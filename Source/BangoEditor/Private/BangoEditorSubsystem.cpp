@@ -24,8 +24,8 @@ TStatId UBangoEditorSubsystem::GetStatId() const
 
 void UBangoEditorSubsystem::OnBangoEventAltered(ABangoEvent* Event)
 {
-	TryApplyMesh(Event);
-	TryApplyMaterial(Event);
+	//TryApplyMesh(Event);
+	//TryApplyMaterial(Event);
 }
 
 void UBangoEditorSubsystem::TryApplyMesh(ABangoEvent* Event)
@@ -71,7 +71,7 @@ void UBangoEditorSubsystem::ApplyLoadedMesh(ABangoEvent* Event, TSoftObjectPtr<U
 		return;
 	}
 
-	Event->SetDebugMesh(LoadedObject.Get());
+	//Event->SetDebugMesh(LoadedObject.Get());
 }
 
 void UBangoEditorSubsystem::TryApplyMaterial(ABangoEvent* Event)
@@ -121,5 +121,5 @@ void UBangoEditorSubsystem::ApplyLoadedMaterial(ABangoEvent* Event, TSoftObjectP
 		return;
 	}
 
-	Event->SetDebugMeshMaterial(LoadedMaterialInstance.Get());
+	//Event->SetDebugMeshMaterial(LoadedMaterialInstance.Get());
 }

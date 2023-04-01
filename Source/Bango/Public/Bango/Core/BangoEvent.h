@@ -8,13 +8,15 @@
 class UObject;
 class UBangoAction;
 class UBangoTriggerCondition;
+class UBangoPlungerComponent;
 
 UENUM()
 enum class EBangoWorldTimeType : uint8
 {
 	GameTime,
-	AudioTime,
+	UnpausedTime,
 	RealTime,
+	AudioTime,
 	MAX
 };
 
@@ -29,69 +31,94 @@ enum class EBangoEventState : uint8
 	MAX
 };
 
+USTRUCT()
+struct FBangoRunStateSettings
+{
+	GENERATED_BODY()
+	
+	/** When on, start and stop actions will be run any time an instigator triggers or stops triggering this event.
+	 * When off, start actions will only be run when the first instigator triggers this event, and stop actions will only be run when all instigators are removed.*/
+	UPROPERTY(Category="Bango|Run Settings", EditAnywhere)
+	bool bRunForEveryInstigator = false;
+	
+	/** If true, 2nd and 3rd... instigators will not cause any actions to run. If the first instigator is removed, actions will then be run on the second instigator. */
+	UPROPERTY(Category="Bango|Run Settings", EditAnywhere, meta=(EditCondition="bRunForEveryInstigator"))
+	bool bQueueInstigators = false;
+};
+
 UCLASS()
 class BANGO_API ABangoEvent : public AActor
 {
 	GENERATED_BODY()
 
-#if WITH_EDITORONLY_DATA
+	// ============================================================================================
+	// Constructor/Destructor
+	// ============================================================================================
+public:
+	ABangoEvent();
+
+	// ============================================================================================
+	// Settings
+	// ============================================================================================
+private:
+	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
-	FName EventName;
-#endif
+	bool bStartsAndStops = false;
 	
-	// Settings ---------------------------------
-protected:
+	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any trigger signals. */
+	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseTriggerLimit", ClampMin=1))
+	int32 TriggerLimit = 1;
+
 	UPROPERTY()
-	bool bUseTriggerCountLimit = true;
-	
-	// TODO: need some ability to reset the event so it can be triggered another group of times
-	/** When set, this event can only be triggered this many times before it becomes expired. */
-	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseTriggerCountLimit"/*, EditConditionHides*/, ClampMin=1))
-	int TriggerLimit = 1;
+	bool bUseTriggerLimit = true;
+
+	/** When set, start actions will be delayed by the specified length of time. */
+	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseStartTriggerDelay", ClampMin = 0.0))
+	double StartTriggerDelay = 0;
 
 	UPROPERTY()
 	bool bUseStartTriggerDelay = false;
-	
-	/** When set, activation will only occur after the specified length of time. */
-	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseStartTriggerDelay"/*, EditConditionHides*/, ClampMin = 0.0))
-	double StartTriggerDelay = 0;
 
-	// TODO: Implement stop delay? Get rid of start delay? 
-//	UPROPERTY()
-//	bool bUseStopTriggerDelay = false;
+	/** When set, stop actions will be delayed by the specified length of time. */
+	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseStopTriggerDelay", ClampMin = 0.0))
+	double StopTriggerDelay = 0;
 
-	/** When set, deactivation will only occur after the specified length of time. */
-//	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseStopTriggerDelay"/*, EditConditionHides*/, ClampMin = 0.0))
-//	double StopTriggerDelay = 0;
+	UPROPERTY(meta=(EditCondition="bUseStopTriggerDelay", EditConditionHides))
+	bool bUseStopTriggerDelay = false;
+
+	/**  */
+	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bStartsAndStops", EditConditionHides))
+	FBangoRunStateSettings RunStateSettings;
 	
-	/**  */ // TODO: should this be a list?
+	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere, Instanced)
 	TArray<UBangoTriggerCondition*> StartTriggers;
-
-	/**  */ // TODO: should this be a list?
-	UPROPERTY(Category="Bango", EditAnywhere, Instanced)
-	TArray<UBangoTriggerCondition*> StopTriggers;
-
-	/** When set, this event can be triggered multiple simultaneous times by different instigators. Useful for things like applying damage or healing to multiple instigators. */
-	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="NumStopTriggers > 0", EditConditionHides))
-	bool bRunForEveryInstigator = false;
-	
-	/** If false, a deactivation trigger can only be received by the same instigator that activated this event. */
-	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="NumStopTriggers > 0 && bRunForEveryInstigatorSet == 0", EditConditionHides))
-	bool bStopFromAnyInstigator = false;
 	
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
 	UPROPERTY(Category="Bango", EditAnywhere, Instanced)
 	TArray<UBangoAction*> StartActions;
+	
+	/**  */
+	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="bStartsAndStops", EditConditionHides))
+	TArray<UBangoTriggerCondition*> StopTriggers;
 
 	/** Actions to run when an on/off event turns off. */
-	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="NumStopTriggers > 0", EditConditionHides))
+	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="bStartsAndStops", EditConditionHides))
 	TArray<UBangoAction*> StopActions;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
+	FName DisplayName;
+#endif
+	
 	/**  */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
 
+	/** When set, freezes the event after it expires and runs out of instigators, typically to disable triggers and save CPU. */
+	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseTriggerLimit", HideEditConditionToggle, EditConditionHides))
+	bool bFreezeWhenExpired = true;
+	
 	/** How to measure trigger delay times or trigger hold times. */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	EBangoWorldTimeType TimeType = EBangoWorldTimeType::GameTime;
@@ -100,63 +127,81 @@ protected:
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditInstanceOnly)
 	TArray<ABangoEvent*> SlavedEvents;
 	
-	// State ------------------------------------
+	// ------------------------------------------
+	// Settings Getters
+	// ------------------------------------------
+public:
+	UFUNCTION(BlueprintCallable)
+	int32 GetTriggerLimit();
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetTriggerCount();
+	
+	UFUNCTION(BlueprintCallable)
+	double GetStartTriggerDelay();
+	
+	UFUNCTION(BlueprintCallable)
+	double GetStopTriggerDelay();
+	
+	// ============================================================================================
+	// State
+	// ============================================================================================
 protected:
 	/**  */
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
-	bool bFrozen;
-
+	bool bFrozen = false;
+	
 	/**  */
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
-	int32 TriggerCount;
+	int32 TriggerCount = 0;
 	
 	/** Instigators which are actively triggering an on/off event. */
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
-	TSet<UObject*> ActiveInstigators;
-
-	/** Instigators which are going to be active, but are waiting for StartTriggerDelay to expire. */
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
-	TSet<UObject*> DelayedInstigators;
+	TArray<UObject*> Instigators;
 	
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
-	TMap<UObject*, FTimerHandle>  DelayedTimers;
-
-	// API --------------------------------------
+	// ------------------------------------------
+	// State Getters
+	// ------------------------------------------
 public:
-	ABangoEvent();
+	UFUNCTION(BlueprintCallable)
+	bool GetIsFrozen();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsExpired();
 	
-	virtual void BeginPlay() override;
+	// ============================================================================================
+	// API
+	// ============================================================================================
+public:
+	void BeginPlay() override;
+
+	void ResetTriggerCount(bool bUnfreeze = true);
 
 protected:
 	UFUNCTION()
-	void Activate(UObject* NewInstigator);
+	void ActivateFromTrigger(UObject* NewInstigator);
 
 	UFUNCTION()
-	void Deactivate(UObject* OldInstigator);
+	void DeactivateFromTrigger(UObject* OldInstigator);
 
-protected:
-	void AddActiveInstigator(UObject* NewInstigator);
+	UFUNCTION(BlueprintCallable)
+	void SetFrozen(bool bNewFrozen);
 
-	void RemoveActiveInstigator(UObject* OldInstigator);
+	void EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 
-	void AddDelayedInstigator(UObject* NewInstigator);
-
-	void RemoveDelayedInstigator(UObject* OldInstigator);
-	
-	void FinishTriggerDelay(UObject* PendingInstigator);
+	void DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 	
 	void Update();
 
-	void Freeze();
+	void RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions);
 	
-	// Editor -----------------------------------
+	// ============================================================================================
+	// Editor !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// ============================================================================================
 #if WITH_EDITORONLY_DATA
 private:
 	UPROPERTY(Transient)
 	int NumCollisionVolumes = 0;
-
-	UPROPERTY(Transient)
-	UStaticMeshComponent* DebugMesh;
 
 	UPROPERTY(Transient)
 	TSet<EBangoEventState> CurrentStates;
@@ -166,6 +211,12 @@ private:
 
 	UPROPERTY(Transient)
 	int bRunForEveryInstigatorSet = 0;
+
+	UPROPERTY(Transient)
+	int bUseTriggerLimitSet = 0;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UBangoPlungerComponent> PlungerComponent;
 #endif
 
 #if WITH_EDITOR
@@ -179,19 +230,16 @@ public:
 	void DebugUpdate();
 	
 	void UpdateState();
+
+	bool CanEditChange(const FProperty* InProperty) const override;
 	
 private:
 	void UpdateEditorVars();
 
-public:
-	void SetDebugMesh(UStaticMesh* Mesh);
-
-	void SetDebugMeshMaterial(UMaterialInstance* MaterialInstance);
-	
-	bool CanEditChange(const FProperty* InProperty) const override;
-	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	
 #endif
 };
 

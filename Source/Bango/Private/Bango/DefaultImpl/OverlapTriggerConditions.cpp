@@ -5,14 +5,14 @@
 
 
 
-void UBangoTriggerCondition_OnBeginOverlap::Setup_Implementation(ABangoEvent* Event)
+void UBangoTriggerCondition_OnBeginOverlap::Enable_Implementation()
 {
-	Event->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+	GetEvent()->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
 }
 
-void UBangoTriggerCondition_OnBeginOverlap::Freeze_Implementation(ABangoEvent* Event)
+void UBangoTriggerCondition_OnBeginOverlap::Disable_Implementation()
 {
-	Event->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnBeginOverlap);
+	GetEvent()->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnBeginOverlap);
 }
 
 void UBangoTriggerCondition_OnBeginOverlap::OnBeginOverlap(AActor* BangoEventActor, AActor* InstigatorActor)
@@ -36,14 +36,14 @@ void UBangoTriggerCondition_OnBeginOverlap::OnBeginOverlap(AActor* BangoEventAct
 
 
 
-void UBangoTriggerCondition_OnEndOverlap::Setup_Implementation(ABangoEvent* Event)
+void UBangoTriggerCondition_OnEndOverlap::Enable_Implementation()
 {
-	Event->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
+	GetEvent()->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
 }
 
-void UBangoTriggerCondition_OnEndOverlap::Freeze_Implementation(ABangoEvent* Event)
+void UBangoTriggerCondition_OnEndOverlap::Disable_Implementation()
 {
-	Event->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnEndOverlap);
+	GetEvent()->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnEndOverlap);
 }
 
 void UBangoTriggerCondition_OnEndOverlap::OnEndOverlap(AActor* BangoEventActor, AActor* InstigatorActor)

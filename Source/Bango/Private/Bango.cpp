@@ -17,4 +17,4 @@ void FBangoModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FBangoModule, Bango)
+IMPLEMENT_MODULE(FBangoModule, Bango);

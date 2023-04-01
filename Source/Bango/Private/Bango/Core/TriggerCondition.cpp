@@ -1,11 +1,36 @@
 ﻿#include "Bango/Core/TriggerCondition.h"
 
-void UBangoTriggerCondition::Setup_Implementation(ABangoEvent* Event)
+#include "Bango/Core/BangoEvent.h"
+
+void UBangoTriggerCondition::Enable_Implementation()
 {
+	
 }
 
 
-void UBangoTriggerCondition::Freeze_Implementation(ABangoEvent* Event)
+void UBangoTriggerCondition::Disable_Implementation()
 {
+	
 }
 
+ABangoEvent* UBangoTriggerCondition::GetEvent()
+{
+	return Cast<ABangoEvent>(GetOuter());
+}
+
+void UBangoTriggerCondition::SetEnabled(bool bEnabled)
+{
+	if (bEnabled)
+	{
+		Enable();
+	}
+	else
+	{
+		Disable();
+	}
+}
+
+void UBangoTriggerCondition::Trigger(UObject* NewInstigator)
+{
+	OnTrigger.Execute(NewInstigator);
+}

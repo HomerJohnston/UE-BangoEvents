@@ -17,9 +17,9 @@ protected:
 	UBangoInstigatorFilter* ActorFilter;
 	
 public:
-	void Setup_Implementation(ABangoEvent* Event) override;
+	void Enable_Implementation() override;
 
-	void Freeze_Implementation(ABangoEvent* Event) override;
+	void Disable_Implementation() override;
 
 protected:
 	UFUNCTION()
@@ -36,9 +36,9 @@ protected:
 	// SETTINGS --------------------------------
 	
 public:
-	void Setup_Implementation(ABangoEvent* Event) override;
+	void Enable_Implementation() override;
 
-	void Freeze_Implementation(ABangoEvent* Event) override;
+	void Disable_Implementation() override;
 	
 protected:
 	UFUNCTION()

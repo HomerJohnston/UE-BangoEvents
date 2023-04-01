@@ -1,188 +1,279 @@
 ﻿#include "Bango/Core/BangoEvent.h"
 
 #include "Editor.h"
+#include "Bango/Log.h"
 #include "Bango/Core/BangoAction.h"
 #include "Bango/Core/TriggerCondition.h"
+#include "Bango/Editor/PlungerComponent.h"
 #include "Bango/Subsystems/BangoEngineSubsystem.h"
 #include "Components/ShapeComponent.h"
 #include "Editor/EditorEngine.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 
-
+// ============================================================================================
+// Constructor
+// ============================================================================================
 ABangoEvent::ABangoEvent()
 {
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 	
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.bCanEverTick = false;
 
-#if WITH_EDITOR
-	DebugMesh = CreateDefaultSubobject<UStaticMeshComponent>("DebugMesh");
-	DebugMesh->SetupAttachment(RootComponent);
-	//DebugMesh->SetHiddenInGame(true);
-	DebugMesh->SetHiddenInSceneCapture(true);
+#if WITH_EDITORONLY_DATA
+	PlungerComponent = CreateEditorOnlyDefaultSubobject<UBangoPlungerComponent>("Plunger");
+	PlungerComponent->SetupAttachment(RootComponent);
+
+	if (!IsRunningCommandlet())
+	{
+		//PlungerComponent->
+	}
 #endif
+}
+
+// ------------------------------------------
+// Settings Getters
+// ------------------------------------------
+int32 ABangoEvent::GetTriggerLimit()
+{
+	return TriggerLimit;
+}
+
+int32 ABangoEvent::GetTriggerCount()
+{
+	return TriggerCount;
+}
+
+double ABangoEvent::GetStartTriggerDelay()
+{
+	return bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
+}
+
+double ABangoEvent::GetStopTriggerDelay()
+{
+	return bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
+}
+
+// ------------------------------------------
+// State Getters
+// ------------------------------------------
+
+bool ABangoEvent::GetIsFrozen()
+{
+	return bFrozen;
+}
+
+// ============================================================================================
+// API
+// ============================================================================================
+bool ABangoEvent::GetIsExpired()
+{
+	return bStartsAndStops && bUseTriggerLimit && (TriggerCount >= TriggerLimit);
 }
 
 void ABangoEvent::BeginPlay()
 {
-	Super::BeginPlay();
-	
 	for (UBangoTriggerCondition* Trigger : StartTriggers)
 	{
-		if (IsValid(Trigger))
+		if (!IsValid(Trigger))
 		{
-			Trigger->Setup(this);
-			Trigger->OnTrigger.BindDynamic(this, &ThisClass::Activate);
+			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+			continue;
 		}
+
+		Trigger->OnTrigger.BindDynamic(this, &ThisClass::ActivateFromTrigger);
 	}
+
+	if (!bStartsAndStops && StopTriggers.Num() > 0)
+	{
+		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but StartsAndStops is false, removing stop triggers"), *this->GetName());
+		StopTriggers.Empty();
+	}
+	
 	for (UBangoTriggerCondition* Trigger : StopTriggers)
 	{
-		if (IsValid(Trigger))
+		if (!IsValid(Trigger))
 		{
-			Trigger->Setup(this);
-			Trigger->OnTrigger.BindDynamic(this, &ThisClass::Deactivate);
-		}		
+			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+			continue;
+		}
+	
+		Trigger->OnTrigger.BindDynamic(this, &ThisClass::DeactivateFromTrigger);
 	}
+	
+	SetFrozen(bStartsFrozen);
 
 #if WITH_EDITOR
 	UpdateEditorVars();
 	DebugUpdate();
 #endif
+	
+	Super::BeginPlay();
 }
 
-void ABangoEvent::Activate(UObject* NewInstigator)
-{	
-	if (!bRunForEveryInstigator && (ActiveInstigators.Num() > 0 || DelayedInstigators.Num() > 0) || (bUseTriggerCountLimit && TriggerCount >= TriggerLimit))
+void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
+{
+	TriggerCount = 0;
+
+	if (bUnfreeze)
 	{
-		// Ignore - it's already been or being triggered
+		SetFrozen(false);
+	}
+}
+
+// TODO: warnings if lots of instigators? Other faster mechanisms to handle lots of instigators?
+void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
+{
+	check(!GetIsFrozen());
+	
+	if (GetIsExpired())
+	{
 		return;
 	}
-	if (bUseStartTriggerDelay)
-	{
-		AddDelayedInstigator(NewInstigator);
-	}
-	else
-	{
-		AddActiveInstigator(NewInstigator);
-	}
-}
 
-void ABangoEvent::Deactivate(UObject* OldInstigator)
-{
-	if (!bRunForEveryInstigator && !bStopFromAnyInstigator && !ActiveInstigators.Contains(OldInstigator) && !DelayedInstigators.Contains(OldInstigator)) // TODO: is it a problem that the stop instigator could be different from the start instigator?
+	int32 NewIndex = Instigators.Add(NewInstigator);
+
+	bool bRun = true;
+	
+	if (bStartsAndStops)
 	{
-		return;
+		// Don't run if this is a single-state event and this isn't the first instigator
+		if (!RunStateSettings.bRunForEveryInstigator && NewIndex > 0)
+		{
+			bRun = false;
+		}
+
+		// Don't run if this is a multi-state event but it's set up to require queued instigators and this isn't the first instigator
+		if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && NewIndex > 0)
+		{
+			bRun = false;
+		}
 	}
 	
-	if (bUseStartTriggerDelay && DelayedInstigators.Contains(OldInstigator))
+	if (bRun)
 	{
-		RemoveDelayedInstigator(OldInstigator);
-	}
-	else
-	{
-		RemoveActiveInstigator(OldInstigator);
-	}
-}
-
-void ABangoEvent::AddActiveInstigator(UObject* NewInstigator)
-{
-	// If the event doesn't have a stop trigger then we actually don't want to turn it on, we just want to bang off the start actions
-	if (StopTriggers.Num() > 0)
-	{
-		ActiveInstigators.Add(NewInstigator);
+		RunActions(NewInstigator, StartActions);
 	}
 	
-	for(UBangoAction* Action : StartActions)
-	{
-		Action->Run(this, NewInstigator);
-	}
-
 	TriggerCount++;
-	
-	Update();
+
+	if (bUseTriggerLimit && bFreezeWhenExpired && TriggerCount >= TriggerLimit)
+	{
+		SetFrozen(true);
+	}
 }
 
-void ABangoEvent::RemoveActiveInstigator(UObject* OldInstigator)
+void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 {
-	if (ActiveInstigators.Contains(OldInstigator))
+	if (Instigators.Num() > 20)
 	{
-		
+		UE_LOG(Bango, Warning, TEXT("Warning: several instigators present on event %s, deactivation may be slow"), *this->GetName());
 	}
 	
-	for (UBangoAction* Action : StopActions)
+	int32 Index = Instigators.Find(OldInstigator);
+
+	if (Index == INDEX_NONE)
 	{
-		Action->Run(this, OldInstigator);
+		// This can happen if the event has been frozen or become expired but it still has some valid instigators.
+		check(bFreezeWhenExpired && Instigators.Num() == 0);
+		
+		return;
 	}
 	
-	ActiveInstigators.Remove(OldInstigator);
-	Update();
-}
+	bool bRun = true;
 
-void ABangoEvent::AddDelayedInstigator(UObject* NewInstigator)
-{
-	DelayedInstigators.Add(NewInstigator);
-		
-	FTimerHandle TimerHandle;
+	if (!RunStateSettings.bRunForEveryInstigator && Index != 0)
+	{
+		bRun =  false;
+	}
 
-	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::FinishTriggerDelay, NewInstigator);
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, StartTriggerDelay, false);
-
-	DelayedTimers.Emplace(NewInstigator, TimerHandle);
+	if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && Index != 0)
+	{
+		bRun = false;
+	}
 	
-	Update();
+	if (bRun)
+	{
+		RunActions(OldInstigator, StopActions);
+	}
+
+	Instigators.RemoveAt(Index);
+
+	// If it's a queued event, and if we just removed the first instigator, run the next instigator 
+	if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && Index == 0 && Instigators.Num() > 0)
+	{
+		RunActions(Instigators[0], StartActions);
+	}
+
+	if (GetIsFrozen() && Instigators.Num() == 0)
+	{
+		DisableTriggers(StopTriggers);
+	}
 }
 
-void ABangoEvent::FinishTriggerDelay(UObject* PendingInstigator)
+void ABangoEvent::SetFrozen(bool bNewFrozen)
 {
-	DelayedInstigators.Remove(PendingInstigator);
-	AddActiveInstigator(PendingInstigator);
-}
-
-void ABangoEvent::RemoveDelayedInstigator(UObject* OldInstigator)
-{
-	DelayedInstigators.Remove(OldInstigator);
+	if (bNewFrozen == bFrozen && HasActorBegunPlay())
+	{
+		return;
+	}
 	
-	FTimerHandle& TimerHandle = DelayedTimers[OldInstigator];
+	if (!bNewFrozen)
+	{
+		EnableTriggers(StartTriggers);
+		EnableTriggers(StopTriggers);
+	}
+	else
+	{
+		DisableTriggers(StartTriggers);
 
-	GetWorldTimerManager().ClearTimer(TimerHandle);
+		if (Instigators.Num() == 0)
+		{
+			DisableTriggers(StopTriggers); // We will also attempt to disable triggers whenever an instigator is removed
+		}
+	}
+	
+	bFrozen = bNewFrozen;
+}
 
-	DelayedTimers.Remove(OldInstigator);
+void ABangoEvent::EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
+{
+	for (UBangoTriggerCondition* Trigger : Triggers)
+	{
+		if (IsValid(Trigger))
+		{
+			Trigger->Enable();
+		}
+	}
+}
 
-	Update();
+void ABangoEvent::DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
+{
+	for (UBangoTriggerCondition* Trigger : Triggers)
+	{
+		if (IsValid(Trigger))
+		{
+			Trigger->Disable();
+		}
+	}
 }
 
 void ABangoEvent::Update()
 {
-	if (bUseTriggerCountLimit && TriggerCount >= TriggerLimit)
-	{
-		Freeze();
-	}
-	
-#if WITH_EDITOR
-	DebugUpdate();
-#endif
 }
 
-void ABangoEvent::Freeze()
+void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions)
 {
-	for (UBangoTriggerCondition* Trigger : StartTriggers)
+	for (UBangoAction* Action : Actions)
 	{
-		if (IsValid(Trigger))
+		if (!IsValid(Action))
 		{
-			Trigger->Freeze(this);
+			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s"), *this->GetName());
+			continue;
 		}
+		
+		Action->Run(this, NewInstigator);
 	}
-	for (UBangoTriggerCondition* Trigger : StopTriggers)
-	{
-		if (IsValid(Trigger))
-		{
-			Trigger->Freeze(this);
-		}		
-	}
-	
-	bFrozen = true;
 }
 
 // Editor ---------------------------------------
@@ -220,16 +311,13 @@ void ABangoEvent::BeginDestroy()
 void ABangoEvent::DebugUpdate()
 {
 	UpdateState();
-	
-	UBangoEngineSubsystem* EngineSubsystem = GEngine->GetEngineSubsystem<UBangoEngineSubsystem>();
-	EngineSubsystem->RegisterBangoEvent(this);
 }
 
 void ABangoEvent::UpdateState()
 {
-	CurrentStates.Empty((uint8)EBangoEventState::MAX);
+	/*CurrentStates.Empty((uint8)EBangoEventState::MAX);
 
-	if (ActiveInstigators.Num() > 0)
+	if (Instigators.Num() > 0)
 	{
 		CurrentStates.Add(EBangoEventState::Active);
 	}
@@ -247,15 +335,20 @@ void ABangoEvent::UpdateState()
 	if (DelayedInstigators.Num() > 0)
 	{
 		CurrentStates.Add(EBangoEventState::StartDelay);
-	}
+	}*/
 }
 
-void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+bool NameIs(const FProperty* InProperty, FName Name)
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-	
-	UpdateEditorVars();
+	return (InProperty->GetFName() == Name);
 }
+
+bool ABangoEvent::CanEditChange(const FProperty* InProperty) const
+{
+	return true;
+}
+
+
 
 void ABangoEvent::UpdateEditorVars()
 {
@@ -266,26 +359,15 @@ void ABangoEvent::UpdateEditorVars()
 
 	NumStopTriggers = StopTriggers.Num();
 
-	bRunForEveryInstigatorSet = (bRunForEveryInstigator) ? 1 : 0;
+	bRunForEveryInstigatorSet = (RunStateSettings.bRunForEveryInstigator) ? 1 : 0;
+
+	bUseTriggerLimitSet = (bUseTriggerLimit) ? 1 : 0;
 }
 
-void ABangoEvent::SetDebugMesh(UStaticMesh* Mesh)
+void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	DebugMesh->SetStaticMesh(Mesh);
-}
-
-void ABangoEvent::SetDebugMeshMaterial(UMaterialInstance* MaterialInstance)
-{
-	int32 NumMaterials = DebugMesh->GetNumMaterials();
-
-	for (int32 i = 0; i < NumMaterials; i++)
-	{
-		DebugMesh->SetMaterial(i, MaterialInstance);
-	}
-}
-
-bool ABangoEvent::CanEditChange(const FProperty* InProperty) const
-{
-	return Super::CanEditChange(InProperty);
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	UpdateEditorVars();
 }
 #endif

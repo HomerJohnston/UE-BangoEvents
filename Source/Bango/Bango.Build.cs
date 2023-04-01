@@ -37,9 +37,10 @@ public class Bango : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"GameplayMessageRuntime",
 				"GameplayTags",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"RHI",
+				"RenderCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
