@@ -1,23 +1,16 @@
 ﻿#pragma once
 
-#include "Engine/DeveloperSettings.h"
 #include "Bango/Core/BangoEvent.h"
+#include "Engine/DeveloperSettingsBackedByCVars.h"
 
 #include "BangoDevSettings.generated.h"
 
 UCLASS(Config = Engine, DefaultConfig, DisplayName="Bango Event System")
-class BANGO_API UBangoDevSettings : public UDeveloperSettings
+class BANGO_API UBangoDevSettings : public UDeveloperSettingsBackedByCVars
 {
 	GENERATED_BODY()
 	
 public:
-	//TSoftObjectPtr<UStaticMesh> 
-	UPROPERTY(Category="Debug|Mesh", EditAnywhere, Config)
-	TSoftObjectPtr<UStaticMesh> NormalMesh;
-
-	UPROPERTY(Category="Debug|Mesh", EditAnywhere, Config)
-	TSoftObjectPtr<UStaticMesh> ActiveMesh;
-	
-	UPROPERTY(Category="Debug|Materials", EditAnywhere, Config, meta=(ArraySizeEnum="EBangoEventState"))
-	TSoftObjectPtr<UMaterialInstance> StateMaterials[EBangoEventState::MAX];
+	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(ConsoleVariable="Bango.ShowEventsInGame"))
+	bool bShowEventsInGame = false;
 };

@@ -5,6 +5,14 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+namespace GhostPepperGames
+{
+	namespace Bango
+	{
+		static bool bShowEventsInGame;
+	}
+}
+
 class FBangoModule : public IModuleInterface
 {
 public:

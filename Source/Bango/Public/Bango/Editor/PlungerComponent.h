@@ -27,19 +27,23 @@ public:
 	// State ------------------------------------
 protected:
 	FLinearColor CurrentColor;
-	
+
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
+	double LastStartTime;
+	
 public:
 	UBangoPlungerComponent();
 
 	float GetHandleOffset() { return HandleOffsetNormal; }
 
 #if WITH_EDITOR
-	virtual bool ComponentIsTouchingSelectionBox(const FBox& InSelBox, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
+	bool ComponentIsTouchingSelectionBox(const FBox& InSelBox, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
 
-	virtual bool ComponentIsTouchingSelectionFrustum(const FConvexVolume& InFrustum, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
-#endif
+	bool ComponentIsTouchingSelectionFrustum(const FConvexVolume& InFrustum, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
+
+	void BeginPlay() override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+#endif
 };

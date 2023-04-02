@@ -6,12 +6,15 @@
 void UBangoAction::RunInternal(ABangoEvent* EventActor, UObject* Instigator, double EventDelay)
 {
 	double RunDelay = Delay;
-	if (!bIgnoreEventDelay && EventDelay > 0)
+
+	if (!bIgnoreEventDelay)
 	{
 		RunDelay += EventDelay;
-		
+	}
+	
+	if (RunDelay > 0.0)
+	{
 		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::PerformRun, EventActor, Instigator);
-		
 		GetWorld()->GetTimerManager().SetTimer(DelayHandle, Delegate, RunDelay, false);
 	}
 	else
@@ -33,6 +36,11 @@ void UBangoAction::PerformRun(ABangoEvent* EventActor, UObject* Instigator)
 	
 	OnRunEvent.Broadcast(Instigator);
 	Run(EventActor, Instigator);
+}
+
+FText UBangoAction::GetDisplayName_Implementation()
+{
+	return DisplayName;
 }
 
 void UBangoAction::OnFailToRun_Implementation(ABangoEvent* EventActor)

@@ -30,6 +30,8 @@ void UBangoEditorSubsystem::OnBangoEventAltered(ABangoEvent* Event)
 
 void UBangoEditorSubsystem::TryApplyMesh(ABangoEvent* Event)
 {
+	
+	/*
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
 
 	TSoftObjectPtr<UStaticMesh> Mesh = nullptr;
@@ -59,24 +61,24 @@ void UBangoEditorSubsystem::TryApplyMesh(ABangoEvent* Event)
 	else
 	{
 		ApplyLoadedMesh(Event, Mesh);
-	}
+	}*/
 }
 
 void UBangoEditorSubsystem::ApplyLoadedMesh(ABangoEvent* Event, TSoftObjectPtr<UStaticMesh> LoadedObject)
 {
-	if (!LoadedObject.IsValid())
+	/*if (!LoadedObject.IsValid())
 	{
 		// TODO LogTemp
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load editor mesh! This should never happen."));
 		return;
-	}
+	}*/
 
 	//Event->SetDebugMesh(LoadedObject.Get());
 }
 
 void UBangoEditorSubsystem::TryApplyMaterial(ABangoEvent* Event)
 {
-	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+	/*const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
 	
 	TSoftObjectPtr<UMaterialInstance> Material;
 	
@@ -109,7 +111,7 @@ void UBangoEditorSubsystem::TryApplyMaterial(ABangoEvent* Event)
 	else
 	{
 		ApplyLoadedMaterial(Event, Material);
-	}
+	}*/
 }
 
 

@@ -16,12 +16,17 @@ class BANGO_API UBangoAction : public UObject
 	// Settings
 	// ============================================================================================
 private:
-	UPROPERTY(EditAnywhere)
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(Category="Bango", EditAnywhere)
+	FText DisplayName;
+#endif
+	
+	UPROPERTY(Category="Bango", EditAnywhere)
 	bool bIgnoreEventDelay = false;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Category="Bango", EditAnywhere)
 	double Delay = 0;
-	
+
 	// ------------------------------------------
 	// Getters and Setters
 	// ------------------------------------------
@@ -43,9 +48,14 @@ public:
 	// ------------------------------------------
 	// Getters and Setters
 	// ------------------------------------------
+
+	// ============================================================================================
+	// API
+	// ============================================================================================
 public:
 	void RunInternal(ABangoEvent* EventActor, UObject* Instigator, double EventDelay);
-	
+
+protected:
 	void PerformRun(ABangoEvent* EventActor, UObject* Instigator);
 	
 	/** Performs action logic. */
@@ -55,4 +65,11 @@ public:
 	/** This can be called if the instigator becomes invalid during a delayed run. */
 	UFUNCTION(BlueprintNativeEvent)
 	void OnFailToRun(ABangoEvent* EventActor);
+
+	
+#if WITH_EDITORONLY_DATA
+	/** Display name used in the editor and debug printing */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FText GetDisplayName();
+#endif
 };

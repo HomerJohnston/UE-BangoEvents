@@ -10,6 +10,7 @@
 #include "Editor/EditorEngine.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "VisualLogger/VisualLogger.h"
 
 // ============================================================================================
 // Constructor
@@ -22,18 +23,30 @@ ABangoEvent::ABangoEvent()
 
 #if WITH_EDITORONLY_DATA
 	PlungerComponent = CreateEditorOnlyDefaultSubobject<UBangoPlungerComponent>("Plunger");
-	PlungerComponent->SetupAttachment(RootComponent);
 
-	if (!IsRunningCommandlet())
+	if (PlungerComponent)
 	{
-		//PlungerComponent->
+		PlungerComponent->SetupAttachment(RootComponent);
+
+		if (!IsRunningCommandlet())
+		{
+			//PlungerComponent->
+		}
 	}
 #endif
 }
 
+
 // ------------------------------------------
 // Settings Getters
 // ------------------------------------------
+#if WITH_EDITORONLY_DATA
+FText ABangoEvent::GetDisplayName_Implementation()
+{
+	return DisplayName;
+}
+#endif
+
 int32 ABangoEvent::GetTriggerLimit()
 {
 	return TriggerLimit;
@@ -152,7 +165,7 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 	
 	if (bRun)
 	{
-		RunActions(NewInstigator, StartActions);
+		RunStartActions(NewInstigator);
 	}
 	
 	TriggerCount++;
@@ -180,21 +193,26 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 		return;
 	}
 	
-	bool bRun = true;
+	bool bIgnore = false;
 
-	if (!RunStateSettings.bRunForEveryInstigator && Index != 0)
+	if (RunStateSettings.bRunForEveryInstigator)
 	{
-		bRun =  false;
+		if (RunStateSettings.bQueueInstigators && Index != 0)
+		{
+			bIgnore = true;
+		}
 	}
-
-	if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && Index != 0)
+	else
 	{
-		bRun = false;
+		if (Instigators.Num() > 1)
+		{
+			bIgnore = true;
+		}
 	}
 	
-	if (bRun)
+	if (!bIgnore)
 	{
-		RunActions(OldInstigator, StopActions);
+		RunStopActions(OldInstigator);
 	}
 
 	Instigators.RemoveAt(Index);
@@ -202,7 +220,7 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 	// If it's a queued event, and if we just removed the first instigator, run the next instigator 
 	if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && Index == 0 && Instigators.Num() > 0)
 	{
-		RunActions(Instigators[0], StartActions);
+		RunStartActions(Instigators[0]);
 	}
 
 	if (GetIsFrozen() && Instigators.Num() == 0)
@@ -262,8 +280,55 @@ void ABangoEvent::Update()
 {
 }
 
-void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions)
+#if WITH_EDITOR
+bool bRunActionsSafetyGate = false;
+#endif
+
+void ABangoEvent::RunStartActions(UObject* NewInstigator)
 {
+#if ENABLE_VISUAL_LOG	
+	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Running Start Actions"));
+		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), 50.f, FColor::Green, TEXT("Test"));
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("%s"), *NewInstigator->GetName());
+	}
+	else
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Running Start Actions from %s"), *NewInstigator->GetName());
+	}
+#endif
+	
+#if WITH_EDITOR
+	bRunActionsSafetyGate = true;
+#endif
+	
+	RunActions(NewInstigator, StartActions, (bUseStartTriggerDelay ? StartTriggerDelay : 0.0));
+	
+#if WITH_EDITOR
+	bRunActionsSafetyGate = false;
+#endif
+}
+
+void ABangoEvent::RunStopActions(UObject* NewInstigator)
+{
+	UE_VLOG(this, Bango, Log, TEXT("Running Stop Actions on %s"), *NewInstigator->GetName());
+
+#if WITH_EDITOR
+	bRunActionsSafetyGate = true;
+#endif
+
+	RunActions(NewInstigator, StopActions, (bUseStopTriggerDelay ? StopTriggerDelay : 0.0));
+	
+#if WITH_EDITOR
+	bRunActionsSafetyGate = false;
+#endif
+}
+
+void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay)
+{
+	check(bRunActionsSafetyGate);
+	
 	for (UBangoAction* Action : Actions)
 	{
 		if (!IsValid(Action))
@@ -272,7 +337,7 @@ void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Acti
 			continue;
 		}
 		
-		Action->Run(this, NewInstigator);
+		Action->RunInternal(this, NewInstigator, Delay);
 	}
 }
 

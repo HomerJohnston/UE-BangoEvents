@@ -46,6 +46,10 @@ struct FBangoRunStateSettings
 	bool bQueueInstigators = false;
 };
 
+// TODO multiplayer compatibility - run on server, on client, on both
+/**
+ * 
+ */
 UCLASS()
 class BANGO_API ABangoEvent : public AActor
 {
@@ -61,6 +65,12 @@ public:
 	// Settings
 	// ============================================================================================
 private:
+#if WITH_EDITORONLY_DATA
+	/**  */
+	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
+	FText DisplayName;
+#endif
+	
 	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
 	bool bStartsAndStops = false;
@@ -105,11 +115,6 @@ private:
 	/** Actions to run when an on/off event turns off. */
 	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="bStartsAndStops", EditConditionHides))
 	TArray<UBangoAction*> StopActions;
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
-	FName DisplayName;
-#endif
 	
 	/**  */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
@@ -131,6 +136,11 @@ private:
 	// Settings Getters
 	// ------------------------------------------
 public:
+#if WITH_EDITORONLY_DATA
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	FText GetDisplayName();
+#endif
+	
 	UFUNCTION(BlueprintCallable)
 	int32 GetTriggerLimit();
 
@@ -193,7 +203,11 @@ protected:
 	
 	void Update();
 
-	void RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions);
+	void RunStartActions(UObject* NewInstigator);
+	
+	void RunStopActions(UObject* NewInstigator);
+	
+	void RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay);
 	
 	// ============================================================================================
 	// Editor !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
