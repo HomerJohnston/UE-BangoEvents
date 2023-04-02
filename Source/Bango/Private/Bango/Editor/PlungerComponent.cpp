@@ -15,14 +15,7 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
 {
-	auto X = new FBangoPlungerSceneProxy(this);
-	
-	if (X != nullptr)
-	{
-		X->SetColor(FLinearColor(FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0)));
-	}
-
-	return X;
+	return new FBangoPlungerSceneProxy(this);
 }
 
 #if WITH_EDITOR

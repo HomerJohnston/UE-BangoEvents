@@ -22,7 +22,7 @@ public:
 	const float PlungerBoxSize = 30;
 	
 	/**  */
-	const float PlungerStemHeight = 10;
+	const float PlungerStemHeight = 20;
 	
 	/**  */
 	const float PlungerHalfWidth = 15;
