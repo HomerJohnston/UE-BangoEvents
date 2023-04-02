@@ -28,11 +28,16 @@ enum class EBangoEventState : uint8
 	Expired		= 1 << 2
 };
 
+inline uint8 operator|(EBangoEventState Left, EBangoEventState Right)
+{
+	return (uint8)Left | (uint8)Right;
+}
+
 struct FBangoEventStateFlag
 {
 	uint8 Value = 0;
 
-	void MakeFlag(EBangoEventState Flag, bool NewValue)
+	void SetFlag(EBangoEventState Flag, bool NewValue)
 	{
 		if (NewValue)
 		{
@@ -46,17 +51,27 @@ struct FBangoEventStateFlag
 	
 	void SetFlag(EBangoEventState In)
 	{
-		Value |= (int)In;
+		Value |= (uint8)In;
 	}
 
 	void ClearFlag(EBangoEventState In)
 	{
-		Value &= ~(int)In;
+		Value &= ~(uint8)In;
 	}
 
 	bool HasFlag(EBangoEventState In)
 	{
-		return (Value & (int)In) == (int)In;
+		return (Value & (uint8)In) == (uint8)In;
+	}
+
+	bool HasFlag(uint8 In)
+	{
+		return (Value & In);
+	}
+	
+	void ToggleFlag(EBangoEventState In)
+	{
+		Value ^= (uint8)In;
 	}
 };
 
@@ -230,8 +245,6 @@ protected:
 
 	void DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 	
-	void Update();
-
 	void RunStartActions(UObject* NewInstigator);
 	
 	void RunStopActions(UObject* NewInstigator);
@@ -258,6 +271,8 @@ public:
 	void BeginDestroy() override;
 	
 	void DebugUpdate();
+
+	FLinearColor GetDebugColor();
 	
 	void UpdateState();
 

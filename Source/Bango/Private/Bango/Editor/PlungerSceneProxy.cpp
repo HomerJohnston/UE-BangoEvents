@@ -2,46 +2,135 @@
 #include "Bango/Editor/PlungerComponent.h"
 #include "SceneManagement.h"
 
+// Forward declarations
+//=================================================================================================
+
+void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
+void BuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
+
+
+// FBangoPlungerSceneProxy
+//=================================================================================================
+
+struct FPlungerMeshConstructionData
+{
+	FLocalVertexFactory* VertexFactory;
+	FStaticMeshVertexBuffers* VertexBuffer;
+	FDynamicMeshIndexBuffer32* IndexBuffer;
+	
+	float BoxSize;
+
+	float StemHeight;
+	float StemRadius;
+	
+	float HandleRadius;
+	float HandleWidth;
+	
+	float StemAndHandleZOffset;
+};
+
+void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData);
+
+// CONSTRUCTION
+// ------------------------------------------------------------------------------------------------
+FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* Component)
+	: FPrimitiveSceneProxy(Component),
+	Color(FColor::Turquoise),
+	VertexFactory_HandleUp(GetScene().GetFeatureLevel(), "FBangoPlungerSceneProxy"),
+	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FBangoPlungerSceneProxy")
+{
+	bWillEverBeLit = false;
+
+	// Mesh Common
+	const float HandleOffsetUp = 0.0f;
+	const float HandleOffsetDown = -40.0f;
+
+	FPlungerMeshConstructionData MeshData;
+
+	MeshData.BoxSize = PlungerBoxSize;
+	
+	MeshData.StemHeight = PlungerStemHeight;
+	MeshData.StemRadius = PlungerStemRadius;
+
+	MeshData.HandleRadius = PlungerHandleRadius;
+	MeshData.HandleWidth = PlungerHandleWidth;
+
+	{
+		MeshData.VertexFactory = &VertexFactory_HandleDown;
+		MeshData.VertexBuffer = &VertexBuffers_HandleDown;
+		MeshData.IndexBuffer = &IndexBuffer_HandleDown;
+		MeshData.StemAndHandleZOffset = HandleOffsetDown;
+	}
+	PreparePlungerMesh(MeshData);
+
+	{
+		MeshData.VertexFactory = &VertexFactory_HandleUp;
+		MeshData.VertexBuffer = &VertexBuffers_HandleUp;
+		MeshData.IndexBuffer = &IndexBuffer_HandleUp;
+		MeshData.StemAndHandleZOffset = HandleOffsetUp;
+	}
+	PreparePlungerMesh(MeshData);
+}
+
+void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData)
+{
+	TArray<FDynamicMeshVertex> OutVerts_HandleUp;
+
+	FVector3f BoxOrigin(0.0f, 0.0f, 0.5f * MeshData.BoxSize);
+	
+	FVector StemOffset(0, 0, MeshData.BoxSize + 0.5f * MeshData.StemHeight + MeshData.StemAndHandleZOffset);
+	FVector HandleOffset(0, 0, StemOffset.Z + 0.5f * MeshData.StemHeight);
+
+	BuildBoxVerts(BoxOrigin, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+	BuildCylinderVerts(StemOffset, FVector::ForwardVector, FVector::RightVector, FVector::UpVector, MeshData.StemRadius, 0.5f * MeshData.StemHeight, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+	BuildCylinderVerts(HandleOffset, FVector::ForwardVector, FVector::UpVector, FVector::LeftVector, MeshData.HandleRadius, 0.5f * MeshData.HandleWidth, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+
+	MeshData.VertexBuffer->InitFromDynamicVertex(MeshData.VertexFactory, OutVerts_HandleUp);
+
+	BeginInitResource(MeshData.IndexBuffer);
+}
+
+FBangoPlungerSceneProxy::~FBangoPlungerSceneProxy()
+{
+	VertexBuffers_HandleUp.PositionVertexBuffer.ReleaseResource();
+	VertexBuffers_HandleUp.StaticMeshVertexBuffer.ReleaseResource();
+	VertexBuffers_HandleUp.ColorVertexBuffer.ReleaseResource();
+	
+	VertexBuffers_HandleDown.PositionVertexBuffer.ReleaseResource();
+	VertexBuffers_HandleDown.StaticMeshVertexBuffer.ReleaseResource();
+	VertexBuffers_HandleDown.ColorVertexBuffer.ReleaseResource();
+
+	IndexBuffer_HandleUp.ReleaseResource();
+	VertexFactory_HandleUp.ReleaseResource();
+	
+	IndexBuffer_HandleDown.ReleaseResource();
+	VertexFactory_HandleDown.ReleaseResource();
+}
+
+// STATE GETTERS AND SETTERS
+// ------------------------------------------------------------------------------------------------
+void FBangoPlungerSceneProxy::SetPlungerPushed(bool bNewPushedState)
+{
+	bPlungerPushed = bNewPushedState;
+
+	// TODO is there a safer way to do this?
+	if (IsValid(GWorld))
+	{
+		LastPushTime = GWorld->GetTimeSeconds();
+	}
+}
+
+void FBangoPlungerSceneProxy::SetColor(FLinearColor NewColor)
+{
+	Color = NewColor;
+}
+
 SIZE_T FBangoPlungerSceneProxy::GetTypeHash() const
 {
 	static size_t UniquePointer;
 	return reinterpret_cast<size_t>(&UniquePointer);
 }
 
-void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
-void BuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
-
-FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* Component)
-		: FPrimitiveSceneProxy(Component),
-		Color(FColor::Turquoise),
-		VertexFactory(GetScene().GetFeatureLevel(), "FBangoPlungerSceneProxy")
-	{
-		TArray<FDynamicMeshVertex> OutVerts;
-
-		FVector PlungerStemOffset(0, 0, BoxSize + PlungerHalfHeight + Component->GetHandleOffset());
-		FVector PlungerHandleOffset(0, 0, BoxSize + 2 * PlungerHalfHeight + Component->GetHandleOffset());
-		FVector3f BoxOffset(0, 0, 0.5f * BoxSize);
-	
-		BuildBoxVerts(BoxOffset, OutVerts, IndexBuffer.Indices);
-		BuildCylinderVerts(PlungerStemOffset, FVector::ForwardVector, FVector::RightVector, FVector::UpVector, PlungerStemRadius, PlungerHalfHeight, 8, OutVerts, IndexBuffer.Indices);
-		BuildCylinderVerts(PlungerHandleOffset, FVector::ForwardVector, FVector::UpVector, FVector::LeftVector, PlungerHandleRadius, PlungerHalfWidth, 8, OutVerts, IndexBuffer.Indices);
-
-		VertexBuffers.InitFromDynamicVertex(&VertexFactory, OutVerts);
-
-		BeginInitResource(&IndexBuffer);
-
-		bWillEverBeLit = false;
-	}
-
-FBangoPlungerSceneProxy::~FBangoPlungerSceneProxy()
-{
-	VertexBuffers.PositionVertexBuffer.ReleaseResource();
-	VertexBuffers.StaticMeshVertexBuffer.ReleaseResource();
-	VertexBuffers.ColorVertexBuffer.ReleaseResource();
-
-	IndexBuffer.ReleaseResource();
-	VertexFactory.ReleaseResource();
-}
 
 void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
@@ -79,8 +168,11 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 			FMeshBatch& Mesh = Collector.AllocateMesh();
 			FMeshBatchElement& BatchElement = Mesh.Elements[0];
 
+			const FLocalVertexFactory& VertexFactory = (bPlungerPushed) ? VertexFactory_HandleDown : VertexFactory_HandleUp;
+			const FIndexBuffer& IndexBuffer = (bPlungerPushed) ? IndexBuffer_HandleDown : IndexBuffer_HandleUp;
+			
 			BatchElement.IndexBuffer = &IndexBuffer;
-
+			
 			Mesh.bWireframe = false;
 			Mesh.VertexFactory = &VertexFactory;
 			Mesh.MaterialRenderProxy = MaterialRenderProxy;
@@ -91,10 +183,10 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 			BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
 
 			BatchElement.FirstIndex = 0;
-			BatchElement.NumPrimitives = IndexBuffer.Indices.Num() / 3;
+			BatchElement.NumPrimitives = IndexBuffer_HandleUp.Indices.Num() / 3;
 
 			BatchElement.MinVertexIndex = 0;
-			BatchElement.MaxVertexIndex = VertexBuffers.PositionVertexBuffer.GetNumVertices() - 1;
+			BatchElement.MaxVertexIndex = VertexBuffers_HandleUp.PositionVertexBuffer.GetNumVertices() - 1;
 
 			Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
 			Mesh.Type = PT_TriangleList;
@@ -127,11 +219,6 @@ void FBangoPlungerSceneProxy::OnTransformChanged()
 uint32 FBangoPlungerSceneProxy::GetMemoryFootprint() const
 {
 	return (sizeof(*this) + GetAllocatedSize());
-}
-
-uint32 FBangoPlungerSceneProxy::GetAllocatedSize() const
-{
-	return FPrimitiveSceneProxy::GetAllocatedSize();
 }
 
 void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
@@ -305,5 +392,4 @@ void BuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector
 		OutIndices.Add(V3);
 		OutIndices.Add(V1);
 	}
-
 }

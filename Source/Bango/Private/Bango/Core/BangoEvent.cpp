@@ -360,8 +360,6 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	UpdateEditorVars();
-
 	DebugUpdate();
 }
 
@@ -385,11 +383,41 @@ void ABangoEvent::DebugUpdate()
 	UpdateState();
 }
 
+FLinearColor ABangoEvent::GetDebugColor()
+{
+	const FLinearColor FrozenExpiredColor	(0.27, 0.30, 0.50, 1.00);
+	const FLinearColor FrozenColor			(0.90, 0.95, 1.00, 1.00);
+	const FLinearColor ExpiredColor			(0.27, 0.25, 0.23, 1.00);
+	const FLinearColor ActiveColor			(0.60, 1.00, 0.60, 1.00);
+	const FLinearColor NormalColor			(0.85, 0.95, 0.85, 1.00);
+
+	if (CurrentState.HasFlag(EBangoEventState::Frozen | EBangoEventState::Expired))
+	{
+		return FrozenExpiredColor;
+	}
+	else if (CurrentState.HasFlag(EBangoEventState::Frozen))
+	{
+		return FrozenColor;
+	}
+	else if (CurrentState.HasFlag(EBangoEventState::Expired))
+	{
+		return ExpiredColor;
+	}
+	else if (CurrentState.HasFlag(EBangoEventState::Active))
+	{
+		return ActiveColor;
+	}
+	else
+	{
+		return NormalColor;	
+	}
+}
+
 void ABangoEvent::UpdateState()
 {
-	CurrentState.MakeFlag(EBangoEventState::Active, Instigators.Num() > 0);
-	CurrentState.MakeFlag(EBangoEventState::Frozen, GetIsFrozen());
-	CurrentState.MakeFlag(EBangoEventState::Expired, GetIsExpired());
+	CurrentState.SetFlag(EBangoEventState::Active, Instigators.Num() > 0);
+	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
+	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
 }
 
 bool NameIs(const FProperty* InProperty, FName Name)
@@ -405,7 +433,5 @@ bool ABangoEvent::CanEditChange(const FProperty* InProperty) const
 void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	
-	UpdateEditorVars();
 }
 #endif

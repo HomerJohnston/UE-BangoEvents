@@ -10,7 +10,7 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 	bUseEditorCompositing = true;
 	SetGenerateOverlapEvents(false);
 
-	SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 }
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
@@ -41,7 +41,6 @@ void UBangoPlungerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	SetHiddenInGame(!GhostPepperGames::Bango::bShowEventsInGame);
-	
 }
 
 FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWorld) const

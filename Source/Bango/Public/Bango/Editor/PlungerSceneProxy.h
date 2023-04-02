@@ -8,33 +8,82 @@ class UBangoPlungerComponent;
 
 class FBangoPlungerSceneProxy final : public FPrimitiveSceneProxy
 {
-protected:
-	FVector Origin;
-
-	FLinearColor Color;
-
-	float BoxSize = 30;
-	float PlungerHalfHeight = 10;
-	float PlungerHalfWidth = 15;
-	float PlungerStemRadius = 2;
-	float PlungerHandleRadius = 3;
-	
-	float Size = 30;
-	bool bIsScreenSizeScaled = true;
-	float ScreenSize = 0.0025;
-
-private:
-	FStaticMeshVertexBuffers VertexBuffers;
-	FDynamicMeshIndexBuffer32 IndexBuffer;
-	FLocalVertexFactory VertexFactory;
-	
-	SIZE_T GetTypeHash() const override;
-
+	// CONSTRUCTION
+	// ============================================================================================
 public:
 	FBangoPlungerSceneProxy(UBangoPlungerComponent* Component);
 
 	virtual ~FBangoPlungerSceneProxy();
+	
+	// SETTINGS
+	// ============================================================================================
+public:
+	/**  */
+	const float PlungerBoxSize = 30;
+	
+	/**  */
+	const float PlungerStemHeight = 10;
+	
+	/**  */
+	const float PlungerHalfWidth = 15;
+	
+	/**  */
+	const float PlungerStemRadius = 2;
 
+	/**  */
+	const float PlungerHandleWidth = 20;
+	
+	/**  */
+	const float PlungerHandleRadius = 3;
+	
+	/**  */
+	const float Size = 30;
+	
+	/**  */
+	const float ScreenSize = 0.0025;
+	
+	/**  */
+	const bool bIsScreenSizeScaled = true;
+
+	/**  */
+	const double RecentPushColorCooldownTime = 1.0;
+	
+	// SETTINGS GETTERS AND SETTERS
+	// ------------------------------------------
+	
+	// STATE
+	// ============================================================================================
+private:
+	FVector Origin = FVector::ZeroVector;
+
+	FLinearColor Color = FLinearColor::White;
+
+	bool bPlungerPushed = false;
+
+	double LastPushTime = DBL_MIN;
+
+	FDynamicMeshIndexBuffer32 IndexBuffer_HandleUp;
+	FStaticMeshVertexBuffers VertexBuffers_HandleUp;
+	FLocalVertexFactory VertexFactory_HandleUp;
+
+	FDynamicMeshIndexBuffer32 IndexBuffer_HandleDown;
+	FStaticMeshVertexBuffers VertexBuffers_HandleDown;
+	FLocalVertexFactory VertexFactory_HandleDown;
+	
+	// STATE GETTERS AND SETTERS
+	// ------------------------------------------
+public:
+	/**  */
+	void SetPlungerPushed(bool bNewPushedState);
+
+	/** */
+	void SetColor(FLinearColor NewColor);
+	
+	// API
+	// ============================================================================================
+public:	
+	SIZE_T GetTypeHash() const override;
+	
 	void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override;
 
 	FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override;
@@ -42,8 +91,4 @@ public:
 	void OnTransformChanged() override;
 
 	uint32 GetMemoryFootprint() const override;
-
-	uint32 GetAllocatedSize() const;
-
-	void SetColor(FLinearColor NewColor) { Color = NewColor;}
 };

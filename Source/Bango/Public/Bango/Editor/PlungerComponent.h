@@ -17,9 +17,6 @@ public:
 	const FLinearColor ExpiredColor		= FLinearColor(0.05f, 0.05f, 0.05f, 0.05f);
 	const FLinearColor TriggeredColor	= FLinearColor(0.75f, 0.13f, 0.13f, 1.00f);
 	
-	const float HandleOffsetNormal = 0;
-	const float HandleOffsetTriggered = -40;
-
 	const float Size = 30;
 	const bool bIsScreenSizeScaled = true;
 	const float ScreenSize = 0.0025;
@@ -34,8 +31,6 @@ protected:
 	
 public:
 	UBangoPlungerComponent();
-
-	float GetHandleOffset() { return HandleOffsetNormal; }
 
 #if WITH_EDITOR
 	bool ComponentIsTouchingSelectionBox(const FBox& InSelBox, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
