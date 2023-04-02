@@ -20,15 +20,44 @@ enum class EBangoWorldTimeType : uint8
 	MAX
 };
 
-UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor))
 enum class EBangoEventState : uint8
 {
-	Normal,
-	Active,
-	Frozen,
-	Expired,
-	StartDelay,
-	MAX
+	NONE		= 0 UMETA(Hidden),
+	Active		= 1 << 0, 
+	Frozen		= 1 << 1,
+	Expired		= 1 << 2
+};
+
+struct FBangoEventStateFlag
+{
+	uint8 Value = 0;
+
+	void MakeFlag(EBangoEventState Flag, bool NewValue)
+	{
+		if (NewValue)
+		{
+			SetFlag(Flag);
+		}
+		else
+		{
+			ClearFlag(Flag);
+		}
+	}
+	
+	void SetFlag(EBangoEventState In)
+	{
+		Value |= (int)In;
+	}
+
+	void ClearFlag(EBangoEventState In)
+	{
+		Value &= ~(int)In;
+	}
+
+	bool HasFlag(EBangoEventState In)
+	{
+		return (Value & (int)In) == (int)In;
+	}
 };
 
 USTRUCT()
@@ -214,21 +243,8 @@ protected:
 	// ============================================================================================
 #if WITH_EDITORONLY_DATA
 private:
-	UPROPERTY(Transient)
-	int NumCollisionVolumes = 0;
+	FBangoEventStateFlag CurrentState;
 
-	UPROPERTY(Transient)
-	TSet<EBangoEventState> CurrentStates;
-
-	UPROPERTY(Transient)
-	int NumStopTriggers = 0;
-
-	UPROPERTY(Transient)
-	int bRunForEveryInstigatorSet = 0;
-
-	UPROPERTY(Transient)
-	int bUseTriggerLimitSet = 0;
-	
 	UPROPERTY(Transient)
 	TObjectPtr<UBangoPlungerComponent> PlungerComponent;
 #endif
@@ -247,9 +263,6 @@ public:
 
 	bool CanEditChange(const FProperty* InProperty) const override;
 	
-private:
-	void UpdateEditorVars();
-
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 

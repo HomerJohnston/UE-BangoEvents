@@ -117,11 +117,12 @@ void ABangoEvent::BeginPlay()
 	SetFrozen(bStartsFrozen);
 
 #if WITH_EDITOR
-	UpdateEditorVars();
 	DebugUpdate();
 #endif
 	
 	Super::BeginPlay();
+
+	UE_VLOG(this, Bango, Log, TEXT("Event Initialized"));
 }
 
 void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
@@ -276,10 +277,6 @@ void ABangoEvent::DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
 	}
 }
 
-void ABangoEvent::Update()
-{
-}
-
 #if WITH_EDITOR
 bool bRunActionsSafetyGate = false;
 #endif
@@ -289,13 +286,13 @@ void ABangoEvent::RunStartActions(UObject* NewInstigator)
 #if ENABLE_VISUAL_LOG	
 	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
 	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Running Start Actions"));
-		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), 50.f, FColor::Green, TEXT("Test"));
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("%s"), *NewInstigator->GetName());
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Start by"));
+		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), FColor::Green, TEXT(""));
+		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, FColor::Green, TEXT("%s"), *NewInstigator->GetName());
 	}
 	else
 	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Running Start Actions from %s"), *NewInstigator->GetName());
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Start by %s"), *NewInstigator->GetName());
 	}
 #endif
 	
@@ -312,8 +309,18 @@ void ABangoEvent::RunStartActions(UObject* NewInstigator)
 
 void ABangoEvent::RunStopActions(UObject* NewInstigator)
 {
-	UE_VLOG(this, Bango, Log, TEXT("Running Stop Actions on %s"), *NewInstigator->GetName());
-
+#if ENABLE_VISUAL_LOG	
+	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Red, TEXT("Stop by"));
+		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), FColor::Red, TEXT(""));
+		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, FColor::Red, TEXT("%s"), *NewInstigator->GetName());
+	}
+	else
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Red, TEXT("Stop by %s"), *NewInstigator->GetName());
+	}
+#endif
 #if WITH_EDITOR
 	bRunActionsSafetyGate = true;
 #endif
@@ -346,7 +353,7 @@ void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Acti
 #if WITH_EDITOR
 bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
-	return CurrentStates.Contains(State);
+	return CurrentState.HasFlag(State);
 }
 
 void ABangoEvent::OnConstruction(const FTransform& Transform)
@@ -380,27 +387,9 @@ void ABangoEvent::DebugUpdate()
 
 void ABangoEvent::UpdateState()
 {
-	/*CurrentStates.Empty((uint8)EBangoEventState::MAX);
-
-	if (Instigators.Num() > 0)
-	{
-		CurrentStates.Add(EBangoEventState::Active);
-	}
-	
-	if (bFrozen)
-	{
-		CurrentStates.Add(EBangoEventState::Frozen);
-	}
-	
-	if (TriggerCount >= TriggerLimit)
-	{
-		CurrentStates.Add(EBangoEventState::Expired);
-	}
-	
-	if (DelayedInstigators.Num() > 0)
-	{
-		CurrentStates.Add(EBangoEventState::StartDelay);
-	}*/
+	CurrentState.MakeFlag(EBangoEventState::Active, Instigators.Num() > 0);
+	CurrentState.MakeFlag(EBangoEventState::Frozen, GetIsFrozen());
+	CurrentState.MakeFlag(EBangoEventState::Expired, GetIsExpired());
 }
 
 bool NameIs(const FProperty* InProperty, FName Name)
@@ -411,22 +400,6 @@ bool NameIs(const FProperty* InProperty, FName Name)
 bool ABangoEvent::CanEditChange(const FProperty* InProperty) const
 {
 	return true;
-}
-
-
-
-void ABangoEvent::UpdateEditorVars()
-{
-	TArray<UShapeComponent*> Colliders;
-	GetComponents(Colliders);
-
-	NumCollisionVolumes = Colliders.Num();
-
-	NumStopTriggers = StopTriggers.Num();
-
-	bRunForEveryInstigatorSet = (RunStateSettings.bRunForEveryInstigator) ? 1 : 0;
-
-	bUseTriggerLimitSet = (bUseTriggerLimit) ? 1 : 0;
 }
 
 void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

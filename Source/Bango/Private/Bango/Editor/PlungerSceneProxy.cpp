@@ -46,7 +46,7 @@ FBangoPlungerSceneProxy::~FBangoPlungerSceneProxy()
 void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
 	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), Color, "GizmoColor");
-	
+
 	Collector.RegisterOneFrameMaterialProxy(MaterialRenderProxy);
 
 	FMatrix EffLocalToWorld = GetLocalToWorld();

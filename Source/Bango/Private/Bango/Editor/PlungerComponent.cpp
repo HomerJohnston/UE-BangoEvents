@@ -15,7 +15,14 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
 {
-	return new FBangoPlungerSceneProxy(this);
+	auto X = new FBangoPlungerSceneProxy(this);
+	
+	if (X != nullptr)
+	{
+		X->SetColor(FLinearColor(FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0),FMath::RandRange(0.0, 1.0)));
+	}
+
+	return X;
 }
 
 #if WITH_EDITOR
@@ -33,7 +40,8 @@ void UBangoPlungerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetHiddenInGame(!GhostPepperGames::Bango::bShowEventsInGame);	
+	SetHiddenInGame(!GhostPepperGames::Bango::bShowEventsInGame);
+	
 }
 
 FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWorld) const

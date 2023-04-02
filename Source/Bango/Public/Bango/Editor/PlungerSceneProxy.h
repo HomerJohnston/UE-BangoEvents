@@ -44,4 +44,6 @@ public:
 	uint32 GetMemoryFootprint() const override;
 
 	uint32 GetAllocatedSize() const;
+
+	void SetColor(FLinearColor NewColor) { Color = NewColor;}
 };
