@@ -1,16 +1,15 @@
 ﻿#pragma once
 
-#include "Bango/Core/BangoEvent.h"
 #include "Engine/DeveloperSettingsBackedByCVars.h"
 
 #include "BangoDevSettings.generated.h"
 
-UCLASS(Config = Engine, DefaultConfig, DisplayName="Bango Event System")
+UCLASS(Config = EditorPerProjectUserSettings, DisplayName="Bango Event System")
 class BANGO_API UBangoDevSettings : public UDeveloperSettingsBackedByCVars
 {
 	GENERATED_BODY()
 	
 public:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(ConsoleVariable="Bango.ShowEventsInGame"))
-	bool bShowEventsInGame = false;
+	bool bShowEventsInGame;
 };

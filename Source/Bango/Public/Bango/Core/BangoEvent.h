@@ -23,9 +23,11 @@ enum class EBangoWorldTimeType : uint8
 enum class EBangoEventState : uint8
 {
 	NONE		= 0 UMETA(Hidden),
-	Active		= 1 << 0, 
-	Frozen		= 1 << 1,
-	Expired		= 1 << 2
+	Initialized = 1 << 0,
+	Active		= 1 << 1, 
+	Frozen		= 1 << 2,
+	Expired		= 1 << 3
+	
 };
 
 inline uint8 operator|(EBangoEventState Left, EBangoEventState Right)
@@ -59,12 +61,12 @@ struct FBangoEventStateFlag
 		Value &= ~(uint8)In;
 	}
 
-	bool HasFlag(EBangoEventState In)
+	bool HasFlag(EBangoEventState In) const
 	{
 		return (Value & (uint8)In) == (uint8)In;
 	}
 
-	bool HasFlag(uint8 In)
+	bool HasFlag(uint8 In) const
 	{
 		return (Value & In);
 	}
@@ -172,10 +174,6 @@ private:
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	EBangoWorldTimeType TimeType = EBangoWorldTimeType::GameTime;
 	
-	/** Any events specified will be triggered whenever this event is triggered, using identical instigator data. */
-	UPROPERTY(Category="Bango", AdvancedDisplay, EditInstanceOnly)
-	TArray<ABangoEvent*> SlavedEvents;
-	
 	// ------------------------------------------
 	// Settings Getters
 	// ------------------------------------------
@@ -184,6 +182,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FText GetDisplayName();
 #endif
+	
+	UFUNCTION(BlueprintCallable)
+	bool GetStartsFrozen();
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetTriggerLimit();
@@ -196,6 +197,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	double GetStopTriggerDelay();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetStartsAndStops();
 	
 	// ============================================================================================
 	// State
@@ -212,6 +216,12 @@ protected:
 	/** Instigators which are actively triggering an on/off event. */
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
 	TArray<UObject*> Instigators;
+
+	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	double LastStartActionsTime = -999;
+
+	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	double LastStopActionsTime = -999;
 	
 	// ------------------------------------------
 	// State Getters
@@ -222,6 +232,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsExpired();
+
+	UFUNCTION(BlueprintCallable)
+	double GetLastStartActionsTime();
+
+	UFUNCTION(BlueprintCallable)
+	double GetLastStopActionsTime();
 	
 	// ============================================================================================
 	// API
@@ -231,15 +247,15 @@ public:
 
 	void ResetTriggerCount(bool bUnfreeze = true);
 
+	UFUNCTION(BlueprintCallable)
+	void SetFrozen(bool bNewFrozen);
+
 protected:
 	UFUNCTION()
 	void ActivateFromTrigger(UObject* NewInstigator);
 
 	UFUNCTION()
 	void DeactivateFromTrigger(UObject* OldInstigator);
-
-	UFUNCTION(BlueprintCallable)
-	void SetFrozen(bool bNewFrozen);
 
 	void EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 
@@ -252,36 +268,35 @@ protected:
 	void RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay);
 	
 	// ============================================================================================
-	// Editor !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// ============================================================================================
 #if WITH_EDITORONLY_DATA
 private:
 	FBangoEventStateFlag CurrentState;
 
+	FDelegateHandle DebugDrawService_Editor;
+	
+	FDelegateHandle DebugDrawService_Game;
+	
 	UPROPERTY(Transient)
 	TObjectPtr<UBangoPlungerComponent> PlungerComponent;
 #endif
 
 #if WITH_EDITOR
 public:
+	const FBangoEventStateFlag& GetState() const;
+	
 	bool HasCurrentState(EBangoEventState State);
 	
 	void OnConstruction(const FTransform& Transform) override;
 
-	void BeginDestroy() override;
-	
-	void DebugUpdate();
-
-	FLinearColor GetDebugColor();
-	
-	void UpdateState();
-
-	bool CanEditChange(const FProperty* InProperty) const override;
+	void UpdateProxyState();
 	
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	
+	void DebugDraw_Editor(UCanvas* Canvas, APlayerController* Cont);
+	void DebugDraw_Game(UCanvas* Canvas, APlayerController* Cont);
 #endif
 };
 

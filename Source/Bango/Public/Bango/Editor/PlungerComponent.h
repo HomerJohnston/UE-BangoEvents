@@ -1,38 +1,51 @@
 ﻿#pragma once
 
+#include "Bango/Core/BangoEvent.h"
 #include "Components/PrimitiveComponent.h"
 
 #include "PlungerComponent.generated.h"
 
-UCLASS(meta = (BlueprintSpawnableComponent))
+struct FBangoEventStateFlag;
+UCLASS(Within=BangoEvent, meta = (BlueprintSpawnableComponent))
 class UBangoPlungerComponent : public UPrimitiveComponent
 {
 	GENERATED_BODY()
 
-	// Settings ---------------------------------
-public:
-	const FLinearColor NormalColor		= FLinearColor(0.40f, 0.70f, 1.00f, 1.00f);
-	const FLinearColor DelayedColor		= FLinearColor(0.75f, 0.62f, 0.15f, 1.00f);
-	const FLinearColor FrozenColor		= FLinearColor(0.52f, 0.58f, 0.84f, 1.00f);
-	const FLinearColor ExpiredColor		= FLinearColor(0.05f, 0.05f, 0.05f, 0.05f);
-	const FLinearColor TriggeredColor	= FLinearColor(0.75f, 0.13f, 0.13f, 1.00f);
-	
-	const float Size = 30;
-	const bool bIsScreenSizeScaled = true;
-	const float ScreenSize = 0.0025;
-
-	// State ------------------------------------
-protected:
-	FLinearColor CurrentColor;
-
-	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
-
-	double LastStartTime;
-	
+	// CONSTRUCTION
+	// ============================================================================================
 public:
 	UBangoPlungerComponent();
+	
+	// SETTINGS
+	// ============================================================================================
+public:
+
+	// Rendering settings
+	const bool bIsScreenSizeScaled = true;
+	const float ScreenSize = 0.0025;
+	
+	// Mesh color settings
+	const FLinearColor FrozenExpiredColor	{0.20, 0.40, 0.50, 1.00};
+	const FLinearColor FrozenColor			{0.70, 0.75, 0.80, 0.50};
+	const FLinearColor ExpiredColor			{0.20, 0.18, 0.16, 1.00};
+	const FLinearColor ActiveColor			{0.40, 3.00, 0.40, 1.00};
+	const FLinearColor ActiveOnOffColor		{0.30, 0.45, 3.00, 1.00};
+	const FLinearColor NormalColor			{0.05, 0.20, 0.05, 1.00};
+	const FLinearColor NormalOnOffColor		{0.05, 0.10, 0.40, 1.00};
+
+	/**  */
+	const double RecentPushHandleCooldownTime = 0.2;
+	const double RecentPushColorCooldownTime = 0.4;
+	// STATE
+	// ============================================================================================
+
+	// API
+	// ============================================================================================
+protected:
+	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
 #if WITH_EDITOR
+public:
 	bool ComponentIsTouchingSelectionBox(const FBox& InSelBox, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
 
 	bool ComponentIsTouchingSelectionFrustum(const FConvexVolume& InFrustum, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
@@ -40,5 +53,9 @@ public:
 	void BeginPlay() override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+
+	FLinearColor GetColorForProxy();
+	
+	bool GetIsPlungerPushed();
 #endif
 };

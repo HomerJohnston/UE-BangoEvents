@@ -5,12 +5,15 @@
 #include "Bango/Core/BangoAction.h"
 #include "Bango/Core/TriggerCondition.h"
 #include "Bango/Editor/PlungerComponent.h"
-#include "Bango/Subsystems/BangoEngineSubsystem.h"
-#include "Components/ShapeComponent.h"
 #include "Editor/EditorEngine.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "VisualLogger/VisualLogger.h"
+
+#if WITH_EDITOR
+#include "Engine/Canvas.h"
+#include "Debug/DebugDrawService.h"
+#endif
 
 // ============================================================================================
 // Constructor
@@ -67,6 +70,16 @@ double ABangoEvent::GetStopTriggerDelay()
 	return bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
 }
 
+bool ABangoEvent::GetStartsAndStops()
+{
+	return bStartsAndStops;
+}
+
+bool ABangoEvent::GetStartsFrozen()
+{
+	return bStartsFrozen;
+}
+
 // ------------------------------------------
 // State Getters
 // ------------------------------------------
@@ -82,6 +95,16 @@ bool ABangoEvent::GetIsFrozen()
 bool ABangoEvent::GetIsExpired()
 {
 	return bStartsAndStops && bUseTriggerLimit && (TriggerCount >= TriggerLimit);
+}
+
+double ABangoEvent::GetLastStartActionsTime()
+{
+	return LastStartActionsTime;
+}
+
+double ABangoEvent::GetLastStopActionsTime()
+{
+	return LastStopActionsTime;
 }
 
 void ABangoEvent::BeginPlay()
@@ -116,12 +139,18 @@ void ABangoEvent::BeginPlay()
 	
 	SetFrozen(bStartsFrozen);
 
-#if WITH_EDITOR
-	DebugUpdate();
-#endif
-	
 	Super::BeginPlay();
 
+#if WITH_EDITOR
+	UpdateProxyState();
+
+	if (!DebugDrawService_Game.IsValid())
+	{
+		DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw_Game));
+	}
+#endif
+
+	CurrentState.SetFlag(EBangoEventState::Initialized);
 	UE_VLOG(this, Bango, Log, TEXT("Event Initialized"));
 }
 
@@ -145,12 +174,12 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 		return;
 	}
 
-	int32 NewIndex = Instigators.Add(NewInstigator);
-
 	bool bRun = true;
 	
 	if (bStartsAndStops)
 	{
+		int32 NewIndex = Instigators.Add(NewInstigator);
+
 		// Don't run if this is a single-state event and this isn't the first instigator
 		if (!RunStateSettings.bRunForEveryInstigator && NewIndex > 0)
 		{
@@ -175,6 +204,10 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 	{
 		SetFrozen(true);
 	}
+	
+#if WITH_EDITOR
+	UpdateProxyState();
+#endif
 }
 
 void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
@@ -228,6 +261,10 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 	{
 		DisableTriggers(StopTriggers);
 	}
+	
+#if WITH_EDITOR
+	UpdateProxyState();
+#endif
 }
 
 void ABangoEvent::SetFrozen(bool bNewFrozen)
@@ -253,6 +290,10 @@ void ABangoEvent::SetFrozen(bool bNewFrozen)
 	}
 	
 	bFrozen = bNewFrozen;
+	
+#if WITH_EDITOR
+	UpdateProxyState();
+#endif
 }
 
 void ABangoEvent::EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
@@ -282,24 +323,12 @@ bool bRunActionsSafetyGate = false;
 #endif
 
 void ABangoEvent::RunStartActions(UObject* NewInstigator)
-{
-#if ENABLE_VISUAL_LOG	
-	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
-	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Start by"));
-		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), FColor::Green, TEXT(""));
-		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, FColor::Green, TEXT("%s"), *NewInstigator->GetName());
-	}
-	else
-	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Green, TEXT("Start by %s"), *NewInstigator->GetName());
-	}
-#endif
-	
+{	
 #if WITH_EDITOR
 	bRunActionsSafetyGate = true;
 #endif
-	
+
+	LastStartActionsTime = GetWorld()->GetTimeSeconds();
 	RunActions(NewInstigator, StartActions, (bUseStartTriggerDelay ? StartTriggerDelay : 0.0));
 	
 #if WITH_EDITOR
@@ -309,22 +338,11 @@ void ABangoEvent::RunStartActions(UObject* NewInstigator)
 
 void ABangoEvent::RunStopActions(UObject* NewInstigator)
 {
-#if ENABLE_VISUAL_LOG	
-	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
-	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Red, TEXT("Stop by"));
-		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), FColor::Red, TEXT(""));
-		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, FColor::Red, TEXT("%s"), *NewInstigator->GetName());
-	}
-	else
-	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, FColor::Red, TEXT("Stop by %s"), *NewInstigator->GetName());
-	}
-#endif
 #if WITH_EDITOR
 	bRunActionsSafetyGate = true;
 #endif
-
+	
+	LastStopActionsTime = GetWorld()->GetTimeSeconds();
 	RunActions(NewInstigator, StopActions, (bUseStopTriggerDelay ? StopTriggerDelay : 0.0));
 	
 #if WITH_EDITOR
@@ -335,6 +353,24 @@ void ABangoEvent::RunStopActions(UObject* NewInstigator)
 void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay)
 {
 	check(bRunActionsSafetyGate);
+
+#if ENABLE_VISUAL_LOG
+	bool bStart = (&Actions == &StartActions);
+	
+	FString Text = (bStart) ? "Start by" : "Stop by";
+	FColor Color = (bStart) ? FColor::Red : FColor::Silver;
+
+	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
+		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
+		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
+	}
+	else
+	{
+		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
+	}
+#endif
 	
 	for (UBangoAction* Action : Actions)
 	{
@@ -351,87 +387,110 @@ void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Acti
 // Editor ---------------------------------------
 
 #if WITH_EDITOR
+const FBangoEventStateFlag& ABangoEvent::GetState() const
+{
+	return CurrentState;
+}
+
 bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
 	return CurrentState.HasFlag(State);
 }
+#endif
 
+#if WITH_EDITOR
 void ABangoEvent::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	DebugUpdate();
-}
+	if (!DebugDrawService_Editor.IsValid())
+	{
+		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw_Editor));
+	}	
 
-void ABangoEvent::BeginDestroy()
-{
-	if (IsValid(GEngine))
+	if (GetWorld()->IsGameWorld())
 	{
-		UBangoEngineSubsystem* EngineSubsystem = GEngine->GetEngineSubsystem<UBangoEngineSubsystem>();
-
-		if (IsValid(EngineSubsystem))
-		{
-			EngineSubsystem->UnregisterBangoEvent(this);
-		}
-	}
-	
-	Super::BeginDestroy();
-}
-
-void ABangoEvent::DebugUpdate()
-{
-	UpdateState();
-}
-
-FLinearColor ABangoEvent::GetDebugColor()
-{
-	const FLinearColor FrozenExpiredColor	(0.27, 0.30, 0.50, 1.00);
-	const FLinearColor FrozenColor			(0.90, 0.95, 1.00, 1.00);
-	const FLinearColor ExpiredColor			(0.27, 0.25, 0.23, 1.00);
-	const FLinearColor ActiveColor			(0.60, 1.00, 0.60, 1.00);
-	const FLinearColor NormalColor			(0.85, 0.95, 0.85, 1.00);
-
-	if (CurrentState.HasFlag(EBangoEventState::Frozen | EBangoEventState::Expired))
-	{
-		return FrozenExpiredColor;
-	}
-	else if (CurrentState.HasFlag(EBangoEventState::Frozen))
-	{
-		return FrozenColor;
-	}
-	else if (CurrentState.HasFlag(EBangoEventState::Expired))
-	{
-		return ExpiredColor;
-	}
-	else if (CurrentState.HasFlag(EBangoEventState::Active))
-	{
-		return ActiveColor;
-	}
-	else
-	{
-		return NormalColor;	
+		UpdateProxyState();
 	}
 }
+#endif
 
-void ABangoEvent::UpdateState()
+#if WITH_EDITOR
+void ABangoEvent::UpdateProxyState()
 {
 	CurrentState.SetFlag(EBangoEventState::Active, Instigators.Num() > 0);
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
 }
+#endif
 
-bool NameIs(const FProperty* InProperty, FName Name)
-{
-	return (InProperty->GetFName() == Name);
-}
-
-bool ABangoEvent::CanEditChange(const FProperty* InProperty) const
-{
-	return true;
-}
-
+#if WITH_EDITOR
 void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+#endif
+
+#if WITH_EDITOR
+void ABangoEvent::DebugDraw_Editor(UCanvas* Canvas, APlayerController* Cont)
+{
+	// TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
+	
+	UFont* HeaderFont = GEngine->GetLargeFont();
+	UFont* TextFont = GEngine->GetTinyFont();
+	
+	FString HeaderString = "Test 1";
+	FString TextString = "Test 2";
+	
+	FVector WorldLocation = GetActorLocation() + FVector(0,0,100);
+	FVector ScreenLocation;
+
+	ScreenLocation = Canvas->Project(WorldLocation);
+
+	FVector2D HeaderTextPos(ScreenLocation.X, ScreenLocation.Y - 8);
+	
+	FCanvasTextItem HeaderText(HeaderTextPos, DisplayName, HeaderFont, FColor::White);
+	HeaderText.bCentreX = true;
+	HeaderText.bCentreY = true;
+	
+	Canvas->DrawItem(HeaderText);
+}
+
+void ABangoEvent::DebugDraw_Game(UCanvas* Canvas, APlayerController* Cont)
+{
+	UFont* HeaderFont = GEngine->GetLargeFont();
+	UFont* TextFont = GEngine->GetTinyFont();
+	
+	FString HeaderString = "Test 1";
+	FString TextString = "Test 2";
+	
+	FVector WorldLocation = GetActorLocation() + FVector(0,0,100);
+	FVector ScreenLocation;
+
+	ScreenLocation = Canvas->Project(WorldLocation);
+
+	FVector2D HeaderTextPos(ScreenLocation.X, ScreenLocation.Y - 8);
+	
+	FCanvasTextItem HeaderText(HeaderTextPos, DisplayName, HeaderFont, FColor::White);
+	HeaderText.bCentreX = true;
+	HeaderText.bCentreY = true;
+	
+	Canvas->DrawItem(HeaderText);
+
+	int32 CurrentOffset = 8;
+
+	if (bUseTriggerLimit)
+	{
+		FVector2D SubTextPos(ScreenLocation.X, ScreenLocation.Y + CurrentOffset);
+
+		FString S = FString::Printf(TEXT("(%i / %i)"), TriggerCount, TriggerLimit);
+		FCanvasTextItem InfoText(SubTextPos, FText::FromString(S), TextFont, FColor::White);
+		InfoText.bCentreX = true;
+		InfoText.bCentreY = true;
+
+		Canvas->DrawItem(InfoText);
+
+		CurrentOffset += 8;
+	}
 }
 #endif

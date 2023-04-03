@@ -4,6 +4,8 @@
 #include "PrimitiveSceneProxy.h"
 #include "LocalVertexFactory.h"
 
+struct FBangoEventStateFlag;
+
 class UBangoPlungerComponent;
 
 class FBangoPlungerSceneProxy final : public FPrimitiveSceneProxy
@@ -11,42 +13,22 @@ class FBangoPlungerSceneProxy final : public FPrimitiveSceneProxy
 	// CONSTRUCTION
 	// ============================================================================================
 public:
-	FBangoPlungerSceneProxy(UBangoPlungerComponent* Component);
+	FBangoPlungerSceneProxy(UBangoPlungerComponent* OwnerComponent);
 
 	virtual ~FBangoPlungerSceneProxy();
 	
 	// SETTINGS
 	// ============================================================================================
-public:
-	/**  */
+
 	const float PlungerBoxSize = 30;
 	
-	/**  */
-	const float PlungerStemHeight = 20;
-	
-	/**  */
-	const float PlungerHalfWidth = 15;
-	
-	/**  */
+	const float PlungerStemLength = 20;
 	const float PlungerStemRadius = 2;
-
-	/**  */
-	const float PlungerHandleWidth = 20;
-	
-	/**  */
+	const float PlungerHandleLength = 20;
 	const float PlungerHandleRadius = 3;
 	
-	/**  */
-	const float Size = 30;
-	
-	/**  */
-	const float ScreenSize = 0.0025;
-	
-	/**  */
-	const bool bIsScreenSizeScaled = true;
-
-	/**  */
-	const double RecentPushColorCooldownTime = 1.0;
+	const float HandleOffsetUp = 0.0f;
+	const float HandleOffsetDown = -15.0f;
 	
 	// SETTINGS GETTERS AND SETTERS
 	// ------------------------------------------
@@ -54,13 +36,11 @@ public:
 	// STATE
 	// ============================================================================================
 private:
+	TWeakObjectPtr<UBangoPlungerComponent> Component;
+	
 	FVector Origin = FVector::ZeroVector;
 
-	FLinearColor Color = FLinearColor::White;
-
-	bool bPlungerPushed = false;
-
-	double LastPushTime = DBL_MIN;
+	FLinearColor DesiredColor = FLinearColor::White;
 
 	FDynamicMeshIndexBuffer32 IndexBuffer_HandleUp;
 	FStaticMeshVertexBuffers VertexBuffers_HandleUp;
@@ -74,11 +54,7 @@ private:
 	// ------------------------------------------
 public:
 	/**  */
-	void SetPlungerPushed(bool bNewPushedState);
 
-	/** */
-	void SetColor(FLinearColor NewColor);
-	
 	// API
 	// ============================================================================================
 public:	

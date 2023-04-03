@@ -1,5 +1,6 @@
 ﻿#include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Editor/PlungerComponent.h"
+#include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
 
 // Forward declarations
@@ -33,27 +34,29 @@ void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData);
 
 // CONSTRUCTION
 // ------------------------------------------------------------------------------------------------
-FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* Component)
-	: FPrimitiveSceneProxy(Component),
-	Color(FColor::Turquoise),
+FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* OwnerComponent)
+	: FPrimitiveSceneProxy(OwnerComponent),
 	VertexFactory_HandleUp(GetScene().GetFeatureLevel(), "FBangoPlungerSceneProxy"),
 	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FBangoPlungerSceneProxy")
 {
+	Component = OwnerComponent;
+
 	bWillEverBeLit = false;
+	bAffectDistanceFieldLighting = false;
+	bAffectDynamicIndirectLighting = false;
+	bAffectIndirectLightingWhileHidden = false;
 
-	// Mesh Common
-	const float HandleOffsetUp = 0.0f;
-	const float HandleOffsetDown = -40.0f;
-
+	
+	// Generate meshes
 	FPlungerMeshConstructionData MeshData;
 
 	MeshData.BoxSize = PlungerBoxSize;
 	
-	MeshData.StemHeight = PlungerStemHeight;
+	MeshData.StemHeight = PlungerStemLength;
 	MeshData.StemRadius = PlungerStemRadius;
 
 	MeshData.HandleRadius = PlungerHandleRadius;
-	MeshData.HandleWidth = PlungerHandleWidth;
+	MeshData.HandleWidth = PlungerHandleLength;
 
 	{
 		MeshData.VertexFactory = &VertexFactory_HandleDown;
@@ -109,31 +112,21 @@ FBangoPlungerSceneProxy::~FBangoPlungerSceneProxy()
 
 // STATE GETTERS AND SETTERS
 // ------------------------------------------------------------------------------------------------
-void FBangoPlungerSceneProxy::SetPlungerPushed(bool bNewPushedState)
-{
-	bPlungerPushed = bNewPushedState;
 
-	// TODO is there a safer way to do this?
-	if (IsValid(GWorld))
-	{
-		LastPushTime = GWorld->GetTimeSeconds();
-	}
-}
-
-void FBangoPlungerSceneProxy::SetColor(FLinearColor NewColor)
-{
-	Color = NewColor;
-}
-
+// API
+// ------------------------------------------------------------------------------------------------
 SIZE_T FBangoPlungerSceneProxy::GetTypeHash() const
 {
 	static size_t UniquePointer;
 	return reinterpret_cast<size_t>(&UniquePointer);
 }
 
-
 void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
+	check(Component.IsValid());
+	
+	FLinearColor Color = Component->GetColorForProxy();
+	
 	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), Color, "GizmoColor");
 
 	Collector.RegisterOneFrameMaterialProxy(MaterialRenderProxy);
@@ -150,13 +143,13 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 
 			float ViewScale = 1.0f;
 
-			if (bIsScreenSizeScaled && (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f))
+			if (Component->bIsScreenSizeScaled && (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f))
 			{
 				const float ZoomFactor = FMath::Min<float>(View->ViewMatrices.GetProjectionMatrix().M[0][0], View->ViewMatrices.GetProjectionMatrix().M[1][1]);
 
 				if (ZoomFactor != 0.0f)
 				{
-					const float Radius = FMath::Abs(View->WorldToScreen(Origin).W * (ScreenSize / ZoomFactor));
+					const float Radius = FMath::Abs(View->WorldToScreen(Origin).W * (Component->ScreenSize / ZoomFactor));
 
 					if (Radius < 1.0f)
 					{
@@ -168,8 +161,8 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 			FMeshBatch& Mesh = Collector.AllocateMesh();
 			FMeshBatchElement& BatchElement = Mesh.Elements[0];
 
-			const FLocalVertexFactory& VertexFactory = (bPlungerPushed) ? VertexFactory_HandleDown : VertexFactory_HandleUp;
-			const FIndexBuffer& IndexBuffer = (bPlungerPushed) ? IndexBuffer_HandleDown : IndexBuffer_HandleUp;
+			const FLocalVertexFactory& VertexFactory = (Component->GetIsPlungerPushed()) ? VertexFactory_HandleDown : VertexFactory_HandleUp;
+			const FIndexBuffer& IndexBuffer = (Component->GetIsPlungerPushed()) ? IndexBuffer_HandleDown : IndexBuffer_HandleUp;
 			
 			BatchElement.IndexBuffer = &IndexBuffer;
 			
@@ -192,7 +185,7 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 			Mesh.Type = PT_TriangleList;
 			Mesh.DepthPriorityGroup = SDPG_World;
 			Mesh.bCanApplyViewModeOverrides = false;
-
+			
 			Collector.AddMesh(ViewIndex, Mesh);
 		}
 	}
@@ -221,6 +214,7 @@ uint32 FBangoPlungerSceneProxy::GetMemoryFootprint() const
 	return (sizeof(*this) + GetAllocatedSize());
 }
 
+// TODO move these to a separate geometry helper class?
 void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
 {
 	// Calculate verts for a face pointing down Z
