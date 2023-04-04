@@ -1,4 +1,6 @@
-﻿#include "Bango/Editor/PlungerSceneProxy.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Editor/PlungerComponent.h"
 #include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
@@ -51,27 +53,21 @@ FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* OwnerCo
 	FPlungerMeshConstructionData MeshData;
 
 	MeshData.BoxSize = PlungerBoxSize;
-	
 	MeshData.StemHeight = PlungerStemLength;
 	MeshData.StemRadius = PlungerStemRadius;
-
 	MeshData.HandleRadius = PlungerHandleRadius;
 	MeshData.HandleWidth = PlungerHandleLength;
 
-	{
-		MeshData.VertexFactory = &VertexFactory_HandleDown;
-		MeshData.VertexBuffer = &VertexBuffers_HandleDown;
-		MeshData.IndexBuffer = &IndexBuffer_HandleDown;
-		MeshData.StemAndHandleZOffset = HandleOffsetDown;
-	}
+	MeshData.VertexFactory = &VertexFactory_HandleDown;
+	MeshData.VertexBuffer = &VertexBuffers_HandleDown;
+	MeshData.IndexBuffer = &IndexBuffer_HandleDown;
+	MeshData.StemAndHandleZOffset = HandleOffsetDown;
 	PreparePlungerMesh(MeshData);
 
-	{
-		MeshData.VertexFactory = &VertexFactory_HandleUp;
-		MeshData.VertexBuffer = &VertexBuffers_HandleUp;
-		MeshData.IndexBuffer = &IndexBuffer_HandleUp;
-		MeshData.StemAndHandleZOffset = HandleOffsetUp;
-	}
+	MeshData.VertexFactory = &VertexFactory_HandleUp;
+	MeshData.VertexBuffer = &VertexBuffers_HandleUp;
+	MeshData.IndexBuffer = &IndexBuffer_HandleUp;
+	MeshData.StemAndHandleZOffset = HandleOffsetUp;
 	PreparePlungerMesh(MeshData);
 }
 
@@ -193,8 +189,11 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 
 FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneView* View) const
 {
+	// IsShown MUST be checked first - some cameras like Scene Capture won't have the custom ShowFlag defined and will crash inside of the IsEnabled check. IsShown will return false for these other cameras and prevent going into further unsafe checks.
+	const bool bProxyVisible = IsShown(View) && (ABangoEvent::BangoEventsShowFlag.IsEnabled(View->Family->EngineShowFlags));
+
 	FPrimitiveViewRelevance Result;
-	Result.bDrawRelevance = IsShown(View);
+	Result.bDrawRelevance = bProxyVisible;
 	Result.bDynamicRelevance = true;
 
 	Result.bShadowRelevance = IsShadowCast(View);

@@ -1,8 +1,11 @@
-﻿#include "Bango/Editor/PlungerComponent.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Editor/PlungerComponent.h"
 
 #include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango.h"
+#include "Bango/CVars.h"
+#include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
 UBangoPlungerComponent::UBangoPlungerComponent()
@@ -12,6 +15,10 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 	SetGenerateOverlapEvents(false);
 
 	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+
+#if WITH_EDITOR
+	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
+#endif
 }
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
@@ -70,7 +77,7 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 		{
 			Color = ActiveOnOffColor;
 		}
-		else if (State.HasFlag(EBangoEventState::Frozen | EBangoEventState::Expired))
+		else if (State.HasFlag(EBangoEventState::Frozen) && State.HasFlag(EBangoEventState::Expired))
 		{
 			Color = FrozenExpiredColor;
 		}
@@ -102,21 +109,16 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	}
 	else if (GetWorld()->IsEditorWorld())
 	{
-		if (Event->GetStartsFrozen())
-		{
-			return FrozenColor;
-		}
-		else
-		{
-			return bIsOnOff ? NormalOnOffColor : NormalColor;
-		}		
+		return bIsOnOff ? NormalOnOffColor : NormalColor;
 	}
 	else
 	{
 		return FColor::Magenta;
 	}
 }
+#endif
 
+#if WITH_EDITOR
 bool UBangoPlungerComponent::GetIsPlungerPushed()
 {
 	ABangoEvent* Event = Cast<ABangoEvent>(GetOwner());
@@ -125,5 +127,30 @@ bool UBangoPlungerComponent::GetIsPlungerPushed()
 	double Elapsed = GetWorld()->GetTimeSeconds() - Event->GetLastStartActionsTime();
 
 	return Elapsed <= RecentPushHandleCooldownTime;
+}
+#endif
+
+#if WITH_EDITOR
+void UBangoPlungerComponent::OnCvarChange()
+{
+	AActor* OwnerActor = GetOwner();
+
+	if (!IsValid(OwnerActor))
+	{
+		return;
+	}
+
+	UWorld* World = OwnerActor->GetWorld();
+	
+	if (!IsValid(World) || !World->IsGameWorld())
+	{
+		return;
+	}
+	
+	const IConsoleVariable* ShowInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
+	
+	bool bNewHiddenInGame = !ShowInGameCVar->GetBool();
+	
+	SetHiddenInGame(bNewHiddenInGame);
 }
 #endif

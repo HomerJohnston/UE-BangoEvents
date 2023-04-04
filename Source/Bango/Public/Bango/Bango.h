@@ -1,17 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-namespace GhostPepperGames
-{
-	namespace Bango
-	{
-		static bool bShowEventsInGame;
-	}
-}
 
 class FBangoModule : public IModuleInterface
 {

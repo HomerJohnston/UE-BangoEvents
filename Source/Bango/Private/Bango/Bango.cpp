@@ -1,19 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango.h"
+#include "Bango/Bango.h"
 
 #define LOCTEXT_NAMESPACE "FBangoModule"
 
-namespace GhostPepperGames
-{
-	namespace Bango
-	{
-		extern bool bShowEventsInGame = false;
-		static FAutoConsoleVariableRef CVarShowEventsInGame(TEXT("Bango.ShowEventsInGame"),
-			bShowEventsInGame,
-			TEXT("Displays event debug info during Play In Editor"));
-	}
-}
 
 void FBangoModule::StartupModule()
 {

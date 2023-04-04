@@ -1,4 +1,6 @@
-﻿#include "Bango/Core/BangoAction.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Core/BangoAction.h"
 
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"

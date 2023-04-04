@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "Engine/DeveloperSettingsBackedByCVars.h"
 
@@ -11,5 +13,8 @@ class BANGO_API UBangoDevSettings : public UDeveloperSettingsBackedByCVars
 	
 public:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(ConsoleVariable="Bango.ShowEventsInGame"))
-	bool bShowEventsInGame;
+	bool bShowEventsInGame = false;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(ConsoleVariable="Bango.ShowEventsInGame"))
+	bool bShowEventsInEditor = true;
 };

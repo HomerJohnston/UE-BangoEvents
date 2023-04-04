@@ -28,7 +28,7 @@ public:
 	const float PlungerHandleRadius = 3;
 	
 	const float HandleOffsetUp = 0.0f;
-	const float HandleOffsetDown = -15.0f;
+	const float HandleOffsetDown = -10.0f;
 	
 	// SETTINGS GETTERS AND SETTERS
 	// ------------------------------------------

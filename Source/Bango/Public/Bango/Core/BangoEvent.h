@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
@@ -9,6 +11,7 @@ class UObject;
 class UBangoAction;
 class UBangoTriggerCondition;
 class UBangoPlungerComponent;
+class FCanvasTextItem;
 
 UENUM()
 enum class EBangoWorldTimeType : uint8
@@ -100,7 +103,7 @@ UCLASS()
 class BANGO_API ABangoEvent : public AActor
 {
 	GENERATED_BODY()
-
+	
 	// ============================================================================================
 	// Constructor/Destructor
 	// ============================================================================================
@@ -271,6 +274,9 @@ protected:
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// ============================================================================================
 #if WITH_EDITORONLY_DATA
+public:
+	static TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> BangoEventsShowFlag;
+
 private:
 	FBangoEventStateFlag CurrentState;
 
@@ -295,8 +301,17 @@ public:
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	void DebugDraw_Editor(UCanvas* Canvas, APlayerController* Cont);
-	void DebugDraw_Game(UCanvas* Canvas, APlayerController* Cont);
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	bool GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation);
+	
+	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre);
+
+	TArray<FCanvasTextItem> GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter);
+	
+	TArray<FString> GetDebugDataString_Editor();
+
+	TArray<FString> GetDebugDataString_Game();
 #endif
 };
 

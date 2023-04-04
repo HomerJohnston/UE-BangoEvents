@@ -1,6 +1,7 @@
-﻿#include "Bango/Core/BangoEvent.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Editor.h"
+#include "Bango/Core/BangoEvent.h"
+
 #include "Bango/Log.h"
 #include "Bango/Core/BangoAction.h"
 #include "Bango/Core/TriggerCondition.h"
@@ -8,11 +9,19 @@
 #include "Editor/EditorEngine.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "Subsystems/UnrealEditorSubsystem.h"
 #include "VisualLogger/VisualLogger.h"
 
 #if WITH_EDITOR
+#include "Editor.h"
+#include "Bango/CVars.h"
 #include "Engine/Canvas.h"
 #include "Debug/DebugDrawService.h"
+#endif
+
+#if WITH_EDITORONLY_DATA
+// TODO FText
+TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> ABangoEvent::BangoEventsShowFlag(TEXT("BangoEventsShowFlag"), true, EShowFlagGroup::SFG_Developer, FText(INVTEXT("Bango Events")));
 #endif
 
 // ============================================================================================
@@ -146,7 +155,7 @@ void ABangoEvent::BeginPlay()
 
 	if (!DebugDrawService_Game.IsValid())
 	{
-		DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw_Game));
+		DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw));
 	}
 #endif
 
@@ -405,7 +414,7 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 
 	if (!DebugDrawService_Editor.IsValid())
 	{
-		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw_Editor));
+		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw));
 	}	
 
 	if (GetWorld()->IsGameWorld())
@@ -432,65 +441,157 @@ void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 #endif
 
 #if WITH_EDITOR
-void ABangoEvent::DebugDraw_Editor(UCanvas* Canvas, APlayerController* Cont)
+// TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
+void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 {
-	// TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
+	if (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags))
+	{
+		return;
+	}
 	
-	UFont* HeaderFont = GEngine->GetLargeFont();
-	UFont* TextFont = GEngine->GetTinyFont();
+	UWorld* World = GetWorld();
+
+	if (!IsValid(World))
+	{
+		return;
+	}
 	
-	FString HeaderString = "Test 1";
-	FString TextString = "Test 2";
-	
-	FVector WorldLocation = GetActorLocation() + FVector(0,0,100);
+	if (World->IsGameWorld() && !GhostPepperGames::Bango::bShowEventsInGame)
+	{
+		return;
+	}
+
 	FVector ScreenLocation;
-
-	ScreenLocation = Canvas->Project(WorldLocation);
-
-	FVector2D HeaderTextPos(ScreenLocation.X, ScreenLocation.Y - 8);
 	
-	FCanvasTextItem HeaderText(HeaderTextPos, DisplayName, HeaderFont, FColor::White);
-	HeaderText.bCentreX = true;
-	HeaderText.bCentreY = true;
+	if (!GetScreenLocation(Canvas, ScreenLocation))
+	{
+		return;
+	}
 	
+	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation);
 	Canvas->DrawItem(HeaderText);
+
+	TDelegate<TArray<FString>()> DataGetter;
+
+	if (World->IsGameWorld())
+	{
+		DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Game);
+	}
+	else
+	{
+		DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
+	}
+
+	// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
+	TArray<FCanvasTextItem> DataText = GetDebugDataText(ScreenLocation, DataGetter);
+
+	for (FCanvasTextItem& Text : DataText)
+	{
+		Canvas->DrawItem(Text);	
+	}
 }
 
-void ABangoEvent::DebugDraw_Game(UCanvas* Canvas, APlayerController* Cont)
-{
-	UFont* HeaderFont = GEngine->GetLargeFont();
-	UFont* TextFont = GEngine->GetTinyFont();
+bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
+{	
+	// Settings
+	double X, Y;
 	
-	FString HeaderString = "Test 1";
-	FString TextString = "Test 2";
+	FVector WorldCameraPos;
+	FVector WorldCameraDir;
+
+	const double ThresholdDistance = GetWorld()->IsGameWorld() ? 2500 : 5000; // TODO editor settings for display distances
+	const double Threshold = FMath::Square(ThresholdDistance);
+
+	// Validity Logic
+	Canvas->GetCenter(X, Y);
+	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
 	
+	FVector WorldDrawLocation = GetActorLocation() + FVector(0,0,100);
+	
+	if (FVector::DistSquared(WorldDrawLocation, WorldCameraPos) > Threshold)
+	{
+		return false;
+	}
+
 	FVector WorldLocation = GetActorLocation() + FVector(0,0,100);
-	FVector ScreenLocation;
 
 	ScreenLocation = Canvas->Project(WorldLocation);
 
-	FVector2D HeaderTextPos(ScreenLocation.X, ScreenLocation.Y - 8);
-	
-	FCanvasTextItem HeaderText(HeaderTextPos, DisplayName, HeaderFont, FColor::White);
-	HeaderText.bCentreX = true;
-	HeaderText.bCentreY = true;
-	
-	Canvas->DrawItem(HeaderText);
+	return true;
+}
 
-	int32 CurrentOffset = 8;
+FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre)
+{	
+	UFont* TextFont = GEngine->GetMediumFont();
+	
+	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
+	
+	FCanvasTextItem Text(HeaderTextPos, DisplayName, TextFont, FColor::White);
+	Text.bCentreX = true;
+	Text.bCentreY = true;
+	Text.bOutlined = true;
+
+	return Text;
+}
+
+TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter)
+{
+	UFont* TextFont = GEngine->GetMediumFont();
+
+	FVector2D DataTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y + 8);
+
+	TArray<FString> Data = DataGetter.Execute();
+
+	TArray<FCanvasTextItem> CanvasTextItems;
+
+	const double LineOffset = 16;
+	double CurrentLineOffset = 0;
+	
+	for(const FString& S : Data)
+	{
+		FCanvasTextItem Text(DataTextPos, FText::FromString(S), TextFont, FColor::White);
+		Text.bCentreX = true;
+		Text.Position.Y += CurrentLineOffset;
+		CanvasTextItems.Add(Text);
+
+		CurrentLineOffset += LineOffset;
+	}
+	
+	return CanvasTextItems;
+}
+
+TArray<FString> ABangoEvent::GetDebugDataString_Editor()
+{
+	TArray<FString> Data; 
 
 	if (bUseTriggerLimit)
 	{
-		FVector2D SubTextPos(ScreenLocation.X, ScreenLocation.Y + CurrentOffset);
-
-		FString S = FString::Printf(TEXT("(%i / %i)"), TriggerCount, TriggerLimit);
-		FCanvasTextItem InfoText(SubTextPos, FText::FromString(S), TextFont, FColor::White);
-		InfoText.bCentreX = true;
-		InfoText.bCentreY = true;
-
-		Canvas->DrawItem(InfoText);
-
-		CurrentOffset += 8;
+		Data.Add(FString::Printf(TEXT("(%i)"), TriggerLimit));
 	}
+
+	if (bStartsFrozen)
+	{
+		Data.Add(FString::Printf(TEXT("Starts Frozen")));
+	}
+
+	return Data;
 }
+
+TArray<FString> ABangoEvent::GetDebugDataString_Game()
+{
+	TArray<FString> Data; 
+
+	if (bUseTriggerLimit)
+	{
+		Data.Add(FString::Printf(TEXT("(%i/%i)"), TriggerCount, TriggerLimit));
+	}
+
+	if (bStartsAndStops)
+	{
+		Data.Add(FString::Printf(TEXT("Inst: %i"), Instigators.Num()));
+	}
+
+	return Data;
+}
+
 #endif

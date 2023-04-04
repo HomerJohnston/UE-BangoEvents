@@ -1,4 +1,6 @@
-﻿#include "Bango/Subsystems/BangoEngineSubsystem.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Subsystems/BangoEngineSubsystem.h"
 
 void UBangoEngineSubsystem::RegisterBangoEvent(ABangoEvent* Event)
 {

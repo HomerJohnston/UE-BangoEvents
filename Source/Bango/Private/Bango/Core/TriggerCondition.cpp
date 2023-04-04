@@ -1,4 +1,6 @@
-﻿#include "Bango/Core/TriggerCondition.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Core/TriggerCondition.h"
 
 #include "Bango/Core/BangoEvent.h"
 

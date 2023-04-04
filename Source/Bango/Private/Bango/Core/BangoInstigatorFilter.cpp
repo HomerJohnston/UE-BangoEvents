@@ -1,4 +1,6 @@
-﻿#include "Bango/Core/BangoInstigatorFilter.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/Core/BangoInstigatorFilter.h"
 
 #include "GameFramework/Character.h"
 

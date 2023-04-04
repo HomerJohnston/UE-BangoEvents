@@ -1,4 +1,6 @@
-﻿#include "Bango/DefaultImpl/OverlapTriggerConditions.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Bango/DefaultImpl/OverlapTriggerConditions.h"
 
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
