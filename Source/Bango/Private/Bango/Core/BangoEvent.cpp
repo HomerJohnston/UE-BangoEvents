@@ -103,7 +103,7 @@ bool ABangoEvent::GetIsFrozen()
 // ============================================================================================
 bool ABangoEvent::GetIsExpired()
 {
-	return bStartsAndStops && bUseTriggerLimit && (TriggerCount >= TriggerLimit);
+	return bUseTriggerLimit && (TriggerCount >= TriggerLimit);
 }
 
 double ABangoEvent::GetLastStartActionsTime()
@@ -131,6 +131,7 @@ void ABangoEvent::BeginPlay()
 
 	if (!bStartsAndStops && StopTriggers.Num() > 0)
 	{
+		// TODO editor setting to throw serialization warnings
 		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but StartsAndStops is false, removing stop triggers"), *this->GetName());
 		StopTriggers.Empty();
 	}
@@ -230,9 +231,6 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 
 	if (Index == INDEX_NONE)
 	{
-		// This can happen if the event has been frozen or become expired but it still has some valid instigators.
-		check(bFreezeWhenExpired && Instigators.Num() == 0);
-		
 		return;
 	}
 	
@@ -588,9 +586,19 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 
 	if (bStartsAndStops)
 	{
-		Data.Add(FString::Printf(TEXT("Inst: %i"), Instigators.Num()));
+		Data.Add(FString::Printf(TEXT("Instigators: %i"), Instigators.Num()));
 	}
 
+	if (GetIsFrozen())
+	{
+		Data.Add("Frozen");
+	}
+
+	if (GetIsExpired())
+	{
+		Data.Add("Expired");
+	}
+	
 	return Data;
 }
 

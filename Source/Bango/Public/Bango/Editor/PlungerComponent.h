@@ -27,9 +27,9 @@ public:
 	const float ScreenSize = 0.0025;
 	
 	// Mesh color settings
-	const FLinearColor FrozenExpiredColor	{0.05, 0.10, 0.20, 1.00};
-	const FLinearColor FrozenColor			{0.70, 0.75, 0.80, 0.50};
-	const FLinearColor ExpiredColor			{0.20, 0.18, 0.16, 1.00};
+	const FLinearColor FrozenColor			{0.30, 0.35, 0.50, 1.00};
+	const FLinearColor ExpiredColor			{0.05, 0.06, 0.07, 1.00};
+	const FLinearColor FrozenExpiredColor	{0.01, 0.02, 0.03, 1.00};
 	const FLinearColor ActiveColor			{0.40, 3.00, 0.40, 1.00};
 	const FLinearColor ActiveOnOffColor		{0.30, 0.45, 3.00, 1.00};
 	const FLinearColor NormalColor			{0.05, 0.20, 0.05, 1.00};
