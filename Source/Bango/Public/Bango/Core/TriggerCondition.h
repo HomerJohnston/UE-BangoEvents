@@ -18,7 +18,7 @@ public:
 	FOnTrigger OnTrigger;
 	
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)  // TODO pure?
 	ABangoEvent* GetEvent();
 	
 	void SetEnabled(bool bEnabled);

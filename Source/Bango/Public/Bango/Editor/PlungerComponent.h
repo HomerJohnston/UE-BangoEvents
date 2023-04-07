@@ -28,7 +28,7 @@ public:
 
 	/**  */
 	const double RecentPushHandleCooldownTime = 0.2;
-	const double RecentPushColorCooldownTime = 0.4;
+	const double RecentPushColorCooldownTime = 0.2;
 	// STATE
 	// ============================================================================================
 

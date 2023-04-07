@@ -119,7 +119,10 @@ SIZE_T FBangoPlungerSceneProxy::GetTypeHash() const
 
 void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
-	check(Component.IsValid());
+	if (!Component.IsValid())
+	{
+		return;
+	}
 	
 	FLinearColor Color = Component->GetColorForProxy();
 	

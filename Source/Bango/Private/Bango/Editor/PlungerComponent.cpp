@@ -8,6 +8,7 @@
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
+/*
 FVector HSVToRGB(double h, double s, double v)
 {
 	h = h / 360.0;
@@ -33,41 +34,37 @@ FVector HSVToRGB(double h, double s, double v)
 
 	return FVector(r, g, b);
 }
+*/
 
-#define BANGO_COLOR_HSV(Name, H, S, L) FLinearColor Name{HSVToRGB(H, S, L)};
-#define BANGO_COLOR_RGB(Name, R, G, B) FLinearColor Name{R, G, B};
+FLinearColor BrightRed			(4.00,	0.40,	0.40);
+FLinearColor LightRedDesat		(0.60,	0.30,	0.30);
+FLinearColor DarkRedDesat		(0.06,	0.04,	0.04);
+FLinearColor DarkRed			(0.20,	0.00,	0.00);
 
-// Dark color; normal
-// Bright color; active
-// Light desat color; frozen
-// Dark desat color; expired
+FLinearColor BrightOrange		(4.00,	0.50,	0.00);
+FLinearColor LightOrangeDesat	(0.50,	0.40,	0.30);
+FLinearColor DarkOrangeDesat	(0.06,	0.05,	0.04);
+FLinearColor DarkOrange			(0.15,	0.05,	0.00);
 
+FLinearColor BrightYellow		(2.00,	2.00,	0.00);
+FLinearColor LightYellowDesat	(0.50,	0.50,	0.20);
+FLinearColor DarkYellowDesat	(0.06,	0.06,	0.03);
+FLinearColor DarkYellow			(0.10,	0.10,	0.00);
 
-//				Name				R		G		B
-BANGO_COLOR_RGB(BrightRed,			4.00,	0.40,	0.40);
-BANGO_COLOR_RGB(LightRedDesat,		0.60,	0.30,	0.30);
-BANGO_COLOR_RGB(DarkRedDesat,		0.06,	0.04,	0.04);
-BANGO_COLOR_RGB(DarkRed,			0.20,	0.00,	0.00);
-	
-BANGO_COLOR_RGB(BrightGreen,		0.40,	4.00,	0.40);
-BANGO_COLOR_RGB(LightGreenDesat,	0.30,	0.60,	0.30);
-BANGO_COLOR_RGB(DarkGreenDesat,		0.04,	0.06,	0.04);
-BANGO_COLOR_RGB(DarkGreen,			0.00,	0.20,	0.00);
-	
-BANGO_COLOR_RGB(BrightBlue,			0.20,	0.20,	5.00);
-BANGO_COLOR_RGB(LightBlueDesat,		0.30,	0.30,	0.60);
-BANGO_COLOR_RGB(DarkBlueDesat,		0.04,	0.04,	0.06);
-BANGO_COLOR_RGB(DarkBlue,			0.00,	0.00,	0.20);
+FLinearColor BrightGreen		(0.40,	4.00,	0.40);
+FLinearColor LightGreenDesat	(0.30,	0.60,	0.30);
+FLinearColor DarkGreenDesat		(0.04,	0.06,	0.04);
+FLinearColor DarkGreen			(0.00,	0.20,	0.00);
 
-BANGO_COLOR_RGB(BrightOrange,		3.00,	2.50,	0.00);
-BANGO_COLOR_RGB(LightOrangeDesat,	0.50,	0.40,	0.30);
-BANGO_COLOR_RGB(DarkOrangeDesat,	0.06,	0.05,	0.04);
-BANGO_COLOR_RGB(DarkOrange,			0.15,	0.05,	0.00);
+FLinearColor BrightBlue			(0.20,	0.20,	5.00);
+FLinearColor LightBlueDesat		(0.30,	0.30,	0.60);
+FLinearColor DarkBlueDesat		(0.04,	0.04,	0.06);
+FLinearColor DarkBlue			(0.00,	0.00,	0.20);
 
-BANGO_COLOR_RGB(LightGrey,			0.50,	0.50,	0.50);
-BANGO_COLOR_RGB(DarkGrey,			0.02,	0.02,	0.02);
-	
-BANGO_COLOR_RGB(Error,				1.00,	0.00,	1.00);
+FLinearColor LightGrey			(0.50,	0.50,	0.50);
+FLinearColor DarkGrey			(0.02,	0.02,	0.02);
+
+FLinearColor Error				(1.00,	0.00,	1.00);
 
 TMap<EBangoEventState, FLinearColor> BangColorMap
 {
@@ -206,6 +203,11 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	}
 	else if (GetWorld()->IsEditorWorld())
 	{
+		if (Event->GetStartsFrozen())
+		{
+			return ColorMap[EBangoEventState::Frozen];
+		}
+
 		return ColorMap[EBangoEventState::NONE];
 	}
 	else

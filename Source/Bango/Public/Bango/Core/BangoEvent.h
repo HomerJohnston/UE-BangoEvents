@@ -13,6 +13,9 @@ class UBangoTriggerCondition;
 class UBangoPlungerComponent;
 class FCanvasTextItem;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventActivated, ABangoEvent*, Event, UObject*, Instigator);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEvent*, Event, UObject*, Instigator);
+
 UENUM()
 enum class EBangoEventType : uint8
 {
@@ -208,25 +211,31 @@ public:
 	// ============================================================================================
 protected:
 	/**  */
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	bool bFrozen = false;
 	
 	/**  */
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	int32 TriggerCount = 0;
 	
 	/** Instigators which are actively triggering an on/off event. */
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TArray<UObject*> Instigators;
 
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastStartActionsTime = -999;
 
-	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastStopActionsTime = -999;
 	
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
 	TMap<UObject*, FBangoEventInstigatorActions> InstancedActions;
+
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	FOnBangoEventActivated OnBangoEventActivated;
+
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	FOnBangoEventDeactivated OnBangoEventDeactivated;
 	
 	// ------------------------------------------
 	// State Getters

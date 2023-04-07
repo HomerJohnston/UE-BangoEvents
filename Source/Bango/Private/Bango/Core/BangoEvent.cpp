@@ -42,6 +42,7 @@ ABangoEvent::ABangoEvent()
 
 		if (!IsRunningCommandlet())
 		{
+			// TODO copy code from arrow component
 			//PlungerComponent->
 		}
 	}
@@ -346,6 +347,9 @@ void ABangoEvent::StartActions(UObject* NewInstigator)
 {	
 	LastStartActionsTime = GetWorld()->GetTimeSeconds();
 
+	// TODO I can't include the event's trigger delay in the delegate execution with my current setup
+	OnBangoEventActivated.Broadcast(this, NewInstigator);
+	
 	double Delay = bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
 
 	// for an instanced event, we treat the assigned action as a template object
@@ -396,6 +400,9 @@ void ABangoEvent::StopActions(UObject* OldInstigator)
 {
 	LastStopActionsTime = GetWorld()->GetTimeSeconds();
 
+	// TODO make sure this is proper, do I need to check stuff?
+	OnBangoEventActivated.Broadcast(this, OldInstigator);
+	
 	double Delay = bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
 
 	if (GetIsInstanced())
@@ -620,11 +627,6 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		Data.Add(FString::Printf(TEXT("(%i)"), TriggerLimit));
 	}
 
-	if (bStartsFrozen)
-	{
-		Data.Add(FString::Printf(TEXT("Starts Frozen")));
-	}
-
 	return Data;
 }
 
@@ -640,16 +642,6 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 	if (GetToggles())
 	{
 		Data.Add(FString::Printf(TEXT("Instigators: %i"), Instigators.Num()));
-	}
-
-	if (GetIsFrozen())
-	{
-		Data.Add("Frozen");
-	}
-
-	if (GetIsExpired())
-	{
-		Data.Add("Expired");
 	}
 	
 	return Data;
