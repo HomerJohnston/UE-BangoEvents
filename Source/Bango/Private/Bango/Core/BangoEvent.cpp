@@ -65,6 +65,11 @@ int32 ABangoEvent::GetTriggerLimit()
 	return TriggerLimit;
 }
 
+void ABangoEvent::SetTriggerLimit(int32 NewTriggerLimit)
+{
+	TriggerLimit = NewTriggerLimit;
+}
+
 int32 ABangoEvent::GetTriggerCount()
 {
 	return TriggerCount;
@@ -188,7 +193,10 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 // TODO: warnings if lots of instigators? Other faster mechanisms to handle lots of instigators?
 void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 {
-	check(!GetIsFrozen());
+	if (GetIsFrozen())
+	{
+		return;
+	}
 	
 	if (GetIsExpired())
 	{
@@ -645,6 +653,16 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 	}
 	
 	return Data;
+}
+
+bool ABangoEvent::GetUsesCustomColor()
+{
+	return bUseCustomColor;
+}
+
+FLinearColor ABangoEvent::GetCustomColor()
+{
+	return CustomColor;
 }
 
 #endif

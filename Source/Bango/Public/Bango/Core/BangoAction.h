@@ -36,10 +36,10 @@ private:
 	FTimerHandle DelayHandle;
 
 public:
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, Transient)
 	ABangoEvent* Event;
 
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, Transient)
 	UObject* Instigator;
 	
 	// ------------------------------------------

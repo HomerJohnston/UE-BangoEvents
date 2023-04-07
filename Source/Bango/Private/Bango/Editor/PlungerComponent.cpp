@@ -8,94 +8,48 @@
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
-/*
-FVector HSVToRGB(double h, double s, double v)
-{
-	h = h / 360.0;
-	
-	double r, g, b;
-
-	int i = FMath::Floor(h * 6);
-	double f = h * (6.0 - i);
-	double p = v * (1.0 - s);
-	double q = v * (1.0 - f * s);
-	double t = v * (1 - (1 - f) * s);
-
-	switch (i % 6)
-	{
-		case 0: r = v; g = t; b = p; break;
-		case 1: r = q; g = v; b = p; break;
-		case 2: r = p; g = v; b = t; break;
-		case 3: r = p; g = p; b = v; break;
-		case 4: r = t; g = p; b = v; break;
-		case 5: r = v; g = p; b = q; break;
-		default: r = 1.0, g = 0.0, b = 1.0;
-	}
-
-	return FVector(r, g, b);
-}
-*/
-
-FLinearColor BrightRed			(4.00,	0.40,	0.40);
-FLinearColor LightRedDesat		(0.60,	0.30,	0.30);
-FLinearColor DarkRedDesat		(0.06,	0.04,	0.04);
-FLinearColor DarkRed			(0.20,	0.00,	0.00);
-
-FLinearColor BrightOrange		(4.00,	0.50,	0.00);
-FLinearColor LightOrangeDesat	(0.50,	0.40,	0.30);
-FLinearColor DarkOrangeDesat	(0.06,	0.05,	0.04);
-FLinearColor DarkOrange			(0.15,	0.05,	0.00);
-
-FLinearColor BrightYellow		(2.00,	2.00,	0.00);
-FLinearColor LightYellowDesat	(0.50,	0.50,	0.20);
-FLinearColor DarkYellowDesat	(0.06,	0.06,	0.03);
-FLinearColor DarkYellow			(0.10,	0.10,	0.00);
-
-FLinearColor BrightGreen		(0.40,	4.00,	0.40);
-FLinearColor LightGreenDesat	(0.30,	0.60,	0.30);
-FLinearColor DarkGreenDesat		(0.04,	0.06,	0.04);
-FLinearColor DarkGreen			(0.00,	0.20,	0.00);
-
-FLinearColor BrightBlue			(0.20,	0.20,	5.00);
-FLinearColor LightBlueDesat		(0.30,	0.30,	0.60);
-FLinearColor DarkBlueDesat		(0.04,	0.04,	0.06);
-FLinearColor DarkBlue			(0.00,	0.00,	0.20);
-
 FLinearColor LightGrey			(0.50,	0.50,	0.50);
 FLinearColor DarkGrey			(0.02,	0.02,	0.02);
 
 FLinearColor Error				(1.00,	0.00,	1.00);
 
-TMap<EBangoEventState, FLinearColor> BangColorMap
+FLinearColor RedBase			(0.20,	0.00,	0.00);
+FLinearColor OrangeBase			(0.15,	0.05,	0.00);
+FLinearColor YellowBase			(0.10,	0.10,	0.00);
+FLinearColor GreenBase			(0.00,	0.20,	0.00);
+FLinearColor BlueBase			(0.00,	0.00,	0.20);
+
+TMap<EBangoEventType, FLinearColor> ColorBaseMap
 {
-	{ EBangoEventState::NONE,		DarkRed },
-	{ EBangoEventState::Active,		BrightRed },
-	{ EBangoEventState::Frozen,		LightRedDesat },
-	{ EBangoEventState::Expired,	DarkRedDesat }
+	{ EBangoEventType::Bang, RedBase },
+	{ EBangoEventType::Toggle, GreenBase },
+	{ EBangoEventType::Instanced, BlueBase },
 };
 
-TMap<EBangoEventState, FLinearColor> ToggleColorMap
+FLinearColor BrightenColor(FLinearColor C)
 {
-	{ EBangoEventState::NONE,		DarkGreen },
-	{ EBangoEventState::Active,		BrightGreen },
-	{ EBangoEventState::Frozen,		LightGreenDesat },
-	{ EBangoEventState::Expired,	DarkGreenDesat }
-};
+	float M = 18.0f;
+	float N = 0.40f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
 
-TMap<EBangoEventState, FLinearColor> InstancedColorMap
+FLinearColor LightDesatColor(FLinearColor C)
 {
-	{ EBangoEventState::NONE,		DarkBlue },
-	{ EBangoEventState::Active,		BrightBlue },
-	{ EBangoEventState::Frozen,		LightBlueDesat },
-	{ EBangoEventState::Expired,	DarkBlueDesat }
-};
+	float M = 0.40f;
+	float N = 0.20f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
 
-TMap<EBangoEventType, TMap<EBangoEventState, FLinearColor>> EventColorMap
+FLinearColor DarkDesatColor(FLinearColor C)
 {
-	{ EBangoEventType::Bang, BangColorMap },
-	{ EBangoEventType::Toggle, ToggleColorMap },
-	{ EBangoEventType::Instanced, InstancedColorMap }
-};
+	float M = 0.10f;
+	float N = 0.02f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor BangColor = RedBase;
+FLinearColor ToggleColor = GreenBase;
+FLinearColor InstancedColor = BlueBase;
 
 UBangoPlungerComponent::UBangoPlungerComponent()
 {
@@ -148,13 +102,13 @@ FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWor
 #if WITH_EDITOR
 FLinearColor UBangoPlungerComponent::GetColorForProxy()
 {	
-	FLinearColor Color = FLinearColor::Black;
-
 	UWorld* World = GetWorld();
 
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
 	check(Event);
 
+	FLinearColor Color = Event->GetUsesCustomColor() ? Event->GetCustomColor() : ColorBaseMap[Event->GetType()];
+	
 	const FBangoEventStateFlag& State = Event->GetState();
 	bool bToggles = Event->GetToggles();
 	double LastHandleDownTime = Event->GetLastStartActionsTime();
@@ -165,30 +119,28 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 		return Error;
 	}
 	
-	TMap<EBangoEventState, FLinearColor>& ColorMap = EventColorMap[Event->GetType()]; 
-	
 	if (World->IsGameWorld())
 	{
 		if (State.HasFlag(EBangoEventState::Active))
 		{
-			Color = ColorMap[EBangoEventState::Active];
+			Color = BrightenColor(Color);
 		}
 		else if (State.HasFlag(EBangoEventState::Expired))
 		{
-			Color = ColorMap[EBangoEventState::Expired];
+			Color = DarkDesatColor(Color);
 		}
 		else if (State.HasFlag(EBangoEventState::Frozen))
 		{
-			Color = ColorMap[EBangoEventState::Frozen];
+			Color = LightDesatColor(Color);
 		}
 		else if (State.HasFlag(EBangoEventState::Initialized))
 		{
-			Color = ColorMap[EBangoEventState::NONE];		
+					
 		}
 
 		if (!bToggles)
 		{
-			FLinearColor ActiveColor = ColorMap[EBangoEventState::Active];
+			FLinearColor ActiveColor = BrightenColor(Color);
 			
 			double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
 			double Alpha = FMath::Clamp(ElapsedTimeSinceLastActivation / RecentPushColorCooldownTime, 0, 1);
@@ -205,10 +157,10 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	{
 		if (Event->GetStartsFrozen())
 		{
-			return ColorMap[EBangoEventState::Frozen];
+			return LightDesatColor(Color);
 		}
 
-		return ColorMap[EBangoEventState::NONE];
+		return Color;
 	}
 	else
 	{

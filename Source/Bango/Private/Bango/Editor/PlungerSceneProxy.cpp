@@ -125,7 +125,7 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 	}
 	
 	FLinearColor Color = Component->GetColorForProxy();
-	
+
 	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), Color, "GizmoColor");
 
 	Collector.RegisterOneFrameMaterialProxy(MaterialRenderProxy);
