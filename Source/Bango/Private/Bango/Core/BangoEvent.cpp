@@ -79,9 +79,19 @@ double ABangoEvent::GetStopTriggerDelay()
 	return bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
 }
 
-bool ABangoEvent::GetStartsAndStops()
+bool ABangoEvent::GetToggles()
 {
-	return bStartsAndStops;
+	return Type >= EBangoEventType::Toggle;
+}
+
+bool ABangoEvent::GetIsInstanced()
+{
+	return Type >= EBangoEventType::Instanced;
+}
+
+EBangoEventType ABangoEvent::GetType()
+{
+	return Type;
 }
 
 bool ABangoEvent::GetStartsFrozen()
@@ -129,7 +139,7 @@ void ABangoEvent::BeginPlay()
 		Trigger->OnTrigger.BindDynamic(this, &ThisClass::ActivateFromTrigger);
 	}
 
-	if (!bStartsAndStops && StopTriggers.Num() > 0)
+	if (!GetToggles() && StopTriggers.Num() > 0)
 	{
 		// TODO editor setting to throw serialization warnings
 		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but StartsAndStops is false, removing stop triggers"), *this->GetName());
@@ -186,18 +196,12 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 
 	bool bRun = true;
 	
-	if (bStartsAndStops)
+	if (GetToggles())
 	{
 		int32 NewIndex = Instigators.Add(NewInstigator);
 
 		// Don't run if this is a single-state event and this isn't the first instigator
-		if (!RunStateSettings.bRunForEveryInstigator && NewIndex > 0)
-		{
-			bRun = false;
-		}
-
-		// Don't run if this is a multi-state event but it's set up to require queued instigators and this isn't the first instigator
-		if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && NewIndex > 0)
+		if (Type < EBangoEventType::Instanced && NewIndex > 0)
 		{
 			bRun = false;
 		}
@@ -205,7 +209,7 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 	
 	if (bRun)
 	{
-		RunStartActions(NewInstigator);
+		StartActions(NewInstigator);
 	}
 	
 	TriggerCount++;
@@ -236,12 +240,9 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 	
 	bool bIgnore = false;
 
-	if (RunStateSettings.bRunForEveryInstigator)
+	if (GetIsInstanced())
 	{
-		if (RunStateSettings.bQueueInstigators && Index != 0)
-		{
-			bIgnore = true;
-		}
+		// TODO implement queuing/max concurrent instigators
 	}
 	else
 	{
@@ -253,15 +254,15 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 	
 	if (!bIgnore)
 	{
-		RunStopActions(OldInstigator);
+		StopActions(OldInstigator);
 	}
 
 	Instigators.RemoveAt(Index);
 
 	// If it's a queued event, and if we just removed the first instigator, run the next instigator 
-	if (RunStateSettings.bRunForEveryInstigator && RunStateSettings.bQueueInstigators && Index == 0 && Instigators.Num() > 0)
+	if (false && GetIsInstanced() && /* TODO: implement queuing/max conccurent instigators */ Index == 0 && Instigators.Num() > 0)
 	{
-		RunStartActions(Instigators[0]);
+		//RunStartActions(Instigators[0]);
 	}
 
 	if (GetIsFrozen() && Instigators.Num() == 0)
@@ -325,69 +326,113 @@ void ABangoEvent::DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
 	}
 }
 
-#if WITH_EDITOR
-bool bRunActionsSafetyGate = false;
-#endif
-
-void ABangoEvent::RunStartActions(UObject* NewInstigator)
-{	
-#if WITH_EDITOR
-	bRunActionsSafetyGate = true;
-#endif
-
-	LastStartActionsTime = GetWorld()->GetTimeSeconds();
-	RunActions(NewInstigator, StartActions, (bUseStartTriggerDelay ? StartTriggerDelay : 0.0));
-	
-#if WITH_EDITOR
-	bRunActionsSafetyGate = false;
-#endif
-}
-
-void ABangoEvent::RunStopActions(UObject* NewInstigator)
-{
-#if WITH_EDITOR
-	bRunActionsSafetyGate = true;
-#endif
-	
-	LastStopActionsTime = GetWorld()->GetTimeSeconds();
-	RunActions(NewInstigator, StopActions, (bUseStopTriggerDelay ? StopTriggerDelay : 0.0));
-	
-#if WITH_EDITOR
-	bRunActionsSafetyGate = false;
-#endif
-}
-
-void ABangoEvent::RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay)
-{
-	check(bRunActionsSafetyGate);
-
 #if ENABLE_VISUAL_LOG
-	bool bStart = (&Actions == &StartActions);
-	
-	FString Text = (bStart) ? "Start by" : "Stop by";
-	FColor Color = (bStart) ? FColor::Red : FColor::Silver;
-
+void DoVLOG(AActor* Target, FString Text, FColor Color, UObject* NewInstigator)
+{
 	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
 	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
-		UE_VLOG_SEGMENT(this, Bango, Log, this->GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
-		UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
+		UE_VLOG_LOCATION(Target, Bango, Log, Target->GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
+		UE_VLOG_SEGMENT(Target, Bango, Log, Target->GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
+		UE_VLOG_LOCATION(Target, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
 	}
 	else
 	{
-		UE_VLOG_LOCATION(this, Bango, Log, this->GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
+		UE_VLOG_LOCATION(Target, Bango, Log, Target->GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
 	}
+}
 #endif
-	
-	for (UBangoAction* Action : Actions)
+
+void ABangoEvent::StartActions(UObject* NewInstigator)
+{	
+	LastStartActionsTime = GetWorld()->GetTimeSeconds();
+
+	double Delay = bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
+
+	// for an instanced event, we treat the assigned action as a template object
+	if (GetIsInstanced())
 	{
-		if (!IsValid(Action))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s"), *this->GetName());
-			continue;
-		}
+		FBangoEventInstigatorActions* Cur = InstancedActions.Find(NewInstigator);
 		
-		Action->RunInternal(this, NewInstigator, Delay);
+		if (!Cur)
+		{
+			FBangoEventInstigatorActions NewInstancedActions;
+
+			for (UBangoAction* Template : Actions)
+			{
+				UBangoAction* ActionInstance = NewObject<UBangoAction>(this, Template->GetClass(), Template->GetFName(), EObjectFlags::RF_NoFlags, Template);
+				NewInstancedActions.Actions.Add(ActionInstance);
+			}
+
+			Cur = &InstancedActions.Add(NewInstigator, NewInstancedActions);
+		}
+
+		for (UBangoAction* Action : Cur->Actions)
+		{
+			if (!IsValid(Action))
+			{
+				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
+				continue;
+			}
+			
+			Action->StartInternal(this, NewInstigator, Delay);
+		}
+	}
+	else
+	{
+		for (UBangoAction* Action : Actions)
+		{
+			if (!IsValid(Action))
+			{
+				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
+				continue;
+			}
+			
+			Action->StartInternal(this, NewInstigator, Delay);
+		}
+	}
+}
+
+void ABangoEvent::StopActions(UObject* OldInstigator)
+{
+	LastStopActionsTime = GetWorld()->GetTimeSeconds();
+
+	double Delay = bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
+
+	if (GetIsInstanced())
+	{
+		FBangoEventInstigatorActions* Cur = InstancedActions.Find(OldInstigator);
+
+		if (!Cur)
+		{
+			return;
+		}
+
+		for (UBangoAction* Action : Cur->Actions)
+		{
+			if (!IsValid(Action))
+			{
+				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
+				continue;
+			}
+			
+			Action->StopInternal(Delay);
+		}
+
+		InstancedActions.Remove(OldInstigator);
+
+	}
+	else
+	{
+		for (UBangoAction* Action : Actions)
+		{
+			if (!IsValid(Action))
+			{
+				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
+				continue;
+			}
+		
+			Action->StopInternal(Delay);
+		}
 	}
 }
 
@@ -428,6 +473,14 @@ void ABangoEvent::UpdateProxyState()
 	CurrentState.SetFlag(EBangoEventState::Active, Instigators.Num() > 0);
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
+}
+#endif
+
+#if WITH_EDITOR
+bool ABangoEvent::CanEditChange(const FProperty* Property) const
+{
+	//if (Property->GetFName() == )
+	return Super::CanEditChange(Property);
 }
 #endif
 
@@ -584,7 +637,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 		Data.Add(FString::Printf(TEXT("(%i/%i)"), TriggerCount, TriggerLimit));
 	}
 
-	if (bStartsAndStops)
+	if (GetToggles())
 	{
 		Data.Add(FString::Printf(TEXT("Instigators: %i"), Instigators.Num()));
 	}

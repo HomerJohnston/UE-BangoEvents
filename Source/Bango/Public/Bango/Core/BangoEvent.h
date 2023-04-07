@@ -14,6 +14,15 @@ class UBangoPlungerComponent;
 class FCanvasTextItem;
 
 UENUM()
+enum class EBangoEventType : uint8
+{
+	Bang,
+	Toggle,
+	Instanced,
+	MAX
+};
+
+UENUM()
 enum class EBangoWorldTimeType : uint8
 {
 	GameTime,
@@ -30,7 +39,6 @@ enum class EBangoEventState : uint8
 	Active		= 1 << 1, 
 	Frozen		= 1 << 2,
 	Expired		= 1 << 3
-	
 };
 
 inline uint8 operator|(EBangoEventState Left, EBangoEventState Right)
@@ -50,6 +58,7 @@ struct FBangoEventStateFlag
 		}
 		else
 		{
+			ClearFlag(Flag);
 			ClearFlag(Flag);
 		}
 	}
@@ -81,18 +90,12 @@ struct FBangoEventStateFlag
 };
 
 USTRUCT()
-struct FBangoRunStateSettings
+struct FBangoEventInstigatorActions
 {
 	GENERATED_BODY()
-	
-	/** When on, start and stop actions will be run any time an instigator triggers or stops triggering this event.
-	 * When off, start actions will only be run when the first instigator triggers this event, and stop actions will only be run when all instigators are removed.*/
-	UPROPERTY(Category="Bango|Run Settings", EditAnywhere)
-	bool bRunForEveryInstigator = false;
-	
-	/** If true, 2nd and 3rd... instigators will not cause any actions to run. If the first instigator is removed, actions will then be run on the second instigator. */
-	UPROPERTY(Category="Bango|Run Settings", EditAnywhere, meta=(EditCondition="bRunForEveryInstigator"))
-	bool bQueueInstigators = false;
+
+	UPROPERTY(Transient)
+	TArray<UBangoAction*> Actions;
 };
 
 // TODO multiplayer compatibility - run on server, on client, on both
@@ -119,10 +122,8 @@ private:
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	FText DisplayName;
 #endif
-	
-	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
-	bool bStartsAndStops = false;
+	EBangoEventType Type;
 	
 	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any trigger signals. */
 	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bUseTriggerLimit", ClampMin=1))
@@ -146,25 +147,17 @@ private:
 	bool bUseStopTriggerDelay = false;
 
 	/**  */
-	UPROPERTY(Category="Bango", EditAnywhere, meta=(EditCondition="bStartsAndStops", EditConditionHides))
-	FBangoRunStateSettings RunStateSettings;
-	
-	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere, Instanced)
 	TArray<UBangoTriggerCondition*> StartTriggers;
-	
+
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
 	UPROPERTY(Category="Bango", EditAnywhere, Instanced)
-	TArray<UBangoAction*> StartActions;
+	TArray<UBangoAction*> Actions;
 	
 	/**  */
-	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="bStartsAndStops", EditConditionHides))
+	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="Type != EBangoEventType::Bang", EditConditionHides))
 	TArray<UBangoTriggerCondition*> StopTriggers;
 
-	/** Actions to run when an on/off event turns off. */
-	UPROPERTY(Category="Bango", EditAnywhere, Instanced, meta=(EditCondition="bStartsAndStops", EditConditionHides))
-	TArray<UBangoAction*> StopActions;
-	
 	/**  */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
@@ -202,7 +195,13 @@ public:
 	double GetStopTriggerDelay();
 
 	UFUNCTION(BlueprintCallable)
-	bool GetStartsAndStops();
+	bool GetToggles();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsInstanced();
+
+	UFUNCTION(BlueprintCallable)
+	EBangoEventType GetType();
 	
 	// ============================================================================================
 	// State
@@ -225,6 +224,9 @@ protected:
 
 	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
 	double LastStopActionsTime = -999;
+	
+	UPROPERTY(Category="Bango|Debug", Transient, VisibleInstanceOnly)
+	TMap<UObject*, FBangoEventInstigatorActions> InstancedActions;
 	
 	// ------------------------------------------
 	// State Getters
@@ -264,12 +266,10 @@ protected:
 
 	void DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 	
-	void RunStartActions(UObject* NewInstigator);
+	void StartActions(UObject* NewInstigator);
 	
-	void RunStopActions(UObject* NewInstigator);
-	
-	void RunActions(UObject* NewInstigator, TArray<UBangoAction*>& Actions, double Delay);
-	
+	void StopActions(UObject* OldInstigator);
+
 	// ============================================================================================
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// ============================================================================================
@@ -297,9 +297,11 @@ public:
 	void OnConstruction(const FTransform& Transform) override;
 
 	void UpdateProxyState();
+
+	bool CanEditChange(const FProperty* Property) const override;
 	
 protected:
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
 

@@ -4,10 +4,7 @@
 
 class ABangoEvent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFailed);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRun, UObject*, InInstigator);
-
-UCLASS(Abstract, Blueprintable, DefaultToInstanced, EditInlineNew)
+UCLASS(Abstract, Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
 {
 	GENERATED_BODY()
@@ -40,10 +37,10 @@ private:
 
 public:
 	UPROPERTY(Transient)
-	FOnRun OnRunEvent;
-	
+	ABangoEvent* Event;
+
 	UPROPERTY(Transient)
-	FOnFailed OnRunFailed;
+	UObject* Instigator;
 	
 	// ------------------------------------------
 	// Getters and Setters
@@ -53,19 +50,22 @@ public:
 	// API
 	// ============================================================================================
 public:
-	void RunInternal(ABangoEvent* EventActor, UObject* Instigator, double EventDelay);
+	void StartInternal(ABangoEvent* EventActor, UObject* NewInstigator, double EventDelay);
 
-protected:
-	void PerformRun(ABangoEvent* EventActor, UObject* Instigator);
+	void StopInternal(double EventDelay);
+
+private:
+	void PerformStart();
+
+	void PerformStop();
 	
+protected:
 	/** Performs action logic. */
 	UFUNCTION(BlueprintNativeEvent)
-	void Run(ABangoEvent* EventActor, UObject* Instigator);
+	void Start();
 
-	/** This can be called if the instigator becomes invalid during a delayed run. */
 	UFUNCTION(BlueprintNativeEvent)
-	void OnFailToRun(ABangoEvent* EventActor);
-
+	void Stop();
 	
 #if WITH_EDITORONLY_DATA
 	/** Display name used in the editor and debug printing */
