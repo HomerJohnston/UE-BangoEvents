@@ -2,6 +2,7 @@
 
 #include "Bango/DefaultImpl/OverlapTriggerConditions.h"
 
+#include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
 
@@ -9,23 +10,34 @@
 
 void UBangoTriggerCondition_OnBeginOverlap::Enable_Implementation()
 {
-	GetEvent()->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+	if (bUseTargetActor && !IsValid(TargetActor))
+	{
+		UE_LOG(Bango, Warning, TEXT("Trigger <%s> on event <%s> is set to use a target actor, but target isn't valid"), *GetName(), *GetEvent()->GetName());
+		return;
+	}
+
+	AActor* Actor = bUseTargetActor ? TargetActor : GetEvent();
+
+	Actor->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+
+	SubscribedActor = Actor;
 }
 
 void UBangoTriggerCondition_OnBeginOverlap::Disable_Implementation()
 {
-	GetEvent()->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnBeginOverlap);
+	if (SubscribedActor.IsValid())
+	{
+		SubscribedActor->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnBeginOverlap);
+	}
+
+	SubscribedActor = nullptr;
 }
 
-void UBangoTriggerCondition_OnBeginOverlap::OnBeginOverlap(AActor* BangoEventActor, AActor* InstigatorActor)
+void UBangoTriggerCondition_OnBeginOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	ABangoEvent* BangoEvent = Cast<ABangoEvent>(BangoEventActor);
-
-	check(BangoEvent);
-	
 	if (IsValid(ActorFilter))
 	{
-		if (!ActorFilter->IsValidInstigator(BangoEvent, InstigatorActor))
+		if (!ActorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
 		{
 			return;
 		}

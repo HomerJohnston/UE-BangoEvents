@@ -12,9 +12,21 @@ class BANGO_API UBangoTriggerCondition_OnBeginOverlap : public UBangoTriggerCond
 	GENERATED_BODY()
 
 protected:
-	// SETTINGS --------------------------------
+	// SETTINGS
+	// ============================================================================================
 	UPROPERTY(EditAnywhere, Instanced)
 	UBangoInstigatorFilter* ActorFilter;
+
+	/** Actor we will listen for overlap events from, will listen to parent Event actor if left blank */
+	UPROPERTY(EditAnywhere, DisplayName="Use Target Actor", meta=(EditCondition="bUseTargetActor"));
+	AActor* TargetActor;
+
+	UPROPERTY()
+	bool bUseTargetActor;
+	// STATE
+	// ============================================================================================
+
+	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
 	
 public:
 	void Enable_Implementation() override;
@@ -23,7 +35,7 @@ public:
 
 protected:
 	UFUNCTION()
-	void OnBeginOverlap(AActor* BangoEventActor, AActor* InstigatorActor);
+	void OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor);
 };
 
 

@@ -145,11 +145,16 @@ void ABangoEvent::BeginPlay()
 		Trigger->OnTrigger.BindDynamic(this, &ThisClass::ActivateFromTrigger);
 	}
 
+	// TODO editor setting to disable these serialization warnings
 	if (!GetToggles() && StopTriggers.Num() > 0)
 	{
-		// TODO editor setting to throw serialization warnings
 		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but StartsAndStops is false, removing stop triggers"), *this->GetName());
 		StopTriggers.Empty();
+	}
+
+	if (GetToggles() && StopTriggers.Num() == 0)
+	{
+		UE_LOG(Bango, Warning, TEXT("Event %s is set to a toggle mode, but has no stop triggers"), *this->GetName());
 	}
 	
 	for (UBangoTriggerCondition* Trigger : StopTriggers)
