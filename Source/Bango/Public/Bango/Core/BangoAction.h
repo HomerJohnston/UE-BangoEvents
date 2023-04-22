@@ -13,15 +13,13 @@ class BANGO_API UBangoAction : public UObject
 	// Settings
 	// ============================================================================================
 private:
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(Category="Bango", EditAnywhere)
+	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
 	FText DisplayName;
-#endif
 	
-	UPROPERTY(Category="Bango", EditAnywhere)
+	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
 	bool bIgnoreEventDelay = false;
 
-	UPROPERTY(Category="Bango", EditAnywhere)
+	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
 	double Delay = 0;
 
 	// ------------------------------------------
@@ -67,9 +65,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void Stop();
 	
-#if WITH_EDITORONLY_DATA
 	/** Display name used in the editor and debug printing */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FText GetDisplayName();
-#endif
 };

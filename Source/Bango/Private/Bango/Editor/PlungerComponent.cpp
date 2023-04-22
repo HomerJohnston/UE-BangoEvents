@@ -53,15 +53,14 @@ FLinearColor InstancedColor = BlueBase;
 
 UBangoPlungerComponent::UBangoPlungerComponent()
 {
+	bIsEditorOnly = true;
 	bHiddenInGame = true;
 	bUseEditorCompositing = true;
 	SetGenerateOverlapEvents(false);
 
 	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
-#if WITH_EDITOR
 	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
-#endif
 }
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
@@ -83,26 +82,27 @@ bool UBangoPlungerComponent::ComponentIsTouchingSelectionFrustum(const FConvexVo
 }
 #endif
 
-#if WITH_EDITOR
 void UBangoPlungerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	SetHiddenInGame(!GhostPepperGames::Bango::bShowEventsInGame);
 }
-#endif
 
-#if WITH_EDITOR
 FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 	return FBoxSphereBounds(FBox(FVector(0,-1,-80),FVector(1.0 * 80 * 3.0f,80,80))).TransformBy(LocalToWorld);
 }
-#endif
 
-#if WITH_EDITOR
 FLinearColor UBangoPlungerComponent::GetColorForProxy()
-{	
+{
+#if WITH_EDITOR
 	UWorld* World = GetWorld();
+
+	if (!IsValid(World))
+	{
+		return Error;
+	}
 
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
 	check(Event);
@@ -166,12 +166,19 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	{
 		return Error;
 	}
-}
+#else
+	return FLinearColor::Black;
 #endif
+}
 
-#if WITH_EDITOR
 bool UBangoPlungerComponent::GetIsPlungerPushed()
 {
+#if WITH_EDITOR
+	if (!IsValid(GetWorld()))
+	{
+		return false;
+	}
+	
 	ABangoEvent* Event = Cast<ABangoEvent>(GetOwner());
 	check(Event);
 
@@ -188,10 +195,11 @@ bool UBangoPlungerComponent::GetIsPlungerPushed()
 			return Elapsed <= RecentPushHandleCooldownTime;
 		}
 	}
-}
+#else
+	return false;
 #endif
+}
 
-#if WITH_EDITOR
 void UBangoPlungerComponent::OnCvarChange()
 {
 	AActor* OwnerActor = GetOwner();
@@ -214,4 +222,3 @@ void UBangoPlungerComponent::OnCvarChange()
 	
 	SetHiddenInGame(bNewHiddenInGame);
 }
-#endif

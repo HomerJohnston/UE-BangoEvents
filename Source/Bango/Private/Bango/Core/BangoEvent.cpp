@@ -6,14 +6,12 @@
 #include "Bango/Core/BangoAction.h"
 #include "Bango/Core/TriggerCondition.h"
 #include "Bango/Editor/PlungerComponent.h"
-#include "Editor/EditorEngine.h"
+//#include "Editor/EditorEngine.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
-#include "Subsystems/UnrealEditorSubsystem.h"
 #include "VisualLogger/VisualLogger.h"
 
 #if WITH_EDITOR
-#include "Editor.h"
 #include "Bango/CVars.h"
 #include "Engine/Canvas.h"
 #include "Debug/DebugDrawService.h"
@@ -54,9 +52,19 @@ ABangoEvent::ABangoEvent()
 // Settings Getters
 // ------------------------------------------
 #if WITH_EDITORONLY_DATA
-FText ABangoEvent::GetDisplayName_Implementation()
+FText ABangoEvent::GetDisplayName()
 {
 	return DisplayName;
+}
+
+bool ABangoEvent::GetUsesCustomColor()
+{
+	return bUseCustomColor;
+}
+
+FLinearColor ABangoEvent::GetCustomColor()
+{
+	return CustomColor;
 }
 #endif
 
@@ -98,6 +106,16 @@ bool ABangoEvent::GetIsInstanced()
 EBangoEventType ABangoEvent::GetType()
 {
 	return Type;
+}
+
+EBangoToggleDeactivateCondition ABangoEvent::GetDeactivateCondition()
+{
+	return DeactivateCondition;
+}
+
+bool ABangoEvent::GetRunsActionStops()
+{
+	return bRunActionStopFunction;
 }
 
 bool ABangoEvent::GetStartsFrozen()
@@ -181,7 +199,10 @@ void ABangoEvent::BeginPlay()
 	}
 #endif
 
+#if WITH_EDITORONLY_DATA
 	CurrentState.SetFlag(EBangoEventState::Initialized);
+#endif
+	
 	UE_VLOG(this, Bango, Log, TEXT("Event Initialized"));
 }
 
@@ -252,21 +273,48 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 		return;
 	}
 	
-	bool bIgnore = false;
+	bool bRunStopActions = true;
 
 	if (GetIsInstanced())
 	{
 		// TODO implement queuing/max concurrent instigators
 	}
-	else
+	else if (GetToggles())
 	{
-		if (Instigators.Num() > 1)
+		switch (DeactivateCondition)
 		{
-			bIgnore = true;
+			case EBangoToggleDeactivateCondition::AllInstigatorsDeactivate:
+			{
+				if (Instigators.Num() > 1 && Instigators[0] != OldInstigator)
+				{
+					bRunStopActions = false;
+				}
+				break;
+			}
+			case EBangoToggleDeactivateCondition::AnyInstigatorDeactivates:
+			{
+				break;
+			}
+			case EBangoToggleDeactivateCondition::FirstInstigatorDeactivates:
+			{
+				if (Instigators.Num() == 0 || OldInstigator != Instigators[0])
+				{
+					bRunStopActions = false;
+				}
+				break;
+			}
+			default:
+			{
+				break;
+			}
 		}
 	}
+	else if (!bRunActionStopFunction)
+	{
+		bRunStopActions = false;
+	}
 	
-	if (!bIgnore)
+	if (bRunStopActions)
 	{
 		StopActions(OldInstigator);
 	}
@@ -376,7 +424,8 @@ void ABangoEvent::StartActions(UObject* NewInstigator)
 
 			for (UBangoAction* Template : Actions)
 			{
-				UBangoAction* ActionInstance = NewObject<UBangoAction>(this, Template->GetClass(), Template->GetFName(), EObjectFlags::RF_NoFlags, Template);
+				// TODO pooling system for instanced UObjects? May not be worth it for events since they're sparse
+				UBangoAction* ActionInstance = DuplicateObject(Template, this);// NewObject<UBangoAction>(this, Template->GetClass(), Template->GetFName(), EObjectFlags::RF_NoFlags, Template);
 				NewInstancedActions.Actions.Add(ActionInstance);
 			}
 
@@ -468,9 +517,7 @@ bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
 	return CurrentState.HasFlag(State);
 }
-#endif
 
-#if WITH_EDITOR
 void ABangoEvent::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -485,33 +532,14 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 		UpdateProxyState();
 	}
 }
-#endif
 
-#if WITH_EDITOR
 void ABangoEvent::UpdateProxyState()
 {
 	CurrentState.SetFlag(EBangoEventState::Active, Instigators.Num() > 0);
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
 }
-#endif
 
-#if WITH_EDITOR
-bool ABangoEvent::CanEditChange(const FProperty* Property) const
-{
-	//if (Property->GetFName() == )
-	return Super::CanEditChange(Property);
-}
-#endif
-
-#if WITH_EDITOR
-void ABangoEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-#endif
-
-#if WITH_EDITOR
 // TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
 void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 {
@@ -659,15 +687,4 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 	
 	return Data;
 }
-
-bool ABangoEvent::GetUsesCustomColor()
-{
-	return bUseCustomColor;
-}
-
-FLinearColor ABangoEvent::GetCustomColor()
-{
-	return CustomColor;
-}
-
 #endif

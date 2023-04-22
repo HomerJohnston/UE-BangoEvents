@@ -42,7 +42,9 @@ public:
 	bool ComponentIsTouchingSelectionBox(const FBox& InSelBox, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
 
 	bool ComponentIsTouchingSelectionFrustum(const FConvexVolume& InFrustum, const bool bConsiderOnlyBSP, const bool bMustEncompassEntireComponent) const override;
-
+#endif
+	
+public:
 	void BeginPlay() override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
@@ -52,5 +54,4 @@ public:
 	bool GetIsPlungerPushed();
 
 	void OnCvarChange();
-#endif 
 };

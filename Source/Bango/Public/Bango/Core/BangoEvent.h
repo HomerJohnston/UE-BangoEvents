@@ -19,10 +19,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEve
 UENUM()
 enum class EBangoEventType : uint8
 {
-	Bang,
+	Bang					UMETA(ToolTip="Runs all action starts when triggered. Does not run action stop."),
 	Toggle,
 	Instanced,
-	MAX
+	MAX						UMETA(Hidden)
+};
+
+UENUM()
+enum class EBangoToggleDeactivateCondition : uint8
+{
+	AllInstigatorsDeactivate,
+	AnyInstigatorDeactivates,
+	FirstInstigatorDeactivates,
+	MAX						UMETA(Hidden)
 };
 
 UENUM()
@@ -35,9 +44,10 @@ enum class EBangoWorldTimeType : uint8
 	MAX
 };
 
+#if WITH_EDITOR
 enum class EBangoEventState : uint8
 {
-	NONE		= 0 UMETA(Hidden),
+	NONE		= 0			UMETA(Hidden),
 	Initialized = 1 << 0,
 	Active		= 1 << 1, 
 	Frozen		= 1 << 2,
@@ -91,6 +101,7 @@ struct FBangoEventStateFlag
 		Value ^= (uint8)In;
 	}
 };
+#endif
 
 USTRUCT()
 struct FBangoEventInstigatorActions
@@ -101,7 +112,7 @@ struct FBangoEventInstigatorActions
 	TArray<UBangoAction*> Actions;
 };
 
-// TODO multiplayer compatibility - run on server, on client, on both
+
 /**
  * 
  */
@@ -117,27 +128,39 @@ public:
 
 	// SETTINGS
 	// ============================================================================================
-
 #if WITH_EDITORONLY_DATA
 protected:
+	/**  */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, BlueprintReadOnly)
 	FText DisplayName;
-	
+
+	/**  */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
 	FLinearColor CustomColor;
-	
+
+	/**  */
 	UPROPERTY()
 	bool bUseCustomColor = false;
 #endif
 
 private:
+	/** Bang events are simply triggered over and over. Toggle events turn on and off. Instanced events turn on and off, but spawn and run new instances of their actions for each instigator. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere)
 	EBangoEventType Type;
+
+	/** When set, will run actions' stop functions immediately after running their start functions, and when unset will only run actions' start functions. */
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="Type==EBangoEventType::Bang", EditConditionHides))
+	bool bRunActionStopFunction = false;
+
+	/**  */
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, DisplayName="Deactivate When", meta=(EditCondition="Type==EBangoEventType::Toggle", EditConditionHides))
+	EBangoToggleDeactivateCondition DeactivateCondition;
 	
 	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any trigger signals. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseTriggerLimit", ClampMin=1))
 	int32 TriggerLimit = 1;
 
+	/**  */
 	UPROPERTY()
 	bool bUseTriggerLimit = true;
 
@@ -145,6 +168,7 @@ private:
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseStartTriggerDelay", ClampMin = 0.0))
 	double StartTriggerDelay = 0;
 
+	/**  */
 	UPROPERTY()
 	bool bUseStartTriggerDelay = false;
 
@@ -152,6 +176,7 @@ private:
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseStopTriggerDelay", ClampMin = 0.0))
 	double StopTriggerDelay = 0;
 
+	/**  */
 	UPROPERTY()
 	bool bUseStopTriggerDelay = false;
 
@@ -181,9 +206,8 @@ private:
 	
 	// SETTINGS GETTERS AND SETTERS
 	// ------------------------------------------
-public:
 #if WITH_EDITORONLY_DATA
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+public:
 	FText GetDisplayName();
 	
 	bool GetUsesCustomColor();
@@ -191,6 +215,7 @@ public:
 	FLinearColor GetCustomColor();
 #endif
 	
+public:
 	UFUNCTION(BlueprintCallable)
 	bool GetStartsFrozen();
 	
@@ -217,6 +242,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EBangoEventType GetType();
+
+	UFUNCTION(BlueprintCallable)
+	EBangoToggleDeactivateCondition GetDeactivateCondition();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetRunsActionStops();
 	
 	// ============================================================================================
 	// State
@@ -297,7 +328,7 @@ protected:
 	// ============================================================================================
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// ============================================================================================
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 public:
 	static TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> BangoEventsShowFlag;
 
@@ -308,11 +339,8 @@ private:
 	
 	FDelegateHandle DebugDrawService_Game;
 	
-	UPROPERTY(Transient)
 	TObjectPtr<UBangoPlungerComponent> PlungerComponent;
-#endif
 
-#if WITH_EDITOR
 public:
 	const FBangoEventStateFlag& GetState() const;
 	
@@ -322,11 +350,7 @@ public:
 
 	void UpdateProxyState();
 
-	bool CanEditChange(const FProperty* Property) const override;
-	
 protected:
-	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
 
 	bool GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation);

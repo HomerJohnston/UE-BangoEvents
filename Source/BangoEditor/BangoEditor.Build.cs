@@ -22,7 +22,6 @@ public class BangoEditor : ModuleRules
                 "SlateCore",
                 "Bango",
                 "DeveloperSettings",
-                "EditorSubsystem"
             }
         );
     }

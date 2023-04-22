@@ -2,6 +2,7 @@
 
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
+#include "Engine/Light.h"
 
 void UBangoAction_DebugLog::Start_Implementation()
 {
@@ -25,15 +26,12 @@ void UBangoAction_DebugLog::Stop_Implementation()
 	{
 		UE_LOG(Bango, Log, TEXT("%s"), *StopText);
 	}
+
 }
 
 FString UBangoAction_DebugLog::GetEventName()
 {
-#if UE_BUILD_DEVELOPMENT
-	return Event->GetActorLabel();
-#else
 	return Event->GetName();
-#endif
 }
 
 FString UBangoAction_DebugLog::GetInstigatorName()
@@ -42,11 +40,7 @@ FString UBangoAction_DebugLog::GetInstigatorName()
 
 	if (AActor* ActorInstigator = Cast<AActor>(Instigator))
 	{
-#if UE_BUILD_DEVELOPMENT
-		InstigatorName = ActorInstigator->GetActorLabel();
-#else
 		InstigatorName = Instigator->GetName();
-#endif
 	}
 	else
 	{

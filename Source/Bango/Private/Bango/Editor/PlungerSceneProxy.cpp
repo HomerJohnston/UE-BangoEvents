@@ -8,8 +8,8 @@
 // Forward declarations
 //=================================================================================================
 
-void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
-void BuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
+void BuildBangoBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
+void BuildBangoCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
 
 
 // FBangoPlungerSceneProxy
@@ -80,9 +80,9 @@ void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData)
 	FVector StemOffset(0, 0, MeshData.BoxSize + 0.5f * MeshData.StemHeight + MeshData.StemAndHandleZOffset);
 	FVector HandleOffset(0, 0, StemOffset.Z + 0.5f * MeshData.StemHeight);
 
-	BuildBoxVerts(BoxOrigin, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
-	BuildCylinderVerts(StemOffset, FVector::ForwardVector, FVector::RightVector, FVector::UpVector, MeshData.StemRadius, 0.5f * MeshData.StemHeight, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
-	BuildCylinderVerts(HandleOffset, FVector::ForwardVector, FVector::UpVector, FVector::LeftVector, MeshData.HandleRadius, 0.5f * MeshData.HandleWidth, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+	BuildBangoBoxVerts(BoxOrigin, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+	BuildBangoCylinderVerts(StemOffset, FVector::ForwardVector, FVector::RightVector, FVector::UpVector, MeshData.StemRadius, 0.5f * MeshData.StemHeight, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
+	BuildBangoCylinderVerts(HandleOffset, FVector::ForwardVector, FVector::UpVector, FVector::LeftVector, MeshData.HandleRadius, 0.5f * MeshData.HandleWidth, 8, OutVerts_HandleUp, MeshData.IndexBuffer->Indices);
 
 	MeshData.VertexBuffer->InitFromDynamicVertex(MeshData.VertexFactory, OutVerts_HandleUp);
 
@@ -192,6 +192,7 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 
 FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneView* View) const
 {
+#if WITH_EDITOR
 	// IsShown MUST be checked first - some cameras like Scene Capture won't have the custom ShowFlag defined and will crash inside of the IsEnabled check. IsShown will return false for these other cameras and prevent going into further unsafe checks.
 	const bool bProxyVisible = IsShown(View) && (ABangoEvent::BangoEventsShowFlag.IsEnabled(View->Family->EngineShowFlags));
 
@@ -204,6 +205,13 @@ FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneVi
 	Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
 	
 	return Result;
+#else
+	FPrimitiveViewRelevance Result;
+	Result.bDrawRelevance = false;
+	Result.bDynamicRelevance = false;
+
+	return Result;
+#endif
 }
 
 void FBangoPlungerSceneProxy::OnTransformChanged()
@@ -217,7 +225,7 @@ uint32 FBangoPlungerSceneProxy::GetMemoryFootprint() const
 }
 
 // TODO move these to a separate geometry helper class?
-void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
+void BuildBangoBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
 {
 	// Calculate verts for a face pointing down Z
 	FVector3f Positions[4] =
@@ -288,7 +296,7 @@ void BuildBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& Ou
 	}
 }
 
-void BuildCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
+void BuildBangoCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices)
 {
 	const float	AngleDelta = 2.0f * UE_PI / Sides;
 	FVector	LastVertex = Base + XAxis * Radius;

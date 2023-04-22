@@ -12,6 +12,7 @@ void FBangoEditorModule::StartupModule()
 		// TODO localization
 		TSharedRef<FPropertySection> Section = PropertyEditorModule.FindOrCreateSection("Actor", "Bango", INVTEXT("Bango"));
 		Section->AddCategory("Bango");
+		Section->AddCategory("Bango Action");
 	}
 }
 
