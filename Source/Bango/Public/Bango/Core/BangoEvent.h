@@ -7,6 +7,7 @@
 
 #include "BangoEvent.generated.h"
 
+class UBangoEventProcessor;
 class UObject;
 class UBangoAction;
 class UBangoTriggerCondition;
@@ -19,18 +20,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEve
 UENUM()
 enum class EBangoEventType : uint8
 {
-	Bang					UMETA(ToolTip="Runs all action starts when triggered. Does not run action stop."),
-	Toggle,
-	Instanced,
+	Bang					UMETA(ToolTip="Runs all action's start functions when triggered."),
+	Toggle					UMETA(ToolTip=""),
+	Instanced				UMETA(ToolTip=""),
 	MAX						UMETA(Hidden)
 };
 
 UENUM()
 enum class EBangoToggleDeactivateCondition : uint8
 {
-	AllInstigatorsDeactivate,
-	AnyInstigatorDeactivates,
-	FirstInstigatorDeactivates,
+	AllInstigatorsMustDeactivate,
+	AnyInstigatorCanDeactivate,
+	OriginalInstigatorDeactivates,
+	AnythingCanDeactivate,
 	MAX						UMETA(Hidden)
 };
 
@@ -112,7 +114,6 @@ struct FBangoEventInstigatorActions
 	TArray<UBangoAction*> Actions;
 };
 
-
 /**
  * 
  */
@@ -150,7 +151,7 @@ private:
 
 	/** When set, will run actions' stop functions immediately after running their start functions, and when unset will only run actions' start functions. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="Type==EBangoEventType::Bang", EditConditionHides))
-	bool bRunActionStopFunction = false;
+	bool bRunActionStopFunctions = false;
 
 	/**  */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, DisplayName="Deactivate When", meta=(EditCondition="Type==EBangoEventType::Toggle", EditConditionHides))
@@ -182,15 +183,15 @@ private:
 
 	/**  */
 	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
-	TArray<UBangoTriggerCondition*> StartTriggers;
+	TArray<TObjectPtr<UBangoTriggerCondition>> StartTriggers;
 
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
 	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
-	TArray<UBangoAction*> Actions;
+	TArray<TObjectPtr<UBangoAction>> Actions;
 	
 	/**  */
 	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced, meta=(EditCondition="Type != EBangoEventType::Bang", EditConditionHides))
-	TArray<UBangoTriggerCondition*> StopTriggers;
+	TArray<TObjectPtr<UBangoTriggerCondition>> StopTriggers;
 
 	/**  */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
@@ -235,11 +236,13 @@ public:
 	double GetStopTriggerDelay();
 
 	UFUNCTION(BlueprintCallable)
-	bool GetToggles();
+	bool IsToggleType();
 
 	UFUNCTION(BlueprintCallable)
-	bool GetIsInstanced();
+	bool IsInstancedType();
 
+	bool IsBangType();
+	
 	UFUNCTION(BlueprintCallable)
 	EBangoEventType GetType();
 
@@ -248,11 +251,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool GetRunsActionStops();
-	
+
+	const TArray<TObjectPtr<UBangoAction>>& GetActions();
 	// ============================================================================================
 	// State
 	// ============================================================================================
 protected:
+	UPROPERTY(Transient)
+	TObjectPtr<UBangoEventProcessor> EventProcessor; 
+	
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	bool bFrozen = false;
@@ -261,24 +268,26 @@ protected:
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	int32 TriggerCount = 0;
 	
-	/** Instigators which are actively triggering an on/off event. */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
-	TArray<UObject*> Instigators;
-
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastStartActionsTime = -999;
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastStopActionsTime = -999;
-	
-	UPROPERTY(Category="Bango|State (Debug)", Transient, VisibleInstanceOnly)
-	TMap<UObject*, FBangoEventInstigatorActions> InstancedActions;
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventActivated OnBangoEventActivated;
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventDeactivated OnBangoEventDeactivated;
+
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	bool bActivateRequestQueued = false;
+
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	bool bDeactivateRequestQueued = false;
+
+	UPROPERTY(Transient)
+	FTimerHandle StartTimerHandle;
 	
 	// ------------------------------------------
 	// State Getters
@@ -307,24 +316,24 @@ public:
 	void ResetTriggerCount(bool bUnfreeze = true);
 
 	UFUNCTION(BlueprintCallable)
-	void SetFrozen(bool bNewFrozen);
+	void SetFrozen(bool bFreeze);
 
 public:
 	UFUNCTION(BlueprintCallable)
 	void ActivateFromTrigger(UObject* NewInstigator);
 
+	void PerformActivateFromTrigger(UObject* NewInstigator);
+	
 	UFUNCTION(BlueprintCallable)
 	void DeactivateFromTrigger(UObject* OldInstigator);
 
+	void PerformDeactivateFromTrigger(UObject* OldInstigator);
+	
 protected:
 	void EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 
 	void DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
 	
-	void StartActions(UObject* NewInstigator);
-	
-	void StopActions(UObject* OldInstigator);
-
 	// ============================================================================================
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 	// ============================================================================================

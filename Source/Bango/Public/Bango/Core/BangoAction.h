@@ -15,12 +15,6 @@ class BANGO_API UBangoAction : public UObject
 private:
 	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
 	FText DisplayName;
-	
-	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
-	bool bIgnoreEventDelay = false;
-
-	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
-	double Delay = 0;
 
 	// ------------------------------------------
 	// Getters and Setters
@@ -29,16 +23,12 @@ private:
 	// ============================================================================================
 	// State
 	// ============================================================================================
-private:
-	UPROPERTY(Transient)
-	FTimerHandle DelayHandle;
-
 public:
 	UPROPERTY(BlueprintReadOnly, Transient)
-	ABangoEvent* Event;
+	TObjectPtr<ABangoEvent> Event;
 
 	UPROPERTY(BlueprintReadOnly, Transient)
-	UObject* Instigator;
+	TObjectPtr<UObject> Instigator;
 	
 	// ------------------------------------------
 	// Getters and Setters
@@ -48,24 +38,20 @@ public:
 	// API
 	// ============================================================================================
 public:
-	void StartInternal(ABangoEvent* EventActor, UObject* NewInstigator, double EventDelay);
+	void StartInternal(ABangoEvent* EventActor, UObject* NewInstigator);
 
-	void StopInternal(double EventDelay);
+	void StopInternal();
 
-private:
-	void PerformStart();
-
-	void PerformStop();
-	
 protected:
-	/** Performs action logic. */
+	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
 	void Start();
 
+	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
 	void Stop();
 	
-	/** Display name used in the editor and debug printing */
+	/** Display name used in the editor and debug printing. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FText GetDisplayName();
 };

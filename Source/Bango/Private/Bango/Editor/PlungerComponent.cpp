@@ -110,7 +110,7 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	FLinearColor Color = Event->GetUsesCustomColor() ? Event->GetCustomColor() : ColorBaseMap[Event->GetType()];
 	
 	const FBangoEventStateFlag& State = Event->GetState();
-	bool bToggles = Event->GetToggles();
+	bool bToggles = Event->IsToggleType();
 	double LastHandleDownTime = Event->GetLastStartActionsTime();
 	double LastHandleUpTime = Event->GetLastStopActionsTime();
 

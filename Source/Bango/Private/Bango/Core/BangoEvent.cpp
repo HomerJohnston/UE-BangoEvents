@@ -7,6 +7,7 @@
 #include "Bango/Core/TriggerCondition.h"
 #include "Bango/Editor/PlungerComponent.h"
 //#include "Editor/EditorEngine.h"
+#include "Bango/Core/BangoEventProcessor.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "VisualLogger/VisualLogger.h"
@@ -93,14 +94,19 @@ double ABangoEvent::GetStopTriggerDelay()
 	return bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
 }
 
-bool ABangoEvent::GetToggles()
+bool ABangoEvent::IsBangType()
 {
-	return Type >= EBangoEventType::Toggle;
+	return Type == EBangoEventType::Bang;
 }
 
-bool ABangoEvent::GetIsInstanced()
+bool ABangoEvent::IsToggleType()
 {
-	return Type >= EBangoEventType::Instanced;
+	return Type == EBangoEventType::Toggle;
+}
+
+bool ABangoEvent::IsInstancedType()
+{
+	return Type == EBangoEventType::Instanced;
 }
 
 EBangoEventType ABangoEvent::GetType()
@@ -115,7 +121,12 @@ EBangoToggleDeactivateCondition ABangoEvent::GetDeactivateCondition()
 
 bool ABangoEvent::GetRunsActionStops()
 {
-	return bRunActionStopFunction;
+	return bRunActionStopFunctions;
+}
+
+const TArray<TObjectPtr<UBangoAction>>& ABangoEvent::GetActions()
+{
+	return Actions;
 }
 
 bool ABangoEvent::GetStartsFrozen()
@@ -152,6 +163,29 @@ double ABangoEvent::GetLastStopActionsTime()
 
 void ABangoEvent::BeginPlay()
 {
+	switch (GetType())
+	{
+		case EBangoEventType::Bang:
+		{
+			EventProcessor = NewObject<UBangoEventProcessor_Bang>(this);
+			break;
+		}
+		case EBangoEventType::Toggle:
+		{
+			EventProcessor = NewObject<UBangoEventProcessor_Toggle>(this);
+			break;
+		}
+		case EBangoEventType::Instanced:
+		{
+			EventProcessor = NewObject<UBangoEventProcessor_Instanced>(this);
+			break;
+		}
+		default:
+		{
+			checkNoEntry();
+		}
+	}
+
 	for (UBangoTriggerCondition* Trigger : StartTriggers)
 	{
 		if (!IsValid(Trigger))
@@ -164,25 +198,28 @@ void ABangoEvent::BeginPlay()
 	}
 
 	// TODO editor setting to disable these serialization warnings
-	if (!GetToggles() && StopTriggers.Num() > 0)
+	if (IsBangType() && !bRunActionStopFunctions && StopTriggers.Num() > 0)
 	{
-		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but StartsAndStops is false, removing stop triggers"), *this->GetName());
+		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but won't be used, removing stop triggers"), *this->GetName());
 		StopTriggers.Empty();
 	}
 
-	if (GetToggles() && StopTriggers.Num() == 0)
+	if ((IsToggleType() || IsInstancedType()) && StopTriggers.Num() == 0)
 	{
 		UE_LOG(Bango, Warning, TEXT("Event %s is set to a toggle mode, but has no stop triggers"), *this->GetName());
 	}
-	
-	for (UBangoTriggerCondition* Trigger : StopTriggers)
+
+	for (auto it = StopTriggers.CreateIterator(); it; ++it)
 	{
+		UBangoTriggerCondition* Trigger = it->Get();
+
 		if (!IsValid(Trigger))
 		{
 			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+			it.RemoveCurrent();
 			continue;
 		}
-	
+		
 		Trigger->OnTrigger.BindDynamic(this, &ThisClass::DeactivateFromTrigger);
 	}
 	
@@ -219,37 +256,33 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 // TODO: warnings if lots of instigators? Other faster mechanisms to handle lots of instigators?
 void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 {
-	if (GetIsFrozen())
-	{
-		return;
-	}
-	
-	if (GetIsExpired())
+	if (GetIsFrozen() || GetIsExpired())
 	{
 		return;
 	}
 
-	bool bRun = true;
-	
-	if (GetToggles())
-	{
-		int32 NewIndex = Instigators.Add(NewInstigator);
+	double Delay = bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
 
-		// Don't run if this is a single-state event and this isn't the first instigator
-		if (Type < EBangoEventType::Instanced && NewIndex > 0)
-		{
-			bRun = false;
-		}
+	if (Delay == 0.0)
+	{
+		PerformActivateFromTrigger(NewInstigator);
+	}
+	else
+	{
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::PerformActivateFromTrigger, NewInstigator);
+		GetWorldTimerManager().SetTimer(StartTimerHandle, Delegate, Delay, false);
+	}
+}
+
+void ABangoEvent::PerformActivateFromTrigger(UObject* NewInstigator)
+{
+	if (EventProcessor->ActivateFromTrigger(NewInstigator))
+	{
+		TriggerCount++;
+		LastStartActionsTime = GetWorld()->GetTimeSeconds();
 	}
 	
-	if (bRun)
-	{
-		StartActions(NewInstigator);
-	}
-	
-	TriggerCount++;
-
-	if (bUseTriggerLimit && bFreezeWhenExpired && TriggerCount >= TriggerLimit)
+	if (bFreezeWhenExpired && GetIsExpired())
 	{
 		SetFrozen(true);
 	}
@@ -261,73 +294,12 @@ void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
 
 void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 {
-	if (Instigators.Num() > 20)
-	{
-		UE_LOG(Bango, Warning, TEXT("Warning: several instigators present on event %s, deactivation may be slow"), *this->GetName());
-	}
+	// TODO make this more graceful, or remove it
+	EventProcessor->DeactivateFromTrigger(OldInstigator);
+
+	LastStopActionsTime = GetWorld()->GetTimeSeconds();
 	
-	int32 Index = Instigators.Find(OldInstigator);
-
-	if (Index == INDEX_NONE)
-	{
-		return;
-	}
-	
-	bool bRunStopActions = true;
-
-	if (GetIsInstanced())
-	{
-		// TODO implement queuing/max concurrent instigators
-	}
-	else if (GetToggles())
-	{
-		switch (DeactivateCondition)
-		{
-			case EBangoToggleDeactivateCondition::AllInstigatorsDeactivate:
-			{
-				if (Instigators.Num() > 1 && Instigators[0] != OldInstigator)
-				{
-					bRunStopActions = false;
-				}
-				break;
-			}
-			case EBangoToggleDeactivateCondition::AnyInstigatorDeactivates:
-			{
-				break;
-			}
-			case EBangoToggleDeactivateCondition::FirstInstigatorDeactivates:
-			{
-				if (Instigators.Num() == 0 || OldInstigator != Instigators[0])
-				{
-					bRunStopActions = false;
-				}
-				break;
-			}
-			default:
-			{
-				break;
-			}
-		}
-	}
-	else if (!bRunActionStopFunction)
-	{
-		bRunStopActions = false;
-	}
-	
-	if (bRunStopActions)
-	{
-		StopActions(OldInstigator);
-	}
-
-	Instigators.RemoveAt(Index);
-
-	// If it's a queued event, and if we just removed the first instigator, run the next instigator 
-	if (false && GetIsInstanced() && /* TODO: implement queuing/max conccurent instigators */ Index == 0 && Instigators.Num() > 0)
-	{
-		//RunStartActions(Instigators[0]);
-	}
-
-	if (GetIsFrozen() && Instigators.Num() == 0)
+	if (GetIsFrozen() && EventProcessor->GetInstigatorsNum() == 0)
 	{
 		DisableTriggers(StopTriggers);
 	}
@@ -337,29 +309,35 @@ void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
 #endif
 }
 
-void ABangoEvent::SetFrozen(bool bNewFrozen)
+void ABangoEvent::PerformDeactivateFromTrigger(UObject* OldInstigator)
 {
-	if (bNewFrozen == bFrozen && HasActorBegunPlay())
+}
+
+void ABangoEvent::SetFrozen(bool bFreeze)
+{
+	if (bFreeze == bFrozen && HasActorBegunPlay())
 	{
 		return;
 	}
 	
-	if (!bNewFrozen)
+	if (bFreeze)
+	{
+		DisableTriggers(StartTriggers);
+
+		// Freezing is intended to halt new starts. It is not intended to prevent stopping running actions.
+		// We will also attempt to disable triggers whenever an instigator is removed.
+		if (EventProcessor->GetInstigatorsNum() == 0) 
+		{
+			DisableTriggers(StopTriggers); 
+		}
+	}
+	else
 	{
 		EnableTriggers(StartTriggers);
 		EnableTriggers(StopTriggers);
 	}
-	else
-	{
-		DisableTriggers(StartTriggers);
-
-		if (Instigators.Num() == 0)
-		{
-			DisableTriggers(StopTriggers); // We will also attempt to disable triggers whenever an instigator is removed
-		}
-	}
 	
-	bFrozen = bNewFrozen;
+	bFrozen = bFreeze;
 	
 #if WITH_EDITOR
 	UpdateProxyState();
@@ -404,107 +382,6 @@ void DoVLOG(AActor* Target, FString Text, FColor Color, UObject* NewInstigator)
 }
 #endif
 
-void ABangoEvent::StartActions(UObject* NewInstigator)
-{	
-	LastStartActionsTime = GetWorld()->GetTimeSeconds();
-
-	// TODO I can't include the event's trigger delay in the delegate execution with my current setup
-	OnBangoEventActivated.Broadcast(this, NewInstigator);
-	
-	double Delay = bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
-
-	// for an instanced event, we treat the assigned action as a template object
-	if (GetIsInstanced())
-	{
-		FBangoEventInstigatorActions* Cur = InstancedActions.Find(NewInstigator);
-		
-		if (!Cur)
-		{
-			FBangoEventInstigatorActions NewInstancedActions;
-
-			for (UBangoAction* Template : Actions)
-			{
-				// TODO pooling system for instanced UObjects? May not be worth it for events since they're sparse
-				UBangoAction* ActionInstance = DuplicateObject(Template, this);// NewObject<UBangoAction>(this, Template->GetClass(), Template->GetFName(), EObjectFlags::RF_NoFlags, Template);
-				NewInstancedActions.Actions.Add(ActionInstance);
-			}
-
-			Cur = &InstancedActions.Add(NewInstigator, NewInstancedActions);
-		}
-
-		for (UBangoAction* Action : Cur->Actions)
-		{
-			if (!IsValid(Action))
-			{
-				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-				continue;
-			}
-			
-			Action->StartInternal(this, NewInstigator, Delay);
-		}
-	}
-	else
-	{
-		for (UBangoAction* Action : Actions)
-		{
-			if (!IsValid(Action))
-			{
-				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-				continue;
-			}
-			
-			Action->StartInternal(this, NewInstigator, Delay);
-		}
-	}
-}
-
-void ABangoEvent::StopActions(UObject* OldInstigator)
-{
-	LastStopActionsTime = GetWorld()->GetTimeSeconds();
-
-	// TODO make sure this is proper, do I need to check stuff?
-	OnBangoEventActivated.Broadcast(this, OldInstigator);
-	
-	double Delay = bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
-
-	if (GetIsInstanced())
-	{
-		FBangoEventInstigatorActions* Cur = InstancedActions.Find(OldInstigator);
-
-		if (!Cur)
-		{
-			return;
-		}
-
-		for (UBangoAction* Action : Cur->Actions)
-		{
-			if (!IsValid(Action))
-			{
-				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-				continue;
-			}
-			
-			Action->StopInternal(Delay);
-		}
-
-		InstancedActions.Remove(OldInstigator);
-
-	}
-	else
-	{
-		for (UBangoAction* Action : Actions)
-		{
-			if (!IsValid(Action))
-			{
-				UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-				continue;
-			}
-		
-			Action->StopInternal(Delay);
-		}
-	}
-}
-
 // Editor ---------------------------------------
 
 #if WITH_EDITOR
@@ -535,7 +412,7 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 
 void ABangoEvent::UpdateProxyState()
 {
-	CurrentState.SetFlag(EBangoEventState::Active, Instigators.Num() > 0);
+	CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
 }
@@ -665,7 +542,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 
 	if (bUseTriggerLimit)
 	{
-		Data.Add(FString::Printf(TEXT("(%i)"), TriggerLimit));
+		Data.Add(FString::Printf(TEXT("(Limit: %i)"), TriggerLimit));
 	}
 
 	return Data;
@@ -680,9 +557,9 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 		Data.Add(FString::Printf(TEXT("(%i/%i)"), TriggerCount, TriggerLimit));
 	}
 
-	if (GetToggles())
+	if (IsToggleType())
 	{
-		Data.Add(FString::Printf(TEXT("Instigators: %i"), Instigators.Num()));
+		Data.Add(FString::Printf(TEXT("Instigators: %i"), EventProcessor->GetInstigatorsNum()));
 	}
 	
 	return Data;
