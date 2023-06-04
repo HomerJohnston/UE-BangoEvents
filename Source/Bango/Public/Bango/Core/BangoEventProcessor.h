@@ -24,7 +24,7 @@ public:
 	
 	virtual void StartActions(UObject* NewInstigator);;
 
-	virtual void DeactivateFromTrigger(UObject* OldInstigator) {};
+	virtual bool DeactivateFromTrigger(UObject* OldInstigator) { return false; };
 	
 	virtual void StopActions(UObject* OldInstigator);
 
@@ -42,7 +42,7 @@ class UBangoEventProcessor_Bang : public UBangoEventProcessor
 public:
 	bool ActivateFromTrigger(UObject* NewInstigator) override;
 	
-	void DeactivateFromTrigger(UObject* OldInstigator) override;
+	bool DeactivateFromTrigger(UObject* OldInstigator) override;
 };
 
 // TOGGLE PROCESSOR
@@ -56,7 +56,7 @@ class UBangoEventProcessor_Toggle : public UBangoEventProcessor
 public:
 	bool ActivateFromTrigger(UObject* NewInstigator) override;
 	
-	void DeactivateFromTrigger(UObject* OldInstigator) override;
+	bool DeactivateFromTrigger(UObject* OldInstigator) override;
 };
 
 // INSTANCED PROCESSOR
@@ -78,7 +78,7 @@ public:
 	
 	void StartActions(UObject* NewInstigator) override;
 
-	void DeactivateFromTrigger(UObject* OldInstigator) override;
+	bool DeactivateFromTrigger(UObject* OldInstigator) override;
 	
 	void StopActions(UObject* OldInstigator) override;
 };

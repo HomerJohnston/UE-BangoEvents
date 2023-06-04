@@ -86,12 +86,12 @@ int32 ABangoEvent::GetTriggerCount()
 
 double ABangoEvent::GetStartTriggerDelay()
 {
-	return bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
+	return bUseActivateTriggerDelay ? ActivateTriggerDelay : 0.0;
 }
 
 double ABangoEvent::GetStopTriggerDelay()
 {
-	return bUseStopTriggerDelay ? StopTriggerDelay : 0.0;
+	return bUseDeactivateTriggerDelay ? DeactivateTriggerDelay : 0.0;
 }
 
 bool ABangoEvent::IsBangType()
@@ -119,12 +119,8 @@ EBangoToggleDeactivateCondition ABangoEvent::GetDeactivateCondition()
 	return DeactivateCondition;
 }
 
-bool ABangoEvent::GetRunsActionStops()
-{
-	return bRunActionStopFunctions;
-}
 
-const TArray<TObjectPtr<UBangoAction>>& ABangoEvent::GetActions()
+const TArray<UBangoAction*>& ABangoEvent::GetActions()
 {
 	return Actions;
 }
@@ -143,23 +139,34 @@ bool ABangoEvent::GetIsFrozen()
 	return bFrozen;
 }
 
-// ============================================================================================
-// API
-// ============================================================================================
 bool ABangoEvent::GetIsExpired()
 {
 	return bUseTriggerLimit && (TriggerCount >= TriggerLimit);
 }
 
-double ABangoEvent::GetLastStartActionsTime()
+double ABangoEvent::GetLastActivationTime()
 {
-	return LastStartActionsTime;
+	return LastActivationTime;
 }
 
-double ABangoEvent::GetLastStopActionsTime()
+double ABangoEvent::GetLastDeactivationTime()
 {
-	return LastStopActionsTime;
+	return LastDeactivationTime;
 }
+
+bool ABangoEvent::IsPendingActivation()
+{
+	return ActivateTimerHandle.IsValid();
+}
+
+bool ABangoEvent::IsPendingDeactivation()
+{
+	return DeactivateTimerHandle.IsValid();
+}
+
+// ============================================================================================
+// API
+// ============================================================================================
 
 void ABangoEvent::BeginPlay()
 {
@@ -186,30 +193,33 @@ void ABangoEvent::BeginPlay()
 		}
 	}
 
-	for (UBangoTriggerCondition* Trigger : StartTriggers)
+	for (auto it = ActivationTriggers.CreateIterator(); it; ++it)
 	{
+		UBangoTriggerCondition* Trigger = it->Get();
+		
 		if (!IsValid(Trigger))
 		{
 			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+			it.RemoveCurrent();
 			continue;
 		}
 
-		Trigger->OnTrigger.BindDynamic(this, &ThisClass::ActivateFromTrigger);
+		Trigger->OnTrigger.BindDynamic(this, &ThisClass::QueueActivate);
 	}
 
 	// TODO editor setting to disable these serialization warnings
-	if (IsBangType() && !bRunActionStopFunctions && StopTriggers.Num() > 0)
+	if (IsBangType() && ActivateTriggerDelay == 0.0 && DeactivationTriggers.Num() > 0)
 	{
-		UE_LOG(Bango, Warning, TEXT("Stop triggers exist on event %s but won't be used, removing stop triggers"), *this->GetName());
-		StopTriggers.Empty();
+		UE_LOG(Bango, Warning, TEXT("Deactivate triggers exist on Bang event %s but there is no start delay; won't be used, removing stop triggers"), *this->GetName());
+		DeactivationTriggers.Empty();
 	}
 
-	if ((IsToggleType() || IsInstancedType()) && StopTriggers.Num() == 0)
+	if ((IsToggleType() || IsInstancedType()) && DeactivationTriggers.Num() == 0)
 	{
 		UE_LOG(Bango, Warning, TEXT("Event %s is set to a toggle mode, but has no stop triggers"), *this->GetName());
 	}
 
-	for (auto it = StopTriggers.CreateIterator(); it; ++it)
+	for (auto it = DeactivationTriggers.CreateIterator(); it; ++it)
 	{
 		UBangoTriggerCondition* Trigger = it->Get();
 
@@ -220,7 +230,7 @@ void ABangoEvent::BeginPlay()
 			continue;
 		}
 		
-		Trigger->OnTrigger.BindDynamic(this, &ThisClass::DeactivateFromTrigger);
+		Trigger->OnTrigger.BindDynamic(this, &ThisClass::QueueDeactivate);
 	}
 	
 	SetFrozen(bStartsFrozen);
@@ -254,32 +264,35 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 }
 
 // TODO: warnings if lots of instigators? Other faster mechanisms to handle lots of instigators?
-void ABangoEvent::ActivateFromTrigger(UObject* NewInstigator)
-{
+void ABangoEvent::QueueActivate(UObject* NewInstigator)
+{	
 	if (GetIsFrozen() || GetIsExpired())
 	{
 		return;
 	}
 
-	double Delay = bUseStartTriggerDelay ? StartTriggerDelay : 0.0;
-
-	if (Delay == 0.0)
+	if (bUseActivateTriggerDelay && ActivateTriggerDelay > 0.0)
 	{
-		PerformActivateFromTrigger(NewInstigator);
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::Activate, NewInstigator);
+		GetWorldTimerManager().SetTimer(ActivateTimerHandle, Delegate, ActivateTriggerDelay, false);
 	}
 	else
 	{
-		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::PerformActivateFromTrigger, NewInstigator);
-		GetWorldTimerManager().SetTimer(StartTimerHandle, Delegate, Delay, false);
+		Activate(NewInstigator);
 	}
 }
 
-void ABangoEvent::PerformActivateFromTrigger(UObject* NewInstigator)
+void ABangoEvent::Activate(UObject* NewInstigator)
 {
 	if (EventProcessor->ActivateFromTrigger(NewInstigator))
 	{
 		TriggerCount++;
-		LastStartActionsTime = GetWorld()->GetTimeSeconds();
+
+		GetWorldTimerManager().ClearTimer(ActivateTimerHandle);
+		
+		LastActivationTime = GetWorld()->GetTimeSeconds();
+		
+		OnBangoEventActivated.Broadcast(this, NewInstigator);
 	}
 	
 	if (bFreezeWhenExpired && GetIsExpired())
@@ -292,25 +305,45 @@ void ABangoEvent::PerformActivateFromTrigger(UObject* NewInstigator)
 #endif
 }
 
-void ABangoEvent::DeactivateFromTrigger(UObject* OldInstigator)
-{
-	// TODO make this more graceful, or remove it
-	EventProcessor->DeactivateFromTrigger(OldInstigator);
+void ABangoEvent::QueueDeactivate(UObject* OldInstigator)
+{	
+	double Delay = bUseDeactivateTriggerDelay ? DeactivateTriggerDelay : 0.0;
+	
+	if (bUseDeactivateTriggerDelay && DeactivateTriggerDelay > 0.0)
+	{
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::Deactivate, OldInstigator);
+		GetWorldTimerManager().SetTimer(DeactivateTimerHandle, Delegate, Delay, false);
+	}
+	else
+	{
+		Deactivate(OldInstigator);
+	}
+}
 
-	LastStopActionsTime = GetWorld()->GetTimeSeconds();
+void ABangoEvent::Deactivate(UObject* OldInstigator)
+{
+	if (ActivateTimerHandle.IsValid())
+	{
+		GetWorldTimerManager().ClearTimer(ActivateTimerHandle);
+	}
+	
+	if (EventProcessor->DeactivateFromTrigger(OldInstigator))
+	{
+		GetWorldTimerManager().ClearTimer(DeactivateTimerHandle);
+		
+		LastDeactivationTime = GetWorld()->GetTimeSeconds();
+
+		OnBangoEventDeactivated.Broadcast(this, OldInstigator);
+	}
 	
 	if (GetIsFrozen() && EventProcessor->GetInstigatorsNum() == 0)
 	{
-		DisableTriggers(StopTriggers);
+		DisableTriggers(DeactivationTriggers);
 	}
-	
+
 #if WITH_EDITOR
 	UpdateProxyState();
 #endif
-}
-
-void ABangoEvent::PerformDeactivateFromTrigger(UObject* OldInstigator)
-{
 }
 
 void ABangoEvent::SetFrozen(bool bFreeze)
@@ -322,19 +355,19 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 	
 	if (bFreeze)
 	{
-		DisableTriggers(StartTriggers);
+		DisableTriggers(ActivationTriggers);
 
 		// Freezing is intended to halt new starts. It is not intended to prevent stopping running actions.
 		// We will also attempt to disable triggers whenever an instigator is removed.
 		if (EventProcessor->GetInstigatorsNum() == 0) 
 		{
-			DisableTriggers(StopTriggers); 
+			DisableTriggers(DeactivationTriggers); 
 		}
 	}
 	else
 	{
-		EnableTriggers(StartTriggers);
-		EnableTriggers(StopTriggers);
+		EnableTriggers(ActivationTriggers);
+		EnableTriggers(DeactivationTriggers);
 	}
 	
 	bFrozen = bFreeze;
@@ -481,7 +514,7 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 	// Validity Logic
 	Canvas->GetCenter(X, Y);
 	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
-	
+
 	FVector WorldDrawLocation = GetActorLocation() + FVector(0,0,100);
 	
 	if (FVector::DistSquared(WorldDrawLocation, WorldCameraPos) > Threshold)
@@ -489,9 +522,14 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 		return false;
 	}
 
-	FVector WorldLocation = GetActorLocation() + FVector(0,0,100);
+	FVector VectorToWorldDrawLocation = WorldDrawLocation - WorldCameraPos;
 
-	ScreenLocation = Canvas->Project(WorldLocation);
+	if ((VectorToWorldDrawLocation | WorldCameraDir) < 0.0)
+	{
+		return false;
+	}
+
+	ScreenLocation = Canvas->Project(WorldDrawLocation);
 
 	return true;
 }

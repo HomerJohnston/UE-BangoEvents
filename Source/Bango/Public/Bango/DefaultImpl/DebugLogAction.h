@@ -20,9 +20,9 @@ protected:
 	FString StopText;
 	
 public:
-	void Start_Implementation() override;
+	void OnStart_Implementation() override;
 
-	void Stop_Implementation() override;
+	void OnStop_Implementation() override;
 
 protected:
 	FString GetEventName();

@@ -38,18 +38,18 @@ public:
 	// API
 	// ============================================================================================
 public:
-	void StartInternal(ABangoEvent* EventActor, UObject* NewInstigator);
+	void Start(ABangoEvent* EventActor, UObject* NewInstigator);
 
-	void StopInternal();
+	void Stop();
 
 protected:
 	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
-	void Start();
+	void OnStart();
 
 	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
-	void Stop();
+	void OnStop();
 	
 	/** Display name used in the editor and debug printing. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)

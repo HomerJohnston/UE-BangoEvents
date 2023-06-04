@@ -33,6 +33,13 @@ FLinearColor BrightenColor(FLinearColor C)
 	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
 }
 
+FLinearColor EnhanceColor(FLinearColor C)
+{
+	float M = 2.0f;
+	float N = -0.05f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
 FLinearColor LightDesatColor(FLinearColor C)
 {
 	float M = 0.40f;
@@ -110,9 +117,11 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	FLinearColor Color = Event->GetUsesCustomColor() ? Event->GetCustomColor() : ColorBaseMap[Event->GetType()];
 	
 	const FBangoEventStateFlag& State = Event->GetState();
+	
 	bool bToggles = Event->IsToggleType();
-	double LastHandleDownTime = Event->GetLastStartActionsTime();
-	double LastHandleUpTime = Event->GetLastStopActionsTime();
+
+	double LastHandleDownTime = Event->GetLastActivationTime();
+	double LastHandleUpTime = Event->GetLastDeactivationTime();
 
 	if (Event->GetType() >= EBangoEventType::MAX)
 	{
@@ -133,11 +142,17 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 		{
 			Color = LightDesatColor(Color);
 		}
-		else if (State.HasFlag(EBangoEventState::Initialized))
+
+		if (Event->IsPendingActivation())
 		{
-					
+			Color = EnhanceColor(Color);
 		}
 
+		if (Event->IsPendingDeactivation())
+		{
+			
+		}
+		
 		if (!bToggles)
 		{
 			FLinearColor ActiveColor = BrightenColor(Color);
@@ -190,7 +205,7 @@ bool UBangoPlungerComponent::GetIsPlungerPushed()
 		}
 		default:
 		{
-			double Elapsed = GetWorld()->GetTimeSeconds() - Event->GetLastStartActionsTime();
+			double Elapsed = GetWorld()->GetTimeSeconds() - Event->GetLastActivationTime();
 
 			return Elapsed <= RecentPushHandleCooldownTime;
 		}

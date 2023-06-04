@@ -4,7 +4,7 @@
 #include "Bango/Core/BangoEvent.h"
 #include "Engine/Light.h"
 
-void UBangoAction_DebugLog::Start_Implementation()
+void UBangoAction_DebugLog::OnStart_Implementation()
 {
 	if (StartText.IsEmpty())
 	{		
@@ -16,7 +16,7 @@ void UBangoAction_DebugLog::Start_Implementation()
 	}
 }
 
-void UBangoAction_DebugLog::Stop_Implementation()
+void UBangoAction_DebugLog::OnStop_Implementation()
 {
 	if (StopText.IsEmpty())
 	{

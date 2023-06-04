@@ -23,7 +23,7 @@ void UBangoEventProcessor::StartActions(UObject* NewInstigator)
 			continue;
 		}
 			
-		Action->StartInternal(GetEvent(), NewInstigator);
+		Action->Start(GetEvent(), NewInstigator);
 	}
 }
 
@@ -37,7 +37,7 @@ void UBangoEventProcessor::StopActions(UObject* OldInstigator)
 			continue;
 		}
 
-		Action->StopInternal();
+		Action->Stop();
 	}
 }
 
@@ -52,18 +52,17 @@ int32 UBangoEventProcessor::GetInstigatorsNum()
 bool UBangoEventProcessor_Bang::ActivateFromTrigger(UObject* NewInstigator)
 //-------------------------------------------------------------------------------------------------
 {
+	
+	
 	StartActions(NewInstigator);
 
 	return true;
 }
 
-void UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
+bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
 //-------------------------------------------------------------------------------------------------
 {
-	if (GetEvent()->GetRunsActionStops())
-	{
-		StopActions(OldInstigator);
-	}
+	return false;
 }
 
 // TOGGLE PROCESSOR
@@ -89,7 +88,7 @@ bool UBangoEventProcessor_Toggle::ActivateFromTrigger(UObject* NewInstigator)
 	return true;
 }
 
-void UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
+bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 //-------------------------------------------------------------------------------------------------
 {
 	bool bRunStopActions;
@@ -128,7 +127,11 @@ void UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 	if (bRunStopActions)
 	{
 		StopActions(OldInstigator);
+
+		return true;
 	}
+
+	return false;
 }
 
 // INSTANCED PROCESSOR
@@ -180,16 +183,18 @@ void UBangoEventProcessor_Instanced::StartActions(UObject* NewInstigator)
 	
 	for (UBangoAction* InstancedAction : InstancedActions->Actions)
 	{
-		InstancedAction->StartInternal(GetEvent(), NewInstigator);
+		InstancedAction->Start(GetEvent(), NewInstigator);
 	}
 }
 
-void UBangoEventProcessor_Instanced::DeactivateFromTrigger(UObject* OldInstigator)
+bool UBangoEventProcessor_Instanced::DeactivateFromTrigger(UObject* OldInstigator)
 //-------------------------------------------------------------------------------------------------
 {
 	StopActions(OldInstigator);
 
 	Instigators.Remove(OldInstigator);
+
+	return true;
 }
 
 void UBangoEventProcessor_Instanced::StopActions(UObject* OldInstigator)
@@ -210,7 +215,7 @@ void UBangoEventProcessor_Instanced::StopActions(UObject* OldInstigator)
 			continue;
 		}
 			
-		Action->StopInternal();
+		Action->Stop();
 	}
 
 	InstancedActionsPerInstigator.Remove(OldInstigator);

@@ -5,7 +5,7 @@
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
-void UBangoAction::StartInternal(ABangoEvent* EventActor, UObject* NewInstigator)
+void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 {
 	Event = EventActor;
 	Instigator = NewInstigator;
@@ -13,19 +13,19 @@ void UBangoAction::StartInternal(ABangoEvent* EventActor, UObject* NewInstigator
 	check(Event);
 	check(Instigator);
 	
-	Start();
+	OnStart();
 }
 
-void UBangoAction::StopInternal()
+void UBangoAction::Stop()
 {
-	Stop();
+	OnStop();
 }
 
-void UBangoAction::Start_Implementation()
+void UBangoAction::OnStart_Implementation()
 {
 }
 
-void UBangoAction::Stop_Implementation()
+void UBangoAction::OnStop_Implementation()
 {
 }
 
