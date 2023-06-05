@@ -36,6 +36,18 @@ private:
 	// ------------------------------------------
 	// Getters and Setters
 	// ------------------------------------------
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetUseStartDelay();
+	
+	UFUNCTION(BlueprintCallable)
+	bool GetUseStopDelay();
+
+	UFUNCTION(BlueprintCallable)
+	double GetStartDelay();
+
+	UFUNCTION(BlueprintCallable)
+	double GetStopDelay();
 	
 	// ============================================================================================
 	// State
@@ -84,7 +96,7 @@ protected:
 public:
 	/** Display name used in the editor and debug printing. Override to replace/add additional text. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	FString GetDisplayName();
+	FText GetDisplayName();
 
 protected:
 	UWorld* GetWorld() const override;

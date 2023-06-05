@@ -5,6 +5,16 @@
 #include "Bango/Log.h"
 
 
+bool UBangoTrigger::GetCanActivateEvent()
+{
+	return bCanActivateEvent;
+}
+
+bool UBangoTrigger::GetCanDeactivateEvent()
+{
+	return bCanDeactivateEvent;
+}
+
 ABangoEvent* UBangoTrigger::GetEvent()
 {
 	return Cast<ABangoEvent>(GetOuter());
@@ -59,4 +69,9 @@ void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 	}
 	
 	OnTriggerDeactivation.Execute(OldInstigator);	
+}
+
+FText UBangoTrigger::GetDisplayName()
+{
+	return GetClass()->GetDisplayNameText();
 }

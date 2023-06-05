@@ -18,6 +18,13 @@ protected:
 
 	UPROPERTY(Category="Trigger Settings", EditAnywhere)
 	bool bCanDeactivateEvent = true;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetCanActivateEvent();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetCanDeactivateEvent();
 	
 private:
 	/** The owning ABangoEvent will listen for this delegate to fire. */
@@ -53,4 +60,9 @@ protected:
 	/** Run this function to deactivate this Trigger's Event. */
 	UFUNCTION(BlueprintCallable)
 	void DeactivateEvent(UObject* OldInstigator);
+
+#if WITH_EDITOR
+public:
+	virtual FText GetDisplayName();
+#endif
 };

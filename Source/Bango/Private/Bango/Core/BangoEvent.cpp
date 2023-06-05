@@ -444,9 +444,9 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre)
 {	
 	UFont* TextFont = GEngine->GetMediumFont();
-	
+
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
-	
+
 	FCanvasTextItem Text(HeaderTextPos, DisplayName, TextFont, FColor::White);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
@@ -490,6 +490,44 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		Data.Add(FString::Printf(TEXT("(Activation Limit: %i)"), ActivationLimit));
 	}
 
+	for (UBangoTrigger* Trigger : Triggers)
+	{
+		if (!IsValid(Trigger))
+		{
+			continue;
+		}
+
+		TStringBuilder<128> TriggerEntry;
+
+		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
+
+		if (Trigger->GetCanActivateEvent() || Trigger->GetCanDeactivateEvent())
+		{
+			TriggerEntry.AppendChar(' ');
+			TriggerEntry.AppendChar('(');
+			
+			if (Trigger->GetCanActivateEvent() && Trigger->GetCanDeactivateEvent())
+			{
+				TriggerEntry.Append("A+D");
+			}
+			else
+			{
+				if (Trigger->GetCanActivateEvent())
+				{
+					TriggerEntry.AppendChar('A');
+				}
+				else
+				{
+					TriggerEntry.AppendChar('D');
+				}
+			}
+		
+			TriggerEntry.AppendChar(')');
+		}
+
+		Data.Add(TriggerEntry.ToString());
+	}
+	
 	for (UBangoAction* Action : Actions)
 	{
 		if (!IsValid(Action))
@@ -497,7 +535,22 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 			continue;
 		}
 		
-		Data.Add(FString::Printf(TEXT("%s"), *Action->GetDisplayName()));
+		TStringBuilder<128> ActionEntry;
+
+		ActionEntry.Append(*Action->GetDisplayName().ToString());
+
+		if (Action->GetUseStartDelay() || Action->GetUseStopDelay())
+		{
+			ActionEntry.AppendChar(' ');
+			
+			ActionEntry.AppendChar('(');
+
+			ActionEntry.Append(FString::Printf(TEXT("%.2f / %.2f"), Action->GetStartDelay(), Action->GetStopDelay()));
+			
+			ActionEntry.AppendChar(')');
+		}
+		
+		Data.Add(ActionEntry.ToString());
 	}
 	
 

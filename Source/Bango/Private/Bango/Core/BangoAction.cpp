@@ -5,6 +5,26 @@
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
+bool UBangoAction::GetUseStartDelay()
+{
+	return bUseStartDelay;
+}
+
+bool UBangoAction::GetUseStopDelay()
+{
+	return bUseStopDelay;
+}
+
+double UBangoAction::GetStartDelay()
+{
+	return StartDelay;
+}
+
+double UBangoAction::GetStopDelay()
+{
+	return StopDelay;
+}
+
 void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 {
 	Event = EventActor;
@@ -79,7 +99,7 @@ void UBangoAction::OnStart_Implementation() { /* Placeholder */}
 
 void UBangoAction::OnStop_Implementation() { /* Placeholder */ }
 
-FString UBangoAction::GetDisplayName_Implementation()
+FText UBangoAction::GetDisplayName_Implementation()
 {
-	return DisplayName.ToString();
+	return DisplayName;
 }
