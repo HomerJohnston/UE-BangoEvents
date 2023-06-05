@@ -59,7 +59,7 @@ bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
 {
 	StopActions(OldInstigator);
 	
-	return false;
+	return true;
 }
 
 // TOGGLE PROCESSOR
@@ -69,18 +69,17 @@ bool UBangoEventProcessor_Toggle::ActivateFromTrigger(UObject* NewInstigator)
 {
 	if (Instigators.Contains(NewInstigator))
 	{
-		UE_LOG(Bango, Warning, TEXT("Warning: Instigator %s attempted to activate event %s, but is already registered as a running instigator!"), *NewInstigator->GetName(), *GetName());
-
 		return false;
 	}
-		
+	
 	int32 InstigatorIndex = Instigators.Add(NewInstigator);
 
+	// Toggle events are either on or off, and cannot be turned on or off more than once at a time. If this is the first instigator, it must be newly turned on.
 	if (InstigatorIndex == 0)
 	{
 		StartActions(NewInstigator);
 	}
-
+	
 	return true;
 }
 

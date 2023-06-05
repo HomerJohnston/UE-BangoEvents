@@ -96,7 +96,8 @@ bool ABangoEvent::IsToggleType()
 
 bool ABangoEvent::IsInstancedType()
 {
-	return Type == EBangoEventType::Instanced;
+	return false;
+	//return Type == EBangoEventType::Instanced;
 }
 
 EBangoEventType ABangoEvent::GetType()
@@ -162,11 +163,13 @@ void ABangoEvent::BeginPlay()
 			EventProcessor = NewObject<UBangoEventProcessor_Toggle>(this);
 			break;
 		}
+		/*
 		case EBangoEventType::Instanced:
 		{
 			EventProcessor = NewObject<UBangoEventProcessor_Instanced>(this);
 			break;
 		}
+		*/
 		default:
 		{
 			checkNoEntry();
@@ -183,8 +186,6 @@ void ABangoEvent::BeginPlay()
 			it.RemoveCurrent();
 			continue;
 		}
-
-		Trigger->BindEvent(this);
 	}
 
 	SetFrozen(bStartsFrozen);

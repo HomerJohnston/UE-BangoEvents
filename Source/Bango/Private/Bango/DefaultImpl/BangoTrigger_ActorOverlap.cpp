@@ -13,6 +13,18 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
 	AActor* EventActor = GetEvent();
 
+	if (SubscribedActor.IsValid())
+	{
+		if (SubscribedActor == EventActor)
+		{
+			return;
+		}
+		else
+		{
+			Disable();
+		}
+	}
+	
 	EventActor->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
 	EventActor->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
 
@@ -24,14 +36,6 @@ void UBangoTrigger_ActorOverlap::Disable_Implementation()
 	if (!SubscribedActor.IsValid())
 	{
 		return;
-	}
-
-	// TODO: I should be able to handle changing the target actor during runtime, or else prevent it.
-	AActor* Actor = GetEvent();
-
-	if (SubscribedActor != Actor)
-	{
-		UE_LOG(Bango, Warning, TEXT("Warning, subscribed actor does not match target actor!"));
 	}
 	
 	SubscribedActor->OnActorBeginOverlap.RemoveDynamic(this, &ThisClass::OnBeginOverlap);

@@ -10,20 +10,18 @@ ABangoEvent* UBangoTrigger::GetEvent()
 	return Cast<ABangoEvent>(GetOuter());
 }
 
-void UBangoTrigger::BindEvent(ABangoEvent* Event)
-{
-	OnTriggerActivation.BindDynamic(Event, &ABangoEvent::Activate);
-	OnTriggerDeactivation.BindDynamic(Event, &ABangoEvent::Deactivate);
-}
-
 void UBangoTrigger::SetEnabled(bool bEnabled)
 {
 	if (bEnabled)
 	{
+		OnTriggerActivation.BindDynamic(GetEvent(), &ABangoEvent::Activate);
+		OnTriggerDeactivation.BindDynamic(GetEvent(), &ABangoEvent::Deactivate);
 		Enable();
 	}
 	else
 	{
+		OnTriggerActivation.Clear();
+		OnTriggerDeactivation.Clear();
 		Disable();
 	}
 }
@@ -40,9 +38,13 @@ void UBangoTrigger::Disable_Implementation()
 
 void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 {
+	if (!bCanActivateEvent)
+	{
+		return;
+	}
+	
 	if (GetEvent()->GetIsFrozen())
 	{
-		UE_LOG(Bango, Warning, TEXT("Trigger <%s> tried to activate event <%s> but event is frozen (did you forget to implement Disable function in trigger?"), *GetName(), *GetEvent()->GetName())
 		return;
 	}
 
@@ -51,5 +53,10 @@ void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 
 void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 {
+	if (!bCanDeactivateEvent)
+	{
+		return;
+	}
+	
 	OnTriggerDeactivation.Execute(OldInstigator);	
 }

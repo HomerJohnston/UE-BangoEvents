@@ -23,7 +23,7 @@ TMap<EBangoEventType, FLinearColor> ColorBaseMap
 {
 	{ EBangoEventType::Bang, RedBase },
 	{ EBangoEventType::Toggle, GreenBase },
-	{ EBangoEventType::Instanced, BlueBase },
+//	{ EBangoEventType::Instanced, BlueBase },
 };
 
 FLinearColor BrightenColor(FLinearColor C)
@@ -51,6 +51,13 @@ FLinearColor DarkDesatColor(FLinearColor C)
 {
 	float M = 0.10f;
 	float N = 0.02f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor VeryDarkDesatColor(FLinearColor C)
+{
+	float M = 0.05f;
+	float N = 0.01f;
 	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
 }
 
@@ -145,14 +152,23 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 		
 		if (!bToggles)
 		{
-			FLinearColor ActiveColor = BrightenColor(Color);
+			FLinearColor ActivationColor = BrightenColor(Color);
+			FLinearColor DeactivationColor = VeryDarkDesatColor(Color);
 			
 			double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
-			double Alpha = FMath::Clamp(ElapsedTimeSinceLastActivation / RecentPushColorCooldownTime, 0, 1);
+			double ActivationAlpha = FMath::Clamp(ElapsedTimeSinceLastActivation / RecentPushHandleCooldownTime, 0, 1);
 			
-			if (IsValid(GWorld) && (Alpha > 0))
+			if (IsValid(GWorld) && (ActivationAlpha > 0))
 			{
-				Color = FMath::Lerp(ActiveColor, Color, Alpha);
+				Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
+			}
+
+			double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
+			double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * RecentPushHandleCooldownTime), 0, 1);
+
+			if (IsValid(GWorld) && (DeactivationAlpha > 0))
+			{
+				Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
 			}
 		}
 		

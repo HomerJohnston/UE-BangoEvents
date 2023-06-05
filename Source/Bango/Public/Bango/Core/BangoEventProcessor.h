@@ -52,7 +52,7 @@ UCLASS()
 class UBangoEventProcessor_Toggle : public UBangoEventProcessor
 {
 	GENERATED_BODY()
-	
+
 public:
 	bool ActivateFromTrigger(UObject* NewInstigator) override;
 	

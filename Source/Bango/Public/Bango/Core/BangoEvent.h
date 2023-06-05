@@ -21,8 +21,8 @@ UENUM()
 enum class EBangoEventType : uint8
 {
 	Bang					UMETA(ToolTip="Bang Events have no concept of state: Triggers can freely execute Start and Stop of the Event's Actions whenever they fire Activate or Deactivate."),
-	Toggle					UMETA(ToolTip="Toggle Events are either activated or deactivated, and can only execute Start and Stop of the Event's Actions when the state changes. "),
-	Instanced				UMETA(ToolTip="Instanced Tooltip"),
+	Toggle					UMETA(ToolTip="Toggle Events are either activated or deactivated, and can only execute Start and Stop of the Event's Actions when the state changes. If the Actions include a delay, deactivating the event before the Action starts will cause that action to abort and not run."),
+	//Instanced				UMETA(ToolTip="Instanced Tooltip"),
 	MAX						UMETA(Hidden)
 };
 

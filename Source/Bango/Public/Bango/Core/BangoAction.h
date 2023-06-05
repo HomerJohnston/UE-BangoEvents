@@ -3,6 +3,7 @@
 #include "BangoAction.generated.h"
 
 class ABangoEvent;
+class UWorld;
 
 UCLASS(Abstract, Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
@@ -17,7 +18,7 @@ private:
 	FText DisplayName;
 
 	/** When set, start actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="General Settings", EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
+	UPROPERTY(Category="General Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
 	double StartDelay = 0;
 
 	/**  */
@@ -25,7 +26,7 @@ private:
 	bool bUseStartDelay = false;
 	
 	/** When set, start actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="General Settings", EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
+	UPROPERTY(Category="General Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
 	double StopDelay = 0;
 
 	/**  */
@@ -45,6 +46,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Transient)
 	TObjectPtr<UObject> Instigator;
+	
+	UPROPERTY(BlueprintReadOnly, Transient)
+	bool bRunning = false;
 	
 	UPROPERTY(Transient)
 	FTimerHandle StartTimerHandle;
@@ -81,4 +85,7 @@ public:
 	/** Display name used in the editor and debug printing. Override to replace/add additional text. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FString GetDisplayName();
+
+protected:
+	UWorld* GetWorld() const override;
 };

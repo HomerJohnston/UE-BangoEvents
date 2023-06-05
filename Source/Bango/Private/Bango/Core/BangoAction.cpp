@@ -20,13 +20,17 @@ void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 	}
 	else
 	{
-		OnStart();
+		StartDelayed();
 	}
 }
 
 void UBangoAction::StartDelayed()
 {
 	StartTimerHandle.Invalidate();
+	StopTimerHandle.Invalidate();
+
+	bRunning = true;
+	
 	OnStart();
 }
 
@@ -45,14 +49,30 @@ void UBangoAction::Stop()
 	}
 	else
 	{
-		OnStop();
+		StopDelayed();
 	}
 }
 
 void UBangoAction::StopDelayed()
 {
 	StopTimerHandle.Invalidate();
+	StartTimerHandle.Invalidate();
+	
+	bRunning = false;
+	
 	OnStop();
+}
+
+UWorld* UBangoAction::GetWorld() const
+{
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		return GetOuter()->GetWorld();
+	}
+	else
+	{
+		return nullptr;		
+	}
 }
 
 void UBangoAction::OnStart_Implementation() { /* Placeholder */}

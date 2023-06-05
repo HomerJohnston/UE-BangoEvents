@@ -18,7 +18,7 @@ protected:
 	// TODO: It hsould be possible for the event self to act as the overlappable actor, or for any other actor, or any other set of actors
 	
 	/** Use to filter/ignore triggers from different actors */
-	UPROPERTY(Category="Trigger Settings", EditAnywhere, Instanced)
+	UPROPERTY(Category="Actor Overlap Settings", EditAnywhere, Instanced)
 	UBangoInstigatorFilter* ActorFilter;
 
 	// STATE
