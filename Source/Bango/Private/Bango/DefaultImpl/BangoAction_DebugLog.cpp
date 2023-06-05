@@ -1,4 +1,4 @@
-﻿#include "Bango/DefaultImpl/DebugLogAction.h"
+﻿#include "Bango/DefaultImpl/BangoAction_DebugLog.h"
 
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"

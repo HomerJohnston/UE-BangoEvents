@@ -13,9 +13,25 @@ class BANGO_API UBangoAction : public UObject
 	// Settings
 	// ============================================================================================
 private:
-	UPROPERTY(Category="Bango Action Settings", EditAnywhere)
+	UPROPERTY(Category="General Settings", EditAnywhere)
 	FText DisplayName;
 
+	/** When set, start actions will be delayed by the specified length of time. */
+	UPROPERTY(Category="General Settings", EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
+	double StartDelay = 0;
+
+	/**  */
+	UPROPERTY()
+	bool bUseStartDelay = false;
+	
+	/** When set, start actions will be delayed by the specified length of time. */
+	UPROPERTY(Category="General Settings", EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
+	double StopDelay = 0;
+
+	/**  */
+	UPROPERTY()
+	bool bUseStopDelay = false;
+	
 	// ------------------------------------------
 	// Getters and Setters
 	// ------------------------------------------
@@ -30,6 +46,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient)
 	TObjectPtr<UObject> Instigator;
 	
+	UPROPERTY(Transient)
+	FTimerHandle StartTimerHandle;
+	
+	UPROPERTY(Transient)
+	FTimerHandle StopTimerHandle;
+	
 	// ------------------------------------------
 	// Getters and Setters
 	// ------------------------------------------
@@ -40,7 +62,11 @@ public:
 public:
 	void Start(ABangoEvent* EventActor, UObject* NewInstigator);
 
+	void StartDelayed();
+	
 	void Stop();
+
+	void StopDelayed();
 
 protected:
 	/** Performs action logic. You do not need to call Super implementation when overriding. */
@@ -50,8 +76,9 @@ protected:
 	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
 	void OnStop();
-	
-	/** Display name used in the editor and debug printing. */
+
+public:
+	/** Display name used in the editor and debug printing. Override to replace/add additional text. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	FText GetDisplayName();
+	FString GetDisplayName();
 };

@@ -2,7 +2,7 @@
 
 #include "Bango/Core/BangoAction.h"
 
-#include "DebugLogAction.generated.h"
+#include "BangoAction_DebugLog.generated.h"
 
 class ALight;
 

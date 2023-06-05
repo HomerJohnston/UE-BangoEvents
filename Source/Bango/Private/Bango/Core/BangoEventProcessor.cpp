@@ -8,7 +8,6 @@
 // ================================================================================================
 
 ABangoEvent* UBangoEventProcessor::GetEvent() const
-//-------------------------------------------------------------------------------------------------
 {
 	return Cast<ABangoEvent>(GetOuter());
 }
@@ -50,18 +49,16 @@ int32 UBangoEventProcessor::GetInstigatorsNum()
 // ================================================================================================
 
 bool UBangoEventProcessor_Bang::ActivateFromTrigger(UObject* NewInstigator)
-//-------------------------------------------------------------------------------------------------
 {
-	
-	
 	StartActions(NewInstigator);
 
 	return true;
 }
 
 bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
-//-------------------------------------------------------------------------------------------------
 {
+	StopActions(OldInstigator);
+	
 	return false;
 }
 
@@ -69,7 +66,6 @@ bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
 // ================================================================================================
 
 bool UBangoEventProcessor_Toggle::ActivateFromTrigger(UObject* NewInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	if (Instigators.Contains(NewInstigator))
 	{
@@ -89,7 +85,6 @@ bool UBangoEventProcessor_Toggle::ActivateFromTrigger(UObject* NewInstigator)
 }
 
 bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	bool bRunStopActions;
 
@@ -138,13 +133,11 @@ bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 // ================================================================================================
 
 void UBangoEventProcessor_Instanced::Initialize()
-//-------------------------------------------------------------------------------------------------
 {
 	
 }
 
 bool UBangoEventProcessor_Instanced::ActivateFromTrigger(UObject* NewInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	if (Instigators.Contains(NewInstigator))
 	{
@@ -161,7 +154,6 @@ bool UBangoEventProcessor_Instanced::ActivateFromTrigger(UObject* NewInstigator)
 }
 
 void UBangoEventProcessor_Instanced::StartActions(UObject* NewInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	// for an instanced event, we treat the assigned actions as template objects
 	FBangoEventInstigatorActions NewInstancedActions;
@@ -188,7 +180,6 @@ void UBangoEventProcessor_Instanced::StartActions(UObject* NewInstigator)
 }
 
 bool UBangoEventProcessor_Instanced::DeactivateFromTrigger(UObject* OldInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	StopActions(OldInstigator);
 
@@ -198,7 +189,6 @@ bool UBangoEventProcessor_Instanced::DeactivateFromTrigger(UObject* OldInstigato
 }
 
 void UBangoEventProcessor_Instanced::StopActions(UObject* OldInstigator)
-//-------------------------------------------------------------------------------------------------
 {
 	FBangoEventInstigatorActions* InstancedActions = InstancedActionsPerInstigator.Find(OldInstigator);
 

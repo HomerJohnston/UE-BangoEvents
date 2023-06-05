@@ -142,16 +142,6 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 		{
 			Color = LightDesatColor(Color);
 		}
-
-		if (Event->IsPendingActivation())
-		{
-			Color = EnhanceColor(Color);
-		}
-
-		if (Event->IsPendingDeactivation())
-		{
-			
-		}
 		
 		if (!bToggles)
 		{

@@ -4,7 +4,7 @@
 
 #include "Bango/Log.h"
 #include "Bango/Core/BangoAction.h"
-#include "Bango/Core/TriggerCondition.h"
+#include "Bango/Core/BangoTrigger.h"
 #include "Bango/Editor/PlungerComponent.h"
 //#include "Editor/EditorEngine.h"
 #include "Bango/Core/BangoEventProcessor.h"
@@ -71,27 +71,17 @@ FLinearColor ABangoEvent::GetCustomColor()
 
 int32 ABangoEvent::GetTriggerLimit()
 {
-	return TriggerLimit;
+	return ActivationLimit;
 }
 
 void ABangoEvent::SetTriggerLimit(int32 NewTriggerLimit)
 {
-	TriggerLimit = NewTriggerLimit;
+	ActivationLimit = NewTriggerLimit;
 }
 
 int32 ABangoEvent::GetTriggerCount()
 {
-	return TriggerCount;
-}
-
-double ABangoEvent::GetStartTriggerDelay()
-{
-	return bUseActivateTriggerDelay ? ActivateTriggerDelay : 0.0;
-}
-
-double ABangoEvent::GetStopTriggerDelay()
-{
-	return bUseDeactivateTriggerDelay ? DeactivateTriggerDelay : 0.0;
+	return ActivationCount;
 }
 
 bool ABangoEvent::IsBangType()
@@ -141,7 +131,7 @@ bool ABangoEvent::GetIsFrozen()
 
 bool ABangoEvent::GetIsExpired()
 {
-	return bUseTriggerLimit && (TriggerCount >= TriggerLimit);
+	return bUseActivationLimit && (ActivationCount >= ActivationLimit);
 }
 
 double ABangoEvent::GetLastActivationTime()
@@ -152,16 +142,6 @@ double ABangoEvent::GetLastActivationTime()
 double ABangoEvent::GetLastDeactivationTime()
 {
 	return LastDeactivationTime;
-}
-
-bool ABangoEvent::IsPendingActivation()
-{
-	return ActivateTimerHandle.IsValid();
-}
-
-bool ABangoEvent::IsPendingDeactivation()
-{
-	return DeactivateTimerHandle.IsValid();
 }
 
 // ============================================================================================
@@ -193,9 +173,9 @@ void ABangoEvent::BeginPlay()
 		}
 	}
 
-	for (auto it = ActivationTriggers.CreateIterator(); it; ++it)
+	for (auto it = Triggers.CreateIterator(); it; ++it)
 	{
-		UBangoTriggerCondition* Trigger = it->Get();
+		UBangoTrigger* Trigger = it->Get();
 		
 		if (!IsValid(Trigger))
 		{
@@ -204,35 +184,9 @@ void ABangoEvent::BeginPlay()
 			continue;
 		}
 
-		Trigger->OnTrigger.BindDynamic(this, &ThisClass::QueueActivate);
+		Trigger->BindEvent(this);
 	}
 
-	// TODO editor setting to disable these serialization warnings
-	if (IsBangType() && ActivateTriggerDelay == 0.0 && DeactivationTriggers.Num() > 0)
-	{
-		UE_LOG(Bango, Warning, TEXT("Deactivate triggers exist on Bang event %s but there is no start delay; won't be used, removing stop triggers"), *this->GetName());
-		DeactivationTriggers.Empty();
-	}
-
-	if ((IsToggleType() || IsInstancedType()) && DeactivationTriggers.Num() == 0)
-	{
-		UE_LOG(Bango, Warning, TEXT("Event %s is set to a toggle mode, but has no stop triggers"), *this->GetName());
-	}
-
-	for (auto it = DeactivationTriggers.CreateIterator(); it; ++it)
-	{
-		UBangoTriggerCondition* Trigger = it->Get();
-
-		if (!IsValid(Trigger))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
-			it.RemoveCurrent();
-			continue;
-		}
-		
-		Trigger->OnTrigger.BindDynamic(this, &ThisClass::QueueDeactivate);
-	}
-	
 	SetFrozen(bStartsFrozen);
 
 	Super::BeginPlay();
@@ -255,7 +209,7 @@ void ABangoEvent::BeginPlay()
 
 void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 {
-	TriggerCount = 0;
+	ActivationCount = 0;
 
 	if (bUnfreeze)
 	{
@@ -263,33 +217,17 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 	}
 }
 
-// TODO: warnings if lots of instigators? Other faster mechanisms to handle lots of instigators?
-void ABangoEvent::QueueActivate(UObject* NewInstigator)
-{	
+void ABangoEvent::Activate(UObject* NewInstigator)
+{
 	if (GetIsFrozen() || GetIsExpired())
 	{
 		return;
 	}
-
-	if (bUseActivateTriggerDelay && ActivateTriggerDelay > 0.0)
-	{
-		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::Activate, NewInstigator);
-		GetWorldTimerManager().SetTimer(ActivateTimerHandle, Delegate, ActivateTriggerDelay, false);
-	}
-	else
-	{
-		Activate(NewInstigator);
-	}
-}
-
-void ABangoEvent::Activate(UObject* NewInstigator)
-{
+	
 	if (EventProcessor->ActivateFromTrigger(NewInstigator))
 	{
-		TriggerCount++;
+		ActivationCount++;
 
-		GetWorldTimerManager().ClearTimer(ActivateTimerHandle);
-		
 		LastActivationTime = GetWorld()->GetTimeSeconds();
 		
 		OnBangoEventActivated.Broadcast(this, NewInstigator);
@@ -305,42 +243,15 @@ void ABangoEvent::Activate(UObject* NewInstigator)
 #endif
 }
 
-void ABangoEvent::QueueDeactivate(UObject* OldInstigator)
-{	
-	double Delay = bUseDeactivateTriggerDelay ? DeactivateTriggerDelay : 0.0;
-	
-	if (bUseDeactivateTriggerDelay && DeactivateTriggerDelay > 0.0)
-	{
-		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::Deactivate, OldInstigator);
-		GetWorldTimerManager().SetTimer(DeactivateTimerHandle, Delegate, Delay, false);
-	}
-	else
-	{
-		Deactivate(OldInstigator);
-	}
-}
-
 void ABangoEvent::Deactivate(UObject* OldInstigator)
 {
-	if (ActivateTimerHandle.IsValid())
-	{
-		GetWorldTimerManager().ClearTimer(ActivateTimerHandle);
-	}
-	
 	if (EventProcessor->DeactivateFromTrigger(OldInstigator))
 	{
-		GetWorldTimerManager().ClearTimer(DeactivateTimerHandle);
-		
 		LastDeactivationTime = GetWorld()->GetTimeSeconds();
 
 		OnBangoEventDeactivated.Broadcast(this, OldInstigator);
 	}
 	
-	if (GetIsFrozen() && EventProcessor->GetInstigatorsNum() == 0)
-	{
-		DisableTriggers(DeactivationTriggers);
-	}
-
 #if WITH_EDITOR
 	UpdateProxyState();
 #endif
@@ -355,19 +266,14 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 	
 	if (bFreeze)
 	{
-		DisableTriggers(ActivationTriggers);
+		DisableTriggers();
 
 		// Freezing is intended to halt new starts. It is not intended to prevent stopping running actions.
 		// We will also attempt to disable triggers whenever an instigator is removed.
-		if (EventProcessor->GetInstigatorsNum() == 0) 
-		{
-			DisableTriggers(DeactivationTriggers); 
-		}
 	}
 	else
 	{
-		EnableTriggers(ActivationTriggers);
-		EnableTriggers(DeactivationTriggers);
+		EnableTriggers();
 	}
 	
 	bFrozen = bFreeze;
@@ -377,24 +283,24 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 #endif
 }
 
-void ABangoEvent::EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
+void ABangoEvent::EnableTriggers()
 {
-	for (UBangoTriggerCondition* Trigger : Triggers)
+	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (IsValid(Trigger))
 		{
-			Trigger->Enable();
+			Trigger->SetEnabled(true);
 		}
 	}
 }
 
-void ABangoEvent::DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers)
+void ABangoEvent::DisableTriggers()
 {
-	for (UBangoTriggerCondition* Trigger : Triggers)
+	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (IsValid(Trigger))
 		{
-			Trigger->Disable();
+			Trigger->SetEnabled(false);
 		}
 	}
 }
@@ -576,12 +482,23 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocat
 
 TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 {
-	TArray<FString> Data; 
-
-	if (bUseTriggerLimit)
+	TArray<FString> Data;
+	
+	if (bUseActivationLimit)
 	{
-		Data.Add(FString::Printf(TEXT("(Limit: %i)"), TriggerLimit));
+		Data.Add(FString::Printf(TEXT("(Activation Limit: %i)"), ActivationLimit));
 	}
+
+	for (UBangoAction* Action : Actions)
+	{
+		if (!IsValid(Action))
+		{
+			continue;
+		}
+		
+		Data.Add(FString::Printf(TEXT("%s"), *Action->GetDisplayName()));
+	}
+	
 
 	return Data;
 }
@@ -590,9 +507,9 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 {
 	TArray<FString> Data; 
 
-	if (bUseTriggerLimit)
+	if (bUseActivationLimit)
 	{
-		Data.Add(FString::Printf(TEXT("(%i/%i)"), TriggerCount, TriggerLimit));
+		Data.Add(FString::Printf(TEXT("(%i/%i)"), ActivationCount, ActivationLimit));
 	}
 
 	if (IsToggleType())

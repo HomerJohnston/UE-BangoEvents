@@ -10,7 +10,7 @@
 class UBangoEventProcessor;
 class UObject;
 class UBangoAction;
-class UBangoTriggerCondition;
+class UBangoTrigger;
 class UBangoPlungerComponent;
 class FCanvasTextItem;
 
@@ -20,8 +20,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEve
 UENUM()
 enum class EBangoEventType : uint8
 {
-	Bang					UMETA(ToolTip="Bang Tooltip"),
-	Toggle					UMETA(ToolTip="Toggle Tooltip"),
+	Bang					UMETA(ToolTip="Bang Events have no concept of state: Triggers can freely execute Start and Stop of the Event's Actions whenever they fire Activate or Deactivate."),
+	Toggle					UMETA(ToolTip="Toggle Events are either activated or deactivated, and can only execute Start and Stop of the Event's Actions when the state changes. "),
 	Instanced				UMETA(ToolTip="Instanced Tooltip"),
 	MAX						UMETA(Hidden)
 };
@@ -134,12 +134,12 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	/**  */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditAnywhere, BlueprintReadOnly)
 	FText DisplayName;
-
+	
 	/**  */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
-	FLinearColor CustomColor;
+	FLinearColor CustomColor = FColor::White;
 
 	/**  */
 	UPROPERTY()
@@ -156,47 +156,27 @@ private:
 	EBangoToggleDeactivateCondition DeactivateCondition;
 	
 	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any trigger signals. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseTriggerLimit", ClampMin=1))
-	int32 TriggerLimit = 1;
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseActivationLimit", ClampMin=1))
+	int32 ActivationLimit = 1;
 
 	/**  */
 	UPROPERTY()
-	bool bUseTriggerLimit = true;
+	bool bUseActivationLimit = true;
 
-	/** When set, start actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseActivateTriggerDelay", ClampMin = 0.0))
-	double ActivateTriggerDelay = 0;
-
-	/**  */
-	UPROPERTY()
-	bool bUseActivateTriggerDelay = false;
-
-	/** When set, stop actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseDeactivateTriggerDelay", ClampMin = 0.0))
-	double DeactivateTriggerDelay = 0;
-
-	/**  */
-	UPROPERTY()
-	bool bUseDeactivateTriggerDelay = false;
-
-	/**  */
+	/** Runs the Start function of all Actions */
 	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
-	TArray<TObjectPtr<UBangoTriggerCondition>> ActivationTriggers;
+	TArray<TObjectPtr<UBangoTrigger>> Triggers;
 
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
 	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
 	TArray<TObjectPtr<UBangoAction>> Actions;
 	
 	/**  */
-	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced, meta=(EditCondition="Type != EBangoEventType::Bang || bUseActivateTriggerDelay", EditConditionHides))
-	TArray<TObjectPtr<UBangoTriggerCondition>> DeactivationTriggers;
-
-	/**  */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
 
 	/** When set, freezes the event after it expires and runs out of instigators, typically to disable triggers and save CPU. */
-	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseTriggerLimit", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseActivationLimit", HideEditConditionToggle, EditConditionHides))
 	bool bFreezeWhenExpired = true;
 	
 	/** How to measure trigger delay times or trigger hold times. */
@@ -228,12 +208,6 @@ public:
 	int32 GetTriggerCount();
 	
 	UFUNCTION(BlueprintCallable)
-	double GetStartTriggerDelay();
-	
-	UFUNCTION(BlueprintCallable)
-	double GetStopTriggerDelay();
-
-	UFUNCTION(BlueprintCallable)
 	bool IsToggleType();
 
 	UFUNCTION(BlueprintCallable)
@@ -263,7 +237,7 @@ protected:
 	
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
-	int32 TriggerCount = 0;
+	int32 ActivationCount = 0;
 	
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastActivationTime = -999;
@@ -276,12 +250,6 @@ protected:
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventDeactivated OnBangoEventDeactivated;
-
-	UPROPERTY(Transient)
-	FTimerHandle ActivateTimerHandle;
-	
-	UPROPERTY(Transient)
-	FTimerHandle DeactivateTimerHandle;
 
 	// ------------------------------------------
 	// STATE GETTERS
@@ -299,12 +267,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	double GetLastDeactivationTime();
 
-	UFUNCTION(BlueprintCallable)
-	bool IsPendingActivation();
-
-	UFUNCTION(BlueprintCallable)
-	bool IsPendingDeactivation();
-	
 	// ============================================================================================
 	// API
 	// ============================================================================================
@@ -320,19 +282,15 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void QueueActivate(UObject* NewInstigator);
-
 	void Activate(UObject* NewInstigator);
 
 	UFUNCTION(BlueprintCallable)
-	void QueueDeactivate(UObject* OldInstigator);
-
 	void Deactivate(UObject* OldInstigator);
 
 protected:
-	void EnableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
+	void EnableTriggers();
 
-	void DisableTriggers(TArray<UBangoTriggerCondition*>& Triggers);
+	void DisableTriggers();
 	
 	// ============================================================================================
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

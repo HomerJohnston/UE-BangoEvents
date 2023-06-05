@@ -2,27 +2,36 @@
 
 #include "UObject/Object.h"
 
-#include "TriggerCondition.generated.h"
+#include "BangoTrigger.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnTrigger, UObject*, NewInstigator);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FTriggerDelegate, UObject*, NewInstigator);
 
 class ABangoEvent;
 UCLASS(Abstract, Blueprintable, DefaultToInstanced, EditInlineNew)
-class BANGO_API UBangoTriggerCondition : public UObject
+class BANGO_API UBangoTrigger : public UObject
 {
 	GENERATED_BODY()
 
-public:
+private:
 	/** The owning ABangoEvent will listen for this delegate to fire. */
 	UPROPERTY()
-	FOnTrigger OnTrigger;
+	FTriggerDelegate OnTriggerActivation;
+
+	/** The owning ABangoEvent will listen for this delegate to fire. */
+	UPROPERTY()
+	FTriggerDelegate OnTriggerDeactivation;
 	
-public:
+protected:
 	UFUNCTION(BlueprintCallable)  // TODO pure?
 	ABangoEvent* GetEvent();
-	
+
+public:
+	void BindEvent(ABangoEvent* Event);
+
+	UFUNCTION(BlueprintCallable)
 	void SetEnabled(bool bEnabled);
-	
+
+protected:
 	/** Perform setup to make the trigger valid and active here (subscribe to events or turn on a tick timer etc). */ // TODO enforce implementation of this!
 	UFUNCTION(BlueprintNativeEvent)
 	void Enable();
@@ -31,7 +40,11 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void Disable();
 
+protected:
 	/** Run this function to fire (start or stop) the ABangoEvent that owns this trigger. */
 	UFUNCTION(BlueprintCallable)
-	void Trigger(UObject* NewInstigator);
+	void ActivateEvent(UObject* NewInstigator);
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateEvent(UObject* OldInstigator);
 };
