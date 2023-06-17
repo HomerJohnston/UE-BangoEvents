@@ -406,7 +406,7 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 }
 
 double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
-{	
+{
 	// Settings
 	double X, Y;
 	
@@ -439,10 +439,22 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
-	FCanvasTextItem Text(HeaderTextPos, DisplayName, TextFont, FColor::White);
+	FText Display;
+
+	if (DisplayName.IsEmpty())
+	{
+		Display = FText::FromString(GetActorLabel());
+	}
+	else
+	{
+		Display = DisplayName;
+	}
+	
+	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, FColor::White);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
 	Text.bOutlined = true;
+	Text.Scale = FVector2d(1.2, 1.2);
 
 	return Text;
 }
@@ -463,8 +475,9 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocat
 	for(const FString& S : Data)
 	{
 		FCanvasTextItem Text(DataTextPos, FText::FromString(S), TextFont, FColor::White);
-		Text.bCentreX = true;
+		Text.bCentreX = false;
 		Text.Position.Y += CurrentLineOffset;
+		Text.Scale = FVector2d(1.1, 1.1);
 		CanvasTextItems.Add(Text);
 
 		CurrentLineOffset += LineOffset;
@@ -483,7 +496,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 	}
 	else
 	{
-		Data.Add(TEXT("Activation Limit: \u221E"));
+		Data.Add(TEXT("Activation Limit: Infinite"));
 	}
 
 	for (UBangoTrigger* Trigger : Triggers)
@@ -495,6 +508,8 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 
 		TStringBuilder<128> TriggerEntry;
 
+		TriggerEntry.Append("Trgr: ");
+		
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
 		TriggerEntry.Append(" (");
@@ -536,6 +551,8 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		}
 		
 		TStringBuilder<128> ActionEntry;
+
+		ActionEntry.Append("Actn: ");
 
 		ActionEntry.Append(*Action->GetDisplayName().ToString());
 

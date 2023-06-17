@@ -100,7 +100,9 @@ void UBangoPlungerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetHiddenInGame(!GhostPepperGames::Bango::bShowEventsInGame);
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>(); 
+	
+	SetHiddenInGame(!DevSettings->bShowEventsInGame);
 }
 
 FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWorld) const

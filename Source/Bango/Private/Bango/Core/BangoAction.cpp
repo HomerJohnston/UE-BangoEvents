@@ -101,5 +101,10 @@ void UBangoAction::OnStop_Implementation() { /* Placeholder */ }
 
 FText UBangoAction::GetDisplayName_Implementation()
 {
+	if (DisplayName.IsEmpty())
+	{
+		return GetClass()->GetDisplayNameText();
+	}
+	
 	return DisplayName;
 }

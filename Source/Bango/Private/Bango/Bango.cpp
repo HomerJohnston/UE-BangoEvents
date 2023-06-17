@@ -9,12 +9,6 @@
 
 void FBangoModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	IConsoleVariable* ShowEventsInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
-
-	ShowEventsInGameCVar->Set(true);
-
-	GhostPepperGames::Bango::
 }
 
 void FBangoModule::ShutdownModule()

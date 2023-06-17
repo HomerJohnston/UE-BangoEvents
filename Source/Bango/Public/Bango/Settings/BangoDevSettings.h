@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/DeveloperSettingsBackedByCVars.h"
+#include "Engine/DeveloperSettings.h"
 
 #include "BangoDevSettings.generated.h"
 
