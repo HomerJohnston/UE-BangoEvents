@@ -16,11 +16,14 @@ protected:
 	// ============================================================================================
 
 	// TODO: It hsould be possible for the event self to act as the overlappable actor, or for any other actor, or any other set of actors
+
+	UPROPERTY(Category="Settings", EditAnywhere)
+	AActor* TargetActor;
 	
 	/** Use to filter/ignore triggers from different actors */
-	UPROPERTY(Category="Actor Overlap Settings", EditAnywhere, Instanced)
+	UPROPERTY(Category="Settings", EditAnywhere, Instanced, meta=(EditCondition="TargetActor==nullptr", EditConditionHides))
 	UBangoInstigatorFilter* ActorFilter;
-
+	
 	// STATE
 	// ============================================================================================
 	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
@@ -30,6 +33,8 @@ public:
 
 	void Disable_Implementation() override;
 
+	void SetTargetActor(AActor* NewTargetActor);
+	
 protected:
 	UFUNCTION()
 	void OnBeginOverlap(AActor* BangoEventActor, AActor* InstigatorActor);

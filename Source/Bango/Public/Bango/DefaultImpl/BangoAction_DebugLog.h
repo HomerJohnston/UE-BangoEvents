@@ -12,11 +12,11 @@ class UBangoAction_DebugLog : public UBangoAction
 	GENERATED_BODY()
 protected:
 	/** Optional debug string to print */
-	UPROPERTY(Category="Debug Log Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	FString StartText;
 	
 	/** Optional debug string to print */
-	UPROPERTY(Category="Debug Log Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	FString StopText;
 	
 public:

@@ -74,7 +74,7 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 
 	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
-	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
+	//FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
 }
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
@@ -123,7 +123,17 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
 	check(Event);
 
-	FLinearColor Color = Event->GetUsesCustomColor() ? Event->GetCustomColor() : ColorBaseMap[Event->GetType()];
+	FLinearColor Color;
+	FLinearColor* MapColor = ColorBaseMap.Find(Event->GetType());
+	
+	if (!MapColor)
+	{
+		Color = FColor::Magenta;
+	}
+	else
+	{
+		Color = *MapColor;
+	}
 	
 	const FBangoEventStateFlag& State = Event->GetState();
 	
@@ -240,7 +250,7 @@ void UBangoPlungerComponent::OnCvarChange()
 	}
 	
 	const IConsoleVariable* ShowInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
-	
+
 	bool bNewHiddenInGame = !ShowInGameCVar->GetBool();
 	
 	SetHiddenInGame(bNewHiddenInGame);

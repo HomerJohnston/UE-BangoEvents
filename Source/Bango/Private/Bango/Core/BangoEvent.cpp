@@ -403,6 +403,11 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 			Canvas->DrawItem(Text);	
 		}
 	}
+
+	for (UBangoAction* Action : Actions)
+	{
+		Action->DebugDraw(Canvas, Cont);
+	}
 }
 
 double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
@@ -440,7 +445,7 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
 	FText Display;
-
+	
 	if (DisplayName.IsEmpty())
 	{
 		Display = FText::FromString(GetActorLabel());
@@ -449,8 +454,10 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 	{
 		Display = DisplayName;
 	}
+
+	FColor HeaderColor = (HasInvalidData() ? FColor::Red : FColor::White);
 	
-	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, FColor::White);
+	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, HeaderColor);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
 	Text.bOutlined = true;
@@ -499,13 +506,19 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		Data.Add(TEXT("Activation Limit: Infinite"));
 	}
 
+	if (Triggers.IsEmpty())
+	{
+		Data.Add("NO TRIGGERS!");
+	}
+	
 	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{
+			Data.Add("NULL TRIGGER");
 			continue;
 		}
-
+		
 		TStringBuilder<128> TriggerEntry;
 
 		TriggerEntry.Append("Trgr: ");
@@ -513,7 +526,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
 		TriggerEntry.Append(" (");
-		
+	
 		if (Trigger->GetCanActivateEvent() || Trigger->GetCanDeactivateEvent())
 		{
 			if (Trigger->GetCanActivateEvent() && Trigger->GetCanDeactivateEvent())
@@ -531,7 +544,6 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 					TriggerEntry.Append("Deactivate Only");
 				}
 			}
-		
 		}
 		else
 		{
@@ -542,11 +554,17 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 		
 		Data.Add(TriggerEntry.ToString());
 	}
+
+	if (Actions.IsEmpty())
+	{
+		Data.Add("NO ACTIONS!");
+	}
 	
 	for (UBangoAction* Action : Actions)
 	{
 		if (!IsValid(Action))
 		{
+			Data.Add("NULL ACTION");
 			continue;
 		}
 		
@@ -562,7 +580,24 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 			
 			ActionEntry.AppendChar('(');
 
-			ActionEntry.Append(FString::Printf(TEXT("%.2f / %.2f"), Action->GetStartDelay(), Action->GetStopDelay()));
+			bool bShowSeparator = false;
+			
+			if (Action->GetUseStartDelay())
+			{
+				ActionEntry.Append(FString::Printf(TEXT("Start Delay: %.2f"), Action->GetStartDelay()));
+				
+				bShowSeparator = true;
+			}
+
+			if (Action->GetUseStopDelay())
+			{
+				if (bShowSeparator)
+				{
+					ActionEntry.Append(" / ");
+				}
+				
+				ActionEntry.Append(FString::Printf(TEXT("Stop Delay: %.2f"), Action->GetStopDelay()));
+			}
 			
 			ActionEntry.AppendChar(')');
 		}
@@ -589,5 +624,36 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 	}
 	
 	return Data;
+}
+
+bool ABangoEvent::HasInvalidData() const
+{
+	if (Triggers.IsEmpty())
+	{
+		return true;
+	}
+
+	if (Actions.IsEmpty())
+	{
+		return true;
+	}
+	
+	for(UBangoTrigger* Trigger : Triggers)
+	{
+		if (!IsValid(Trigger))
+		{
+			return true;
+		}
+	}
+
+	for(UBangoAction* Action : Actions)
+	{
+		if (!IsValid(Action))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 #endif

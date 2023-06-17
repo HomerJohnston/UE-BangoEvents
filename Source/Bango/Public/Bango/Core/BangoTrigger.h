@@ -13,10 +13,10 @@ class BANGO_API UBangoTrigger : public UObject
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(Category="Trigger Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	bool bCanActivateEvent = true;
 
-	UPROPERTY(Category="Trigger Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	bool bCanDeactivateEvent = true;
 
 public:

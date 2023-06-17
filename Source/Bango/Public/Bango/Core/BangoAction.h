@@ -14,11 +14,11 @@ class BANGO_API UBangoAction : public UObject
 	// Settings
 	// ============================================================================================
 private:
-	UPROPERTY(Category="General Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	FText DisplayName;
 
 	/** When set, start actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="General Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
+	UPROPERTY(Category="Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
 	double StartDelay = 0;
 
 	/**  */
@@ -26,7 +26,7 @@ private:
 	bool bUseStartDelay = false;
 	
 	/** When set, start actions will be delayed by the specified length of time. */
-	UPROPERTY(Category="General Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
+	UPROPERTY(Category="Settings", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
 	double StopDelay = 0;
 
 	/**  */
@@ -100,4 +100,10 @@ public:
 
 protected:
 	UWorld* GetWorld() const override;
+
+#if WITH_EDITOR
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+#endif
 };

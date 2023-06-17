@@ -95,6 +95,10 @@ UWorld* UBangoAction::GetWorld() const
 	}
 }
 
+void UBangoAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
+{
+}
+
 void UBangoAction::OnStart_Implementation() { /* Placeholder */}
 
 void UBangoAction::OnStop_Implementation() { /* Placeholder */ }

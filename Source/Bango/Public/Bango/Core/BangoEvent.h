@@ -164,11 +164,11 @@ private:
 	bool bUseActivationLimit = true;
 
 	/** Runs the Start function of all Actions */
-	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
 	TArray<TObjectPtr<UBangoTrigger>> Triggers;
 
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
-	UPROPERTY(Category="Bango|Behavior", EditAnywhere, Instanced)
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
 	TArray<TObjectPtr<UBangoAction>> Actions;
 	
 	/**  */
@@ -329,6 +329,8 @@ protected:
 	TArray<FString> GetDebugDataString_Editor();
 
 	TArray<FString> GetDebugDataString_Game();
+
+	bool HasInvalidData() const;
 #endif
 };
 

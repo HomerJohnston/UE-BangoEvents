@@ -11,11 +11,11 @@
 // ============================================================================================
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
-	AActor* EventActor = GetEvent();
-
+	AActor* ActorToUse = IsValid(TargetActor) ? TargetActor : GetEvent();
+	
 	if (SubscribedActor.IsValid())
 	{
-		if (SubscribedActor == EventActor)
+		if (SubscribedActor == ActorToUse)
 		{
 			return;
 		}
@@ -25,10 +25,10 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 		}
 	}
 	
-	EventActor->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
-	EventActor->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
+	ActorToUse->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+	ActorToUse->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
 
-	SubscribedActor = EventActor;
+	SubscribedActor = ActorToUse;
 }
 
 void UBangoTrigger_ActorOverlap::Disable_Implementation()
@@ -42,6 +42,18 @@ void UBangoTrigger_ActorOverlap::Disable_Implementation()
 	SubscribedActor->OnActorEndOverlap.RemoveDynamic(this, &ThisClass::OnEndOverlap);
 
 	SubscribedActor = nullptr;
+}
+
+void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
+{
+	if (NewTargetActor == SubscribedActor)
+	{
+		return;
+	}
+
+	TargetActor = NewTargetActor;
+
+	Enable();
 }
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
