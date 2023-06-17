@@ -6,8 +6,5 @@ namespace GhostPepperGames
 {
 	namespace Bango
 	{
-		static bool bShowEventsInGame;
-		
-		static bool bShowEventsInEditor;
 	}
 }

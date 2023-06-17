@@ -8,6 +8,7 @@
 #include "Bango/Editor/PlungerComponent.h"
 //#include "Editor/EditorEngine.h"
 #include "Bango/Core/BangoEventProcessor.h"
+#include "Bango/Settings/BangoDevSettings.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "VisualLogger/VisualLogger.h"
@@ -360,26 +361,19 @@ void ABangoEvent::UpdateProxyState()
 // TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
 void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 {
-	if (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags))
-	{
-		return;
-	}
-	
 	UWorld* World = GetWorld();
-
-	if (!IsValid(World))
-	{
-		return;
-	}
-	
-	if (World->IsGameWorld() && !GhostPepperGames::Bango::bShowEventsInGame)
-	{
-		return;
-	}
-
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
 	FVector ScreenLocation;
+	double Distance = GetScreenLocation(Canvas, ScreenLocation);
 	
-	if (!GetScreenLocation(Canvas, ScreenLocation))
+	if  (
+		   (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags)) ||
+		   (!IsValid(World)) ||
+		   (World->IsGameWorld() && !DevSettings->bShowEventsInGame) ||
+		   (!World->IsGameWorld() && !DevSettings->bShowEventsInEditor) ||
+		   (Distance < 0.0)	||
+		   (Distance > FMath::Square(GetDefault<UBangoDevSettings>()->DisplayDistanceFar))
+		)
 	{
 		return;
 	}
@@ -387,27 +381,31 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation);
 	Canvas->DrawItem(HeaderText);
 
-	TDelegate<TArray<FString>()> DataGetter;
-
-	if (World->IsGameWorld())
+	if (Distance < FMath::Square(DevSettings->DisplayDistanceClose))
 	{
-		DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Game);
-	}
-	else
-	{
-		DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
-	}
+		TDelegate<TArray<FString>()> DataGetter;
 
-	// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
-	TArray<FCanvasTextItem> DataText = GetDebugDataText(ScreenLocation, DataGetter);
+		if (GetWorld()->IsGameWorld())
+		{
+			DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Game);
+		}
+		else
+		{
+			DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
+		}
+	
+		// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
+		// By setting up an array of individual items I can keep them all centre justified and manually offset each one.
+		TArray<FCanvasTextItem> DataText = GetDebugDataText(ScreenLocation, DataGetter);
 
-	for (FCanvasTextItem& Text : DataText)
-	{
-		Canvas->DrawItem(Text);	
+		for (FCanvasTextItem& Text : DataText)
+		{
+			Canvas->DrawItem(Text);	
+		}
 	}
 }
 
-bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
+double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 {	
 	// Settings
 	double X, Y;
@@ -415,30 +413,24 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 	FVector WorldCameraPos;
 	FVector WorldCameraDir;
 
-	const double ThresholdDistance = GetWorld()->IsGameWorld() ? 2500 : 5000; // TODO editor settings for display distances
-	const double Threshold = FMath::Square(ThresholdDistance);
-
 	// Validity Logic
 	Canvas->GetCenter(X, Y);
 	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
 
 	FVector WorldDrawLocation = GetActorLocation() + FVector(0,0,100);
-	
-	if (FVector::DistSquared(WorldDrawLocation, WorldCameraPos) > Threshold)
-	{
-		return false;
-	}
+
+	double DistSquared = FVector::DistSquared(WorldDrawLocation, WorldCameraPos);
 
 	FVector VectorToWorldDrawLocation = WorldDrawLocation - WorldCameraPos;
 
 	if ((VectorToWorldDrawLocation | WorldCameraDir) < 0.0)
 	{
-		return false;
+		return -1;
 	}
 
 	ScreenLocation = Canvas->Project(WorldDrawLocation);
 
-	return true;
+	return DistSquared;
 }
 
 FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre)
@@ -487,7 +479,11 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 	
 	if (bUseActivationLimit)
 	{
-		Data.Add(FString::Printf(TEXT("(Activation Limit: %i)"), ActivationLimit));
+		Data.Add(FString::Printf(TEXT("Activation Limit: %i"), ActivationLimit));
+	}
+	else
+	{
+		Data.Add(TEXT("Activation Limit: \u221E"));
 	}
 
 	for (UBangoTrigger* Trigger : Triggers)
@@ -501,30 +497,34 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
+		TriggerEntry.Append(" (");
+		
 		if (Trigger->GetCanActivateEvent() || Trigger->GetCanDeactivateEvent())
 		{
-			TriggerEntry.AppendChar(' ');
-			TriggerEntry.AppendChar('(');
-			
 			if (Trigger->GetCanActivateEvent() && Trigger->GetCanDeactivateEvent())
 			{
-				TriggerEntry.Append("A+D");
+				TriggerEntry.Append("Activate & Deactivate");
 			}
 			else
 			{
 				if (Trigger->GetCanActivateEvent())
 				{
-					TriggerEntry.AppendChar('A');
+					TriggerEntry.Append("Activate Only");
 				}
 				else
 				{
-					TriggerEntry.AppendChar('D');
+					TriggerEntry.Append("Deactivate Only");
 				}
 			}
 		
-			TriggerEntry.AppendChar(')');
+		}
+		else
+		{
+			TriggerEntry.Append("INACTIVE");
 		}
 
+		TriggerEntry.AppendChar(')');
+		
 		Data.Add(TriggerEntry.ToString());
 	}
 	

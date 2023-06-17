@@ -319,8 +319,8 @@ public:
 
 protected:
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
-
-	bool GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation);
+	
+	double GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation);
 	
 	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre);
 

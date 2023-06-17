@@ -2,6 +2,8 @@
 
 #include "Bango/Bango.h"
 
+#include "Bango/CVars.h"
+
 #define LOCTEXT_NAMESPACE "FBangoModule"
 
 
@@ -11,6 +13,8 @@ void FBangoModule::StartupModule()
 	IConsoleVariable* ShowEventsInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
 
 	ShowEventsInGameCVar->Set(true);
+
+	GhostPepperGames::Bango::
 }
 
 void FBangoModule::ShutdownModule()
