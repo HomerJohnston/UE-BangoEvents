@@ -27,16 +27,14 @@ double UBangoAction::GetStopDelay()
 
 void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 {
-	Event = EventActor;
 	Instigator = NewInstigator;
 
-	check(Event);
 	check(Instigator);
 
 	if (bUseStartDelay && StartDelay > 0.0)
 	{
 		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartDelayed);
-		Event->GetWorldTimerManager().SetTimer(StartTimerHandle, Delegate, StartDelay, false);
+		GetEvent()->GetWorldTimerManager().SetTimer(StartTimerHandle, Delegate, StartDelay, false);
 	}
 	else
 	{
@@ -58,14 +56,14 @@ void UBangoAction::Stop()
 {
 	if (StartTimerHandle.IsValid())
 	{
-		Event->GetWorldTimerManager().ClearTimer(StartTimerHandle);
+		GetEvent()->GetWorldTimerManager().ClearTimer(StartTimerHandle);
 		return;
 	}
 
 	if (bUseStopDelay && StopDelay > 0.0)
 	{
 		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::StopDelayed);
-		Event->GetWorldTimerManager().SetTimer(StopTimerHandle, Delegate, StopDelay, false);
+		GetEvent()->GetWorldTimerManager().SetTimer(StopTimerHandle, Delegate, StopDelay, false);
 	}
 	else
 	{
@@ -93,6 +91,11 @@ UWorld* UBangoAction::GetWorld() const
 	{
 		return nullptr;		
 	}
+}
+
+ABangoEvent* UBangoAction::GetEvent() const
+{
+	return Cast<ABangoEvent>(GetOuter());
 }
 
 void UBangoAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)

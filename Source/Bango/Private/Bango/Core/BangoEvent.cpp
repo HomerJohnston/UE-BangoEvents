@@ -49,28 +49,27 @@ ABangoEvent::ABangoEvent()
 #endif
 }
 
-
 // ------------------------------------------
 // Settings Getters
 // ------------------------------------------
 #if WITH_EDITORONLY_DATA
-FText ABangoEvent::GetDisplayName()
+FText ABangoEvent::GetDisplayName() const
 {
 	return DisplayName;
 }
 
-bool ABangoEvent::GetUsesCustomColor()
+bool ABangoEvent::GetUsesCustomColor() const
 {
 	return bUseCustomColor;
 }
 
-FLinearColor ABangoEvent::GetCustomColor()
+FLinearColor ABangoEvent::GetCustomColor() const
 {
 	return CustomColor;
 }
 #endif
 
-int32 ABangoEvent::GetTriggerLimit()
+int32 ABangoEvent::GetTriggerLimit() const
 {
 	return ActivationLimit;
 }
@@ -80,44 +79,44 @@ void ABangoEvent::SetTriggerLimit(int32 NewTriggerLimit)
 	ActivationLimit = NewTriggerLimit;
 }
 
-int32 ABangoEvent::GetTriggerCount()
+int32 ABangoEvent::GetTriggerCount() const
 {
 	return ActivationCount;
 }
 
-bool ABangoEvent::IsBangType()
+bool ABangoEvent::IsBangType() const
 {
 	return Type == EBangoEventType::Bang;
 }
 
-bool ABangoEvent::IsToggleType()
+bool ABangoEvent::IsToggleType() const
 {
 	return Type == EBangoEventType::Toggle;
 }
 
-bool ABangoEvent::IsInstancedType()
+bool ABangoEvent::IsInstancedType() const
 {
 	return false;
 	//return Type == EBangoEventType::Instanced;
 }
 
-EBangoEventType ABangoEvent::GetType()
+EBangoEventType ABangoEvent::GetType() const
 {
 	return Type;
 }
 
-EBangoToggleDeactivateCondition ABangoEvent::GetDeactivateCondition()
+EBangoToggleDeactivateCondition ABangoEvent::GetDeactivateCondition() const
 {
 	return DeactivateCondition;
 }
 
 
-const TArray<UBangoAction*>& ABangoEvent::GetActions()
+const TArray<UBangoAction*>& ABangoEvent::GetActions() const
 {
 	return Actions;
 }
 
-bool ABangoEvent::GetStartsFrozen()
+bool ABangoEvent::GetStartsFrozen() const
 {
 	return bStartsFrozen;
 }
@@ -279,7 +278,7 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 	}
 	
 	bFrozen = bFreeze;
-	
+
 #if WITH_EDITOR
 	UpdateProxyState();
 #endif
@@ -307,22 +306,6 @@ void ABangoEvent::DisableTriggers()
 	}
 }
 
-#if ENABLE_VISUAL_LOG
-void DoVLOG(AActor* Target, FString Text, FColor Color, UObject* NewInstigator)
-{
-	if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
-	{
-		UE_VLOG_LOCATION(Target, Bango, Log, Target->GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
-		UE_VLOG_SEGMENT(Target, Bango, Log, Target->GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
-		UE_VLOG_LOCATION(Target, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
-	}
-	else
-	{
-		UE_VLOG_LOCATION(Target, Bango, Log, Target->GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
-	}
-}
-#endif
-
 // Editor ---------------------------------------
 
 #if WITH_EDITOR
@@ -330,12 +313,16 @@ const FBangoEventStateFlag& ABangoEvent::GetState() const
 {
 	return CurrentState;
 }
+#endif
 
+#if WITH_EDITOR
 bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
 	return CurrentState.HasFlag(State);
 }
+#endif
 
+#if WITH_EDITOR
 void ABangoEvent::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -350,16 +337,20 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 		UpdateProxyState();
 	}
 }
+#endif
 
+#if WITH_EDITOR
 void ABangoEvent::UpdateProxyState()
 {
 	CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
 }
+#endif
 
+#if WITH_EDITOR
 // TODO see void FEQSRenderingDebugDrawDelegateHelper::DrawDebugLabels(UCanvas* Canvas, APlayerController* PC) they skip drawing if the canvas isn't from the correct world, do I need to do this?
-void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
+void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 {
 	UWorld* World = GetWorld();
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
@@ -409,8 +400,10 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont)
 		Action->DebugDraw(Canvas, Cont);
 	}
 }
+#endif
 
-double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
+#if WITH_EDITOR
+double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) const
 {
 	// Settings
 	double X, Y;
@@ -437,8 +430,10 @@ double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation)
 
 	return DistSquared;
 }
+#endif
 
-FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre)
+#if WITH_EDITOR
+FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre) const
 {	
 	UFont* TextFont = GEngine->GetMediumFont();
 
@@ -465,8 +460,10 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 
 	return Text;
 }
+#endif
 
-TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter)
+#if WITH_EDITOR
+TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter) const
 {
 	UFont* TextFont = GEngine->GetMediumFont();
 
@@ -492,8 +489,10 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocat
 	
 	return CanvasTextItems;
 }
+#endif
 
-TArray<FString> ABangoEvent::GetDebugDataString_Editor()
+#if WITH_EDITOR
+TArray<FString> ABangoEvent::GetDebugDataString_Editor() const
 {
 	TArray<FString> Data;
 	
@@ -608,8 +607,10 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor()
 
 	return Data;
 }
+#endif
 
-TArray<FString> ABangoEvent::GetDebugDataString_Game()
+#if WITH_EDITOR
+TArray<FString> ABangoEvent::GetDebugDataString_Game() const
 {
 	TArray<FString> Data; 
 
@@ -625,7 +626,9 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game()
 	
 	return Data;
 }
+#endif
 
+#if WITH_EDITOR
 bool ABangoEvent::HasInvalidData() const
 {
 	if (Triggers.IsEmpty())
@@ -655,5 +658,23 @@ bool ABangoEvent::HasInvalidData() const
 	}
 
 	return false;
+}
+#endif
+
+#if ENABLE_VISUAL_LOG
+void ABangoEvent::VLOGSnapshot(FString Text, FColor Color, UObject* NewInstigator) const
+{
+	{
+		if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
+		{
+			UE_VLOG_LOCATION(this, Bango, Log, GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
+			UE_VLOG_SEGMENT(this, Bango, Log, GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
+			UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
+		}
+		else
+		{
+			UE_VLOG_LOCATION(this, Bango, Log, GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
+		}
+	}
 }
 #endif

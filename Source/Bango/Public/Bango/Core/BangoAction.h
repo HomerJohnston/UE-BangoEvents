@@ -54,9 +54,6 @@ public:
 	// ============================================================================================
 public:
 	UPROPERTY(BlueprintReadOnly, Transient)
-	TObjectPtr<ABangoEvent> Event;
-
-	UPROPERTY(BlueprintReadOnly, Transient)
 	TObjectPtr<UObject> Instigator;
 	
 	UPROPERTY(BlueprintReadOnly, Transient)
@@ -100,6 +97,9 @@ public:
 
 protected:
 	UWorld* GetWorld() const override;
+
+	UFUNCTION(BlueprintCallable)
+	ABangoEvent* GetEvent() const;
 
 #if WITH_EDITOR
 public:

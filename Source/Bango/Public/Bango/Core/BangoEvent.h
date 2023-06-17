@@ -187,42 +187,42 @@ private:
 	// ------------------------------------------
 #if WITH_EDITORONLY_DATA
 public:
-	FText GetDisplayName();
+	FText GetDisplayName() const;
 	
-	bool GetUsesCustomColor();
+	bool GetUsesCustomColor() const;
 	
-	FLinearColor GetCustomColor();
+	FLinearColor GetCustomColor() const;
 #endif
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	bool GetStartsFrozen();
+	bool GetStartsFrozen() const;
 	
 	UFUNCTION(BlueprintCallable)
-	int32 GetTriggerLimit();
+	int32 GetTriggerLimit() const;
 
 	UFUNCTION(BlueprintCallable)
 	void SetTriggerLimit(int32 NewTriggerLimit);
 	
 	UFUNCTION(BlueprintCallable)
-	int32 GetTriggerCount();
+	int32 GetTriggerCount() const;
 	
 	UFUNCTION(BlueprintCallable)
-	bool IsToggleType();
+	bool IsToggleType() const;
 
 	UFUNCTION(BlueprintCallable)
-	bool IsInstancedType();
+	bool IsInstancedType() const;
 
-	bool IsBangType();
+	bool IsBangType() const;
 	
 	UFUNCTION(BlueprintCallable)
-	EBangoEventType GetType();
+	EBangoEventType GetType() const;
 
 	UFUNCTION(BlueprintCallable)
-	EBangoToggleDeactivateCondition GetDeactivateCondition();
+	EBangoToggleDeactivateCondition GetDeactivateCondition() const;
 
 	UFUNCTION(BlueprintCallable)
-	const TArray<UBangoAction*>& GetActions();
+	const TArray<UBangoAction*>& GetActions() const;
 	
 	// ============================================================================================
 	// STATE
@@ -318,19 +318,23 @@ public:
 	void UpdateProxyState();
 
 protected:
-	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont) const;
 	
-	double GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation);
+	double GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) const;
 	
-	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre);
+	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre) const;
 
-	TArray<FCanvasTextItem> GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter);
+	TArray<FCanvasTextItem> GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter) const;
 	
-	TArray<FString> GetDebugDataString_Editor();
+	TArray<FString> GetDebugDataString_Editor() const;
 
-	TArray<FString> GetDebugDataString_Game();
+	TArray<FString> GetDebugDataString_Game() const;
 
 	bool HasInvalidData() const;
+#endif
+	
+#if ENABLE_VISUAL_LOG
+	void VLOGSnapshot(FString Text, FColor Color, UObject* NewInstigator) const;
 #endif
 };
 

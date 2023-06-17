@@ -31,7 +31,7 @@ void UBangoAction_DebugLog::OnStop_Implementation()
 
 FString UBangoAction_DebugLog::GetEventName()
 {
-	return Event->GetName();
+	return GetEvent()->GetName();
 }
 
 FString UBangoAction_DebugLog::GetInstigatorName()
