@@ -4,6 +4,7 @@
 #include "Bango/Editor/PlungerComponent.h"
 #include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
+#include "Bango/Settings/BangoDevSettings.h"
 
 // Forward declarations
 //=================================================================================================
@@ -47,7 +48,6 @@ FBangoPlungerSceneProxy::FBangoPlungerSceneProxy(UBangoPlungerComponent* OwnerCo
 	bAffectDistanceFieldLighting = false;
 	bAffectDynamicIndirectLighting = false;
 	bAffectIndirectLightingWhileHidden = false;
-
 	
 	// Generate meshes
 	FPlungerMeshConstructionData MeshData;
@@ -145,7 +145,7 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 			if (Component->bIsScreenSizeScaled && (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f))
 			{
 				const float ZoomFactor = FMath::Min<float>(View->ViewMatrices.GetProjectionMatrix().M[0][0], View->ViewMatrices.GetProjectionMatrix().M[1][1]);
-
+				
 				if (ZoomFactor != 0.0f)
 				{
 					const float Radius = FMath::Abs(View->WorldToScreen(Origin).W * (Component->ScreenSize / ZoomFactor));
@@ -156,6 +156,9 @@ void FBangoPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVi
 					}
 				}
 			}
+
+			const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>(); 
+			ViewScale *= DevSettings->GetEventDisplaySize();
 
 			FMeshBatch& Mesh = Collector.AllocateMesh();
 			FMeshBatchElement& BatchElement = Mesh.Elements[0];
@@ -195,7 +198,7 @@ FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneVi
 #if WITH_EDITOR
 	// IsShown MUST be checked first - some cameras like Scene Capture won't have the custom ShowFlag defined and will crash inside of the IsEnabled check. IsShown will return false for these other cameras and prevent going into further unsafe checks.
 	const bool bProxyVisible = IsShown(View) && (ABangoEvent::BangoEventsShowFlag.IsEnabled(View->Family->EngineShowFlags));
-
+		
 	FPrimitiveViewRelevance Result;
 	Result.bDrawRelevance = bProxyVisible;
 	Result.bDynamicRelevance = true;

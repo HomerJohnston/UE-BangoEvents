@@ -12,18 +12,31 @@ class BANGO_API UBangoDevSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 	// TODO: console variables for quicker hiding?
-public:
+protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
 	bool bShowEventsInGame = false;
 	
-	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	bool bShowEventsInEditor = true;
-
 	/** Beyond this distance, all event data will be hidden */
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	float DisplayDistanceFar = 3000;
+	float FarDisplayDistance = 5000;
 
 	/** Beyond this distance, detailed event data will be hidden */
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	float DisplayDistanceClose = 1000;
+	float NearDisplayDistance = 2500;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(UIMin=0.5, UIMax=5.0))
+	float EventDisplaySize = 1.0;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetShowEventsInGame() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetFarDisplayDistance() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetNearDisplayDistance() const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetEventDisplaySize() const;
 };

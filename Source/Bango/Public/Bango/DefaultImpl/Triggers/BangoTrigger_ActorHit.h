@@ -16,7 +16,7 @@ class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger
 	// ============================================================================================
 protected:
 	/** By default the event will use itself as the source of hit triggers. Pick another actor to listen for hit triggers from that actor instead. */
-	UPROPERTY(Category="Settings", DisplayName = "Use Target Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(Category="Settings", DisplayName = "Hit Source Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 
 	UPROPERTY()

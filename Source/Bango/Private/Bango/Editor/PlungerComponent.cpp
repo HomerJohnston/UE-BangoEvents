@@ -4,8 +4,6 @@
 
 #include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/CVars.h"
-#include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 
 FLinearColor LightGrey			(0.50,	0.50,	0.50);
@@ -102,7 +100,7 @@ void UBangoPlungerComponent::BeginPlay()
 
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>(); 
 	
-	SetHiddenInGame(!DevSettings->bShowEventsInGame);
+	SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 }
 
 FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWorld) const
@@ -124,15 +122,23 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 	check(Event);
 
 	FLinearColor Color;
-	FLinearColor* MapColor = ColorBaseMap.Find(Event->GetType());
-	
-	if (!MapColor)
+
+	if (Event->GetUsesCustomColor())
 	{
-		Color = FColor::Magenta;
+		Color = Event->GetCustomColor();
 	}
 	else
 	{
-		Color = *MapColor;
+		FLinearColor* MapColor = ColorBaseMap.Find(Event->GetType());
+	
+		if (!MapColor)
+		{
+			Color = FColor::Magenta;
+		}
+		else
+		{
+			Color = *MapColor;
+		}
 	}
 	
 	const FBangoEventStateFlag& State = Event->GetState();

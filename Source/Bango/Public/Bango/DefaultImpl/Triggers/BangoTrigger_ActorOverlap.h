@@ -17,7 +17,7 @@ protected:
 	// ============================================================================================
 	
 	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
-	UPROPERTY(DisplayName = "Overlap Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(DisplayName = "Overlap Source Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 
 	UPROPERTY()

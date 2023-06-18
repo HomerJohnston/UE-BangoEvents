@@ -6,7 +6,6 @@
 #include "Bango/Core/BangoAction.h"
 #include "Bango/Core/BangoTrigger.h"
 #include "Bango/Editor/PlungerComponent.h"
-//#include "Editor/EditorEngine.h"
 #include "Bango/Core/BangoEventProcessor.h"
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Engine/AssetManager.h"
@@ -14,7 +13,6 @@
 #include "VisualLogger/VisualLogger.h"
 
 #if WITH_EDITOR
-#include "Bango/CVars.h"
 #include "Engine/Canvas.h"
 #include "Debug/DebugDrawService.h"
 #endif
@@ -368,10 +366,9 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 	if  (
 		   (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags)) ||
 		   (!IsValid(World)) ||
-		   (World->IsGameWorld() && !DevSettings->bShowEventsInGame) ||
-		   (!World->IsGameWorld() && !DevSettings->bShowEventsInEditor) ||
+		   (World->IsGameWorld() && !DevSettings->GetShowEventsInGame()) ||
 		   (Distance < 0.0)	||
-		   (Distance > FMath::Square(GetDefault<UBangoDevSettings>()->DisplayDistanceFar))
+		   (Distance > FMath::Square(GetDefault<UBangoDevSettings>()->GetFarDisplayDistance()))
 		)
 	{
 		return;
@@ -380,7 +377,7 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation);
 	Canvas->DrawItem(HeaderText);
 
-	if (Distance < FMath::Square(DevSettings->DisplayDistanceClose))
+	if (Distance < FMath::Square(DevSettings->GetNearDisplayDistance()))
 	{
 		TDelegate<TArray<FString>()> DataGetter;
 
@@ -405,6 +402,11 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 
 	for (UBangoAction* Action : Actions)
 	{
+		if (!IsValid(Action))
+		{
+			continue;
+		}
+		
 		Action->DebugDraw(Canvas, Cont);
 	}
 }
