@@ -282,10 +282,10 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void Activate(UObject* NewInstigator);
+	void Activate(UObject* ActivationInstigator);
 
 	UFUNCTION(BlueprintCallable)
-	void Deactivate(UObject* OldInstigator);
+	void Deactivate(UObject* DeactivationInstigator);
 
 protected:
 	void EnableTriggers();
@@ -334,7 +334,7 @@ protected:
 #endif
 	
 #if ENABLE_VISUAL_LOG
-	void VLOGSnapshot(FString Text, FColor Color, UObject* NewInstigator) const;
+	void VLOG_Generic(FString Text, FColor Color, UObject* EventInstigator) const;
 #endif
 };
 

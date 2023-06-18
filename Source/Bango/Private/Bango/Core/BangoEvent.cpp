@@ -218,40 +218,48 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 	}
 }
 
-void ABangoEvent::Activate(UObject* NewInstigator)
+void ABangoEvent::Activate(UObject* ActivationInstigator)
 {
 	if (GetIsFrozen() || GetIsExpired())
 	{
 		return;
 	}
 	
-	if (EventProcessor->ActivateFromTrigger(NewInstigator))
+	if (EventProcessor->ActivateFromTrigger(ActivationInstigator))
 	{
 		ActivationCount++;
 
 		LastActivationTime = GetWorld()->GetTimeSeconds();
 		
-		OnBangoEventActivated.Broadcast(this, NewInstigator);
+		OnBangoEventActivated.Broadcast(this, ActivationInstigator);
 	}
 	
 	if (bFreezeWhenExpired && GetIsExpired())
 	{
 		SetFrozen(true);
 	}
-	
+
+#if ENABLE_VISUAL_LOG
+	VLOG_Generic("Activate", FColor::Green, ActivationInstigator);
+#endif
+
 #if WITH_EDITOR
 	UpdateProxyState();
 #endif
 }
 
-void ABangoEvent::Deactivate(UObject* OldInstigator)
+void ABangoEvent::Deactivate(UObject* DeactivationInstigator)
 {
-	if (EventProcessor->DeactivateFromTrigger(OldInstigator))
+	if (EventProcessor->DeactivateFromTrigger(DeactivationInstigator))
 	{
 		LastDeactivationTime = GetWorld()->GetTimeSeconds();
 
-		OnBangoEventDeactivated.Broadcast(this, OldInstigator);
+		OnBangoEventDeactivated.Broadcast(this, DeactivationInstigator);
 	}
+	
+#if ENABLE_VISUAL_LOG
+	VLOG_Generic("Deactivate", FColor::Red, DeactivationInstigator);
+#endif
 	
 #if WITH_EDITOR
 	UpdateProxyState();
@@ -662,18 +670,18 @@ bool ABangoEvent::HasInvalidData() const
 #endif
 
 #if ENABLE_VISUAL_LOG
-void ABangoEvent::VLOGSnapshot(FString Text, FColor Color, UObject* NewInstigator) const
+void ABangoEvent::VLOG_Generic(FString Text, FColor Color, UObject* EventInstigator) const
 {
 	{
-		if (AActor* InstigatorAsActor = Cast<AActor>(NewInstigator))
+		if (AActor* InstigatorActor = Cast<AActor>(EventInstigator))
 		{
 			UE_VLOG_LOCATION(this, Bango, Log, GetActorLocation(), 50.0, Color, TEXT("%s"), *Text);
-			UE_VLOG_SEGMENT(this, Bango, Log, GetActorLocation(), InstigatorAsActor->GetActorLocation(), Color, TEXT(""));
-			UE_VLOG_LOCATION(this, Bango, Log, InstigatorAsActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *NewInstigator->GetName());
+			UE_VLOG_SEGMENT(this, Bango, Log, GetActorLocation(), InstigatorActor->GetActorLocation(), Color, TEXT(""));
+			UE_VLOG_LOCATION(this, Bango, Log, InstigatorActor->GetActorLocation(), 50.0, Color, TEXT("%s"), *EventInstigator->GetName());
 		}
 		else
 		{
-			UE_VLOG_LOCATION(this, Bango, Log, GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *NewInstigator->GetName());
+			UE_VLOG_LOCATION(this, Bango, Log, GetActorLocation(), 50.0, Color, TEXT("%s %s"), *Text, *EventInstigator->GetName());
 		}
 	}
 }
