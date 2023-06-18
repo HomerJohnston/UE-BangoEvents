@@ -13,11 +13,11 @@ class UBangoAction_DebugLog : public UBangoAction
 protected:
 	/** Optional debug string to print */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	FString StartText;
+	FString ActivateMessage;
 	
 	/** Optional debug string to print */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	FString StopText;
+	FString DeactivateMessage;
 	
 public:
 	void OnStart_Implementation() override;
@@ -25,7 +25,7 @@ public:
 	void OnStop_Implementation() override;
 
 protected:
-	FString GetEventName();
+	FText GetEventName();
 	
 	FString GetInstigatorName();
 };

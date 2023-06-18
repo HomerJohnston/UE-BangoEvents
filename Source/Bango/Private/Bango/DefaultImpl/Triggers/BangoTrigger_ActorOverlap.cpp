@@ -1,6 +1,6 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/DefaultImpl/BangoTrigger_ActorOverlap.h"
+#include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorOverlap.h"
 
 #include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
@@ -11,7 +11,7 @@
 // ============================================================================================
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
-	AActor* ActorToUse = IsValid(TargetActor) ? TargetActor : GetEvent();
+	AActor* ActorToUse = (bUseTargetActor && IsValid(TargetActor)) ? TargetActor : GetEvent();
 	
 	if (SubscribedActor.IsValid())
 	{
@@ -51,16 +51,19 @@ void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 		return;
 	}
 
+	Disable();
+	
 	TargetActor = NewTargetActor;
+	bUseTargetActor = true;
 
 	Enable();
 }
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	if (IsValid(ActorFilter))
+	if (IsValid(InstigatorFilter))
 	{
-		if (!ActorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
+		if (!InstigatorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
 		{
 			return;
 		}
@@ -71,9 +74,9 @@ void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* In
 
 void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	if (IsValid(ActorFilter))
+	if (IsValid(InstigatorFilter))
 	{
-		if (!ActorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
+		if (!InstigatorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
 		{
 			return;
 		}
