@@ -26,6 +26,10 @@ protected:
 	UPROPERTY(Category="Settings", EditAnywhere, Instanced)
 	UBangoInstigatorFilter* InstigatorFilter;
 
+	/** How to trigger the event when a hit occurs. */
+	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
+	EBangoTriggerType TriggerType = EBangoTriggerType::ActivateEvent;
+	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================

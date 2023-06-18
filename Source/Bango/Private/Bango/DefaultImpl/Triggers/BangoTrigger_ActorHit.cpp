@@ -57,14 +57,14 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 		}
 	}
 
-	if (bCanActivateEvent)
+	switch (TriggerType)
 	{
-		ActivateEvent(InstigatorActor);
-	}
-
-	if (bCanDeactivateEvent)
-	{
-		DeactivateEvent(InstigatorActor);
+		case EBangoTriggerType::ActivateEvent:
+			ActivateEvent(InstigatorActor);
+			break;
+		case EBangoTriggerType::DeactivateEvent:
+			DeactivateEvent(InstigatorActor);
+			break;
 	}
 }
 

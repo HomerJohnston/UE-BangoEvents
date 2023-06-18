@@ -26,6 +26,14 @@ protected:
 	/** Use this to determine which overlap events to use and which to ignore. */
 	UPROPERTY(Category="Settings", EditAnywhere, Instanced)
 	UBangoInstigatorFilter* InstigatorFilter;
+
+	/** How to trigger the event when an overlap begins. */
+	UPROPERTY(Category="Settings", DisplayName="On Begin Overlap", EditAnywhere)
+	EBangoTriggerType BeginOverlapTrigger = EBangoTriggerType::ActivateEvent;
+
+	/** How to trigger the event when an overlap ends. */
+	UPROPERTY(Category="Settings", DisplayName="On End Overlap", EditAnywhere)
+	EBangoTriggerType EndOverlapTrigger = EBangoTriggerType::DeactivateEvent;
 	
 	// ============================================================================================
 	// STATE

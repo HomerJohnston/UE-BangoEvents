@@ -5,16 +5,6 @@
 #include "Bango/Log.h"
 
 
-bool UBangoTrigger::GetCanActivateEvent()
-{
-	return bCanActivateEvent;
-}
-
-bool UBangoTrigger::GetCanDeactivateEvent()
-{
-	return bCanDeactivateEvent;
-}
-
 ABangoEvent* UBangoTrigger::GetEvent()
 {
 	return Cast<ABangoEvent>(GetOuter());
@@ -47,12 +37,7 @@ void UBangoTrigger::Disable_Implementation()
 }
 
 void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
-{
-	if (!bCanActivateEvent)
-	{
-		return;
-	}
-	
+{	
 	if (GetEvent()->GetIsFrozen())
 	{
 		return;
@@ -63,11 +48,6 @@ void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 
 void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 {
-	if (!bCanDeactivateEvent)
-	{
-		return;
-	}
-	
 	OnTriggerDeactivation.Execute(OldInstigator);	
 }
 

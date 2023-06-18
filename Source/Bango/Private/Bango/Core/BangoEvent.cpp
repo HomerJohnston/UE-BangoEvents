@@ -532,32 +532,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor() const
 		
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
-		TriggerEntry.Append(" (");
-	
-		if (Trigger->GetCanActivateEvent() || Trigger->GetCanDeactivateEvent())
-		{
-			if (Trigger->GetCanActivateEvent() && Trigger->GetCanDeactivateEvent())
-			{
-				TriggerEntry.Append("Activate & Deactivate");
-			}
-			else
-			{
-				if (Trigger->GetCanActivateEvent())
-				{
-					TriggerEntry.Append("Activate Only");
-				}
-				else
-				{
-					TriggerEntry.Append("Deactivate Only");
-				}
-			}
-		}
-		else
-		{
-			TriggerEntry.Append("INACTIVE");
-		}
-
-		TriggerEntry.AppendChar(')');
+		// TODO: Hook to add debug text for triggers
 		
 		Data.Add(TriggerEntry.ToString());
 	}
