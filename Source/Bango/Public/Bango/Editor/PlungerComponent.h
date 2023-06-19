@@ -53,4 +53,6 @@ public:
 	bool GetIsPlungerPushed();
 
 	void OnCvarChange();
+
+	bool GetEventHasCustomMesh();
 };

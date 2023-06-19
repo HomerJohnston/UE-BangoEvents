@@ -106,7 +106,7 @@ struct FBangoEventStateFlag
 #endif
 
 USTRUCT()
-struct FBangoEventInstigatorActions
+struct BANGO_API FBangoEventInstigatorActions
 {
 	GENERATED_BODY()
 
@@ -144,6 +144,12 @@ protected:
 	/**  */
 	UPROPERTY()
 	bool bUseCustomColor = false;
+	
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh"))
+	UStaticMesh* CustomMesh = nullptr;
+
+	UPROPERTY()
+	bool bUseCustomMesh = false;
 #endif
 
 private:
@@ -223,6 +229,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	const TArray<UBangoAction*>& GetActions() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool GetUsesCustomMesh() const;
 	
 	// ============================================================================================
 	// STATE
@@ -251,21 +260,25 @@ protected:
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventDeactivated OnBangoEventDeactivated;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY()
+	UMaterialInstanceDynamic* CustomMaterialDynamic;
+#endif
 	// ------------------------------------------
 	// STATE GETTERS
 	// ------------------------------------------
 public:
 	UFUNCTION(BlueprintCallable)
-	bool GetIsFrozen();
+	bool GetIsFrozen() const;
 
 	UFUNCTION(BlueprintCallable)
-	bool GetIsExpired();
+	bool GetIsExpired() const;
 
 	UFUNCTION(BlueprintCallable)
-	double GetLastActivationTime();
+	double GetLastActivationTime() const;
 
 	UFUNCTION(BlueprintCallable)
-	double GetLastDeactivationTime();
+	double GetLastDeactivationTime() const;
 
 	// ============================================================================================
 	// API
@@ -305,9 +318,11 @@ private:
 	FDelegateHandle DebugDrawService_Editor;
 	
 	FDelegateHandle DebugDrawService_Game;
-	
+
 	TObjectPtr<UBangoPlungerComponent> PlungerComponent;
 
+	TObjectPtr<UStaticMeshComponent> OverrideDisplayMesh;
+	
 public:
 	const FBangoEventStateFlag& GetState() const;
 	
@@ -331,6 +346,9 @@ protected:
 	TArray<FString> GetDebugDataString_Game() const;
 
 	bool HasInvalidData() const;
+
+public:
+	FLinearColor GetColorForProxy() const;
 #endif
 	
 #if ENABLE_VISUAL_LOG

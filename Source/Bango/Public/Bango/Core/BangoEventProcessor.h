@@ -1,6 +1,11 @@
 ﻿#pragma once
 
+#include "CoreMinimal.h"
+#include "Bango/Core/BangoEvent.h"
 #include "BangoEventProcessor.generated.h"
+
+class ABangoEvent;
+struct FBangoEventInstigatorActions;
 
 // PROCESSOR BASE
 // ================================================================================================

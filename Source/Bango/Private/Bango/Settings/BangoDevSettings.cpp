@@ -21,3 +21,8 @@ float UBangoDevSettings::GetEventDisplaySize() const
 {
 	return EventDisplaySize;
 }
+
+UMaterial* UBangoDevSettings::GetCustomMeshMaterial() const
+{
+	return CustomMeshMaterial.Get();
+}

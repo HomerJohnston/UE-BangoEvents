@@ -6,63 +6,6 @@
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Core/BangoEvent.h"
 
-FLinearColor LightGrey			(0.50,	0.50,	0.50);
-FLinearColor DarkGrey			(0.02,	0.02,	0.02);
-
-FLinearColor Error				(1.00,	0.00,	1.00);
-
-FLinearColor RedBase			(0.20,	0.00,	0.00);
-FLinearColor OrangeBase			(0.15,	0.05,	0.00);
-FLinearColor YellowBase			(0.10,	0.10,	0.00);
-FLinearColor GreenBase			(0.00,	0.20,	0.00);
-FLinearColor BlueBase			(0.00,	0.00,	0.20);
-
-TMap<EBangoEventType, FLinearColor> ColorBaseMap
-{
-	{ EBangoEventType::Bang, RedBase },
-	{ EBangoEventType::Toggle, GreenBase },
-//	{ EBangoEventType::Instanced, BlueBase },
-};
-
-FLinearColor BrightenColor(FLinearColor C)
-{
-	float M = 18.0f;
-	float N = 0.40f;
-	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
-}
-
-FLinearColor EnhanceColor(FLinearColor C)
-{
-	float M = 2.0f;
-	float N = -0.05f;
-	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
-}
-
-FLinearColor LightDesatColor(FLinearColor C)
-{
-	float M = 0.40f;
-	float N = 0.20f;
-	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
-}
-
-FLinearColor DarkDesatColor(FLinearColor C)
-{
-	float M = 0.10f;
-	float N = 0.02f;
-	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
-}
-
-FLinearColor VeryDarkDesatColor(FLinearColor C)
-{
-	float M = 0.05f;
-	float N = 0.01f;
-	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
-}
-
-FLinearColor BangColor = RedBase;
-FLinearColor ToggleColor = GreenBase;
-FLinearColor InstancedColor = BlueBase;
-
 UBangoPlungerComponent::UBangoPlungerComponent()
 {
 	bIsEditorOnly = true;
@@ -110,104 +53,10 @@ FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWor
 
 FLinearColor UBangoPlungerComponent::GetColorForProxy()
 {
-#if WITH_EDITOR
-	UWorld* World = GetWorld();
-
-	if (!IsValid(World))
-	{
-		return Error;
-	}
-
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
 	check(Event);
 
-	FLinearColor Color;
-
-	if (Event->GetUsesCustomColor())
-	{
-		Color = Event->GetCustomColor();
-	}
-	else
-	{
-		FLinearColor* MapColor = ColorBaseMap.Find(Event->GetType());
-	
-		if (!MapColor)
-		{
-			Color = FColor::Magenta;
-		}
-		else
-		{
-			Color = *MapColor;
-		}
-	}
-	
-	const FBangoEventStateFlag& State = Event->GetState();
-	
-	bool bToggles = Event->IsToggleType();
-
-	double LastHandleDownTime = Event->GetLastActivationTime();
-	double LastHandleUpTime = Event->GetLastDeactivationTime();
-
-	if (Event->GetType() >= EBangoEventType::MAX)
-	{
-		return Error;
-	}
-	
-	if (World->IsGameWorld())
-	{
-		if (State.HasFlag(EBangoEventState::Active))
-		{
-			Color = BrightenColor(Color);
-		}
-		else if (State.HasFlag(EBangoEventState::Expired))
-		{
-			Color = DarkDesatColor(Color);
-		}
-		else if (State.HasFlag(EBangoEventState::Frozen))
-		{
-			Color = LightDesatColor(Color);
-		}
-		
-		if (!bToggles)
-		{
-			FLinearColor ActivationColor = BrightenColor(Color);
-			FLinearColor DeactivationColor = VeryDarkDesatColor(Color);
-			
-			double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
-			double ActivationAlpha = FMath::Clamp(ElapsedTimeSinceLastActivation / RecentPushHandleCooldownTime, 0, 1);
-			
-			if (IsValid(GWorld) && (ActivationAlpha > 0))
-			{
-				Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
-			}
-
-			double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
-			double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * RecentPushHandleCooldownTime), 0, 1);
-
-			if (IsValid(GWorld) && (DeactivationAlpha > 0))
-			{
-				Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
-			}
-		}
-		
-		return Color;
-	}
-	else if (GetWorld()->IsEditorWorld())
-	{
-		if (Event->GetStartsFrozen())
-		{
-			return LightDesatColor(Color);
-		}
-
-		return Color;
-	}
-	else
-	{
-		return Error;
-	}
-#else
-	return FLinearColor::Black;
-#endif
+	return Event->GetColorForProxy();
 }
 
 bool UBangoPlungerComponent::GetIsPlungerPushed()
@@ -260,4 +109,9 @@ void UBangoPlungerComponent::OnCvarChange()
 	bool bNewHiddenInGame = !ShowInGameCVar->GetBool();
 	
 	SetHiddenInGame(bNewHiddenInGame);
+}
+
+bool UBangoPlungerComponent::GetEventHasCustomMesh()
+{
+	return GetOuterABangoEvent()->GetUsesCustomMesh();
 }

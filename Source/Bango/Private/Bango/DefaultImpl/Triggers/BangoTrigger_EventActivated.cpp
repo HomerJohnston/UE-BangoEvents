@@ -1,0 +1,1 @@
+#include "Bango/DefaultImpl/Triggers/BangoTrigger_EventActivated.h"

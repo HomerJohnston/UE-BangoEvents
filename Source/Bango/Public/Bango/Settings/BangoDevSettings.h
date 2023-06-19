@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(UIMin=0.5, UIMax=5.0))
 	float EventDisplaySize = 1.0;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Bango")
+	TSoftObjectPtr<UMaterial> CustomMeshMaterial;
+	
 public:
 	UFUNCTION(BlueprintCallable)
 	bool GetShowEventsInGame() const;
@@ -39,4 +42,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	float GetEventDisplaySize() const;
+
+	UFUNCTION(BlueprintCallable)
+	UMaterial* GetCustomMeshMaterial() const;
 };

@@ -41,8 +41,15 @@ ABangoEvent::ABangoEvent()
 		if (!IsRunningCommandlet())
 		{
 			// TODO copy code from arrow component
-			//PlungerComponent->
 		}
+	}
+
+	OverrideDisplayMesh = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>("CustomMesh");
+
+	if (OverrideDisplayMesh)
+	{
+		OverrideDisplayMesh->SetupAttachment(RootComponent);
+		OverrideDisplayMesh->SetCastShadow(false);
 	}
 #endif
 }
@@ -114,6 +121,11 @@ const TArray<UBangoAction*>& ABangoEvent::GetActions() const
 	return Actions;
 }
 
+bool ABangoEvent::GetUsesCustomMesh() const
+{
+	return bUseCustomMesh;
+}
+
 bool ABangoEvent::GetStartsFrozen() const
 {
 	return bStartsFrozen;
@@ -123,22 +135,22 @@ bool ABangoEvent::GetStartsFrozen() const
 // State Getters
 // ------------------------------------------
 
-bool ABangoEvent::GetIsFrozen()
+bool ABangoEvent::GetIsFrozen() const
 {
 	return bFrozen;
 }
 
-bool ABangoEvent::GetIsExpired()
+bool ABangoEvent::GetIsExpired() const
 {
 	return bUseActivationLimit && (ActivationCount >= ActivationLimit);
 }
 
-double ABangoEvent::GetLastActivationTime()
+double ABangoEvent::GetLastActivationTime() const
 {
 	return LastActivationTime;
 }
 
-double ABangoEvent::GetLastDeactivationTime()
+double ABangoEvent::GetLastDeactivationTime() const
 {
 	return LastDeactivationTime;
 }
@@ -186,6 +198,8 @@ void ABangoEvent::BeginPlay()
 		}
 	}
 
+	EnableTriggers();
+	
 	SetFrozen(bStartsFrozen);
 
 	Super::BeginPlay();
@@ -271,18 +285,6 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 		return;
 	}
 	
-	if (bFreeze)
-	{
-		DisableTriggers();
-
-		// Freezing is intended to halt new starts. It is not intended to prevent stopping running actions.
-		// We will also attempt to disable triggers whenever an instigator is removed.
-	}
-	else
-	{
-		EnableTriggers();
-	}
-	
 	bFrozen = bFreeze;
 
 #if WITH_EDITOR
@@ -336,21 +338,59 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 	if (!DebugDrawService_Editor.IsValid())
 	{
 		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw));
-	}	
-
-	if (GetWorld()->IsGameWorld())
-	{
-		UpdateProxyState();
 	}
+
+	if (bUseCustomMesh && IsValid(CustomMesh))
+	{
+		OverrideDisplayMesh->SetStaticMesh(CustomMesh);
+		
+		int32 NumMaterials = OverrideDisplayMesh->GetNumMaterials();
+
+		const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+		
+		if (IsValid(DevSettings->GetCustomMeshMaterial()))
+		{
+			CustomMaterialDynamic = UMaterialInstanceDynamic::Create(DevSettings->GetCustomMeshMaterial(), this);
+
+			for (int32 i = 0; i < NumMaterials; i++)
+			{
+				OverrideDisplayMesh->SetMaterial(i, CustomMaterialDynamic);
+			}
+		}
+		
+		OverrideDisplayMesh->SetVisibility(true);
+		
+		OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
+	}
+	else
+	{
+		OverrideDisplayMesh->SetStaticMesh(nullptr);
+		OverrideDisplayMesh->SetVisibility(false);
+	}
+	
+	///if (GetWorld()->IsGameWorld())
+	//{
+		UpdateProxyState();
+	//}
 }
 #endif
 
 #if WITH_EDITOR
 void ABangoEvent::UpdateProxyState()
 {
-	CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
-	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
-	CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
+	if (GetWorld()->IsGameWorld())
+	{
+		CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
+		CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
+		CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
+	}
+	
+	if (bUseCustomMesh && IsValid(CustomMaterialDynamic))
+	{
+		FLinearColor C = GetColorForProxy();
+		
+		CustomMaterialDynamic->SetVectorParameterValue("Color", C);
+	}
 }
 #endif
 
@@ -643,6 +683,159 @@ bool ABangoEvent::HasInvalidData() const
 	}
 
 	return false;
+}
+
+FLinearColor LightGrey			(0.50,	0.50,	0.50);
+FLinearColor DarkGrey			(0.02,	0.02,	0.02);
+
+FLinearColor Error				(1.00,	0.00,	1.00);
+
+FLinearColor RedBase			(0.20,	0.00,	0.00);
+FLinearColor OrangeBase			(0.15,	0.05,	0.00);
+FLinearColor YellowBase			(0.10,	0.10,	0.00);
+FLinearColor GreenBase			(0.00,	0.20,	0.00);
+FLinearColor BlueBase			(0.00,	0.00,	0.20);
+
+TMap<EBangoEventType, FLinearColor> ColorBaseMap
+{
+		{ EBangoEventType::Bang, RedBase },
+		{ EBangoEventType::Toggle, GreenBase },
+	//	{ EBangoEventType::Instanced, BlueBase },
+};
+
+FLinearColor BrightenColor(FLinearColor C)
+{
+	float M = 18.0f;
+	float N = 0.40f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor EnhanceColor(FLinearColor C)
+{
+	float M = 2.0f;
+	float N = -0.05f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor LightDesatColor(FLinearColor C)
+{
+	float M = 0.40f;
+	float N = 0.20f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor DarkDesatColor(FLinearColor C)
+{
+	float M = 0.10f;
+	float N = 0.02f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor VeryDarkDesatColor(FLinearColor C)
+{
+	float M = 0.05f;
+	float N = 0.01f;
+	return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
+}
+
+FLinearColor BangColor = RedBase;
+FLinearColor ToggleColor = GreenBase;
+FLinearColor InstancedColor = BlueBase;
+
+
+FLinearColor ABangoEvent::GetColorForProxy() const
+{
+	UWorld* World = GetWorld();
+
+	if (!IsValid(World))
+	{
+		return Error;
+	}
+
+	FLinearColor Color;
+
+	if (GetUsesCustomColor())
+	{
+		Color = GetCustomColor();
+	}
+	else
+	{
+		FLinearColor* MapColor = ColorBaseMap.Find(GetType());
+	
+		if (!MapColor)
+		{
+			Color = FColor::Magenta;
+		}
+		else
+		{
+			Color = *MapColor;
+		}
+	}
+	
+	const FBangoEventStateFlag& State = GetState();
+	
+	bool bToggles = IsToggleType();
+
+	double LastHandleDownTime = GetLastActivationTime();
+	double LastHandleUpTime = GetLastDeactivationTime();
+
+	if (GetType() >= EBangoEventType::MAX)
+	{
+		return Error;
+	}
+	
+	if (World->IsGameWorld())
+	{
+		if (State.HasFlag(EBangoEventState::Active))
+		{
+			Color = BrightenColor(Color);
+		}
+		else if (State.HasFlag(EBangoEventState::Expired))
+		{
+			Color = DarkDesatColor(Color);
+		}
+		else if (State.HasFlag(EBangoEventState::Frozen))
+		{
+			Color = LightDesatColor(Color);
+		}
+		
+		if (!bToggles)
+		{
+			FLinearColor ActivationColor = BrightenColor(Color);
+			FLinearColor DeactivationColor = VeryDarkDesatColor(Color);
+			
+			double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
+			double ActivationAlpha = FMath::Clamp(ElapsedTimeSinceLastActivation / 0.2, 0, 1);
+			
+			if (IsValid(GWorld) && (ActivationAlpha > 0))
+			{
+				Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
+			}
+			
+			double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
+			double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * 0.2), 0, 1);
+			
+			if (IsValid(GWorld) && (DeactivationAlpha > 0))
+			{
+				Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
+			}
+		}
+		
+		return Color;
+	}
+	else if (GetWorld()->IsEditorWorld())
+	{
+		if (GetStartsFrozen())
+		{
+			return LightDesatColor(Color);
+		}
+
+		return Color;
+	}
+	else
+	{
+		return Error;
+	}
 }
 #endif
 
