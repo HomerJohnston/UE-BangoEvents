@@ -150,6 +150,14 @@ protected:
 
 	UPROPERTY()
 	bool bUseCustomMesh = false;
+
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0))
+	float CustomMeshScale = 1.0;
+
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = -1000, UIMax = 1000))
+	float CustomMeshOffset = 0.0;
+
+	const float CustomMeshBaseOffset = +100.0;
 #endif
 
 private:

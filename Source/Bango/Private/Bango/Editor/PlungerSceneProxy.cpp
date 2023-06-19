@@ -197,13 +197,8 @@ FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneVi
 {
 #if WITH_EDITOR
 	// IsShown MUST be checked first - some cameras like Scene Capture won't have the custom ShowFlag defined and will crash inside of the IsEnabled check. IsShown will return false for these other cameras and prevent going into further unsafe checks.
-	bool bProxyVisible = IsShown(View) && (ABangoEvent::BangoEventsShowFlag.IsEnabled(View->Family->EngineShowFlags));
+	const bool bProxyVisible = IsShown(View) && (ABangoEvent::BangoEventsShowFlag.IsEnabled(View->Family->EngineShowFlags));
 
-	if (!Component.IsValid() || Component->GetEventHasCustomMesh())
-	{
-		bProxyVisible = false;
-	}
-	
 	FPrimitiveViewRelevance Result;
 	Result.bDrawRelevance = bProxyVisible;
 	Result.bDynamicRelevance = true;

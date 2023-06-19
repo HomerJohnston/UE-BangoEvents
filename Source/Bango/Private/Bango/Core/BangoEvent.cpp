@@ -50,6 +50,7 @@ ABangoEvent::ABangoEvent()
 	{
 		OverrideDisplayMesh->SetupAttachment(RootComponent);
 		OverrideDisplayMesh->SetCastShadow(false);
+		OverrideDisplayMesh->SetHiddenInGame(true);
 	}
 #endif
 }
@@ -204,6 +205,9 @@ void ABangoEvent::BeginPlay()
 
 	Super::BeginPlay();
 
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+	OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
+
 #if WITH_EDITOR
 	UpdateProxyState();
 
@@ -343,24 +347,10 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 	if (bUseCustomMesh && IsValid(CustomMesh))
 	{
 		OverrideDisplayMesh->SetStaticMesh(CustomMesh);
-		
-		int32 NumMaterials = OverrideDisplayMesh->GetNumMaterials();
-
-		const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
-		
-		if (IsValid(DevSettings->GetCustomMeshMaterial()))
-		{
-			CustomMaterialDynamic = UMaterialInstanceDynamic::Create(DevSettings->GetCustomMeshMaterial(), this);
-
-			for (int32 i = 0; i < NumMaterials; i++)
-			{
-				OverrideDisplayMesh->SetMaterial(i, CustomMaterialDynamic);
-			}
-		}
-		
 		OverrideDisplayMesh->SetVisibility(true);
-		
-		OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
+
+		OverrideDisplayMesh->SetWorldScale3D(FVector(CustomMeshScale));
+		OverrideDisplayMesh->SetRelativeLocation(FVector(0, 0, CustomMeshBaseOffset + CustomMeshOffset));
 	}
 	else
 	{
@@ -368,10 +358,7 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 		OverrideDisplayMesh->SetVisibility(false);
 	}
 	
-	///if (GetWorld()->IsGameWorld())
-	//{
-		UpdateProxyState();
-	//}
+	UpdateProxyState();
 }
 #endif
 
