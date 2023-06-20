@@ -7,9 +7,9 @@
 UENUM()
 enum class EBangoAction_FreezeThawEvent_Type : uint8
 {
-	DoNothing,
-	Freeze,
 	Thaw,
+	Freeze,
+	DoNothing,
 };
 
 UCLASS(DisplayName="Control Event")

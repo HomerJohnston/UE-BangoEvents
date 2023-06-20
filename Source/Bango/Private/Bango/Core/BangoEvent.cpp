@@ -141,9 +141,14 @@ bool ABangoEvent::GetIsFrozen() const
 	return bFrozen;
 }
 
-bool ABangoEvent::GetIsExpired() const
+bool ABangoEvent::ActivationLimitReached() const
 {
 	return bUseActivationLimit && (ActivationCount >= ActivationLimit);
+}
+
+bool ABangoEvent::DeactivationLimitReached() const
+{
+	return bUseActivationLimit && (DeactivationCount >= ActivationLimit);
 }
 
 double ABangoEvent::GetLastActivationTime() const
@@ -236,7 +241,7 @@ void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
 
 void ABangoEvent::Activate(UObject* ActivationInstigator)
 {
-	if (GetIsFrozen() || GetIsExpired())
+	if (GetIsFrozen() || ActivationLimitReached())
 	{
 		return;
 	}
@@ -250,9 +255,9 @@ void ABangoEvent::Activate(UObject* ActivationInstigator)
 		OnBangoEventActivated.Broadcast(this, ActivationInstigator);
 	}
 	
-	if (bFreezeWhenExpired && GetIsExpired())
+	if (ActivationLimitReached())
 	{
-		SetFrozen(true);
+		DeactivationCount = FMath::Max(DeactivationCount, ActivationCount - 1);
 	}
 
 #if ENABLE_VISUAL_LOG
@@ -266,8 +271,15 @@ void ABangoEvent::Activate(UObject* ActivationInstigator)
 
 void ABangoEvent::Deactivate(UObject* DeactivationInstigator)
 {
+	if (GetIsFrozen() || DeactivationLimitReached())
+	{
+		return;
+	}
+	
 	if (EventProcessor->DeactivateFromTrigger(DeactivationInstigator))
 	{
+		DeactivationCount++;
+		
 		LastDeactivationTime = GetWorld()->GetTimeSeconds();
 
 		OnBangoEventDeactivated.Broadcast(this, DeactivationInstigator);
@@ -332,17 +344,29 @@ bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
 	return CurrentState.HasFlag(State);
 }
+
+void ABangoEvent::PostLoad()
+{
+	Super::PostLoad();
+
+}
+
+void ABangoEvent::Destroyed()
+{
+	UDebugDrawService::Unregister(DebugDrawService_Editor);
+	UDebugDrawService::Unregister(DebugDrawService_Game);
+
+	DebugDrawService_Editor.Reset();
+	DebugDrawService_Game.Reset();
+	
+	Super::Destroyed();
+}
 #endif
 
 #if WITH_EDITOR
 void ABangoEvent::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-
-	if (!DebugDrawService_Editor.IsValid())
-	{
-		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw));
-	}
 
 	if (bUseCustomMesh && IsValid(CustomMesh))
 	{
@@ -358,6 +382,11 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 		OverrideDisplayMesh->SetVisibility(false);
 	}
 	
+	if (!DebugDrawService_Editor.IsValid())
+	{
+		DebugDrawService_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ABangoEvent::DebugDraw));
+	}	
+	
 	UpdateProxyState();
 }
 #endif
@@ -369,7 +398,7 @@ void ABangoEvent::UpdateProxyState()
 	{
 		CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
 		CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
-		CurrentState.SetFlag(EBangoEventState::Expired, GetIsExpired());
+		CurrentState.SetFlag(EBangoEventState::Expired, ActivationLimitReached());
 	}
 	
 	if (bUseCustomMesh && IsValid(CustomMaterialDynamic))
@@ -557,7 +586,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor() const
 		
 		TStringBuilder<128> TriggerEntry;
 
-		TriggerEntry.Append("Trgr: ");
+		TriggerEntry.Append("Trg: ");
 		
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
@@ -581,7 +610,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Editor() const
 		
 		TStringBuilder<128> ActionEntry;
 
-		ActionEntry.Append("Actn: ");
+		ActionEntry.Append("Act: ");
 
 		ActionEntry.Append(*Action->GetDisplayName().ToString());
 

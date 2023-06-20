@@ -20,8 +20,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEve
 UENUM()
 enum class EBangoEventType : uint8
 {
-	Bang					UMETA(ToolTip="Bang Events have no concept of state: Triggers can freely execute Start and Stop of the Event's Actions whenever they fire Activate or Deactivate."),
-	Toggle					UMETA(ToolTip="Toggle Events are either activated or deactivated, and can only execute Start and Stop of the Event's Actions when the state changes. If the Actions include a delay, deactivating the event before the Action starts will cause that action to abort and not run."),
+	Bang					UMETA(ToolTip="Bangs will simply execute Start on all actions when any trigger Activates, and Stop when any trigger Deactivates."),
+	Toggle					UMETA(ToolTip="Toggles exist in a state of activated or deactivated, and will only Start or Stop all actions when the state changes. If an Actions include a delay, deactivating the event before the Action starts will cause that Action to abort and not run."),
 	//Instanced				UMETA(ToolTip="Instanced Tooltip"),
 	MAX						UMETA(Hidden)
 };
@@ -189,10 +189,6 @@ private:
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
 
-	/** When set, freezes the event after it expires and runs out of instigators, typically to disable triggers and save CPU. */
-	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere, meta=(EditCondition="bUseActivationLimit", HideEditConditionToggle, EditConditionHides))
-	bool bFreezeWhenExpired = true;
-	
 	/** How to measure trigger delay times or trigger hold times. */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	EBangoWorldTimeType TimeType = EBangoWorldTimeType::GameTime;
@@ -251,10 +247,14 @@ protected:
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	bool bFrozen = false;
-	
+
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	int32 ActivationCount = 0;
+	
+	/**  */
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	int32 DeactivationCount = 0;
 	
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastActivationTime = -999;
@@ -280,7 +280,10 @@ public:
 	bool GetIsFrozen() const;
 
 	UFUNCTION(BlueprintCallable)
-	bool GetIsExpired() const;
+	bool ActivationLimitReached() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool DeactivationLimitReached() const;
 
 	UFUNCTION(BlueprintCallable)
 	double GetLastActivationTime() const;
@@ -335,6 +338,10 @@ public:
 	const FBangoEventStateFlag& GetState() const;
 	
 	bool HasCurrentState(EBangoEventState State);
+
+	void PostLoad() override;
+
+	void Destroyed() override;
 	
 	void OnConstruction(const FTransform& Transform) override;
 
