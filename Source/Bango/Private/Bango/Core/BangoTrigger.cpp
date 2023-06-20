@@ -51,7 +51,9 @@ void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 	OnTriggerDeactivation.Execute(OldInstigator);	
 }
 
+#if WITH_EDITOR
 FText UBangoTrigger::GetDisplayName()
 {
 	return GetClass()->GetDisplayNameText();
 }
+#endif

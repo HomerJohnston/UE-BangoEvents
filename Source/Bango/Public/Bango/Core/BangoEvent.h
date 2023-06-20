@@ -339,8 +339,6 @@ public:
 	
 	bool HasCurrentState(EBangoEventState State);
 
-	void PostLoad() override;
-
 	void Destroyed() override;
 	
 	void OnConstruction(const FTransform& Transform) override;

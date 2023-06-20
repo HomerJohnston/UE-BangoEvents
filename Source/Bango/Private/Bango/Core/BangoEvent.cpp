@@ -122,10 +122,16 @@ const TArray<UBangoAction*>& ABangoEvent::GetActions() const
 	return Actions;
 }
 
+
 bool ABangoEvent::GetUsesCustomMesh() const
 {
+#if WITH_EDITORONLY_DATA
 	return bUseCustomMesh;
+#else
+	return false;
+#endif
 }
+
 
 bool ABangoEvent::GetStartsFrozen() const
 {
@@ -167,6 +173,8 @@ double ABangoEvent::GetLastDeactivationTime() const
 
 void ABangoEvent::BeginPlay()
 {
+	Super::BeginPlay();
+	
 	switch (GetType())
 	{
 		case EBangoEventType::Bang:
@@ -208,12 +216,12 @@ void ABangoEvent::BeginPlay()
 	
 	SetFrozen(bStartsFrozen);
 
-	Super::BeginPlay();
 
+#if WITH_EDITOR	
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+
 	OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 
-#if WITH_EDITOR
 	UpdateProxyState();
 
 	if (!DebugDrawService_Game.IsValid())
@@ -344,13 +352,9 @@ bool ABangoEvent::HasCurrentState(EBangoEventState State)
 {
 	return CurrentState.HasFlag(State);
 }
+#endif
 
-void ABangoEvent::PostLoad()
-{
-	Super::PostLoad();
-
-}
-
+#if WITH_EDITOR
 void ABangoEvent::Destroyed()
 {
 	UDebugDrawService::Unregister(DebugDrawService_Editor);

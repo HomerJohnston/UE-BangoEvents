@@ -51,6 +51,7 @@ FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWor
 	return FBoxSphereBounds(FBox(FVector(0,-1,-80),FVector(1.0 * 80 * 3.0f,80,80))).TransformBy(LocalToWorld);
 }
 
+#if WITH_EDITOR
 FLinearColor UBangoPlungerComponent::GetColorForProxy()
 {
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
@@ -58,6 +59,7 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 
 	return Event->GetColorForProxy();
 }
+#endif
 
 bool UBangoPlungerComponent::GetIsPlungerPushed()
 {

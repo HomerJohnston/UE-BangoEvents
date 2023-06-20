@@ -7,7 +7,7 @@
 void UBangoAction_DebugLog::OnStart_Implementation()
 {
 	if (ActivateMessage.IsEmpty())
-	{		
+	{
 		UE_LOG(Bango, Log, TEXT("Event <%s> activated for instigator <%s>"), *GetEventName().ToString(), *GetInstigatorName());
 	}
 	else
@@ -30,7 +30,11 @@ void UBangoAction_DebugLog::OnStop_Implementation()
 
 FText UBangoAction_DebugLog::GetEventName()
 {
+#if WITH_EDITOR
 	return GetEvent()->GetDisplayName();
+#else
+	return FText::FromName(GetEvent()->GetFName());
+#endif
 }
 
 FString UBangoAction_DebugLog::GetInstigatorName()

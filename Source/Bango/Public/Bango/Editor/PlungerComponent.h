@@ -48,7 +48,9 @@ public:
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
+#if WITH_EDITOR
 	FLinearColor GetColorForProxy();
+#endif
 	
 	bool GetIsPlungerPushed();
 

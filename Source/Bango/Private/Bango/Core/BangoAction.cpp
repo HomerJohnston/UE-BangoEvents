@@ -98,9 +98,11 @@ ABangoEvent* UBangoAction::GetEvent() const
 	return Cast<ABangoEvent>(GetOuter());
 }
 
+#if WITH_EDITOR
 void UBangoAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
 {
 }
+#endif
 
 void UBangoAction::OnStart_Implementation() { /* Placeholder */}
 
@@ -110,7 +112,11 @@ FText UBangoAction::GetDisplayName_Implementation()
 {
 	if (DisplayName.IsEmpty())
 	{
+#if WITH_EDITOR
 		return GetClass()->GetDisplayNameText();
+#else
+		return FText::FromString(GetClass()->GetName());
+#endif
 	}
 	
 	return DisplayName;

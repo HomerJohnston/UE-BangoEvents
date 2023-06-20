@@ -4,6 +4,8 @@
 
 class ABangoEvent;
 class UWorld;
+class UCanvas;
+class APlayerController;
 
 UCLASS(Abstract, Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
