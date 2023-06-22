@@ -142,31 +142,33 @@ public:
 	// ============================================================================================
 #if WITH_EDITORONLY_DATA
 protected:
-	/**  */
-	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditAnywhere, BlueprintReadOnly)
+	/** Set to override the editor display name. */
+	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditInstanceOnly, BlueprintReadOnly)
 	FText DisplayName;
 	
-	/**  */
+	/** Set to override the editor display color. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
 	FLinearColor CustomColor = FColor::White;
 
-	/**  */
 	UPROPERTY()
 	bool bUseCustomColor = false;
-	
+
+	/** Set to add a custom mesh display above the event proxy. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh"))
 	UStaticMesh* CustomMesh = nullptr;
 
 	UPROPERTY()
 	bool bUseCustomMesh = false;
 
+	/** Set to change the display scale of the mesh. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0))
 	float CustomMeshScale = 1.0;
 
+	/** Set to change the elevation of the mesh. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = -1000, UIMax = 1000))
 	float CustomMeshOffset = 0.0;
 
-	const float CustomMeshBaseOffset = +100.0;
+	const float CustomMeshOffsetBase = +100.0;
 #endif
 
 private:
@@ -174,27 +176,26 @@ private:
 	UPROPERTY(Category="Bango|Settings", EditAnywhere)
 	EBangoEventType Type;
 
-	/**  */
+	/** Determines how the event can be deactivated. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, DisplayName="Deactivate When", meta=(EditCondition="Type==EBangoEventType::Toggle", EditConditionHides))
 	EBangoToggleDeactivateCondition DeactivateCondition;
 	
-	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any trigger signals. */
+	/** When set, this event can only be triggered this many times before it becomes expired. Expired events will ignore any further trigger signals. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(EditCondition="bUseActivationLimit", ClampMin=1))
 	int32 ActivationLimit = 1;
 
-	/**  */
 	UPROPERTY()
 	bool bUseActivationLimit = true;
 
-	/** Causes the event to activate or deactivate */
+	/** Causes the event to activate & deactivate. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
 	TObjectPtr<UBangoTrigger> Trigger;
 	
-	/** Actions to run when event is triggered, or turns on for an on/off event. */
+	/** Actions for the event. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
 	TArray<TObjectPtr<UBangoAction>> Actions;
 	
-	/**  */
+	/** If true, the event will need to be unfrozen before it can be activated. */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
 

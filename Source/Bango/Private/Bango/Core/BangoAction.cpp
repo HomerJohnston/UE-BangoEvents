@@ -27,6 +27,11 @@ double UBangoAction::GetStopDelay()
 
 void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 {
+	if (bPreventStart)
+	{
+		return;
+	}
+	
 	Instigator = NewInstigator;
 
 	check(Instigator);
@@ -43,17 +48,22 @@ void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 }
 
 void UBangoAction::StartDelayed()
-{
+{	
 	StartTimerHandle.Invalidate();
 	StopTimerHandle.Invalidate();
 
 	bRunning = true;
-	
+
 	OnStart();
 }
 
 void UBangoAction::Stop()
 {
+	if (bPreventStop)
+	{
+		return;
+	}
+	
 	if (StartTimerHandle.IsValid())
 	{
 		GetEvent()->GetWorldTimerManager().ClearTimer(StartTimerHandle);

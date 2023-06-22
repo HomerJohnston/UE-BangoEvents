@@ -373,7 +373,7 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 		OverrideDisplayMesh->SetVisibility(true);
 
 		OverrideDisplayMesh->SetWorldScale3D(FVector(CustomMeshScale));
-		OverrideDisplayMesh->SetRelativeLocation(FVector(0, 0, CustomMeshBaseOffset + CustomMeshOffset));
+		OverrideDisplayMesh->SetRelativeLocation(FVector(0, 0, CustomMeshOffsetBase + CustomMeshOffset));
 	}
 	else
 	{

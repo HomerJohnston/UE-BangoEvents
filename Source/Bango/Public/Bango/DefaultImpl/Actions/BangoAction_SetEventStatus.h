@@ -2,18 +2,18 @@
 
 #include "Bango/Core/BangoAction.h"
 
-#include "BangoAction_ControlEvent.generated.h"
+#include "BangoAction_SetEventStatus.generated.h"
 
 UENUM()
 enum class EBangoAction_FreezeThawEvent_Type : uint8
 {
-	Thaw,
-	Freeze,
-	DoNothing,
+	Active,
+	Frozen,
+	NoChange,
 };
 
-UCLASS(DisplayName="Control Event")
-class BANGO_API UBangoAction_ControlEvent : public UBangoAction
+UCLASS(DisplayName="Set Event Status")
+class BANGO_API UBangoAction_SetEventStatus : public UBangoAction
 {
 	GENERATED_BODY()
 protected:
@@ -21,10 +21,10 @@ protected:
 	ABangoEvent* TargetEvent;
 
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoAction_FreezeThawEvent_Type OnStartAction = EBangoAction_FreezeThawEvent_Type::Thaw;
+	EBangoAction_FreezeThawEvent_Type StatusToSetOnStart = EBangoAction_FreezeThawEvent_Type::Active;
 
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoAction_FreezeThawEvent_Type OnStopAction = EBangoAction_FreezeThawEvent_Type::Freeze;
+	EBangoAction_FreezeThawEvent_Type StatusToSetOnStop = EBangoAction_FreezeThawEvent_Type::Frozen;
 	
 public:
 	void OnStart_Implementation() override;
