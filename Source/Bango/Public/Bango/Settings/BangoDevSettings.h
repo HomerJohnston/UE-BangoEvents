@@ -10,7 +10,10 @@ UCLASS(Config = EditorPerProjectUserSettings, DisplayName="Bango Event System")
 class BANGO_API UBangoDevSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
-
+public:
+	void PostCDOContruct() override;
+	
+	
 	// TODO: console variables for quicker hiding?
 protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
@@ -27,9 +30,6 @@ protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(UIMin=0.5, UIMax=5.0))
 	float EventDisplaySize = 1.0;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	TSoftObjectPtr<UMaterial> CustomMeshMaterial;
-	
 public:
 	UFUNCTION(BlueprintCallable)
 	bool GetShowEventsInGame() const;
@@ -43,6 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetEventDisplaySize() const;
 
-	UFUNCTION(BlueprintCallable)
-	UMaterial* GetCustomMeshMaterial() const;
+	void OnCvarChange();
+
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 };

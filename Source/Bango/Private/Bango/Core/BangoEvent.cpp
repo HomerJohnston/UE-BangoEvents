@@ -51,6 +51,7 @@ ABangoEvent::ABangoEvent()
 		OverrideDisplayMesh->SetupAttachment(RootComponent);
 		OverrideDisplayMesh->SetCastShadow(false);
 		OverrideDisplayMesh->SetHiddenInGame(true);
+		OverrideDisplayMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 #endif
 }
@@ -235,6 +236,8 @@ void ABangoEvent::BeginPlay()
 #endif
 	
 	UE_VLOG(this, Bango, Log, TEXT("Event Initialized"));
+	
+	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
 }
 
 void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
@@ -855,6 +858,29 @@ FLinearColor ABangoEvent::GetColorForProxy() const
 	else
 	{
 		return Error;
+	}
+}
+
+void ABangoEvent::OnCvarChange()
+{
+	if (!bUseCustomMesh || !IsValid(OverrideDisplayMesh))
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	
+	if (!IsValid(World) || !World->IsGameWorld())
+	{
+		return;
+	}
+
+	const IConsoleVariable* ShowInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
+	bool bNewHiddenInGame = !ShowInGameCVar->GetBool();
+	
+	if (bUseCustomMesh && IsValid(OverrideDisplayMesh))
+	{
+		OverrideDisplayMesh->SetHiddenInGame(bNewHiddenInGame);
 	}
 }
 #endif

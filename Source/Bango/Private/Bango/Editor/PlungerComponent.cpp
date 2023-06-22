@@ -15,7 +15,7 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 
 	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 
-	//FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
+	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
 }
 
 FPrimitiveSceneProxy* UBangoPlungerComponent::CreateSceneProxy()
@@ -105,7 +105,7 @@ void UBangoPlungerComponent::OnCvarChange()
 	{
 		return;
 	}
-	
+
 	const IConsoleVariable* ShowInGameCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Bango.ShowEventsInGame"));
 
 	bool bNewHiddenInGame = !ShowInGameCVar->GetBool();
