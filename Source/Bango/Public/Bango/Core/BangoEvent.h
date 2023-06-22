@@ -116,6 +116,15 @@ struct BANGO_API FBangoEventInstigatorActions
 	TMap<int, FBangoEventInstigatorActions*> Test;
 };
 
+struct FBangoDebugTextEntry
+{
+	FString TextL;
+	FString TextR;
+	FColor Color;
+
+	FBangoDebugTextEntry(FString InTextL, FString InTextR, FColor InColor = FColor::White);
+};
+
 /**
  * 
  */
@@ -177,10 +186,10 @@ private:
 	UPROPERTY()
 	bool bUseActivationLimit = true;
 
-	/** Runs the Start function of all Actions */
+	/** Causes the event to activate or deactivate */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
-	TArray<TObjectPtr<UBangoTrigger>> Triggers;
-
+	TObjectPtr<UBangoTrigger> Trigger;
+	
 	/** Actions to run when event is triggered, or turns on for an on/off event. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
 	TArray<TObjectPtr<UBangoAction>> Actions;
@@ -312,9 +321,9 @@ public:
 	void Deactivate(UObject* DeactivationInstigator);
 
 protected:
-	void EnableTriggers();
+	void EnableTrigger();
 
-	void DisableTriggers();
+	void DisableTrigger();
 	
 	// ============================================================================================
 	// Editor |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -352,11 +361,11 @@ protected:
 	
 	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre) const;
 
-	TArray<FCanvasTextItem> GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter) const;
+	TArray<FCanvasTextItem> GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter) const;
 	
-	TArray<FString> GetDebugDataString_Editor() const;
+	TArray<FBangoDebugTextEntry> GetDebugDataString_Editor() const;
 
-	TArray<FString> GetDebugDataString_Game() const;
+	TArray<FBangoDebugTextEntry> GetDebugDataString_Game() const;
 
 	bool HasInvalidData() const;
 

@@ -22,6 +22,11 @@
 TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> ABangoEvent::BangoEventsShowFlag(TEXT("BangoEventsShowFlag"), true, EShowFlagGroup::SFG_Developer, FText(INVTEXT("Bango Events")));
 #endif
 
+FBangoDebugTextEntry::FBangoDebugTextEntry(FString InTextL, FString InTextR, FColor InColor)
+	: TextL(InTextL), TextR(InTextR), Color(InColor)
+{
+}
+
 // ============================================================================================
 // Constructor
 // ============================================================================================
@@ -43,7 +48,7 @@ ABangoEvent::ABangoEvent()
 			// TODO copy code from arrow component
 		}
 	}
-
+	
 	OverrideDisplayMesh = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>("CustomMesh");
 
 	if (OverrideDisplayMesh)
@@ -200,20 +205,13 @@ void ABangoEvent::BeginPlay()
 			checkNoEntry();
 		}
 	}
-
-	for (auto it = Triggers.CreateIterator(); it; ++it)
-	{
-		UBangoTrigger* Trigger = it->Get();
 		
-		if (!IsValid(Trigger))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
-			it.RemoveCurrent();
-			continue;
-		}
+	if (!IsValid(Trigger))
+	{
+		UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
 	}
 
-	EnableTriggers();
+	EnableTrigger();
 	
 	SetFrozen(bStartsFrozen);
 
@@ -319,25 +317,19 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 #endif
 }
 
-void ABangoEvent::EnableTriggers()
+void ABangoEvent::EnableTrigger()
 {
-	for (UBangoTrigger* Trigger : Triggers)
+	if (IsValid(Trigger))
 	{
-		if (IsValid(Trigger))
-		{
-			Trigger->SetEnabled(true);
-		}
+		Trigger->SetEnabled(true);
 	}
 }
 
-void ABangoEvent::DisableTriggers()
+void ABangoEvent::DisableTrigger()
 {
-	for (UBangoTrigger* Trigger : Triggers)
+	if (IsValid(Trigger))
 	{
-		if (IsValid(Trigger))
-		{
-			Trigger->SetEnabled(false);
-		}
+		Trigger->SetEnabled(false);
 	}
 }
 
@@ -442,20 +434,20 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 
 	if (Distance < FMath::Square(DevSettings->GetNearDisplayDistance()))
 	{
-		TDelegate<TArray<FString>()> DataGetter;
+		TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter;
 
 		if (GetWorld()->IsGameWorld())
 		{
-			DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Game);
+			DataGetter = TDelegate<TArray<FBangoDebugTextEntry>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Game);
 		}
 		else
 		{
-			DataGetter = TDelegate<TArray<FString>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
+			DataGetter = TDelegate<TArray<FBangoDebugTextEntry>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
 		}
 	
 		// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
 		// By setting up an array of individual items I can keep them all centre justified and manually offset each one.
-		TArray<FCanvasTextItem> DataText = GetDebugDataText(ScreenLocation, DataGetter);
+		TArray<FCanvasTextItem> DataText = GetDebugDataText(Canvas, ScreenLocation, DataGetter);
 
 		for (FCanvasTextItem& Text : DataText)
 		{
@@ -508,7 +500,7 @@ double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) 
 #if WITH_EDITOR
 FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre) const
 {	
-	UFont* TextFont = GEngine->GetMediumFont();
+	UFont* TextFont = GEngine->GetLargeFont();
 
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
@@ -536,26 +528,45 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 #endif
 
 #if WITH_EDITOR
-TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocationCentre, TDelegate<TArray<FString>()> DataGetter) const
+TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter) const
 {
 	UFont* TextFont = GEngine->GetMediumFont();
 
 	FVector2D DataTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y + 8);
 
-	TArray<FString> Data = DataGetter.Execute();
+	TArray<FBangoDebugTextEntry> Data = DataGetter.Execute();
 
 	TArray<FCanvasTextItem> CanvasTextItems;
 
 	const double LineOffset = 16;
 	double CurrentLineOffset = 0;
 	
-	for(const FString& S : Data)
+	for(const FBangoDebugTextEntry& S : Data)
 	{
-		FCanvasTextItem Text(DataTextPos, FText::FromString(S), TextFont, FColor::White);
-		Text.bCentreX = false;
-		Text.Position.Y += CurrentLineOffset;
-		Text.Scale = FVector2d(1.1, 1.1);
-		CanvasTextItems.Add(Text);
+		float LX = 0;
+		float LY = 0;
+		float RX = 0;
+		float RY = 0;
+		
+		Canvas->StrLen(TextFont, S.TextL, LX, LY, false);
+		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
+
+		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FColor::White);
+		TextLeft.Position.X -= (LX + 3 + 0.5 * S.TextL.Len());
+		TextLeft.Position.Y += CurrentLineOffset;
+		TextLeft.Scale = FVector2d(1.1);
+		TextLeft.bOutlined = true;
+		TextLeft.OutlineColor = FColor(50, 50, 50, 255);
+
+		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, S.Color);
+		TextRight.Position.X += 3;
+		TextRight.Position.Y += CurrentLineOffset;
+		TextRight.Scale = FVector2d(1.1);
+		TextRight.bOutlined = true;
+		TextRight.OutlineColor = FColor(50, 50, 50, 255);
+		
+		CanvasTextItems.Add(TextLeft);
+		CanvasTextItems.Add(TextRight);
 
 		CurrentLineOffset += LineOffset;
 	}
@@ -565,111 +576,98 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(const FVector& ScreenLocat
 #endif
 
 #if WITH_EDITOR
-TArray<FString> ABangoEvent::GetDebugDataString_Editor() const
+TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 {
-	TArray<FString> Data;
+	TArray<FBangoDebugTextEntry> Data;
 	
 	if (bUseActivationLimit)
 	{
-		Data.Add(FString::Printf(TEXT("Activation Limit: %i"), ActivationLimit));
+		Data.Add(FBangoDebugTextEntry("Activation Limit:", FString::Printf(TEXT("%i"), ActivationLimit)));
 	}
 	else
 	{
-		Data.Add(TEXT("Activation Limit: Infinite"));
-	}
-
-	if (Triggers.IsEmpty())
-	{
-		Data.Add("NO TRIGGERS!");
+		Data.Add(FBangoDebugTextEntry("Activation Limit:", "Infinite"));
 	}
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	if (!IsValid(Trigger))
 	{
-		if (!IsValid(Trigger))
-		{
-			Data.Add("NULL TRIGGER");
-			continue;
-		}
-		
+		Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", FColor::Red));
+	}
+	else
+	{
 		TStringBuilder<128> TriggerEntry;
 
-		TriggerEntry.Append("Trg: ");
-		
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
 		// TODO: Hook to add debug text for triggers
 		
-		Data.Add(TriggerEntry.ToString());
+		Data.Add(FBangoDebugTextEntry("Trigger:", TriggerEntry.ToString()));
 	}
-
+	
 	if (Actions.IsEmpty())
 	{
-		Data.Add("NO ACTIONS!");
+		Data.Add(FBangoDebugTextEntry("Action:", "NONE", FColor::Red));
 	}
 	
 	for (UBangoAction* Action : Actions)
 	{
-		if (!IsValid(Action))
-		{
-			Data.Add("NULL ACTION");
-			continue;
-		}
-		
 		TStringBuilder<128> ActionEntry;
 
-		ActionEntry.Append("Act: ");
-
-		ActionEntry.Append(*Action->GetDisplayName().ToString());
-
-		if (Action->GetUseStartDelay() || Action->GetUseStopDelay())
+		if (!IsValid(Action))
 		{
-			ActionEntry.AppendChar(' ');
-			
-			ActionEntry.AppendChar('(');
+			ActionEntry.Append("NULL");
+		}
+		else
+		{
+			ActionEntry.Append(*Action->GetDisplayName().ToString());
 
-			bool bShowSeparator = false;
-			
-			if (Action->GetUseStartDelay())
+			if (Action->GetUseStartDelay() || Action->GetUseStopDelay())
 			{
-				ActionEntry.Append(FString::Printf(TEXT("Start Delay: %.2f"), Action->GetStartDelay()));
-				
-				bShowSeparator = true;
-			}
+				ActionEntry.Append(" (");
 
-			if (Action->GetUseStopDelay())
-			{
-				if (bShowSeparator)
+				bool bShowSeparator = false;
+			
+				if (Action->GetUseStartDelay())
 				{
-					ActionEntry.Append(" / ");
+					ActionEntry.Append(FString::Printf(TEXT("Start Delay: %.2f"), Action->GetStartDelay()));
+					
+					bShowSeparator = true;
 				}
 				
-				ActionEntry.Append(FString::Printf(TEXT("Stop Delay: %.2f"), Action->GetStopDelay()));
+				if (Action->GetUseStopDelay())
+				{
+					if (bShowSeparator)
+					{
+						ActionEntry.Append(" / ");
+					}
+				
+					ActionEntry.Append(FString::Printf(TEXT("Stop Delay: %.2f"), Action->GetStopDelay()));
+				}
+				
+				ActionEntry.Append(")");
 			}
-			
-			ActionEntry.AppendChar(')');
 		}
 		
-		Data.Add(ActionEntry.ToString());
-	}
+		Data.Add(FBangoDebugTextEntry("Action:", ActionEntry.ToString()));
+	}	
 	
-
 	return Data;
 }
 #endif
 
 #if WITH_EDITOR
-TArray<FString> ABangoEvent::GetDebugDataString_Game() const
+TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Game() const
 {
-	TArray<FString> Data; 
+	TArray<FBangoDebugTextEntry> Data; 
 
 	if (bUseActivationLimit)
 	{
-		Data.Add(FString::Printf(TEXT("(%i/%i)"), ActivationCount, ActivationLimit));
+		Data.Add(FBangoDebugTextEntry("Activations:", FString::Printf(TEXT("(%i/%i)"), ActivationCount, ActivationLimit)));
 	}
 
 	if (IsToggleType())
 	{
-		Data.Add(FString::Printf(TEXT("Instigators: %i"), EventProcessor->GetInstigatorsNum()));
+		Data.Add(FBangoDebugTextEntry("Instigators:", FString::Printf(TEXT("%i"), EventProcessor->GetInstigatorsNum())));
 	}
 	
 	return Data;
@@ -679,7 +677,7 @@ TArray<FString> ABangoEvent::GetDebugDataString_Game() const
 #if WITH_EDITOR
 bool ABangoEvent::HasInvalidData() const
 {
-	if (Triggers.IsEmpty())
+	if (!IsValid(Trigger))
 	{
 		return true;
 	}
@@ -689,14 +687,6 @@ bool ABangoEvent::HasInvalidData() const
 		return true;
 	}
 	
-	for(UBangoTrigger* Trigger : Triggers)
-	{
-		if (!IsValid(Trigger))
-		{
-			return true;
-		}
-	}
-
 	for(UBangoAction* Action : Actions)
 	{
 		if (!IsValid(Action))
