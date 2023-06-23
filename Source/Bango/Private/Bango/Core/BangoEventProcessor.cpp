@@ -46,6 +46,11 @@ int32 UBangoEventProcessor::GetInstigatorsNum()
 	return Instigators.Num();
 }
 
+const TArray<UObject*>& UBangoEventProcessor::GetInstigators() const
+{
+	return Instigators;
+}
+
 // BANG PROCESSOR
 // ================================================================================================
 
@@ -92,17 +97,17 @@ bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 	
 	switch (GetEvent()->GetDeactivateCondition())
 	{
-		case EBangoToggleDeactivateCondition::AllInstigatorsMustDeactivate:
+		case EBangoToggleDeactivateCondition::AllInstigatorsRemoved:
 		{
 			bRunStopActions = Instigators.Num() == 1 && Instigators[0] == OldInstigator;
 			break;
 		}
-		case EBangoToggleDeactivateCondition::AnyInstigatorCanDeactivate:
+		case EBangoToggleDeactivateCondition::AnyInstigatorRemoved:
 		{
 			bRunStopActions = InstigatorIndex != INDEX_NONE;
 			break;
 		}
-		case EBangoToggleDeactivateCondition::OriginalInstigatorDeactivates:
+		case EBangoToggleDeactivateCondition::OriginalInstigatorRemoved:
 		{
 			bRunStopActions = Instigators.Num() > 0 && Instigators[0] == OldInstigator;
 			break;
@@ -122,6 +127,8 @@ bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 	if (bRunStopActions)
 	{
 		StopActions(OldInstigator);
+
+		Instigators.Empty(Instigators.Num());
 
 		return true;
 	}

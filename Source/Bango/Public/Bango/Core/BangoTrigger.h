@@ -10,8 +10,8 @@ UENUM(BlueprintType)
 enum class EBangoTriggerType : uint8
 {
 	DoNothing,
-	ActivateEvent,
-	DeactivateEvent,
+	AddInstigator,
+	RemoveInstigator,
 };
 
 class ABangoEvent;

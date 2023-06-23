@@ -59,10 +59,10 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 
 	switch (TriggerType)
 	{
-		case EBangoTriggerType::ActivateEvent:
+		case EBangoTriggerType::AddInstigator:
 			ActivateEvent(InstigatorActor);
 			break;
-		case EBangoTriggerType::DeactivateEvent:
+		case EBangoTriggerType::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 			break;
 	}

@@ -29,11 +29,11 @@ protected:
 
 	/** How to trigger the event when an overlap begins. */
 	UPROPERTY(Category="Settings", DisplayName="On Begin Overlap", EditAnywhere)
-	EBangoTriggerType BeginOverlapTrigger = EBangoTriggerType::ActivateEvent;
+	EBangoTriggerType BeginOverlapTrigger = EBangoTriggerType::AddInstigator;
 
 	/** How to trigger the event when an overlap ends. */
 	UPROPERTY(Category="Settings", DisplayName="On End Overlap", EditAnywhere)
-	EBangoTriggerType EndOverlapTrigger = EBangoTriggerType::DeactivateEvent;
+	EBangoTriggerType EndOverlapTrigger = EBangoTriggerType::RemoveInstigator;
 	
 	// ============================================================================================
 	// STATE

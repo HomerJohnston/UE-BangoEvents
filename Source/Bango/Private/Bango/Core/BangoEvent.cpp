@@ -395,7 +395,7 @@ void ABangoEvent::UpdateProxyState()
 {
 	if (GetWorld()->IsGameWorld())
 	{
-		CurrentState.SetFlag(EBangoEventState::Active, EventProcessor->GetInstigatorsNum() > 0);
+		CurrentState.SetFlag(EBangoEventState::Active, LastActivationTime > LastDeactivationTime);
 		CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 		CurrentState.SetFlag(EBangoEventState::Expired, ActivationLimitReached());
 	}
@@ -667,7 +667,12 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Game() const
 
 	if (IsToggleType())
 	{
-		Data.Add(FBangoDebugTextEntry("Instigators:", FString::Printf(TEXT("%i"), EventProcessor->GetInstigatorsNum())));
+		const TArray<UObject*>& Instigators = EventProcessor->GetInstigators();
+
+		for(const UObject* CurrentInstigator : Instigators)
+		{
+			Data.Add(FBangoDebugTextEntry("Instigator:", FString::Printf(TEXT("%s"), *CurrentInstigator->GetName())));	
+		}
 	}
 	
 	return Data;

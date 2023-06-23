@@ -22,28 +22,17 @@ enum class EBangoEventType : uint8
 {
 	Bang					UMETA(ToolTip="Bangs will simply execute Start on all actions when any trigger Activates, and Stop when any trigger Deactivates."),
 	Toggle					UMETA(ToolTip="Toggles exist in a state of activated or deactivated, and will only Start or Stop all actions when the state changes. If an Actions include a delay, deactivating the event before the Action starts will cause that Action to abort and not run."),
-	//Instanced				UMETA(ToolTip="Instanced Tooltip"),
+	//Instanced				UMETA(ToolTip="Instanced events work like toggle events, but they can be independently activated for every instigator."),
 	MAX						UMETA(Hidden)
 };
 
 UENUM()
 enum class EBangoToggleDeactivateCondition : uint8
 {
-	AllInstigatorsMustDeactivate,
-	AnyInstigatorCanDeactivate,
-	OriginalInstigatorDeactivates,
-	AnythingCanDeactivate,
+	AllInstigatorsRemoved,
+	AnyInstigatorRemoved,
+	OriginalInstigatorRemoved,
 	MAX						UMETA(Hidden)
-};
-
-UENUM()
-enum class EBangoWorldTimeType : uint8
-{
-	GameTime,
-	UnpausedTime,
-	RealTime,
-	AudioTime,
-	MAX
 };
 
 #if WITH_EDITOR
@@ -198,10 +187,6 @@ private:
 	/** If true, the event will need to be unfrozen before it can be activated. */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
-
-	/** How to measure trigger delay times or trigger hold times. */
-	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
-	EBangoWorldTimeType TimeType = EBangoWorldTimeType::GameTime;
 	
 	// SETTINGS GETTERS AND SETTERS
 	// ------------------------------------------
@@ -270,7 +255,7 @@ protected:
 	double LastActivationTime = -999;
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
-	double LastDeactivationTime = -999;
+	double LastDeactivationTime = -998;
 
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventActivated OnBangoEventActivated;

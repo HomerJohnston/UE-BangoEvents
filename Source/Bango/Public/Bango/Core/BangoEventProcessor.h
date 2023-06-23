@@ -34,6 +34,8 @@ public:
 	virtual void StopActions(UObject* OldInstigator);
 
 	int32 GetInstigatorsNum();
+
+	const TArray<UObject*>& GetInstigators() const;
 };
 
 // BANG PROCESSOR

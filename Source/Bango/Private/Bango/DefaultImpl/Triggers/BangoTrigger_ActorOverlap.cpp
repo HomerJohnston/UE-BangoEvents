@@ -71,10 +71,10 @@ void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* In
 
 	switch (BeginOverlapTrigger)
 	{
-		case EBangoTriggerType::ActivateEvent:
+		case EBangoTriggerType::AddInstigator:
 			ActivateEvent(InstigatorActor);
 			break;
-		case EBangoTriggerType::DeactivateEvent:
+		case EBangoTriggerType::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 			break;
 	}
@@ -92,10 +92,10 @@ void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* Inst
 
 	switch (EndOverlapTrigger)
 	{
-		case EBangoTriggerType::ActivateEvent:
+		case EBangoTriggerType::AddInstigator:
 			ActivateEvent(InstigatorActor);
 		break;
-		case EBangoTriggerType::DeactivateEvent:
+		case EBangoTriggerType::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 		break;
 	}

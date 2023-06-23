@@ -28,7 +28,7 @@ protected:
 
 	/** How to trigger the event when a hit occurs. */
 	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
-	EBangoTriggerType TriggerType = EBangoTriggerType::ActivateEvent;
+	EBangoTriggerType TriggerType = EBangoTriggerType::AddInstigator;
 	
 	// ============================================================================================
 	// STATE

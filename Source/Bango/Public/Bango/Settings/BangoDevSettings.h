@@ -21,14 +21,14 @@ protected:
 	
 	/** Beyond this distance, all event data will be hidden */
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	float FarDisplayDistance = 5000;
+	float FarDisplayDistance = 10000;
 
 	/** Beyond this distance, detailed event data will be hidden */
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
-	float NearDisplayDistance = 2500;
+	float NearDisplayDistance = 5000;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(UIMin=0.5, UIMax=5.0))
-	float EventDisplaySize = 1.0;
+	float EventDisplaySize = 2.0;
 
 public:
 	UFUNCTION(BlueprintCallable)
