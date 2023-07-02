@@ -5,8 +5,9 @@
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
-	OnStartAction = EBangoFreezeThawEventAction::UnfreezeEvent;
-	OnStopAction = EBangoFreezeThawEventAction::FreezeEvent;
+	OnStartAction = EBangoFreezeThawEventAction::DoNothing;
+	
+	OnStopAction = EBangoFreezeThawEventAction::DoNothing;
 }
 
 void UBangoAction_FreezeThawEvent::OnStart_Implementation()

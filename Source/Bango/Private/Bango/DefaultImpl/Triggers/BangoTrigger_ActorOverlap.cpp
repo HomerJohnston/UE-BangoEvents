@@ -11,7 +11,6 @@
 UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
 {
 	BeginOverlapAction = EBangoTriggerInstigatorAction::AddInstigator;
-
 	EndOverlapAction = EBangoTriggerInstigatorAction::RemoveInstigator;
 }
 

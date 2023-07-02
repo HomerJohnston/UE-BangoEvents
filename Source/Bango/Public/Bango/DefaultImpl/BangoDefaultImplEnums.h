@@ -17,3 +17,11 @@ enum class EBangoFreezeThawEventAction : uint8
 	UnfreezeEvent,
 	DoNothing,
 };
+
+UENUM()
+enum class EBangoActivateDeactivateEventAction : uint8
+{
+	ActivateEvent,
+	DeactivateEvent,
+	DoNothing,
+};
