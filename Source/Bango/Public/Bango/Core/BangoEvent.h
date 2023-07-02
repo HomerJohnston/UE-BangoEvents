@@ -20,17 +20,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventDeactivated, ABangoEve
 UENUM()
 enum class EBangoEventType : uint8
 {
-	Bang					UMETA(ToolTip="Bangs will simply execute Start on all actions when any trigger Activates, and Stop when any trigger Deactivates."),
-	Toggle					UMETA(ToolTip="Toggles exist in a state of activated or deactivated, and will only Start or Stop all actions when the state changes. If an Actions include a delay, deactivating the event before the Action starts will cause that Action to abort and not run."),
-	//Instanced				UMETA(ToolTip="Instanced events work like toggle events, but they can be independently activated for every instigator."),
+	Bang					UMETA(ToolTip="Bangs will repeatedly start actions when any trigger activates, and repeatedly stop when any trigger deactivates."),
+	Toggle					UMETA(ToolTip="Toggles maintain an activated state, and will only start or stop when the state changes. If any actions have a delay set, deactivating the event before the action starts will cause that action to abort starting."),
+	//Instanced				UMETA(ToolTip="Instanced events work like toggle events, but they can be independently activated for multiple instigators."),
 	MAX						UMETA(Hidden)
 };
 
 UENUM()
 enum class EBangoToggleDeactivateCondition : uint8
 {
-	AllInstigatorsRemoved,
 	AnyInstigatorRemoved,
+	AllInstigatorsRemoved,
 	OriginalInstigatorRemoved,
 	MAX						UMETA(Hidden)
 };
@@ -177,11 +177,11 @@ private:
 	bool bUseActivationLimit = true;
 
 	/** Causes the event to activate & deactivate. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TObjectPtr<UBangoTrigger> Trigger;
 	
 	/** Actions for the event. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced)
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TArray<TObjectPtr<UBangoAction>> Actions;
 	
 	/** If true, the event will need to be unfrozen before it can be activated. */

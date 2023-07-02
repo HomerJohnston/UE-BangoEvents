@@ -2,9 +2,10 @@
 
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorOverlap.h"
 
+#include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
-#include "Bango/DefaultImpl/Triggers/BangoTriggerInstigatorAction.h"
+#include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
 
 
 UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
@@ -17,6 +18,11 @@ UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
 // ============================================================================================
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
+	if (bUseTargetActor && !IsValid(TargetActor))
+	{
+		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use target actor but no target actor was set!"));
+	}
+	
 	AActor* ActorToUse = (bUseTargetActor && IsValid(TargetActor)) ? TargetActor : GetEvent();
 	
 	if (SubscribedActor.IsValid())
@@ -67,26 +73,15 @@ void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	if (IsValid(InstigatorFilter))
-	{
-		if (!InstigatorFilter->IsValidInstigator(OverlapActor, InstigatorActor))
-		{
-			return;
-		}
-	}
-
-	switch (BeginOverlapAction)
-	{
-		case EBangoTriggerInstigatorAction::AddInstigator:
-			ActivateEvent(InstigatorActor);
-			break;
-		case EBangoTriggerInstigatorAction::RemoveInstigator:
-			DeactivateEvent(InstigatorActor);
-			break;
-	}
+	Handle(OverlapActor, InstigatorActor, BeginOverlapAction);
 }
 
 void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor)
+{
+	Handle(OverlapActor, InstigatorActor, EndOverlapAction);
+}
+
+void UBangoTrigger_ActorOverlap::Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoTriggerInstigatorAction Action)
 {
 	if (IsValid(InstigatorFilter))
 	{
@@ -95,15 +90,23 @@ void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* Inst
 			return;
 		}
 	}
-
-	switch (EndOverlapAction)
+	
+	switch (Action)
 	{
 		case EBangoTriggerInstigatorAction::AddInstigator:
+		{
 			ActivateEvent(InstigatorActor);
-		break;
+			break;
+		}
 		case EBangoTriggerInstigatorAction::RemoveInstigator:
+		{
 			DeactivateEvent(InstigatorActor);
-		break;
+			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 }
 

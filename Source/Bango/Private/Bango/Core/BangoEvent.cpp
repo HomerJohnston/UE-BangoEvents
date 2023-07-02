@@ -36,6 +36,9 @@ ABangoEvent::ABangoEvent()
 	
 	PrimaryActorTick.bCanEverTick = false;
 
+	Type = EBangoEventType::Bang;
+	DeactivateCondition = EBangoToggleDeactivateCondition::AllInstigatorsRemoved;
+
 #if WITH_EDITORONLY_DATA
 	PlungerComponent = CreateEditorOnlyDefaultSubobject<UBangoPlungerComponent>("Plunger");
 

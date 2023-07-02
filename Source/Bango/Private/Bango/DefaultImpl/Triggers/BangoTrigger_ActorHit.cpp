@@ -1,6 +1,6 @@
 ﻿#include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorHit.h"
 
-#include "Bango/DefaultImpl/Triggers/BangoTriggerInstigatorAction.h"
+#include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
@@ -66,11 +66,19 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 	switch (TriggerAction)
 	{
 		case EBangoTriggerInstigatorAction::AddInstigator:
+		{
 			ActivateEvent(InstigatorActor);
 			break;
+		} 
 		case EBangoTriggerInstigatorAction::RemoveInstigator:
+		{
 			DeactivateEvent(InstigatorActor);
 			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 }
 

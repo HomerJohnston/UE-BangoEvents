@@ -27,7 +27,7 @@ protected:
 	bool bUseTargetActor;
 	
 	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
-	UPROPERTY(DisplayName = "Get Overlap Events From Actor", Category="Overlap Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(DisplayName = "Get Overlap Events From Other Actor", Category="Overlap Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 	
 	/** Use this to determine which overlap events to use and which to ignore. */
@@ -64,4 +64,6 @@ protected:
 
 	UFUNCTION()
 	void OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor);
+
+	void Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoTriggerInstigatorAction Action);
 };
