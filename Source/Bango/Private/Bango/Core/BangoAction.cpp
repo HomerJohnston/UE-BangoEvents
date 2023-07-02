@@ -27,7 +27,7 @@ double UBangoAction::GetStopDelay()
 
 void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
 {
-	if (bPreventStart)
+	if (bBlockFromStarting)
 	{
 		return;
 	}
@@ -59,7 +59,7 @@ void UBangoAction::StartDelayed()
 
 void UBangoAction::Stop()
 {
-	if (bPreventStop)
+	if (bBlockFromStopping)
 	{
 		return;
 	}

@@ -50,6 +50,7 @@ void UBangoDevSettings::OnCvarChange()
 	}
 }
 
+#if WITH_EDITOR
 void UBangoDevSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -60,4 +61,4 @@ void UBangoDevSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyCh
 		ShowEventsInGame->Set(GetShowEventsInGame());
 	}
 }
-
+#endif

@@ -234,8 +234,10 @@ void ABangoEvent::BeginPlay()
 #endif
 	
 	UE_VLOG(this, Bango, Log, TEXT("Event Initialized"));
-	
+
+#if WITH_EDITOR
 	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
+#endif
 }
 
 void ABangoEvent::ResetTriggerCount(bool bUnfreeze)
@@ -502,6 +504,8 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 {	
 	UFont* TextFont = GEngine->GetLargeFont();
 
+	UFont* MyFont = GEngine->GetAdditionalFont(0);
+	
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
 	FText Display;

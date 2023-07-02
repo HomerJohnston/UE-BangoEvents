@@ -17,17 +17,17 @@ class BANGO_API UBangoAction : public UObject
 	// ============================================================================================
 private:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Action Settings", DisplayName="Action Display Name", EditAnywhere)
+	UPROPERTY(Category="Action Settings", DisplayName="Display Name Override", EditAnywhere)
 	FText DisplayName;
 
-	/** When set, start actions will be delayed by the specified length of time. */
+	/** When set, starting of action will be delayed by the specified length of time. */
 	UPROPERTY(Category="Action Settings", EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
 	double StartDelay = 0;
 
 	UPROPERTY()
 	bool bUseStartDelay = false;
 	
-	/** When set, start actions will be delayed by the specified length of time. */
+	/** When set, stopping of action will be delayed by the specified length of time. */
 	UPROPERTY(Category="Action Settings", EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
 	double StopDelay = 0;
 
@@ -36,11 +36,11 @@ private:
 
 	/** If set, prevents this action's OnStart function from running. */
 	UPROPERTY(Category="Action Settings", EditAnywhere)
-	bool bPreventStart = false;
+	bool bBlockFromStarting = false;
 
 	/** If set, prevents this action's OnStop function from running. */
 	UPROPERTY(Category="Action Settings", EditAnywhere)
-	bool bPreventStop = false;
+	bool bBlockFromStopping = false;
 	
 	// ------------------------------------------
 	// Getters and Setters

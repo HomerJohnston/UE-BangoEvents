@@ -360,7 +360,6 @@ public:
 
 protected:
 	void OnCvarChange();
-
 #endif
 	
 #if ENABLE_VISUAL_LOG

@@ -6,10 +6,17 @@
 
 class UBangoInstigatorFilter;
 
+enum class EBangoTriggerInstigatorAction : uint8;
+
 UCLASS(DisplayName="Actor Hit")
 class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger
 {
 	GENERATED_BODY()
+	// ============================================================================================
+	// CONSTRUCTION
+	// ============================================================================================
+public:
+	UBangoTrigger_ActorHit();
 
 	// ============================================================================================
 	// SETTINGS
@@ -28,7 +35,7 @@ protected:
 
 	/** How to trigger the event when a hit occurs. */
 	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
-	EBangoTriggerType TriggerType = EBangoTriggerType::AddInstigator;
+	EBangoTriggerInstigatorAction TriggerAction;
 	
 	// ============================================================================================
 	// STATE

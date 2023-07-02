@@ -45,5 +45,7 @@ public:
 
 	void OnCvarChange();
 
+#if WITH_EDITOR
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

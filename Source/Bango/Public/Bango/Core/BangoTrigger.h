@@ -7,11 +7,11 @@
 DECLARE_DYNAMIC_DELEGATE_OneParam(FTriggerDelegate, UObject*, NewInstigator);
 
 UENUM(BlueprintType)
-enum class EBangoTriggerType : uint8
+enum class EBangoTriggerBehavior : uint8
 {
-	DoNothing,
-	AddInstigator,
-	RemoveInstigator,
+	ActivatesAndDeactivates,
+	ActivatesOnly,
+	DeactivatesOnly,
 };
 
 class ABangoEvent;
@@ -20,6 +20,17 @@ class BANGO_API UBangoTrigger : public UObject
 {
 	GENERATED_BODY()
 
+	// ============================================================================================
+	// SETTINGS
+	// ============================================================================================
+
+	UPROPERTY(Category = "Trigger Settings", EditAnywhere)
+	EBangoTriggerBehavior BehaviorRestrictions = EBangoTriggerBehavior::ActivatesAndDeactivates;
+	
+	// ============================================================================================
+	// STATE
+	// ============================================================================================
+	
 private:
 	/** The owning ABangoEvent will listen for this delegate to fire. */
 	UPROPERTY()

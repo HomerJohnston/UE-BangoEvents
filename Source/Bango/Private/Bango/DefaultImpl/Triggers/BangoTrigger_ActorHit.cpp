@@ -1,6 +1,12 @@
 ﻿#include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorHit.h"
 
+#include "Bango/DefaultImpl/Triggers/BangoTriggerInstigatorAction.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
+
+UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
+{
+	TriggerAction = EBangoTriggerInstigatorAction::AddInstigator;
+}
 
 void UBangoTrigger_ActorHit::Enable_Implementation()
 {
@@ -57,12 +63,12 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 		}
 	}
 
-	switch (TriggerType)
+	switch (TriggerAction)
 	{
-		case EBangoTriggerType::AddInstigator:
+		case EBangoTriggerInstigatorAction::AddInstigator:
 			ActivateEvent(InstigatorActor);
 			break;
-		case EBangoTriggerType::RemoveInstigator:
+		case EBangoTriggerInstigatorAction::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 			break;
 	}

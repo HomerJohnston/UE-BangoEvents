@@ -2,11 +2,17 @@
 
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorOverlap.h"
 
-#include "Bango/Log.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
+#include "Bango/DefaultImpl/Triggers/BangoTriggerInstigatorAction.h"
 
 
+UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
+{
+	BeginOverlapAction = EBangoTriggerInstigatorAction::AddInstigator;
+
+	EndOverlapAction = EBangoTriggerInstigatorAction::RemoveInstigator;
+}
 
 // ============================================================================================
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
@@ -69,12 +75,12 @@ void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* In
 		}
 	}
 
-	switch (BeginOverlapTrigger)
+	switch (BeginOverlapAction)
 	{
-		case EBangoTriggerType::AddInstigator:
+		case EBangoTriggerInstigatorAction::AddInstigator:
 			ActivateEvent(InstigatorActor);
 			break;
-		case EBangoTriggerType::RemoveInstigator:
+		case EBangoTriggerInstigatorAction::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 			break;
 	}
@@ -90,12 +96,12 @@ void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* Inst
 		}
 	}
 
-	switch (EndOverlapTrigger)
+	switch (EndOverlapAction)
 	{
-		case EBangoTriggerType::AddInstigator:
+		case EBangoTriggerInstigatorAction::AddInstigator:
 			ActivateEvent(InstigatorActor);
 		break;
-		case EBangoTriggerType::RemoveInstigator:
+		case EBangoTriggerInstigatorAction::RemoveInstigator:
 			DeactivateEvent(InstigatorActor);
 		break;
 	}

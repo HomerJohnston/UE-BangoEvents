@@ -37,7 +37,12 @@ void UBangoTrigger::Disable_Implementation()
 }
 
 void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
-{	
+{
+	if (BehaviorRestrictions == EBangoTriggerBehavior::DeactivatesOnly)
+	{
+		return;
+	}
+
 	if (GetEvent()->GetIsFrozen())
 	{
 		return;
@@ -48,6 +53,11 @@ void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 
 void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 {
+	if (BehaviorRestrictions == EBangoTriggerBehavior::ActivatesOnly)
+	{
+		return;
+	}
+	
 	OnTriggerDeactivation.Execute(OldInstigator);	
 }
 
