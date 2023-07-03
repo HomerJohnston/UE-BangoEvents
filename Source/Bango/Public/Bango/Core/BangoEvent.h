@@ -32,6 +32,7 @@ enum class EBangoToggleDeactivateCondition : uint8
 	AllInstigatorsRemoved,
 	AnyInstigatorsRemoved,
 	OriginalInstigatorRemoved,
+	AnyDeactivateRequest,
 	MAX						UMETA(Hidden)
 };
 

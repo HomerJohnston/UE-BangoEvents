@@ -112,6 +112,11 @@ bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 			bRunStopActions = Instigators.Num() > 0 && Instigators[0] == OldInstigator;
 			break;
 		}
+		case EBangoToggleDeactivateCondition::AnyDeactivateRequest:
+		{
+			bRunStopActions = true;
+			break;
+		}
 		default:
 		{
 			bRunStopActions = false;
