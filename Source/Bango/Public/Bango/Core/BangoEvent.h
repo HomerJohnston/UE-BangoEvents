@@ -29,8 +29,8 @@ enum class EBangoEventType : uint8
 UENUM()
 enum class EBangoToggleDeactivateCondition : uint8
 {
-	AnyInstigatorRemoved,
 	AllInstigatorsRemoved,
+	AnyInstigatorsRemoved,
 	OriginalInstigatorRemoved,
 	MAX						UMETA(Hidden)
 };
