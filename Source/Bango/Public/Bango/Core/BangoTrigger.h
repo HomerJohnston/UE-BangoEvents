@@ -23,9 +23,9 @@ class BANGO_API UBangoTrigger : public UObject
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-
+protected:
 	UPROPERTY(Category = "Trigger Settings", EditAnywhere)
-	EBangoTriggerBehavior BehaviorRestrictions = EBangoTriggerBehavior::ActivatesAndDeactivates;
+	EBangoTriggerBehavior Behavior = EBangoTriggerBehavior::ActivatesAndDeactivates;
 	
 	// ============================================================================================
 	// STATE
@@ -69,5 +69,7 @@ protected:
 #if WITH_EDITOR
 public:
 	virtual FText GetDisplayName();
+
+	EBangoTriggerBehavior GetBehavior();
 #endif
 };

@@ -624,18 +624,39 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
-		{
+		{			
 			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", FColor::Orange));
 		}
 		else
 		{
+			FString Prefix;
+			
+			switch (Trigger->GetBehavior())
+			{
+				case EBangoTriggerBehavior::ActivatesAndDeactivates:
+				{
+					Prefix = "Activation/Deactivation Trigger:";
+					break;
+				}
+				case EBangoTriggerBehavior::ActivatesOnly:
+				{
+					Prefix = "Activation Trigger:";
+					break;
+				}
+				case EBangoTriggerBehavior::DeactivatesOnly:
+				{
+					Prefix = "Deactivation Trigger:";
+					break;
+				}
+			}
+			
 			TStringBuilder<128> TriggerEntry;
 
 			TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
 			// TODO: Hook to add debug text for triggers
 		
-			Data.Add(FBangoDebugTextEntry("Trigger:", TriggerEntry.ToString()));
+			Data.Add(FBangoDebugTextEntry(Prefix, TriggerEntry.ToString()));
 		}
 	}
 	

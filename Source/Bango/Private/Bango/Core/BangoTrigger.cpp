@@ -38,7 +38,7 @@ void UBangoTrigger::Disable_Implementation()
 
 void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 {
-	if (BehaviorRestrictions == EBangoTriggerBehavior::DeactivatesOnly)
+	if (Behavior == EBangoTriggerBehavior::DeactivatesOnly)
 	{
 		return;
 	}
@@ -53,7 +53,7 @@ void UBangoTrigger::ActivateEvent(UObject* NewInstigator)
 
 void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 {
-	if (BehaviorRestrictions == EBangoTriggerBehavior::ActivatesOnly)
+	if (Behavior == EBangoTriggerBehavior::ActivatesOnly)
 	{
 		return;
 	}
@@ -65,5 +65,10 @@ void UBangoTrigger::DeactivateEvent(UObject* OldInstigator)
 FText UBangoTrigger::GetDisplayName()
 {
 	return GetClass()->GetDisplayNameText();
+}
+
+EBangoTriggerBehavior UBangoTrigger::GetBehavior()
+{
+	return Behavior;
 }
 #endif
