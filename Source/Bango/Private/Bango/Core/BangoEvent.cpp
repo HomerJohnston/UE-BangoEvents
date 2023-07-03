@@ -439,25 +439,28 @@ void ABangoEvent::UpdateProxyState()
 void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 {
 	UWorld* World = GetWorld();
+
+	if (!IsValid(World)) { return; }
+	if (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags)) { return; }
+
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+	
+	if (World->IsGameWorld() && !DevSettings->GetShowEventsInGame()) { return; }
+	
+	double DistanceSqrd;
 	FVector ScreenLocation;
-	double Distance = GetScreenLocation(Canvas, ScreenLocation);
+
+	bool bDraw = GetScreenLocation(Canvas, ScreenLocation, DistanceSqrd);
 	
-	if  (
-		   (!ABangoEvent::BangoEventsShowFlag.IsEnabled(Canvas->SceneView->Family->EngineShowFlags)) ||
-		   (!IsValid(World)) ||
-		   (World->IsGameWorld() && !DevSettings->GetShowEventsInGame()) ||
-		   (Distance < 0.0)	||
-		   (Distance > FMath::Square(GetDefault<UBangoDevSettings>()->GetFarDisplayDistance()))
-		)
-	{
-		return;
-	}
+	if (!bDraw) { return; }
+	if (DistanceSqrd > FMath::Square(GetDefault<UBangoDevSettings>()->GetFarDisplayDistance())) { return; }
 	
-	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation);
+	double Distance = FMath::Sqrt(DistanceSqrd);
+	
+	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);
 	Canvas->DrawItem(HeaderText);
 
-	if (Distance < FMath::Square(DevSettings->GetNearDisplayDistance()))
+	if (Distance < DevSettings->GetNearDisplayDistance())
 	{
 		TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter;
 
@@ -472,7 +475,7 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 	
 		// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
 		// By setting up an array of individual items I can keep them all centre justified and manually offset each one.
-		TArray<FCanvasTextItem> DataText = GetDebugDataText(Canvas, ScreenLocation, DataGetter);
+		TArray<FCanvasTextItem> DataText = GetDebugDataText(Canvas, ScreenLocation, DataGetter, Distance);
 
 		for (FCanvasTextItem& Text : DataText)
 		{
@@ -493,7 +496,7 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* Cont) const
 #endif
 
 #if WITH_EDITOR
-double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) const
+bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const
 {
 	// Settings
 	double X, Y;
@@ -507,27 +510,25 @@ double ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) 
 
 	FVector WorldDrawLocation = GetActorLocation() + FVector(0,0,100);
 
-	double DistSquared = FVector::DistSquared(WorldDrawLocation, WorldCameraPos);
+	DistSqrd = FVector::DistSquared(WorldDrawLocation, WorldCameraPos);
 
 	FVector VectorToWorldDrawLocation = WorldDrawLocation - WorldCameraPos;
 
 	if ((VectorToWorldDrawLocation | WorldCameraDir) < 0.0)
 	{
-		return -1;
+		return false;
 	}
 
 	ScreenLocation = Canvas->Project(WorldDrawLocation);
 
-	return DistSquared;
+	return true;
 }
 #endif
 
 #if WITH_EDITOR
-FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre) const
+FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre, double Distance) const
 {	
 	UFont* TextFont = GEngine->GetLargeFont();
-
-	UFont* MyFont = GEngine->GetAdditionalFont(0);
 	
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
@@ -542,12 +543,21 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 		Display = DisplayName;
 	}
 
-	FColor HeaderColor = (HasInvalidData() ? FColor::Orange : FColor::White);
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+	
+	float FarDisplayDistance = DevSettings->GetFarDisplayDistance();
+
+	float LerpAlpha = FMath::Clamp((FarDisplayDistance - Distance) / (1.25 * FarDisplayDistance - FarDisplayDistance), 0, 1);
+	int32 ColorAlpha = FMath::Lerp(0, 255, LerpAlpha);
+	int32 OutlineAlpha = FMath::Lerp(0, 255, FMath::Square(LerpAlpha));
+	
+	FColor HeaderColor = (HasInvalidData() ? FColor(243, 156, 18, ColorAlpha) : FColor(255, 255, 255, ColorAlpha));
 	
 	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, HeaderColor);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
 	Text.bOutlined = true;
+	Text.OutlineColor = FColor(0, 0, 0, OutlineAlpha);
 	Text.Scale = FVector2d(1.0, 1.0);
 
 	return Text;
@@ -555,7 +565,7 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 #endif
 
 #if WITH_EDITOR
-TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter) const
+TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter, double Distance) const
 {
 	UFont* TextFont = GEngine->GetMediumFont();
 
@@ -568,6 +578,14 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 	const double LineOffset = 16;
 	double CurrentLineOffset = 0;
 	
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+
+	float NearDisplayDistance = DevSettings->GetNearDisplayDistance();
+	
+	float LerpAlpha = FMath::Clamp((NearDisplayDistance - Distance) / (1.25 * NearDisplayDistance - NearDisplayDistance), 0, 1);
+	int32 ColorAlpha = FMath::Lerp(0, 255, LerpAlpha);
+	int32 OutlineAlpha = FMath::Lerp(0, 255, FMath::Square(LerpAlpha));
+	
 	for(const FBangoDebugTextEntry& S : Data)
 	{
 		float LX = 0;
@@ -578,19 +596,19 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		Canvas->StrLen(TextFont, S.TextL, LX, LY, false);
 		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
 
-		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FColor::White);
+		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FColor(255, 255, 255, ColorAlpha));
 		TextLeft.Position.X -= LX;// + 3 + S.TextL.Len(); // (LX + 3 + 0.5 * S.TextL.Len());
 		TextLeft.Position.Y += CurrentLineOffset;
 		TextLeft.Scale = FVector2d(1.0);
 		TextLeft.bOutlined = true;
-		TextLeft.OutlineColor = FColor(50, 50, 50, 255);
+		TextLeft.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
 
-		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, S.Color);
+		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, S.Color.WithAlpha(ColorAlpha));
 		TextRight.Position.X += 3;
 		TextRight.Position.Y += CurrentLineOffset;
 		TextRight.Scale = FVector2d(1.0);
 		TextRight.bOutlined = true;
-		TextRight.OutlineColor = FColor(50, 50, 50, 255);
+		TextRight.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
 		
 		CanvasTextItems.Add(TextLeft);
 		CanvasTextItems.Add(TextRight);
@@ -610,10 +628,6 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 	if (bUseActivationLimit)
 	{
 		Data.Add(FBangoDebugTextEntry("Activation Limit:", FString::Printf(TEXT("%i"), ActivationLimit)));
-	}
-	else
-	{
-		Data.Add(FBangoDebugTextEntry("Activation Limit:", "Infinite"));
 	}
 
 	if (Triggers.IsEmpty())

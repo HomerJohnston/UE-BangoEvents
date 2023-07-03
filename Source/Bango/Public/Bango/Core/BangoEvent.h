@@ -270,6 +270,7 @@ protected:
 	UPROPERTY()
 	UMaterialInstanceDynamic* CustomMaterialDynamic;
 #endif
+	
 	// ------------------------------------------
 	// STATE GETTERS
 	// ------------------------------------------
@@ -346,11 +347,11 @@ public:
 protected:
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont) const;
 	
-	double GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation) const;
+	bool GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const;
 	
-	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre) const;
+	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre, double Distance) const;
 
-	TArray<FCanvasTextItem> GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter) const;
+	TArray<FCanvasTextItem> GetDebugDataText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter, double Distance) const;
 	
 	TArray<FBangoDebugTextEntry> GetDebugDataString_Editor() const;
 
