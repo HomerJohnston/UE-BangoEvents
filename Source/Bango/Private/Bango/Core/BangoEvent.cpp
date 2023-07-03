@@ -400,7 +400,14 @@ void ABangoEvent::UpdateProxyState()
 {
 	if (GetWorld()->IsGameWorld())
 	{
-		CurrentState.SetFlag(EBangoEventState::Active, LastActivationTime > LastDeactivationTime);
+		if (Type == EBangoEventType::Toggle)
+		{
+			CurrentState.SetFlag(EBangoEventState::Active, LastActivationTime > LastDeactivationTime);
+		}
+		else
+		{
+			CurrentState.ClearFlag(EBangoEventState::Active);
+		}
 		CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 		CurrentState.SetFlag(EBangoEventState::Expired, ActivationLimitReached());
 	}
