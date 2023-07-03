@@ -635,17 +635,17 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 			{
 				case EBangoTriggerBehavior::ActivatesAndDeactivates:
 				{
-					Prefix = "Activation/Deactivation Trigger:";
+					Prefix = "Activating/Deactivating Trigger:";
 					break;
 				}
 				case EBangoTriggerBehavior::ActivatesOnly:
 				{
-					Prefix = "Activation Trigger:";
+					Prefix = "Activating Trigger:";
 					break;
 				}
 				case EBangoTriggerBehavior::DeactivatesOnly:
 				{
-					Prefix = "Deactivation Trigger:";
+					Prefix = "Deactivating Trigger:";
 					break;
 				}
 			}
