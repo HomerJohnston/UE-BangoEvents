@@ -179,7 +179,7 @@ private:
 
 	/** Causes the event to activate & deactivate. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
-	TObjectPtr<UBangoTrigger> Trigger;
+	TArray<TObjectPtr<UBangoTrigger>> Triggers;
 	
 	/** Actions for the event. */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
@@ -258,6 +258,7 @@ protected:
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	double LastDeactivationTime = -998;
 
+public:
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventActivated OnBangoEventActivated;
 
@@ -265,6 +266,7 @@ protected:
 	FOnBangoEventDeactivated OnBangoEventDeactivated;
 
 #if WITH_EDITORONLY_DATA
+protected:
 	UPROPERTY()
 	UMaterialInstanceDynamic* CustomMaterialDynamic;
 #endif
@@ -308,7 +310,7 @@ public:
 	void Deactivate(UObject* DeactivationInstigator);
 
 protected:
-	void EnableTrigger();
+	void EnableTriggers();
 
 	void DisableTrigger();
 	

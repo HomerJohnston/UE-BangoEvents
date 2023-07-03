@@ -208,13 +208,20 @@ void ABangoEvent::BeginPlay()
 			checkNoEntry();
 		}
 	}
-		
-	if (!IsValid(Trigger))
+	
+	for (auto it = Triggers.CreateIterator(); it; ++it)
 	{
-		UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+		UBangoTrigger* Trigger = it->Get();
+		
+		if (!IsValid(Trigger))
+		{
+			UE_LOG(Bango, Warning, TEXT("Invalid trigger on event: %s"), *this->GetName());
+			it.RemoveCurrent();
+			continue;
+		}
 	}
 
-	EnableTrigger();
+	EnableTriggers();
 	
 	SetFrozen(bStartsFrozen);
 
@@ -322,19 +329,25 @@ void ABangoEvent::SetFrozen(bool bFreeze)
 #endif
 }
 
-void ABangoEvent::EnableTrigger()
+void ABangoEvent::EnableTriggers()
 {
-	if (IsValid(Trigger))
+	for (UBangoTrigger* Trigger : Triggers)
 	{
-		Trigger->SetEnabled(true);
+		if (IsValid(Trigger))
+		{
+			Trigger->SetEnabled(true);
+		}		
 	}
 }
 
 void ABangoEvent::DisableTrigger()
 {
-	if (IsValid(Trigger))
+	for (UBangoTrigger* Trigger : Triggers)
 	{
-		Trigger->SetEnabled(false);
+		if (IsValid(Trigger))
+		{
+			Trigger->SetEnabled(false);
+		}		
 	}
 }
 
@@ -529,13 +542,13 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 		Display = DisplayName;
 	}
 
-	FColor HeaderColor = (HasInvalidData() ? FColor::Red : FColor::White);
+	FColor HeaderColor = (HasInvalidData() ? FColor::Orange : FColor::White);
 	
 	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, HeaderColor);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
 	Text.bOutlined = true;
-	Text.Scale = FVector2d(1.2, 1.2);
+	Text.Scale = FVector2d(1.0, 1.0);
 
 	return Text;
 }
@@ -566,16 +579,16 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
 
 		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FColor::White);
-		TextLeft.Position.X -= (LX + 3 + 0.5 * S.TextL.Len());
+		TextLeft.Position.X -= LX;// + 3 + S.TextL.Len(); // (LX + 3 + 0.5 * S.TextL.Len());
 		TextLeft.Position.Y += CurrentLineOffset;
-		TextLeft.Scale = FVector2d(1.1);
+		TextLeft.Scale = FVector2d(1.0);
 		TextLeft.bOutlined = true;
 		TextLeft.OutlineColor = FColor(50, 50, 50, 255);
 
 		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, S.Color);
 		TextRight.Position.X += 3;
 		TextRight.Position.Y += CurrentLineOffset;
-		TextRight.Scale = FVector2d(1.1);
+		TextRight.Scale = FVector2d(1.0);
 		TextRight.bOutlined = true;
 		TextRight.OutlineColor = FColor(50, 50, 50, 255);
 		
@@ -602,25 +615,33 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 	{
 		Data.Add(FBangoDebugTextEntry("Activation Limit:", "Infinite"));
 	}
-	
-	if (!IsValid(Trigger))
+
+	if (Triggers.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", FColor::Red));
+		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", FColor::Orange));
 	}
-	else
+	
+	for (UBangoTrigger* Trigger : Triggers)
 	{
-		TStringBuilder<128> TriggerEntry;
+		if (!IsValid(Trigger))
+		{
+			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", FColor::Orange));
+		}
+		else
+		{
+			TStringBuilder<128> TriggerEntry;
 
-		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
+			TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
-		// TODO: Hook to add debug text for triggers
+			// TODO: Hook to add debug text for triggers
 		
-		Data.Add(FBangoDebugTextEntry("Trigger:", TriggerEntry.ToString()));
+			Data.Add(FBangoDebugTextEntry("Trigger:", TriggerEntry.ToString()));
+		}
 	}
 	
 	if (Actions.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Action:", "NONE", FColor::Red));
+		Data.Add(FBangoDebugTextEntry("Action:", "NONE", FColor::Orange));
 	}
 	
 	for (UBangoAction* Action : Actions)
@@ -696,9 +717,17 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Game() const
 #if WITH_EDITOR
 bool ABangoEvent::HasInvalidData() const
 {
-	if (!IsValid(Trigger))
+	if (Triggers.IsEmpty())
 	{
 		return true;
+	}
+
+	for (UBangoTrigger* Trigger : Triggers)
+	{
+		if (!IsValid(Trigger))
+		{
+			return true;
+		}	
 	}
 
 	if (Actions.IsEmpty())
