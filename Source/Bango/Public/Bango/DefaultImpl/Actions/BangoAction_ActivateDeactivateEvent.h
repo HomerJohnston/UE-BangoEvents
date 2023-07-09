@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Bango/Core/BangoAction.h"
+#include "Bango/Action/BangoToggleAction.h"
+#include "Bango/Core/BangoInterfaces.h"
 #include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
+
 
 #include "BangoAction_ActivateDeactivateEvent.generated.h"
 
 
 UCLASS(DisplayName="Activate/Deactivate Event")
-class BANGO_API UBangoAction_ActivateDeactivateEvent : public UBangoAction
+class BANGO_API UBangoAction_ActivateDeactivateEvent : public UBangoToggleAction, public IBangoToggleEventActionInterface
 {
 	GENERATED_BODY()
 	// ============================================================================================

@@ -5,7 +5,7 @@
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {
-	TriggerAction = EBangoTriggerInstigatorAction::AddInstigator;
+	TriggerAction = EBangoSignal::None;
 }
 
 void UBangoTrigger_ActorHit::Enable_Implementation()
@@ -63,22 +63,6 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 		}
 	}
 
-	switch (TriggerAction)
-	{
-		case EBangoTriggerInstigatorAction::AddInstigator:
-		{
-			ActivateEvent(InstigatorActor);
-			break;
-		} 
-		case EBangoTriggerInstigatorAction::RemoveInstigator:
-		{
-			DeactivateEvent(InstigatorActor);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
+	SendTriggerSignal(TriggerAction, InstigatorActor);
 }
 

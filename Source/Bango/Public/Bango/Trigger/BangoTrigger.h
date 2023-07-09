@@ -2,9 +2,11 @@
 
 #include "UObject/Object.h"
 
+#include "Bango/Core/BangoSignal.h"
+
 #include "BangoTrigger.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FTriggerDelegate, UObject*, NewInstigator);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTriggerDelegate, EBangoSignal, Signal, UObject*, NewInstigator);
 
 UENUM(BlueprintType)
 enum class EBangoTriggerBehavior : uint8
@@ -24,26 +26,26 @@ class BANGO_API UBangoTrigger : public UObject
 	// SETTINGS
 	// ============================================================================================
 protected:
-	UPROPERTY(Category = "Trigger Settings", EditAnywhere)
-	EBangoTriggerBehavior Behavior = EBangoTriggerBehavior::ActivatesAndDeactivates;
 	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
 	
-private:
-	/** The owning ABangoEvent will listen for this delegate to fire. */
+public:
+	// TODO can I private this and expose binding functions?
+	/** Call this delegate to control the event. */
 	UPROPERTY()
-	FTriggerDelegate OnTriggerActivation;
+	FTriggerDelegate TriggerSignal;
 
-	/** The owning ABangoEvent will listen for this delegate to fire. */
-	UPROPERTY()
-	FTriggerDelegate OnTriggerDeactivation;
-	
 protected:
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	ABangoEvent* GetEvent();
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName="Get Event")
+	ABangoEvent* GetEventBP();
 
+	ABangoEvent* GetEvent();
+	
+	template<class T>
+	T* GetEvent();
+	
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetEnabled(bool bEnabled);
@@ -58,18 +60,17 @@ protected:
 	void Disable();
 
 protected:
-	/** Run this function to activate this Trigger's Event. */
 	UFUNCTION(BlueprintCallable)
-	void ActivateEvent(UObject* NewInstigator);
-
-	/** Run this function to deactivate this Trigger's Event. */
-	UFUNCTION(BlueprintCallable)
-	void DeactivateEvent(UObject* OldInstigator);
+	void SendTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
 
 #if WITH_EDITOR
 public:
 	virtual FText GetDisplayName();
-
-	EBangoTriggerBehavior GetBehavior();
 #endif
 };
+
+template <class T>
+T* UBangoTrigger::GetEvent()
+{
+	return Cast<T>(GetOuter());
+}

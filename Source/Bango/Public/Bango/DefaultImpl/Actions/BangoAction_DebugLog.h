@@ -1,13 +1,14 @@
 ﻿#pragma once
 
-#include "Bango/Core/BangoAction.h"
+#include "Bango/Action/BangoToggleAction.h"
+#include "Bango/Core/BangoInterfaces.h"
 
 #include "BangoAction_DebugLog.generated.h"
 
 class ALight;
 
 UCLASS(DisplayName="Debug Log")
-class UBangoAction_DebugLog : public UBangoAction
+class UBangoAction_DebugLog : public UBangoAction, public IBangoToggleEventActionInterface
 {
 	GENERATED_BODY()
 protected:

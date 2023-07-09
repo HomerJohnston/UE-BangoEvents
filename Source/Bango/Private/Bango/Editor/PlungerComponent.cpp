@@ -4,7 +4,7 @@
 
 #include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 
 UBangoPlungerComponent::UBangoPlungerComponent()
 {
@@ -64,7 +64,7 @@ FLinearColor UBangoPlungerComponent::GetColorForProxy()
 bool UBangoPlungerComponent::GetIsPlungerPushed()
 {
 #if WITH_EDITOR
-	if (!IsValid(GetWorld()))
+	if (!IsValid(GetWorld()) || !GetWorld()->IsGameWorld())
 	{
 		return false;
 	}
@@ -72,19 +72,7 @@ bool UBangoPlungerComponent::GetIsPlungerPushed()
 	ABangoEvent* Event = Cast<ABangoEvent>(GetOwner());
 	check(Event);
 
-	switch (Event->GetType())
-	{
-		case EBangoEventType::Toggle:
-		{
-			return Event->HasCurrentState(EBangoEventState::Active);
-		}
-		default:
-		{
-			double Elapsed = GetWorld()->GetTimeSeconds() - Event->GetLastActivationTime();
-
-			return Elapsed <= RecentPushHandleCooldownTime;
-		}
-	}
+	return Event->HasCurrentState(EBangoEventState::Active) || (GetWorld()->GetTimeSeconds() - Event->GetLastTriggerTime(EBangoSignal::Activate)) <= RecentPushHandleCooldownTime;
 #else
 	return false;
 #endif

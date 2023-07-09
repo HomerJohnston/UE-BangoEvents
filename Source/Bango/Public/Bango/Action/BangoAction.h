@@ -26,40 +26,23 @@ private:
 
 	UPROPERTY()
 	bool bUseStartDelay = false;
-	
-	/** When set, stopping of action will be delayed by the specified length of time. */
-	UPROPERTY(Category="Action Settings", EditAnywhere, meta=(EditCondition="bUseStopDelay", ClampMin = 0.0))
-	double StopDelay = 0;
-
-	UPROPERTY()
-	bool bUseStopDelay = false;
 
 	/** If set, prevents this action's OnStart function from running. */
 	UPROPERTY(Category="Action Settings", EditAnywhere)
 	bool bBlockFromStarting = false;
-
-	/** If set, prevents this action's OnStop function from running. */
-	UPROPERTY(Category="Action Settings", EditAnywhere)
-	bool bBlockFromStopping = false;
 	
 	// ------------------------------------------
-	// Getters and Setters
+	// Settings Getters and Setters
 	// ------------------------------------------
 public:
 	UFUNCTION(BlueprintCallable)
 	bool GetUseStartDelay();
-	
-	UFUNCTION(BlueprintCallable)
-	bool GetUseStopDelay();
 
 	UFUNCTION(BlueprintCallable)
 	double GetStartDelay();
-
-	UFUNCTION(BlueprintCallable)
-	double GetStopDelay();
 	
 	// ============================================================================================
-	// State
+	// STATE
 	// ============================================================================================
 public:
 	UPROPERTY(BlueprintReadOnly, Transient)
@@ -75,29 +58,21 @@ public:
 	FTimerHandle StopTimerHandle;
 	
 	// ------------------------------------------
-	// Getters and Setters
+	// State Getters and Setters
 	// ------------------------------------------
 
 	// ============================================================================================
 	// API
 	// ============================================================================================
 public:
-	void Start(ABangoEvent* EventActor, UObject* NewInstigator);
+	void Start(UObject* StartInstigator);
 
 	void StartDelayed();
+
 	
-	void Stop();
-
-	void StopDelayed();
-
 protected:
-	/** Performs action logic. You do not need to call Super implementation when overriding. */
 	UFUNCTION(BlueprintNativeEvent)
 	void OnStart();
-
-	/** Performs action logic. You do not need to call Super implementation when overriding. */
-	UFUNCTION(BlueprintNativeEvent)
-	void OnStop();
 
 public:
 	/** Display name used in the editor and debug printing. Override to replace/add additional text. */
@@ -115,4 +90,20 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
 #endif
+};
+
+
+USTRUCT(BlueprintType)
+struct FTestStruct
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category="TestCat1")
+	float SomeProperty1;
+	
+	UPROPERTY(EditAnywhere, Category="TestCat2")
+	float SomeProperty2;
+	
+	UPROPERTY(EditAnywhere, Category="TestCat2")
+	float SomeProperty3;
 };

@@ -1,15 +1,15 @@
 ﻿#pragma once
 
-#include "Bango/Core/BangoTrigger.h"
+#include "Bango/Trigger/BangoBangTrigger.h"
 
 #include "BangoTrigger_ActorHit.generated.h"
 
 class UBangoInstigatorFilter;
 
-enum class EBangoTriggerInstigatorAction : uint8;
+enum class EBangoSignal : uint8;
 
 UCLASS(DisplayName="Actor Hit")
-class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger
+class BANGO_API UBangoTrigger_ActorHit : public UBangoBangTrigger
 {
 	GENERATED_BODY()
 	// ============================================================================================
@@ -35,7 +35,7 @@ protected:
 
 	/** How to trigger the event when a hit occurs. */
 	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
-	EBangoTriggerInstigatorAction TriggerAction;
+	EBangoSignal TriggerAction;
 	
 	// ============================================================================================
 	// STATE

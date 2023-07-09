@@ -1,6 +1,6 @@
 #include "Bango/DefaultImpl/Actions/BangoAction_ActivateDeactivateEvent.h"
 #include "Bango/Log.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 
 UBangoAction_ActivateDeactivateEvent::UBangoAction_ActivateDeactivateEvent()
 {
@@ -37,12 +37,12 @@ void UBangoAction_ActivateDeactivateEvent::Execute(EBangoActivateDeactivateEvent
 	{
 		case EBangoActivateDeactivateEventAction::ActivateEvent:
 		{
-			TargetEvent->Activate(GetEvent());
+			//TargetEvent->Activate(GetEvent());
 			break;
 		}
 		case EBangoTriggerInstigatorAction::RemoveInstigator:
 		{
-			TargetEvent->Deactivate(GetEvent());
+			//TargetEvent->Deactivate(GetEvent());
 			break;
 		}
 		default:

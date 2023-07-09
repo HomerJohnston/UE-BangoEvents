@@ -1,12 +1,12 @@
 ﻿#pragma once
 
-#include "Bango/Core/BangoTrigger.h"
+#include "Bango/Trigger/BangoToggleTrigger.h"
 
 #include "BangoTrigger_ActorOverlap.generated.h"
 
 class UBangoInstigatorFilter;
 
-enum class EBangoTriggerInstigatorAction : uint8;
+enum class EBangoSignal : uint8;
 
 UCLASS(DisplayName="Actor Overlap")
 class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger
@@ -36,11 +36,11 @@ protected:
 
 	/** How to trigger the event when an overlap begins. */
 	UPROPERTY(Category="Overlap Settings", DisplayName="On Begin Overlap", EditAnywhere)
-	EBangoTriggerInstigatorAction BeginOverlapAction;
+	EBangoSignal BeginOverlapSignal;
 
 	/** How to trigger the event when an overlap ends. */
 	UPROPERTY(Category="Overlap Settings", DisplayName="On End Overlap", EditAnywhere)
-	EBangoTriggerInstigatorAction EndOverlapAction;
+	EBangoSignal EndOverlapSignal;
 	
 	// ============================================================================================
 	// STATE
@@ -65,5 +65,5 @@ protected:
 	UFUNCTION()
 	void OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor);
 
-	void Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoTriggerInstigatorAction Action);
+	void Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoSignal Signal);
 };

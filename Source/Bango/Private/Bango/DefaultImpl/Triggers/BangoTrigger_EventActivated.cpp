@@ -1,78 +1,54 @@
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_EventActivated.h"
 
 #include "Bango/Log.h"
-#include "Bango/Core/BangoEvent.h"
-#include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
+#include "Bango/Event/BangoEvent.h"
+#include "Bango/Core/BangoSignal.h"
 
 UBangoTrigger_EventActivated::UBangoTrigger_EventActivated()
 {
-	OnEventActivatedAction = EBangoActivateDeactivateEventAction::DoNothing;
-	OnEventDeactivatedAction = EBangoActivateDeactivateEventAction::DoNothing;
+	bUseWatchedEventInstigator = true;
 }
 
 void UBangoTrigger_EventActivated::Enable_Implementation()
 {
-	if (TargetEvent.IsPending())
+	if (WatchedEvent.IsPending())
 	{
 		UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent::Execute called, but the target event is not loaded!"));
 		return;
 	}
 	
-	if (!TargetEvent.IsValid())
+	if (!WatchedEvent.IsValid())
 	{
 		UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent::Execute called, but the target event is invalid!"));
 		return;
 	}
 
-	TargetEvent->OnBangoEventActivated.AddDynamic(this, &ThisClass::OnTargetEventActivated);
-	TargetEvent->OnBangoEventDeactivated.AddDynamic(this, &ThisClass::OnTargetEventDeactivated);
+	WatchedEvent->OnBangoEventTriggered.AddDynamic(this, &ThisClass::OnTargetEventSignalled);
 }
 
 void UBangoTrigger_EventActivated::Disable_Implementation()
 {
-	TargetEvent->OnBangoEventActivated.RemoveAll(this);
-	TargetEvent->OnBangoEventDeactivated.RemoveAll(this);
+	WatchedEvent->OnBangoEventTriggered.RemoveDynamic(this, &ThisClass::OnTargetEventSignalled);
 }
 
-void UBangoTrigger_EventActivated::OnTargetEventActivated(ABangoEvent* Event, UObject* Instigator)
+void UBangoTrigger_EventActivated::OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
 {
-	Execute(OnEventActivatedAction);
-}
-
-void UBangoTrigger_EventActivated::OnTargetEventDeactivated(ABangoEvent* Event, UObject* Instigator)
-{
-	Execute(OnEventDeactivatedAction);
-}
-
-void UBangoTrigger_EventActivated::Execute(EBangoActivateDeactivateEventAction Action)
-{
-	if (TargetEvent.IsPending())
+	if (WatchedEvent.IsPending())
 	{
 		UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent::Execute called, but the target event is not loaded!"));
 		return;
 	}
 	
-	if (!TargetEvent.IsValid())
+	if (!WatchedEvent.IsValid())
 	{
 		UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent::Execute called, but the target event is invalid!"));
 		return;
 	}
-	
-	switch (Action)
+
+	EBangoSignal* SignalToSend = ActionSignalMap.Find(Signal);
+
+	if (SignalToSend)
 	{
-		case EBangoActivateDeactivateEventAction::ActivateEvent:
-		{
-			GetEvent()->Activate(this);
-			break;
-		}
-		case EBangoActivateDeactivateEventAction::DeactivateEvent:
-		{
-			GetEvent()->Deactivate(this);
-			break;
-		}
-		case EBangoActivateDeactivateEventAction::DoNothing:
-		{
-			break;
-		}
+		SendTriggerSignal(*SignalToSend, SignalInstigator);
 	}
 }

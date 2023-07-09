@@ -3,15 +3,14 @@
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorOverlap.h"
 
 #include "Bango/Log.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
-#include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
-
+#include "Bango/Core/BangoSignal.h"
 
 UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
 {
-	BeginOverlapAction = EBangoTriggerInstigatorAction::AddInstigator;
-	EndOverlapAction = EBangoTriggerInstigatorAction::RemoveInstigator;
+	BeginOverlapSignal = EBangoSignal::None;
+	EndOverlapSignal = EBangoSignal::None;
 }
 
 // ============================================================================================
@@ -37,6 +36,7 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 	}
 	
 	ActorToUse->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
+	
 	ActorToUse->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
 
 	SubscribedActor = ActorToUse;
@@ -72,15 +72,15 @@ void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	Handle(OverlapActor, InstigatorActor, BeginOverlapAction);
+	Handle(OverlapActor, InstigatorActor, BeginOverlapSignal);
 }
 
 void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	Handle(OverlapActor, InstigatorActor, EndOverlapAction);
+	Handle(OverlapActor, InstigatorActor, EndOverlapSignal);
 }
 
-void UBangoTrigger_ActorOverlap::Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoTriggerInstigatorAction Action)
+void UBangoTrigger_ActorOverlap::Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoSignal Signal)
 {
 	if (IsValid(InstigatorFilter))
 	{
@@ -89,24 +89,8 @@ void UBangoTrigger_ActorOverlap::Handle(AActor* OverlapActor, AActor* Instigator
 			return;
 		}
 	}
-	
-	switch (Action)
-	{
-		case EBangoTriggerInstigatorAction::AddInstigator:
-		{
-			ActivateEvent(InstigatorActor);
-			break;
-		}
-		case EBangoTriggerInstigatorAction::RemoveInstigator:
-		{
-			DeactivateEvent(InstigatorActor);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
+
+	SendTriggerSignal(Signal, InstigatorActor);
 }
 
 

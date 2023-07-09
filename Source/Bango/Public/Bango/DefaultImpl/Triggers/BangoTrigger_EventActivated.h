@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bango/Core/BangoTrigger.h"
+#include "Bango/Trigger/BangoTrigger.h"
 
 #include "BangoTrigger_EventActivated.generated.h"
 
@@ -21,14 +21,17 @@ public:
 	// ============================================================================================
 protected:
 
+	/** What event to watch? */
 	UPROPERTY(EditInstanceOnly, Category="Settings")
-	TSoftObjectPtr<ABangoEvent> TargetEvent;
+	TSoftObjectPtr<ABangoEvent> WatchedEvent;
 
-	UPROPERTY(EditAnywhere, Category="Settings", DisplayName="OnStart");
-	EBangoActivateDeactivateEventAction OnEventActivatedAction;
-
+	/** If true, this event will be activated as if the watched event's instigator had triggered us directly. If false, will use this trigger object as our instigator. */
+	UPROPERTY(EditAnywhere, Category="Settings");
+	bool bUseWatchedEventInstigator;
+	
+	/** When watched event (left) is signalled, emit specified signal to our event (right). */
 	UPROPERTY(EditAnywhere, Category="Settings", DisplayName="OnStop");
-	EBangoActivateDeactivateEventAction OnEventDeactivatedAction;
+	TMap<EBangoSignal, EBangoSignal> ActionSignalMap;
 	
 	// ============================================================================================
 	// STATE
@@ -44,10 +47,5 @@ public:
 
 private:
 	UFUNCTION()
-	void OnTargetEventActivated(ABangoEvent* Event, UObject* Instigator);
-
-	UFUNCTION()
-	void OnTargetEventDeactivated(ABangoEvent* Event, UObject* Instigator);
-	
-	void Execute(EBangoActivateDeactivateEventAction Action);
+	void OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator);
 };

@@ -1,46 +1,13 @@
-﻿#include "Bango/Core/BangoEventProcessor.h"
+﻿//#include "Bango/Core/BangoEventProcessor.h"
 
-#include "Bango/Log.h"
-#include "Bango/Core/BangoAction.h"
-#include "Bango/Core/BangoEvent.h"
-#
+//#include "Bango/Log.h"
+//#include "Bango/Core/BangoAction.h"
+//#include "Bango/Core/BangoEvent.h"
 
+
+/*
 // BASE PROCESSOR
 // ================================================================================================
-
-ABangoEvent* UBangoEventProcessor::GetEvent() const
-{
-	return Cast<ABangoEvent>(GetOuter());
-}
-
-void UBangoEventProcessor::StartActions(UObject* NewInstigator)
-{
-	for (UBangoAction* Action : GetEvent()->GetActions())
-	{
-		if (!IsValid(Action))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-			continue;
-		}
-			
-		Action->Start(GetEvent(), NewInstigator);
-	}
-}
-
-void UBangoEventProcessor::StopActions(UObject* OldInstigator)
-{
-	for (UBangoAction* Action : GetEvent()->GetActions())
-	{
-		if (!IsValid(Action))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-			continue;
-		}
-
-		Action->Stop();
-	}
-}
-
 int32 UBangoEventProcessor::GetInstigatorsNum()
 {
 	return Instigators.Num();
@@ -50,16 +17,12 @@ const TArray<UObject*>& UBangoEventProcessor::GetInstigators() const
 {
 	return Instigators;
 }
+*/
 
+/*
 // BANG PROCESSOR
 // ================================================================================================
 
-bool UBangoEventProcessor_Bang::ActivateFromTrigger(UObject* NewInstigator)
-{
-	StartActions(NewInstigator);
-
-	return true;
-}
 
 bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
 {
@@ -67,26 +30,14 @@ bool UBangoEventProcessor_Bang::DeactivateFromTrigger(UObject* OldInstigator)
 	
 	return true;
 }
+*/
 
+/*
 // TOGGLE PROCESSOR
 // ================================================================================================
 
 bool UBangoEventProcessor_Toggle::ActivateFromTrigger(UObject* NewInstigator)
 {
-	if (Instigators.Contains(NewInstigator))
-	{
-		return false;
-	}
-	
-	int32 InstigatorIndex = Instigators.Add(NewInstigator);
-
-	// Toggle events are either on or off, and cannot be turned on or off more than once at a time. If this is the first instigator, it must be newly turned on.
-	if (InstigatorIndex == 0)
-	{
-		StartActions(NewInstigator);
-	}
-	
-	return true;
 }
 
 bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
@@ -140,7 +91,10 @@ bool UBangoEventProcessor_Toggle::DeactivateFromTrigger(UObject* OldInstigator)
 
 	return false;
 }
+*/
 
+	
+/*
 // INSTANCED PROCESSOR
 // ================================================================================================
 
@@ -187,7 +141,7 @@ void UBangoEventProcessor_Instanced::StartActions(UObject* NewInstigator)
 	
 	for (UBangoAction* InstancedAction : InstancedActions->Actions)
 	{
-		InstancedAction->Start(GetEvent(), NewInstigator);
+		InstancedAction->Start(NewInstigator);
 	}
 }
 
@@ -216,9 +170,11 @@ void UBangoEventProcessor_Instanced::StopActions(UObject* OldInstigator)
 			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
 			continue;
 		}
-			
-		Action->Stop();
+
+		// TODO
+		//Action->Stop();
 	}
 
 	InstancedActionsPerInstigator.Remove(OldInstigator);
 }
+*/

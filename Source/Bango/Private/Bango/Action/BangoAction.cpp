@@ -1,18 +1,14 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Core/BangoAction.h"
+#include "Bango/Action/BangoAction.h"
 
 #include "Bango/Log.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
+#include "Bango/Core/BangoInterfaces.h"
 
 bool UBangoAction::GetUseStartDelay()
 {
 	return bUseStartDelay;
-}
-
-bool UBangoAction::GetUseStopDelay()
-{
-	return bUseStopDelay;
 }
 
 double UBangoAction::GetStartDelay()
@@ -20,19 +16,14 @@ double UBangoAction::GetStartDelay()
 	return StartDelay;
 }
 
-double UBangoAction::GetStopDelay()
-{
-	return StopDelay;
-}
-
-void UBangoAction::Start(ABangoEvent* EventActor, UObject* NewInstigator)
+void UBangoAction::Start(UObject* StartInstigator)
 {
 	if (bBlockFromStarting)
 	{
 		return;
 	}
 	
-	Instigator = NewInstigator;
+	Instigator = StartInstigator;
 
 	check(Instigator);
 
@@ -55,40 +46,20 @@ void UBangoAction::StartDelayed()
 	bRunning = true;
 
 	OnStart();
+	/*
+	if (this->Implements<UBangoBangEventActionInterface>())
+	{
+		IBangoBangEventActionInterface::Execute_OnStart(this);
+	}
+	else if (this->Implements<UBangoToggleEventActionInterface>())
+	{
+		IBangoToggleEventActionInterface::Execute_OnStart(this);
+	}
+	*/
 }
 
-void UBangoAction::Stop()
+void UBangoAction::OnStart_Implementation()
 {
-	if (bBlockFromStopping)
-	{
-		return;
-	}
-	
-	if (StartTimerHandle.IsValid())
-	{
-		GetEvent()->GetWorldTimerManager().ClearTimer(StartTimerHandle);
-		return;
-	}
-
-	if (bUseStopDelay && StopDelay > 0.0)
-	{
-		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::StopDelayed);
-		GetEvent()->GetWorldTimerManager().SetTimer(StopTimerHandle, Delegate, StopDelay, false);
-	}
-	else
-	{
-		StopDelayed();
-	}
-}
-
-void UBangoAction::StopDelayed()
-{
-	StopTimerHandle.Invalidate();
-	StartTimerHandle.Invalidate();
-	
-	bRunning = false;
-	
-	OnStop();
 }
 
 UWorld* UBangoAction::GetWorld() const
@@ -113,10 +84,6 @@ void UBangoAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* 
 {
 }
 #endif
-
-void UBangoAction::OnStart_Implementation() { /* Placeholder */}
-
-void UBangoAction::OnStop_Implementation() { /* Placeholder */ }
 
 FText UBangoAction::GetDisplayName_Implementation()
 {

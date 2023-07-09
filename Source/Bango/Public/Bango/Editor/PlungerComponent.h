@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
+
 #include "Components/PrimitiveComponent.h"
 
 #include "PlungerComponent.generated.h"

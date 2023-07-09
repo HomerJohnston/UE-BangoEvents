@@ -1,5 +1,5 @@
 ﻿#include "Bango/DefaultImpl/Actions/BangoAction_FreezeThawEvent.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 #include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
 #include "Bango/Log.h"
 

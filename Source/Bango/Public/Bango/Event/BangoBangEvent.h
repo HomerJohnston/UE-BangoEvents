@@ -1,47 +1,57 @@
 ﻿#pragma once
 
-#include "Bango/Action/BangoToggleAction.h"
+#include "BangoEvent.h"
+
 #include "Bango/Core/BangoInterfaces.h"
 
-#include "BangoAction_FreezeThawEvent.generated.h"
+#include "BangoBangEvent.generated.h"
 
-enum class EBangoFreezeThawEventAction : uint8;
+class UBangoBangTrigger;
+class UBangoBangAction;
 
-UCLASS(DisplayName="Freeze/Thaw Event")
-class BANGO_API UBangoAction_FreezeThawEvent : public UBangoToggleAction, public IBangoToggleEventActionInterface
+UCLASS()
+class BANGO_API ABangoBangEvent : public ABangoEvent
 {
 	GENERATED_BODY()
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
 public:
-	UBangoAction_FreezeThawEvent();
+	ABangoBangEvent();
 	
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-protected:
-	UPROPERTY(Category="Settings", EditInstanceOnly)
-	TSoftObjectPtr<ABangoEvent> TargetEvent;
-
-	UPROPERTY(Category="Settings", EditAnywhere, DisplayName = "On Start")
-	EBangoFreezeThawEventAction OnStartAction;
-
-	UPROPERTY(Category="Settings", EditAnywhere, DisplayName = "On Stop")
-	EBangoFreezeThawEventAction OnStopAction;
 	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-	
+
 	// ============================================================================================
 	// API
 	// ============================================================================================
 public:
-	void OnStart_Implementation() override;
+	virtual bool ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator) override;
 
-	void OnStop_Implementation() override;
+protected:
+	virtual bool HasInvalidData() const override;
 
-private:
-	void Execute(EBangoFreezeThawEventAction Type);
+protected:
+	bool Activate(UObject* ActivateInstigator);
+
+	void StartActions(UObject* StartInstigator);
+	
+public:
+#if WITH_EDITOR
+public:
+	void UpdateProxyState() override;
+
+	FLinearColor GetColorBase() const override;
+
+	FLinearColor GetColorForProxy() const override;
+
+	TArray<FBangoDebugTextEntry> GetDebugDataString_Game() const override;
+
+	TArray<FBangoDebugTextEntry> GetDebugDataString_Editor() const override;
+#endif
 };

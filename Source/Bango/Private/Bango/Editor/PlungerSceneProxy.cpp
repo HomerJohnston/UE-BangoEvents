@@ -2,7 +2,7 @@
 
 #include "Bango/Editor/PlungerSceneProxy.h"
 #include "Bango/Editor/PlungerComponent.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
 

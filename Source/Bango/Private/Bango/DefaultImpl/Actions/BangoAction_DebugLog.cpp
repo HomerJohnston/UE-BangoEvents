@@ -1,7 +1,7 @@
 ﻿#include "Bango/DefaultImpl/Actions/BangoAction_DebugLog.h"
 
 #include "Bango/Log.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 #include "Engine/Light.h"
 
 void UBangoAction_DebugLog::OnStart_Implementation()

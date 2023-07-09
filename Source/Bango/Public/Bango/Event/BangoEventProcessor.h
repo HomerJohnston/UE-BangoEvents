@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Bango/Core/BangoEvent.h"
+#include "Bango/Event/BangoEvent.h"
 #include "BangoEventProcessor.generated.h"
 
 class ABangoEvent;
@@ -14,7 +14,7 @@ UCLASS(Abstract)
 class UBangoEventProcessor : public UObject
 {
 	GENERATED_BODY()
-
+/*
 protected:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UObject>> Instigators;
@@ -25,11 +25,7 @@ protected:
 public:
 	virtual void Initialize() {};
 
-	virtual bool ActivateFromTrigger(UObject* NewInstigator) { return false; };
-	
-	virtual void StartActions(UObject* NewInstigator);;
-
-	virtual bool DeactivateFromTrigger(UObject* OldInstigator) { return false; };
+	virtual void StartActions(UObject* NewInstigator);
 	
 	virtual void StopActions(UObject* OldInstigator);
 
@@ -88,4 +84,5 @@ public:
 	bool DeactivateFromTrigger(UObject* OldInstigator) override;
 	
 	void StopActions(UObject* OldInstigator) override;
+	*/
 };
