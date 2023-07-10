@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#if WITH_EDITOR
 struct FBangoDebugTextEntry
 {
 	FBangoDebugTextEntry(FString InTextL, FString InTextR, FColor InColor = FColor::White) : TextL(InTextL), TextR(InTextR), Color(InColor) { }
@@ -8,3 +9,4 @@ struct FBangoDebugTextEntry
 	FString TextR;
 	FColor Color;
 };
+#endif

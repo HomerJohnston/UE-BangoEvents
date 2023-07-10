@@ -2,19 +2,19 @@
 
 #include "Bango/Trigger/BangoTrigger.h"
 
-#include "BangoTrigger_EventActivated.generated.h"
+#include "BangoTrigger_EventSignalled.generated.h"
 
 enum class EBangoActivateDeactivateEventAction : uint8;
 
-UCLASS(DisplayName="Event Activated")
-class BANGO_API UBangoTrigger_EventActivated : public UBangoTrigger
+UCLASS(DisplayName="Other Event Signalled")
+class BANGO_API UBangoTrigger_EventSignalled : public UBangoTrigger
 {
 	GENERATED_BODY()
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
 public:
-	UBangoTrigger_EventActivated();
+	UBangoTrigger_EventSignalled();
 	
 	// ============================================================================================
 	// SETTINGS
@@ -29,7 +29,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Settings");
 	bool bUseWatchedEventInstigator;
 	
-	/** When watched event (left) is signalled, emit specified signal to our event (right). */
+	/** When watched event responds to left signal, send our event the right signal. */
 	UPROPERTY(EditAnywhere, Category="Settings", DisplayName="OnStop");
 	TMap<EBangoSignal, EBangoSignal> ActionSignalMap;
 	

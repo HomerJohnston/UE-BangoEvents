@@ -1,15 +1,15 @@
-#include "Bango/DefaultImpl/Triggers/BangoTrigger_EventActivated.h"
+#include "Bango/DefaultImpl/Triggers/BangoTrigger_EventSignalled.h"
 
 #include "Bango/Log.h"
 #include "Bango/Event/BangoEvent.h"
 #include "Bango/Core/BangoSignal.h"
 
-UBangoTrigger_EventActivated::UBangoTrigger_EventActivated()
+UBangoTrigger_EventSignalled::UBangoTrigger_EventSignalled()
 {
 	bUseWatchedEventInstigator = true;
 }
 
-void UBangoTrigger_EventActivated::Enable_Implementation()
+void UBangoTrigger_EventSignalled::Enable_Implementation()
 {
 	if (WatchedEvent.IsPending())
 	{
@@ -23,15 +23,15 @@ void UBangoTrigger_EventActivated::Enable_Implementation()
 		return;
 	}
 
-	WatchedEvent->OnBangoEventTriggered.AddDynamic(this, &ThisClass::OnTargetEventSignalled);
+	WatchedEvent->OnEventTriggered.AddDynamic(this, &ThisClass::OnTargetEventSignalled);
 }
 
-void UBangoTrigger_EventActivated::Disable_Implementation()
+void UBangoTrigger_EventSignalled::Disable_Implementation()
 {
-	WatchedEvent->OnBangoEventTriggered.RemoveDynamic(this, &ThisClass::OnTargetEventSignalled);
+	WatchedEvent->OnEventTriggered.RemoveDynamic(this, &ThisClass::OnTargetEventSignalled);
 }
 
-void UBangoTrigger_EventActivated::OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
+void UBangoTrigger_EventSignalled::OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
 {
 	if (WatchedEvent.IsPending())
 	{

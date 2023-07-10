@@ -11,6 +11,38 @@ double UBangoToggleAction::GetStopDelay()
 	return StopDelay;
 }
 
+void UBangoToggleAction::Start(UObject* StartInstigator)
+{	
+	if (bBlockFromStarting)
+	{
+		return;
+	}
+	
+	Instigator = StartInstigator;
+
+	check(Instigator);
+
+	if (bUseStartDelay && StartDelay > 0.0)
+	{
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::StartDelayed);
+		GetEvent()->GetWorldTimerManager().SetTimer(StartTimerHandle, Delegate, StartDelay, false);
+	}
+	else
+	{
+		StartDelayed();
+	}
+}
+
+void UBangoToggleAction::StartDelayed()
+{
+	StartTimerHandle.Invalidate();
+	StopTimerHandle.Invalidate();
+
+	bRunning = true;
+
+	//OnStart();
+}
+
 void UBangoToggleAction::Stop(UObject* StopInstigator)
 {
 	if (bBlockFromStopping)
@@ -35,11 +67,6 @@ void UBangoToggleAction::Stop(UObject* StopInstigator)
 	}
 }
 
-void UBangoToggleAction::OnStop_Implementation()
-{
-	// Default implementation
-}
-
 void UBangoToggleAction::StopDelayed()
 {
 	StopTimerHandle.Invalidate();
@@ -47,5 +74,5 @@ void UBangoToggleAction::StopDelayed()
 	
 	bRunning = false;
 
-	OnStop();
+	//OnStop();
 }

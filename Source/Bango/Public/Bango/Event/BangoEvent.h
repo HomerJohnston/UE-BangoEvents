@@ -19,6 +19,7 @@ class FCanvasTextItem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBangoEventTriggered, ABangoEvent*, Event, EBangoSignal, Signal, UObject*, Instigator);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventSignalLimitReached, ABangoEvent*, Event, EBangoSignal, Signal);
 /**
  * 
  */
@@ -40,8 +41,11 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditInstanceOnly, BlueprintReadOnly)
+	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditInstanceOnly, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
 	FText DisplayName;
+
+	UPROPERTY()
+	bool bUseDisplayName = false;
 	
 	/** Set to override the editor display color. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
@@ -68,6 +72,9 @@ protected:
 	const float CustomMeshOffsetBase = +100.0;
 #endif
 protected:
+	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(UIMin = 0, UIMax = 10))
+	TMap<EBangoSignal, int> TriggerLimits;
+	
 	/** Triggers send signals to events (i.e. to activate or deactivate). */
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TArray<TObjectPtr<UBangoTrigger>> Triggers;
@@ -76,13 +83,12 @@ protected:
 	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TArray<TObjectPtr<UBangoAction>> Actions;
 
-private:
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(UIMin = 0, UIMax = 10))
-	TMap<EBangoSignal, int> TriggerLimits;
-	
 	/** If true, the event will need to be unfrozen before it can be activated. */
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bStartsFrozen = false;
+
+	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
+	bool bFreezeWhenAllTriggerLimitsReached = true;
 	
 	// ------------------------------------------
 	// Settings Getters and Setters
@@ -110,15 +116,19 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetTriggerCount(EBangoSignal Signal) const;
-		
+
+	// TODO: test ResetEvent to fully reset state
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
 public:
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
-	FOnBangoEventTriggered OnBangoEventTriggered;
+	FOnBangoEventTriggered OnEventTriggered;
 
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	FOnBangoEventSignalLimitReached OnSignalLimitReached;
+	
 protected:
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
@@ -126,11 +136,18 @@ protected:
 
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	TMap<EBangoSignal, double> LastTriggerTimes;
+	
+	/**  */
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TMap<EBangoSignal, FBangoInstigationDataCtr> InstigatorData;
 
 	/**  */
 	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	bool bFrozen = false;
+
+	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	TArray<EBangoSignal> RemainingTriggerLimits;
 
 #if WITH_EDITORONLY_DATA
 protected:
@@ -170,6 +187,10 @@ public:
 	virtual void SetFrozen(bool bNewFrozen);
 
 protected:
+	void CleanupInvalidTriggers();
+	
+	void CleanupInvalidActions();
+	
 	void SetTriggers(bool bNewEnabled);
 
 #if WITH_EDITOR
@@ -226,15 +247,6 @@ protected:
 	void VLOG_Generic(FString Text, FColor Color, UObject* EventInstigator) const;
 #endif
 };
-
-
-
-
-
-
-
-
-
 
 // TODO: types of trigger: contact, overlap, kill, global event message, 
 // TODO: handle multiple simultaneous overlaps/triggers

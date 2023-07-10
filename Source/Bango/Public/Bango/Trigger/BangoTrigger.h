@@ -9,11 +9,11 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTriggerDelegate, EBangoSignal, Signal, UObject*, NewInstigator);
 
 UENUM(BlueprintType)
-enum class EBangoTriggerBehavior : uint8
+enum class EBangoTriggerInstigatorAction : uint8
 {
-	ActivatesAndDeactivates,
-	ActivatesOnly,
-	DeactivatesOnly,
+	AddInstigator,
+	RemoveInstigator,
+	DoNothing,
 };
 
 class ABangoEvent;

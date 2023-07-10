@@ -35,7 +35,7 @@ protected:
 
 	/** How to trigger the event when a hit occurs. */
 	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
-	EBangoSignal TriggerAction;
+	EBangoSignal SignalOnHit;
 	
 	// ============================================================================================
 	// STATE

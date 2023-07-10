@@ -4,27 +4,20 @@
 #include "Bango/Event/BangoEvent.h"
 #include "Engine/Light.h"
 
-void UBangoAction_DebugLog::OnStart_Implementation()
+void UBangoAction_DebugLog::ReceiveEventSignal_Implementation(EBangoSignal Signal, UObject* SignalInstigator)
 {
-	if (ActivateMessage.IsEmpty())
+	FString* String = SignalMessageMap.Find(Signal);
+	
+	if (String)
 	{
-		UE_LOG(Bango, Log, TEXT("Event <%s> activated for instigator <%s>"), *GetEventName().ToString(), *GetInstigatorName());
-	}
-	else
-	{
-		UE_LOG(Bango, Log, TEXT("%s"), *ActivateMessage);
-	}
-}
-
-void UBangoAction_DebugLog::OnStop_Implementation()
-{
-	if (DeactivateMessage.IsEmpty())
-	{
-		UE_LOG(Bango, Log, TEXT("Event <%s> deactivated for instigator <%s>"), *GetEventName().ToString(), *GetInstigatorName());
-	}
-	else
-	{
-		UE_LOG(Bango, Log, TEXT("%s"), *DeactivateMessage);
+		if (String->IsEmpty())
+		{
+			UE_LOG(Bango, Log, TEXT("Event <%s> deactivated for instigator <%s>"), *GetEventName().ToString(), *GetInstigatorName());
+		}
+		else
+		{
+			UE_LOG(Bango, Log, TEXT("%s"), **String);
+		}
 	}
 }
 

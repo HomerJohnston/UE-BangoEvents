@@ -71,8 +71,8 @@ bool UBangoPlungerComponent::GetIsPlungerPushed()
 	
 	ABangoEvent* Event = Cast<ABangoEvent>(GetOwner());
 	check(Event);
-
-	return Event->HasCurrentState(EBangoEventState::Active) || (GetWorld()->GetTimeSeconds() - Event->GetLastTriggerTime(EBangoSignal::Activate)) <= RecentPushHandleCooldownTime;
+	
+	return Event->HasCurrentState(EBangoEventState::Active) || ((GetWorld()->GetTimeSeconds() - Event->GetLastTriggerTime(EBangoSignal::Activate)) <= RecentPushHandleCooldownTime);
 #else
 	return false;
 #endif

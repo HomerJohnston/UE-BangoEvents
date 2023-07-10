@@ -30,6 +30,8 @@ protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango", meta=(UIMin=0.5, UIMax=5.0))
 	float EventDisplaySize = 2.0;
 
+	// TODO Brightness setting
+	
 public:
 	UFUNCTION(BlueprintCallable)
 	bool GetShowEventsInGame() const;

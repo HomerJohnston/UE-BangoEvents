@@ -1,11 +1,10 @@
 ﻿#include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorHit.h"
 
-#include "Bango/DefaultImpl/BangoDefaultImplEnums.h"
 #include "Bango/Core/BangoInstigatorFilter.h"
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {
-	TriggerAction = EBangoSignal::None;
+	SignalOnHit = EBangoSignal::None;
 }
 
 void UBangoTrigger_ActorHit::Enable_Implementation()
@@ -63,6 +62,6 @@ void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActo
 		}
 	}
 
-	SendTriggerSignal(TriggerAction, InstigatorActor);
+	SendTriggerSignal(SignalOnHit, InstigatorActor);
 }
 

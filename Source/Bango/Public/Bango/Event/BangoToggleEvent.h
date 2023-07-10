@@ -71,17 +71,15 @@ protected:
 protected:
 	bool Activate(UObject* ActivateInstigator);
 
-	void StartActions(UObject* StartInstigator);
+	bool Deactivate(UObject* DeactivateInstigator);
+
+	void SignalActions(EBangoSignal Signal, UObject* StartInstigator);
 
 public:
 	void SetFrozen(bool bFreeze) override;
 
 	void PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Signal, UObject* NewInstigator);
-	
-protected:
-	bool Deactivate(UObject* DeactivateInstigator);
 
-	void StopActions(UObject* StopInstigator);
 public:
 #if WITH_EDITOR
 	void UpdateProxyState() override;

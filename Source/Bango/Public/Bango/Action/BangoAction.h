@@ -2,6 +2,7 @@
 
 #include "BangoAction.generated.h"
 
+enum class EBangoSignal : uint8;
 class ABangoEvent;
 class UWorld;
 class UCanvas;
@@ -20,27 +21,10 @@ private:
 	UPROPERTY(Category="Action Settings", DisplayName="Display Name Override", EditAnywhere)
 	FText DisplayName;
 
-	/** When set, starting of action will be delayed by the specified length of time. */
-	UPROPERTY(Category="Action Settings", EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
-	double StartDelay = 0;
-
-	UPROPERTY()
-	bool bUseStartDelay = false;
-
-	/** If set, prevents this action's OnStart function from running. */
-	UPROPERTY(Category="Action Settings", EditAnywhere)
-	bool bBlockFromStarting = false;
-	
 	// ------------------------------------------
 	// Settings Getters and Setters
 	// ------------------------------------------
-public:
-	UFUNCTION(BlueprintCallable)
-	bool GetUseStartDelay();
 
-	UFUNCTION(BlueprintCallable)
-	double GetStartDelay();
-	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
@@ -65,45 +49,27 @@ public:
 	// API
 	// ============================================================================================
 public:
-	void Start(UObject* StartInstigator);
-
-	void StartDelayed();
-
-	
-protected:
-	UFUNCTION(BlueprintNativeEvent)
-	void OnStart();
 
 public:
 	/** Display name used in the editor and debug printing. Override to replace/add additional text. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FText GetDisplayName();
 
+	UFUNCTION(BlueprintNativeEvent, DisplayName="Receive Event Signal")
+	void ReceiveEventSignal(EBangoSignal Signal, UObject* SignalInstigator);
+	
 protected:
 	UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintCallable)
 	ABangoEvent* GetEvent() const;
 
+	// ============================================================================================
+	// EDITOR
+	// ============================================================================================
 #if WITH_EDITOR
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
 #endif
-};
-
-
-USTRUCT(BlueprintType)
-struct FTestStruct
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category="TestCat1")
-	float SomeProperty1;
-	
-	UPROPERTY(EditAnywhere, Category="TestCat2")
-	float SomeProperty2;
-	
-	UPROPERTY(EditAnywhere, Category="TestCat2")
-	float SomeProperty3;
 };

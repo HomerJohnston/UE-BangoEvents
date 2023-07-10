@@ -34,13 +34,13 @@ protected:
 	UPROPERTY(Category="Overlap Settings", EditAnywhere, Instanced)
 	UBangoInstigatorFilter* InstigatorFilter;
 
-	/** How to trigger the event when an overlap begins. */
-	UPROPERTY(Category="Overlap Settings", DisplayName="On Begin Overlap", EditAnywhere)
-	EBangoSignal BeginOverlapSignal;
+	/** Signal to send to event when an overlap begins. */
+	UPROPERTY(Category="Overlap Settings", EditAnywhere)
+	EBangoSignal SignalOnBeginOverlap;
 
-	/** How to trigger the event when an overlap ends. */
-	UPROPERTY(Category="Overlap Settings", DisplayName="On End Overlap", EditAnywhere)
-	EBangoSignal EndOverlapSignal;
+	/** Signal to send to event when an overlap ends. */
+	UPROPERTY(Category="Overlap Settings", EditAnywhere)
+	EBangoSignal SignalOnEndOverlap;
 	
 	// ============================================================================================
 	// STATE

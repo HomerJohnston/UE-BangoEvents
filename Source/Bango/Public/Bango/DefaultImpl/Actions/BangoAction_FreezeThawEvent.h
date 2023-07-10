@@ -1,14 +1,19 @@
 ﻿#pragma once
 
 #include "Bango/Action/BangoToggleAction.h"
-#include "Bango/Core/BangoInterfaces.h"
 
 #include "BangoAction_FreezeThawEvent.generated.h"
 
-enum class EBangoFreezeThawEventAction : uint8;
+UENUM()
+enum class EBangoFreezeThawEventAction : uint8
+{
+	FreezeEvent,
+	UnfreezeEvent,
+	DoNothing,
+};
 
 UCLASS(DisplayName="Freeze/Thaw Event")
-class BANGO_API UBangoAction_FreezeThawEvent : public UBangoToggleAction, public IBangoToggleEventActionInterface
+class BANGO_API UBangoAction_FreezeThawEvent : public UBangoAction
 {
 	GENERATED_BODY()
 	// ============================================================================================
@@ -38,9 +43,9 @@ protected:
 	// API
 	// ============================================================================================
 public:
-	void OnStart_Implementation() override;
+	void OnStart_Implementation(); // override;
 
-	void OnStop_Implementation() override;
+	void OnStop_Implementation(); // override;
 
 private:
 	void Execute(EBangoFreezeThawEventAction Type);

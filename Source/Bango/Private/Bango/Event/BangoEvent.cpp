@@ -63,7 +63,12 @@ ABangoEvent::ABangoEvent()
 #if WITH_EDITORONLY_DATA
 FText ABangoEvent::GetDisplayName() const
 {
-	return DisplayName;
+	if (bUseDisplayName)
+	{
+		return DisplayName;
+	}
+	
+	return FText::FromString(GetActorNameOrLabel());
 }
 
 bool ABangoEvent::GetUsesCustomColor() const
@@ -126,6 +131,16 @@ bool ABangoEvent::TriggerLimitReached(EBangoSignal Signal) const
 
 double ABangoEvent::GetLastTriggerTime(EBangoSignal Signal) const
 {
+	const double* LastTriggerTime = LastTriggerTimes.Find(Signal);
+
+	if (LastTriggerTime)
+	{
+		return *LastTriggerTime;
+	}
+
+	return INDEX_NONE;
+	
+	/*
 	const FBangoInstigationDataCtr* InstigationDataCtr = InstigatorData.Find(Signal);
 
 	if (InstigationDataCtr)
@@ -142,7 +157,7 @@ double ABangoEvent::GetLastTriggerTime(EBangoSignal Signal) const
 			return Best;
 		}
 	}
-
+	*/
 	return INDEX_NONE;
 }
 
@@ -154,6 +169,11 @@ void ABangoEvent::BeginPlay()
 {
 	Super::BeginPlay();
 
+#if !UE_BUILD_SHIPPING
+	CleanupInvalidTriggers();
+	CleanupInvalidActions();
+#endif
+	
 	if (bStartsFrozen)
 	{
 		SetFrozen(true);
@@ -162,6 +182,10 @@ void ABangoEvent::BeginPlay()
 	{
 		SetTriggers(true);
 	}
+
+	// TODO should logic like this only be in ResetEvent somehow? Should I call ResetEvent here?
+	RemainingTriggerLimits.Empty();
+	TriggerLimits.GetKeys(RemainingTriggerLimits);
 
 #if WITH_EDITOR	
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
@@ -187,6 +211,7 @@ void ABangoEvent::BeginPlay()
 #endif
 }
 
+// TODO I should probably reimplement these
 /*
 void ABangoEvent::CleanupTriggers()
 {
@@ -229,99 +254,10 @@ void ABangoEvent::ResetEvent(bool bUnfreeze)
 {
 	InstigatorData.Empty();
 	SetFrozen(!bUnfreeze);
-}
-
-/*
-void ABangoEvent::Activate(UObject* ActivationInstigator)
-{
-	if (GetIsFrozen() || TriggerLimitReached())
-	{
-		return;
-	}
 	
-	if (ActivateFromTrigger(ActivationInstigator))
-	{
-		ActivationCount++;
-		LastActivationTime = GetWorld()->GetTimeSeconds();
-		OnBangoEventTriggered.Broadcast(this, ActivationInstigator);
-	}
-	
-	if (TriggerLimitReached())
-	{
-		DeactivationCount = FMath::Max(DeactivationCount, ActivationCount - 1);
-	}
-
-#if ENABLE_VISUAL_LOG
-	VLOG_Generic("Activate", FColor::Green, ActivationInstigator);
-#endif
-
-#if WITH_EDITOR
-	UpdateProxyState();
-#endif
+	RemainingTriggerLimits.Empty();
+	TriggerLimits.GetKeys(RemainingTriggerLimits);
 }
-*/
-
-/*
-void ABangoEvent::Deactivate(UObject* DeactivationInstigator)
-{
-	if (GetIsFrozen() || DeactivationLimitReached())
-	{
-		return;
-	}
-	
-	if (DeactivateFromTrigger(DeactivationInstigator))
-	{
-		DeactivationCount++;
-		
-		LastDeactivationTime = GetWorld()->GetTimeSeconds();
-
-		OnBangoEventDeactivated.Broadcast(this, DeactivationInstigator);
-	}
-	
-#if ENABLE_VISUAL_LOG
-	VLOG_Generic("Deactivate", FColor::Red, DeactivationInstigator);
-#endif
-	
-#if WITH_EDITOR
-	UpdateProxyState();
-#endif
-}
-*/
-
-/*
-void ABangoEvent::StartActions(UObject* NewInstigator)
-{
-	for (UBangoAction* Action : GetActions())
-	{
-		if (!IsValid(Action))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-			continue;
-		}
-
-		StartAction_Individual(Action, NewInstigator);
-		//Action->Start(NewInstigator);
-	}
-}
-*/
-
-/*
-void ABangoEvent::StopActions(UObject* DeactivationInstigator)
-{
-	for (UBangoAction* Action : GetActions())
-	{
-		if (!IsValid(Action))
-		{
-			UE_LOG(Bango, Warning, TEXT("Invalid action on event: %s, skipping"), *this->GetName());
-			continue;
-		}
-
-		// TODO
-		StopAction_Individual(Action, DeactivationInstigator);
-		//Action->Stop();
-	}
-}
-*/
 
 void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 {
@@ -334,15 +270,30 @@ void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 	{
 		return;
 	}
-	
-	int32& CountRef = TriggerCounts.FindOrAdd(Signal);
-	CountRef++;
-	
+		
 	if (ProcessTriggerSignal(Signal, NewInstigator))
 	{
 		int32& TriggerCount = TriggerCounts.FindOrAdd(Signal);
-		TriggerCount++;		
-		OnBangoEventTriggered.Broadcast(this, Signal, NewInstigator);
+		TriggerCount++;
+
+		double& TriggerTime = LastTriggerTimes.FindOrAdd(Signal);
+		TriggerTime = GetWorld()->GetTimeSeconds();
+		
+		if (TriggerLimitReached(Signal))
+		{
+			OnSignalLimitReached.Broadcast(this, Signal);
+
+			RemainingTriggerLimits.Remove(Signal);
+
+			if (bFreezeWhenAllTriggerLimitsReached && RemainingTriggerLimits.IsEmpty())
+			{
+				SetFrozen(true);
+			}
+		}				
+		
+		UpdateProxyState();
+		
+		OnEventTriggered.Broadcast(this, Signal, NewInstigator);
 	}
 }
 
@@ -366,6 +317,36 @@ void ABangoEvent::SetFrozen(bool bNewFrozen)
 #endif
 }
 
+void ABangoEvent::CleanupInvalidTriggers()
+{
+	for (int32 i = Triggers.Num() - 1; i >= 0; --i)
+	{
+		UBangoTrigger* Trigger = Triggers[i];
+		if (!IsValid(Trigger))
+		{
+			Triggers.RemoveAt(i, 1, false);
+			UE_LOG(Bango, Error, TEXT("A null trigger entry was found, this must be fixed! Event: %s"), *GetDisplayName().ToString());
+		}
+	}
+
+	Triggers.Shrink();
+}
+
+void ABangoEvent::CleanupInvalidActions()
+{
+	for (int32 i = Actions.Num() - 1; i >= 0; --i)
+	{
+		UBangoAction* Action = Actions[i];
+		if (!IsValid(Action))
+		{
+			Actions.RemoveAt(i, 1, false);
+			UE_LOG(Bango, Error, TEXT("A null action entry was found, this must be fixed! Event: %s"), *GetDisplayName().ToString());
+		}
+	}
+
+	Actions.Shrink();
+}
+
 void ABangoEvent::SetTriggers(bool bEnabled)
 {
 	for (UBangoTrigger* Trigger : Triggers)
@@ -383,14 +364,18 @@ void ABangoEvent::SetTriggers(bool bEnabled)
 	}
 }
 
-// Editor ---------------------------------------
+// ================================================================================================
+// EDITOR
+// ================================================================================================
 
 #if WITH_EDITOR
 FLinearColor ABangoEvent::GetColorBase() const
 {
 	return FColor::Magenta;
 }
+#endif
 
+#if WITH_EDITOR
 const FBangoEventStateFlag& ABangoEvent::GetState() const
 {
 	return CurrentState;
@@ -453,6 +438,8 @@ void ABangoEvent::UpdateProxyState()
 		FLinearColor C = GetColorForProxy();
 		CustomMaterialDynamic->SetVectorParameterValue("Color", C);
 	}
+
+	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 }
 #endif
 
@@ -770,13 +757,13 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Game() const
 
 #if WITH_EDITOR
 bool ABangoEvent::HasInvalidData() const
-{/*
-	if (GetTriggers().IsEmpty())
+{
+	if (Triggers.IsEmpty())
 	{
 		return true;
 	}
 
-	for (UBangoTrigger* Trigger : GetTriggers())
+	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{
@@ -784,18 +771,18 @@ bool ABangoEvent::HasInvalidData() const
 		}	
 	}
 
-	if (GetActions().IsEmpty())
+	if (Actions.IsEmpty())
 	{
 		return true;
 	}
 	
-	for(UBangoAction* Action : GetActions())
+	for(UBangoAction* Action : Actions)
 	{
 		if (!IsValid(Action))
 		{
 			return true;
 		}
-	}*/
+	}
 
 	return false;
 }

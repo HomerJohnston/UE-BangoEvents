@@ -9,8 +9,8 @@
 
 UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
 {
-	BeginOverlapSignal = EBangoSignal::None;
-	EndOverlapSignal = EBangoSignal::None;
+	SignalOnBeginOverlap = EBangoSignal::None;
+	SignalOnEndOverlap = EBangoSignal::None;
 }
 
 // ============================================================================================
@@ -36,7 +36,6 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 	}
 	
 	ActorToUse->OnActorBeginOverlap.AddDynamic(this, &ThisClass::OnBeginOverlap);
-	
 	ActorToUse->OnActorEndOverlap.AddDynamic(this, &ThisClass::OnEndOverlap);
 
 	SubscribedActor = ActorToUse;
@@ -72,12 +71,12 @@ void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	Handle(OverlapActor, InstigatorActor, BeginOverlapSignal);
+	Handle(OverlapActor, InstigatorActor, SignalOnBeginOverlap);
 }
 
 void UBangoTrigger_ActorOverlap::OnEndOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	Handle(OverlapActor, InstigatorActor, EndOverlapSignal);
+	Handle(OverlapActor, InstigatorActor, SignalOnEndOverlap);
 }
 
 void UBangoTrigger_ActorOverlap::Handle(AActor* OverlapActor, AActor* InstigatorActor, EBangoSignal Signal)

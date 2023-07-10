@@ -1,7 +1,7 @@
 ﻿#include "Bango/Event/BangoToggleEvent.h"
 
+#include "Bango/Log.h"
 #include "Bango/Action/BangoAction.h"
-#include "Bango/Action/BangoToggleAction.h"
 #include "Bango/Trigger/BangoTrigger.h"
 #include "Bango/Utility/BangoColorOps.h"
 
@@ -25,17 +25,17 @@ bool ABangoToggleEvent::SetToggleState(EBangoToggleState NewState, UObject* ByIn
 	if (ToggleState == NewState) { return false; }
 
 	ToggleState = NewState;
-
+	
 	switch (ToggleState)
 	{
 		case EBangoToggleState::Activated:
 		{
-			StartActions(ByInstigator);
+			SignalActions(EBangoSignal::Activate, ByInstigator);
 			return true;
 		}
 		case EBangoToggleState::Deactivated:
 		{
-			StopActions(ByInstigator);
+			SignalActions(EBangoSignal::Deactivate, ByInstigator);
 			return true;
 		}
 		default:
@@ -43,6 +43,7 @@ bool ABangoToggleEvent::SetToggleState(EBangoToggleState NewState, UObject* ByIn
 			return false;
 		}
 	}
+
 }
 
 bool ABangoToggleEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
@@ -85,47 +86,10 @@ bool ABangoToggleEvent::Activate(UObject* ActivateInstigator)
 
 	if (InstigatorIndex == 0)
 	{
-		SetToggleState(EBangoToggleState::Activated, ActivateInstigator);
-		return true;
+		return SetToggleState(EBangoToggleState::Activated, ActivateInstigator);
 	}
 
 	return false;
-}
-
-void ABangoToggleEvent::StartActions(UObject* StartInstigator)
-{
-	for (UBangoAction* Action : Actions)
-	{
-		Action->Start(StartInstigator);
-	}
-}
-
-void ABangoToggleEvent::SetFrozen(bool bFreeze)
-{
-	if (bFreeze)
-	{
-		if (GetToggleState() == EBangoToggleState::Activated)
-		{
-			OnBangoEventTriggered.AddDynamic(this, &ThisClass::PerformPendingFreeze);
-		}
-		else
-		{
-			Super::SetFrozen(bFreeze);
-		}	
-	}
-	else
-	{
-		OnBangoEventTriggered.RemoveDynamic(this, &ThisClass::PerformPendingFreeze);
-		Super::SetFrozen(bFreeze);
-	}
-}
-
-void ABangoToggleEvent::PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Signal, UObject* NewInstigator)
-{
-	if (Signal == EBangoSignal::Deactivate)
-	{
-		Super::SetFrozen(true);
-	}
 }
 
 bool ABangoToggleEvent::Deactivate(UObject* DeactivateInstigator)
@@ -169,47 +133,86 @@ bool ABangoToggleEvent::Deactivate(UObject* DeactivateInstigator)
 			break;
 		}
 	}
-
+	
+	if (Index != INDEX_NONE)
+	{
+		DeactivateInstigations->Array.RemoveAt(Index);
+	}
+	
 	if (bDoDeactivate)
 	{
 		return SetToggleState(EBangoToggleState::Deactivated, DeactivateInstigator);
-	}
-	else if (Index != INDEX_NONE)
-	{
-		DeactivateInstigations->Array.RemoveAt(Index);
 	}
 
 	return false;
 }
 
-void ABangoToggleEvent::StopActions(UObject* StopInstigator)
+void ABangoToggleEvent::SignalActions(EBangoSignal Signal, UObject* StartInstigator)
 {
 	for (UBangoAction* Action : Actions)
 	{
-		UBangoToggleAction* ToggleAction = Cast<UBangoToggleAction>(Action);
-
-		if (ToggleAction)
-		{
-			ToggleAction->Stop(StopInstigator);
-		}
+		Action->ReceiveEventSignal(Signal, StartInstigator);
 	}
 }
 
+void ABangoToggleEvent::SetFrozen(bool bFreeze)
+{
+	if (bFreeze)
+	{
+		if (GetToggleState() == EBangoToggleState::Activated)
+		{
+			OnEventTriggered.AddDynamic(this, &ThisClass::PerformPendingFreeze);
+		}
+		else
+		{
+			Super::SetFrozen(bFreeze);
+		}	
+	}
+	else
+	{
+		OnEventTriggered.RemoveDynamic(this, &ThisClass::PerformPendingFreeze);
+		Super::SetFrozen(bFreeze);
+	}
+}
+
+void ABangoToggleEvent::PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Signal, UObject* NewInstigator)
+{
+	if (Signal == EBangoSignal::Deactivate)
+	{
+		Super::SetFrozen(true);
+	}
+}
+
+
+// ================================================================================================
+// EDITOR
+// ================================================================================================
+
+#if WITH_EDITOR
 void ABangoToggleEvent::UpdateProxyState()
 {
 	Super::UpdateProxyState();
 
 	if (GetWorld()->IsGameWorld())
 	{
-		CurrentState.SetFlag(EBangoEventState::Active, GetLastTriggerTime(EBangoSignal::Activate) > GetLastTriggerTime(EBangoSignal::Deactivate));
+		double LastActivateTime = GetLastTriggerTime(EBangoSignal::Activate);
+		double LastDeactivateTime = GetLastTriggerTime(EBangoSignal::Deactivate);
+		
+		CurrentState.SetFlag(EBangoEventState::Active, LastActivateTime > LastDeactivateTime);
+
+		UE_LOG(Bango, Display, TEXT("Setting CurrentState, new value %i"), CurrentState.Value);
 	}
 }
+#endif
 
+#if WITH_EDITOR
 FLinearColor ABangoToggleEvent::GetColorBase() const
 {
 	return FColor::Green;
 }
+#endif
 
+#if WITH_EDITOR
 FLinearColor ABangoToggleEvent::GetColorForProxy() const
 {
 	FLinearColor Color = Super::GetColorForProxy();
@@ -229,7 +232,7 @@ FLinearColor ABangoToggleEvent::GetColorForProxy() const
 		{
 			Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
 		}
-			
+		
 		double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
 		double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * 0.2), 0, 1);
 			
@@ -241,7 +244,9 @@ FLinearColor ABangoToggleEvent::GetColorForProxy() const
 
 	return Color;
 }
+#endif
 
+#if WITH_EDITOR
 TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Game() const
 {
 	TArray<FBangoDebugTextEntry> Data = Super::GetDebugDataString_Game(); 
@@ -255,8 +260,11 @@ TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Game() const
 	
 	return Data;
 }
+#endif
 
+#if WITH_EDITOR
 TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Editor() const
 {
 	return Super::GetDebugDataString_Editor();
 }
+#endif

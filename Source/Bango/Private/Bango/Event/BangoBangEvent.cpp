@@ -3,6 +3,8 @@
 #include "Bango/Log.h"
 #include "Bango/Trigger/BangoBangTrigger.h"
 #include "Bango/Action/BangoBangAction.h"
+#include "Bango/Utility/BangoColorOps.h"
+#include "VisualLogger/VisualLogger.h"
 
 ABangoBangEvent::ABangoBangEvent()
 {
@@ -10,18 +12,14 @@ ABangoBangEvent::ABangoBangEvent()
 
 bool ABangoBangEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
 {
-	switch (Signal)
+	if (Signal == EBangoSignal::Activate)
 	{
-		case EBangoSignal::Activate:
-		{
-			return Activate(NewInstigator);
-		}
-		default:
-		{
-			UE_LOG(Bango, Warning, TEXT("Bang Event <%s> ignoring trigger signal <%s>, Bang Event will only respond to Activate signals"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal))
-			return false;
-		}
+		return Activate(NewInstigator);
 	}
+
+	UE_LOG(Bango, Warning, TEXT("Bang Event <%s> ignoring trigger signal <%s>, Bang Event not configured to repond to it"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal));
+
+	return false;
 }
 
 bool ABangoBangEvent::HasInvalidData() const
@@ -40,7 +38,7 @@ void ABangoBangEvent::StartActions(UObject* StartInstigator)
 {
 	 for (UBangoAction* Action : Actions)
 	 {
-		 Action->Start(StartInstigator);
+	 	Action->ReceiveEventSignal(EBangoSignal::Activate, StartInstigator);
 	 }
 }
 
@@ -61,7 +59,34 @@ FLinearColor ABangoBangEvent::GetColorBase() const
 
 FLinearColor ABangoBangEvent::GetColorForProxy() const
 {
-	return Super::GetColorForProxy();
+	FLinearColor Color = Super::GetColorForProxy();
+
+	if (GetWorld()->IsGameWorld())
+	{
+		double LastHandleDownTime = GetLastTriggerTime(EBangoSignal::Activate);
+		double LastHandleUpTime = GetLastTriggerTime(EBangoSignal::Deactivate);
+			
+		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
+		FLinearColor DeactivationColor = BangoColorOps::VeryDarkDesatColor(Color);
+			
+		double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
+		double ActivationAlpha = FMath::Clamp(ElapsedTimeSinceLastActivation / 0.2, 0, 1);
+			
+		if (IsValid(GWorld) && (ActivationAlpha > 0))
+		{
+			Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
+		}
+		
+		double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
+		double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * 0.2), 0, 1);
+			
+		if (IsValid(GWorld) && (DeactivationAlpha > 0))
+		{
+			Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
+		}
+	}
+
+	return Color;
 }
 
 TArray<FBangoDebugTextEntry> ABangoBangEvent::GetDebugDataString_Game() const
