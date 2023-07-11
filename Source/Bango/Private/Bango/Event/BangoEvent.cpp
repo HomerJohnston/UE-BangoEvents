@@ -512,7 +512,7 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 
 	float LerpAlpha = FMath::Clamp((FarDisplayDistance - Distance) / (1.25 * FarDisplayDistance - FarDisplayDistance), 0, 1);
 	float ColorAlpha = FMath::Lerp(0.0, 1.0, LerpAlpha);
-	int32 OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
+	float OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
 
 	FLinearColor HeaderBaseColor = HasInvalidData() ? BangoColor::Orange : FLinearColor::White;
 	FLinearColor HeaderColor = HeaderBaseColor;
@@ -567,17 +567,20 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		Canvas->StrLen(TextFont, S.TextL, LX, LY, false);
 		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
 
-		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FLinearColor::White);
+		FLinearColor LColor = FLinearColor::White;
+		LColor.A = ColorAlpha;
+		
+		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, LColor);
 		TextLeft.Position.X -= LX;
 		TextLeft.Position.Y += CurrentLineOffset;
 		TextLeft.Scale = FVector2d(1.0);
 		TextLeft.bOutlined = true;
 		TextLeft.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
 
-		FLinearColor TextColor = S.Color;
-		TextColor.A = ColorAlpha;
+		FLinearColor RColor = S.Color;
+		RColor.A = ColorAlpha;
 		
-		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, TextColor);
+		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, RColor);
 		TextRight.Position.X += 3;
 		TextRight.Position.Y += CurrentLineOffset;
 		TextRight.Scale = FVector2d(1.0);
