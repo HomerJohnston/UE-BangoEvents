@@ -3,7 +3,7 @@
 #include "Bango/Utility/Log.h"
 #include "Bango/Action/BangoAction.h"
 #include "Bango/Trigger/BangoTrigger.h"
-#include "Bango/Utility/BangoColorOps.h"
+#include "Bango/Utility/BangoColor.h"
 
 ABangoEvent_Toggle::ABangoEvent_Toggle()
 {
@@ -203,8 +203,6 @@ void ABangoEvent_Toggle::UpdateProxyState()
 		double LastDeactivateTime = GetLastTriggerTime(EBangoSignal::Deactivate);
 		
 		CurrentState.SetFlag(EBangoEventState::Active, LastActivateTime > LastDeactivateTime);
-
-		UE_LOG(Bango, Display, TEXT("Setting CurrentState, new value %i"), CurrentState.Value);
 	}
 }
 #endif
@@ -212,7 +210,7 @@ void ABangoEvent_Toggle::UpdateProxyState()
 #if WITH_EDITOR
 FLinearColor ABangoEvent_Toggle::GetColorBase() const
 {
-	return BangoColors::GreenBase;
+	return BangoColor::GreenBase;
 }
 #endif
 

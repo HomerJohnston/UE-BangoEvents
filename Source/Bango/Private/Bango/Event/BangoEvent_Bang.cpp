@@ -3,7 +3,7 @@
 #include "Bango/Utility/Log.h"
 #include "Bango/Trigger/BangoBangTrigger.h"
 #include "Bango/Action/BangoBangAction.h"
-#include "Bango/Utility/BangoColorOps.h"
+#include "Bango/Utility/BangoColor.h"
 #include "VisualLogger/VisualLogger.h"
 
 ABangoEvent_Bang::ABangoEvent_Bang()
@@ -59,7 +59,7 @@ void ABangoEvent_Bang::UpdateProxyState()
 
 FLinearColor ABangoEvent_Bang::GetColorBase() const
 {
-	return BangoColors::BlueBase;
+	return BangoColor::BlueBase;
 }
 
 FLinearColor ABangoEvent_Bang::GetColorForProxy() const

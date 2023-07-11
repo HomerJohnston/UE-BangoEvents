@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace BangoColors
+namespace BangoColor
 {
 	inline FLinearColor LightGrey			(0.50,	0.50,	0.50);
 	inline FLinearColor DarkGrey			(0.02,	0.02,	0.02);
@@ -14,6 +14,10 @@ namespace BangoColors
 	inline FLinearColor YellowBase			(0.60,	0.60,	0.00);
 	inline FLinearColor GreenBase			(0.20,	0.90,	0.10);
 	inline FLinearColor BlueBase			(0.15,	0.25,	0.80);
+	inline FLinearColor LightBlue			(0.45,	0.55,	1.20);
+
+	//inline FLinearColor Orange			(0.95,	0.60,	0.07);
+	inline FLinearColor Orange				(1.50,	0.50,	0.10);
 }
 
 namespace BangoColorOps

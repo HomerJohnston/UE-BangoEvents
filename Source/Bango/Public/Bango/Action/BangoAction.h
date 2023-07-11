@@ -22,7 +22,7 @@ class BANGO_API UBangoAction : public UObject
 	// ============================================================================================
 private:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Action Settings", DisplayName="Display Name Override", EditAnywhere)
+	UPROPERTY(Category="Settings", DisplayName="Display Name Override", EditInstanceOnly)
 	FText DisplayName;
 
 	// ------------------------------------------

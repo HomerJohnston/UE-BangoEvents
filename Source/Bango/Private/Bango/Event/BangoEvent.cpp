@@ -7,7 +7,7 @@
 #include "Bango/Trigger/BangoTrigger.h"
 #include "Bango/Editor/PlungerComponent.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/Utility/BangoColorOps.h"
+#include "Bango/Utility/BangoColor.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "VisualLogger/VisualLogger.h"
@@ -96,7 +96,7 @@ bool ABangoEvent::GetStartsFrozen() const
 
 int32 ABangoEvent::GetTriggerLimit() const
 {
-	return TriggerLimit;
+	return bUseTriggerLimit ? TriggerLimit : -1;
 }
 
 void ABangoEvent::SetTriggerLimit(int32 NewTriggerLimit)
@@ -121,6 +121,8 @@ bool ABangoEvent::GetIsFrozen() const
 
 bool ABangoEvent::TriggerLimitReached(EBangoSignal Signal) const
 {
+	if (!bUseTriggerLimit) { return false; }
+	
 	const int32* CountPtr = TriggerCounts.Find(Signal);
 	if (!CountPtr) { return false; }
 
@@ -207,7 +209,7 @@ void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 		return;
 	}
 	
-	if (TriggerLimitReached(Signal))
+	if (bUseTriggerLimit && TriggerLimitReached(Signal))
 	{
 		return;
 	}
@@ -220,7 +222,7 @@ void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 		double& TriggerTime = LastTriggerTimes.FindOrAdd(Signal);
 		TriggerTime = GetWorld()->GetTimeSeconds();
 		
-		if (TriggerLimitReached(Signal))
+		if (bUseTriggerLimit && TriggerLimitReached(Signal))
 		{
 			OnSignalLimitReached.Broadcast(this, Signal);
 
@@ -509,16 +511,24 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 	float FarDisplayDistance = DevSettings->GetFarDisplayDistance();
 
 	float LerpAlpha = FMath::Clamp((FarDisplayDistance - Distance) / (1.25 * FarDisplayDistance - FarDisplayDistance), 0, 1);
-	int32 ColorAlpha = FMath::Lerp(0, 255, LerpAlpha);
-	int32 OutlineAlpha = FMath::Lerp(0, 255, FMath::Square(LerpAlpha));
-	
-	FColor HeaderColor = (HasInvalidData() ? FColor(243, 156, 18, ColorAlpha) : FColor(255, 255, 255, ColorAlpha));
+	float ColorAlpha = FMath::Lerp(0.0, 1.0, LerpAlpha);
+	int32 OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
+
+	FLinearColor HeaderBaseColor = HasInvalidData() ? BangoColor::Orange : FLinearColor::White;
+	FLinearColor HeaderColor = HeaderBaseColor;
+
+	if (bUseDisplayName)
+	{
+		HeaderColor = BangoColor::LightBlue * HeaderBaseColor;
+	}
+
+	HeaderColor.A = ColorAlpha;
 	
 	FCanvasTextItem Text(HeaderTextPos, Display, TextFont, HeaderColor);
 	Text.bCentreX = true;
 	Text.bCentreY = true;
 	Text.bOutlined = true;
-	Text.OutlineColor = FColor(0, 0, 0, OutlineAlpha);
+	Text.OutlineColor = FLinearColor(0, 0, 0, OutlineAlpha);
 	Text.Scale = FVector2d(1.0, 1.0);
 
 	return Text;
@@ -544,8 +554,8 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 	float NearDisplayDistance = DevSettings->GetNearDisplayDistance();
 	
 	float LerpAlpha = FMath::Clamp((NearDisplayDistance - Distance) / (1.25 * NearDisplayDistance - NearDisplayDistance), 0, 1);
-	int32 ColorAlpha = FMath::Lerp(0, 255, LerpAlpha);
-	int32 OutlineAlpha = FMath::Lerp(0, 255, FMath::Square(LerpAlpha));
+	float ColorAlpha = FMath::Lerp(0.0, 1.0, LerpAlpha);
+	float OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
 	
 	for(const FBangoDebugTextEntry& S : Data)
 	{
@@ -557,14 +567,17 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		Canvas->StrLen(TextFont, S.TextL, LX, LY, false);
 		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
 
-		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FColor(255, 255, 255, ColorAlpha));
-		TextLeft.Position.X -= LX;// + 3 + S.TextL.Len(); // (LX + 3 + 0.5 * S.TextL.Len());
+		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, FLinearColor::White);
+		TextLeft.Position.X -= LX;
 		TextLeft.Position.Y += CurrentLineOffset;
 		TextLeft.Scale = FVector2d(1.0);
 		TextLeft.bOutlined = true;
 		TextLeft.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
 
-		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, S.Color.WithAlpha(ColorAlpha));
+		FLinearColor TextColor = S.Color;
+		TextColor.A = ColorAlpha;
+		
+		FCanvasTextItem TextRight(DataTextPos, FText::FromString(S.TextR), TextFont, TextColor);
 		TextRight.Position.X += 3;
 		TextRight.Position.Y += CurrentLineOffset;
 		TextRight.Scale = FVector2d(1.0);
@@ -593,14 +606,14 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 
 	if (Triggers.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", FColor::Orange));
+		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", BangoColor::Orange));
 	}
 	
 	for (UBangoTrigger* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{			
-			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", FColor::Orange));
+			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", BangoColor::Orange));
 		}
 		else
 		{
@@ -618,7 +631,7 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Editor() const
 
 	if (Actions.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Action:", "NONE", FColor::Orange));
+		Data.Add(FBangoDebugTextEntry("Action:", "NONE", BangoColor::Orange));
 	}
 	
 	for (UBangoAction* Action : Actions)
@@ -695,7 +708,7 @@ FLinearColor ABangoEvent::GetColorForProxy() const
 
 	if (!IsValid(World))
 	{
-		return BangoColors::Error;
+		return BangoColor::Error;
 	}
 	
 	FLinearColor Color = GetUsesCustomColor() ? GetCustomColor() : GetColorBase();
@@ -725,7 +738,7 @@ FLinearColor ABangoEvent::GetColorForProxy() const
 	}
 	else
 	{
-		return BangoColors::Error;
+		return BangoColor::Error;
 	}
 }
 
