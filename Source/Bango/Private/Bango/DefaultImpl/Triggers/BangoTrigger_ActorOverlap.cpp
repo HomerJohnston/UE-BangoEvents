@@ -16,9 +16,37 @@ UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()
 // ============================================================================================
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
+	if (bUseSpecificComponent && bUseTargetActor)
+	{
+		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use both a component and a target actor, can only be one or the other!"));
+		return;
+	}
+
+	if (bUseSpecificComponent && !IsValid(Component.GetComponent(GetEvent())))
+	{
+		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use a component but no component was set!"));
+		return;
+	}
+	
 	if (bUseTargetActor && !IsValid(TargetActor))
 	{
 		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use target actor but no target actor was set!"));
+		return;
+	}
+
+	if (bUseSpecificComponent)
+	{
+		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component.GetComponent(GetEvent()));
+
+		if (IsValid(PrimitiveComponent))
+		{
+			PrimitiveComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnComponentBeginOverlap);
+			PrimitiveComponent->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnComponentEndOverlap);
+
+			SubscribedComponent = PrimitiveComponent;
+		}
+
+		return;
 	}
 	
 	AActor* ActorToUse = (bUseTargetActor && IsValid(TargetActor)) ? TargetActor : GetEvent();
@@ -43,6 +71,21 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 
 void UBangoTrigger_ActorOverlap::Disable_Implementation()
 {
+	if (bUseSpecificComponent)
+	{
+		if (!SubscribedComponent.IsValid())
+		{
+			return;
+		}
+		
+		SubscribedComponent->OnComponentBeginOverlap.RemoveDynamic(this, &ThisClass::OnComponentBeginOverlap);
+		SubscribedComponent->OnComponentEndOverlap.RemoveDynamic(this, &ThisClass::OnComponentEndOverlap);
+
+		SubscribedComponent = nullptr;
+		
+		return;
+	}
+	
 	if (!SubscribedActor.IsValid())
 	{
 		return;
@@ -53,6 +96,8 @@ void UBangoTrigger_ActorOverlap::Disable_Implementation()
 
 	SubscribedActor = nullptr;
 }
+
+// TODO implement SetSpecificComponent
 
 void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 {
@@ -65,8 +110,19 @@ void UBangoTrigger_ActorOverlap::SetTargetActor(AActor* NewTargetActor)
 	
 	TargetActor = NewTargetActor;
 	bUseTargetActor = true;
+	bUseSpecificComponent = false;
 
 	Enable();
+}
+
+void UBangoTrigger_ActorOverlap::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Handle(GetEvent(), OtherActor, SignalOnBeginOverlap);
+}
+
+void UBangoTrigger_ActorOverlap::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	Handle(GetEvent(), OtherActor, SignalOnEndOverlap);
 }
 
 void UBangoTrigger_ActorOverlap::OnBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)

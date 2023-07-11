@@ -40,7 +40,7 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Bango|Display", DisplayName="Event Display Name", EditInstanceOnly, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
+	UPROPERTY(Category="Bango|Display", DisplayName="Display Name Override", EditInstanceOnly, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
 	FText DisplayName;
 
 	UPROPERTY()

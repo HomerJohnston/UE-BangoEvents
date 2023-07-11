@@ -488,6 +488,7 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, do
 }
 #endif
 
+// TODO I should lift the text up higher if the bango plunger mesh scale is increased
 #if WITH_EDITOR
 FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre, double Distance) const
 {	
@@ -496,14 +497,14 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
 	FText Display;
-	
-	if (DisplayName.IsEmpty())
+
+	if (bUseDisplayName && !DisplayName.IsEmpty())
 	{
-		Display = FText::FromString(GetActorLabel());
+		Display = DisplayName;
 	}
 	else
 	{
-		Display = DisplayName;
+		Display = FText::FromString(GetActorLabel());
 	}
 
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
@@ -770,7 +771,7 @@ void ABangoEvent::OnCvarChange()
 
 void ABangoEvent::TriggerDebugSignal()
 {
-	ProcessTriggerSignal(DebugSignal, IsValid(DebugSignalInstigator) ? DebugSignalInstigator : this);
+	Trigger(DebugSignal, IsValid(DebugSignalInstigator) ? DebugSignalInstigator : this);
 }
 #endif
 

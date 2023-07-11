@@ -31,6 +31,12 @@ protected:
 	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
 	UPROPERTY(DisplayName = "Get Overlap Events From Other Actor", Category="Overlap Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
+
+	UPROPERTY()
+	bool bUseSpecificComponent;
+
+	UPROPERTY(DisplayName = "Get Overlap Events From Specific Component", Category="Overlap Settings", EditAnywhere, meta=(EditCondition = "bUseSpecificComponent", UseComponentPicker))
+	FComponentReference Component;
 	
 	/** Use this to determine which overlap events to use and which to ignore. */
 	UPROPERTY(Category="Overlap Settings", EditAnywhere, Instanced)
@@ -48,7 +54,10 @@ protected:
 	// STATE
 	// ============================================================================================
 protected:
-	/***/
+	/** */
+	TWeakObjectPtr<UPrimitiveComponent> SubscribedComponent = nullptr;
+	
+	/** */
 	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
 	
 public:
@@ -61,6 +70,12 @@ public:
 	void SetTargetActor(AActor* NewTargetActor);
 	
 protected:
+	UFUNCTION()
+	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
 	UFUNCTION()
 	void OnBeginOverlap(AActor* BangoEventActor, AActor* InstigatorActor);
 
