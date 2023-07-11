@@ -1,21 +1,23 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "BangoEvent.h"
 
-#include "BangoBangEvent.generated.h"
+#include "BangoEvent_Bang.generated.h"
 
 class UBangoBangTrigger;
 class UBangoBangAction;
 
 UCLASS()
-class BANGO_API ABangoBangEvent : public ABangoEvent
+class BANGO_API ABangoEvent_Bang : public ABangoEvent
 {
 	GENERATED_BODY()
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
 public:
-	ABangoBangEvent();
+	ABangoEvent_Bang();
 	
 	// ============================================================================================
 	// SETTINGS
@@ -39,6 +41,8 @@ protected:
 
 	void StartActions(UObject* StartInstigator);
 	
+	virtual void ResetRemainingTriggerLimits() override;
+
 public:
 #if WITH_EDITOR
 public:

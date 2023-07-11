@@ -1,8 +1,10 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "BangoEvent.h"
 
-#include "BangoToggleEvent.generated.h"
+#include "BangoEvent_Toggle.generated.h"
 
 class UBangoToggleTrigger;
 class UBangoToggleAction;
@@ -26,19 +28,19 @@ enum class EBangoToggleState : uint8
 };
 
 UCLASS()
-class BANGO_API ABangoToggleEvent : public ABangoEvent
+class BANGO_API ABangoEvent_Toggle : public ABangoEvent
 {
 	GENERATED_BODY()
 
 public:
-	ABangoToggleEvent();
+	ABangoEvent_Toggle();
 
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
 protected:
 	/** Determines how the event can be deactivated. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, DisplayName="Deactivate When")
+	UPROPERTY(Category="Bango|Event", EditAnywhere, DisplayName="Deactivate When")
 	EBangoToggleDeactivateCondition DeactivateCondition;
 	
 	UFUNCTION(BlueprintCallable)
@@ -75,6 +77,8 @@ protected:
 
 	void SignalActions(EBangoSignal Signal, UObject* StartInstigator);
 
+	virtual void ResetRemainingTriggerLimits() override;
+	
 public:
 	void SetFrozen(bool bFreeze) override;
 

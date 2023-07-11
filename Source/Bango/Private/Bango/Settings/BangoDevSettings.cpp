@@ -2,7 +2,7 @@
 
 #include "Bango/Settings/BangoDevSettings.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 
 static TAutoConsoleVariable<bool> CVarBangoShowEventsInGame(
 	TEXT("Bango.ShowEventsInGame"),

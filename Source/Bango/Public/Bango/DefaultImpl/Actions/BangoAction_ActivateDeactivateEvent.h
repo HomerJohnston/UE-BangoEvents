@@ -1,3 +1,5 @@
+// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
 #pragma once
 
 #include "Bango/Action/BangoToggleAction.h"

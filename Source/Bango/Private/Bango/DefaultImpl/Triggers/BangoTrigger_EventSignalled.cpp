@@ -1,6 +1,6 @@
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_EventSignalled.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
 #include "Bango/Core/BangoSignal.h"
 

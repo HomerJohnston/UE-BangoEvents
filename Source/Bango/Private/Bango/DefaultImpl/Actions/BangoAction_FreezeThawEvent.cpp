@@ -1,6 +1,6 @@
 ﻿#include "Bango/DefaultImpl/Actions/BangoAction_FreezeThawEvent.h"
 #include "Bango/Event/BangoEvent.h"
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {

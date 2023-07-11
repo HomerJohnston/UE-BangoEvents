@@ -2,9 +2,9 @@
 
 #include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorOverlap.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
-#include "Bango/Core/BangoInstigatorFilter.h"
+#include "Bango/DefaultImpl/InstigatorFilters/BangoInstigatorFilter.h"
 #include "Bango/Core/BangoSignal.h"
 
 UBangoTrigger_ActorOverlap::UBangoTrigger_ActorOverlap()

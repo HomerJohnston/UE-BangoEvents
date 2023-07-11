@@ -1,16 +1,16 @@
-﻿#include "Bango/Event/BangoBangEvent.h"
+﻿#include "Bango/Event/BangoEvent_Bang.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Trigger/BangoBangTrigger.h"
 #include "Bango/Action/BangoBangAction.h"
 #include "Bango/Utility/BangoColorOps.h"
 #include "VisualLogger/VisualLogger.h"
 
-ABangoBangEvent::ABangoBangEvent()
+ABangoEvent_Bang::ABangoEvent_Bang()
 {
 }
 
-bool ABangoBangEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
+bool ABangoEvent_Bang::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
 {
 	if (Signal == EBangoSignal::Activate)
 	{
@@ -22,19 +22,19 @@ bool ABangoBangEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInst
 	return false;
 }
 
-bool ABangoBangEvent::HasInvalidData() const
+bool ABangoEvent_Bang::HasInvalidData() const
 {
 	return Super::HasInvalidData();
 }
 
-bool ABangoBangEvent::Activate(UObject* ActivateInstigator)
+bool ABangoEvent_Bang::Activate(UObject* ActivateInstigator)
 {
 	StartActions(ActivateInstigator);
 
 	return true;
 }
 
-void ABangoBangEvent::StartActions(UObject* StartInstigator)
+void ABangoEvent_Bang::StartActions(UObject* StartInstigator)
 {
 	 for (UBangoAction* Action : Actions)
 	 {
@@ -42,7 +42,12 @@ void ABangoBangEvent::StartActions(UObject* StartInstigator)
 	 }
 }
 
-void ABangoBangEvent::UpdateProxyState()
+void ABangoEvent_Bang::ResetRemainingTriggerLimits()
+{
+	RemainingTriggerLimits = { EBangoSignal::Activate };
+}
+
+void ABangoEvent_Bang::UpdateProxyState()
 {
 	Super::UpdateProxyState();
 
@@ -52,12 +57,12 @@ void ABangoBangEvent::UpdateProxyState()
 	}
 }
 
-FLinearColor ABangoBangEvent::GetColorBase() const
+FLinearColor ABangoEvent_Bang::GetColorBase() const
 {
-	return FColor::Red;
+	return BangoColors::BlueBase;
 }
 
-FLinearColor ABangoBangEvent::GetColorForProxy() const
+FLinearColor ABangoEvent_Bang::GetColorForProxy() const
 {
 	FLinearColor Color = Super::GetColorForProxy();
 
@@ -89,12 +94,12 @@ FLinearColor ABangoBangEvent::GetColorForProxy() const
 	return Color;
 }
 
-TArray<FBangoDebugTextEntry> ABangoBangEvent::GetDebugDataString_Game() const
+TArray<FBangoDebugTextEntry> ABangoEvent_Bang::GetDebugDataString_Game() const
 {
 	return Super::GetDebugDataString_Game();
 }
 
-TArray<FBangoDebugTextEntry> ABangoBangEvent::GetDebugDataString_Editor() const
+TArray<FBangoDebugTextEntry> ABangoEvent_Bang::GetDebugDataString_Editor() const
 {
 	return Super::GetDebugDataString_Editor();
 }

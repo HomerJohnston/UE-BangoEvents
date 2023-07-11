@@ -1,6 +1,6 @@
 ﻿#include "Bango/DefaultImpl/Triggers/BangoTrigger_ActorHit.h"
 
-#include "Bango/Core/BangoInstigatorFilter.h"
+#include "Bango/DefaultImpl/InstigatorFilters/BangoInstigatorFilter.h"
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {

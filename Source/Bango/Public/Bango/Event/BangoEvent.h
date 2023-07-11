@@ -5,8 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "Bango/Event/BangoEventState.h"
-#include "Bango/Core/BangoDebugText.h"
-#include "Bango/Core/BangoInstigationData.h"
+#include "Bango/Editor/BangoDebugTextEntry.h"
+#include "Bango/Event/BangoEventInstigation.h"
 #include "BangoEvent.generated.h"
 
 enum class EBangoSignal : uint8;
@@ -20,9 +20,8 @@ class FCanvasTextItem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBangoEventTriggered, ABangoEvent*, Event, EBangoSignal, Signal, UObject*, Instigator);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBangoEventSignalLimitReached, ABangoEvent*, Event, EBangoSignal, Signal);
-/**
- * 
- */
+
+/** Base class for events. Cannot be used as-is, all events must either be a Bang or a Toggle type (or some other custom-built type). */
 UCLASS(Abstract)
 class BANGO_API ABangoEvent : public AActor
 {
@@ -71,16 +70,23 @@ protected:
 
 	const float CustomMeshOffsetBase = +100.0;
 #endif
+	
 protected:
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, meta=(UIMin = 0, UIMax = 10))
-	TMap<EBangoSignal, int> TriggerLimits;
+	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(EditCondition="bUseTriggerLimit", UIMin = 1, UIMax = 10))
+	int32 TriggerLimit = 1;
+
+	UPROPERTY()
+	bool bUseTriggerLimit = false;
+	
+	//UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(UIMin = 0, UIMax = 10))
+	//TMap<EBangoSignal, int32> TriggerLimits;
 	
 	/** Triggers send signals to events (i.e. to activate or deactivate). */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
+	UPROPERTY(Category="Bango|Event", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TArray<TObjectPtr<UBangoTrigger>> Triggers;
 	
 	/** Actions for the event. */
-	UPROPERTY(Category="Bango|Settings", EditAnywhere, Instanced, meta=(ShowInnerProperties))
+	UPROPERTY(Category="Bango|Event", EditAnywhere, Instanced, meta=(ShowInnerProperties))
 	TArray<TObjectPtr<UBangoAction>> Actions;
 
 	/** If true, the event will need to be unfrozen before it can be activated. */
@@ -109,10 +115,10 @@ public:
 	bool GetStartsFrozen() const;
 	
 	UFUNCTION(BlueprintCallable)
-	int32 GetTriggerLimit(EBangoSignal Signal) const;
+	int32 GetTriggerLimit() const;
 
 	UFUNCTION(BlueprintCallable)
-	void SetTriggerLimit(EBangoSignal Signal, int32 NewTriggerLimit);
+	void SetTriggerLimit(int32 NewTriggerLimit);
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetTriggerCount(EBangoSignal Signal) const;
@@ -123,43 +129,55 @@ public:
 	// ============================================================================================
 public:
 	/**  */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventTriggered OnEventTriggered;
 
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventSignalLimitReached OnSignalLimitReached;
 	
 protected:
 	/**  */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TMap<EBangoSignal, int32> TriggerCounts;
 
 	/**  */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TMap<EBangoSignal, double> LastTriggerTimes;
 	
 	/**  */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
-	TMap<EBangoSignal, FBangoInstigationDataCtr> InstigatorData;
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	TMap<EBangoSignal, FBangoEventInstigationArray> InstigatorData;
 
 	/**  */
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	bool bFrozen = false;
 
-	UPROPERTY(Category="Bango|State (Debug)", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TArray<EBangoSignal> RemainingTriggerLimits;
 
 #if WITH_EDITORONLY_DATA
 protected:
+	
 	UPROPERTY()
 	UMaterialInstanceDynamic* CustomMaterialDynamic;
+
+	/** Manually send a trigger signal when debug button is pressed. */
+	UPROPERTY(Category="Bango", Transient, BlueprintReadOnly, EditInstanceOnly)
+	EBangoSignal DebugSignal;
+
+	/** If not set, will use the event (self) as instigator. */
+	UPROPERTY(Category="Bango", Transient, BlueprintReadOnly, EditInstanceOnly)
+	AActor* DebugSignalInstigator = nullptr;
+	
+	UFUNCTION(Category="Bango", CallInEditor)
+	void TriggerDebugSignal();
 #endif
 	
 	// ------------------------------------------
 	// State Getters
 	// ------------------------------------------
 public:
-
+	
 	UFUNCTION(BlueprintCallable)
 	bool TriggerLimitReached(EBangoSignal Signal) const;
 
@@ -187,6 +205,8 @@ public:
 	virtual void SetFrozen(bool bNewFrozen);
 
 protected:
+	virtual void ResetRemainingTriggerLimits();
+	
 	void CleanupInvalidTriggers();
 	
 	void CleanupInvalidActions();
@@ -244,7 +264,7 @@ protected:
 #endif
 	
 #if ENABLE_VISUAL_LOG
-	void VLOG_Generic(FString Text, FColor Color, UObject* EventInstigator) const;
+	void VLOG_Generic(FString Text, FColor Color, UObject* LogInstigator = nullptr) const;
 #endif
 };
 

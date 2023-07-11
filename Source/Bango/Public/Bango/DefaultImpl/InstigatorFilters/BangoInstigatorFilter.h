@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "BangoInstigatorFilter.generated.h"
 

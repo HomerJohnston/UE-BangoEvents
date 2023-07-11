@@ -1,22 +1,18 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "UObject/Object.h"
-
 #include "Bango/Core/BangoSignal.h"
 
 #include "BangoTrigger.generated.h"
 
+class ABangoEvent;
+struct  FBangoDebugTextEntry;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FTriggerDelegate, EBangoSignal, Signal, UObject*, NewInstigator);
 
-UENUM(BlueprintType)
-enum class EBangoTriggerInstigatorAction : uint8
-{
-	AddInstigator,
-	RemoveInstigator,
-	DoNothing,
-};
-
-class ABangoEvent;
+/** Basic trigger class, usable on any event type. */
 UCLASS(Abstract, Blueprintable, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoTrigger : public UObject
 {
@@ -63,7 +59,16 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SendTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
 
+	// ============================================================================================
+	// EDITOR
+	// ============================================================================================
 #if WITH_EDITOR
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
+	
 public:
 	virtual FText GetDisplayName();
 #endif

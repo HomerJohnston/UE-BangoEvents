@@ -1,10 +1,13 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "Bango/Action/BangoAction.h"
 #include "BangoBangAction.generated.h"
 
-UCLASS(Abstract, Within="BangoBangEvent")
-class BANGO_API UBangoBangAction : public UBangoAction//, public IBangoBangActionInterface
+/** Optional "Bang" action, usable only in Bang events. Has start delay feature built-in. */
+UCLASS(Abstract, Within="BangoEvent_Bang")
+class BANGO_API UBangoBangAction : public UBangoAction
 {
 	GENERATED_BODY()
 	
@@ -22,6 +25,22 @@ protected:
 	/** If set, prevents this action's OnStart function from running. */
 	UPROPERTY(Category="Action Settings", EditAnywhere)
 	bool bBlockFromStarting = false;
+	
+	// ------------------------------------------
+	// Settings Getters and Setters
+	// ------------------------------------------
+	
+	// ============================================================================================
+	// STATE
+	// ============================================================================================
+	
+	// ------------------------------------------
+	// State Getters and Setters
+	// ------------------------------------------
+
+	// ============================================================================================
+	// API
+	// ============================================================================================
 	
 public:
 	void Start(UObject* StartInstigator); // override;

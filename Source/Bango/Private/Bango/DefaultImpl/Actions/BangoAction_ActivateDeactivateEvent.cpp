@@ -1,5 +1,5 @@
 #include "Bango/DefaultImpl/Actions/BangoAction_ActivateDeactivateEvent.h"
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
 
 UBangoAction_ActivateDeactivateEvent::UBangoAction_ActivateDeactivateEvent()

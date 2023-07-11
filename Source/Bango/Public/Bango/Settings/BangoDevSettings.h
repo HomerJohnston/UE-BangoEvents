@@ -11,10 +11,8 @@ class BANGO_API UBangoDevSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 public:
-	void PostCDOContruct() override;
+	void PostCDOContruct() override;	
 	
-	
-	// TODO: console variables for quicker hiding?
 protected:
 	UPROPERTY(Config, EditAnywhere, Category = "Bango")
 	bool bShowEventsInGame = false;

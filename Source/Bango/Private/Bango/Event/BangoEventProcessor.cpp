@@ -1,6 +1,6 @@
 ﻿//#include "Bango/Core/BangoEventProcessor.h"
 
-//#include "Bango/Log.h"
+//#include "Bango/Utility/Log.h"
 //#include "Bango/Core/BangoAction.h"
 //#include "Bango/Core/BangoEvent.h"
 

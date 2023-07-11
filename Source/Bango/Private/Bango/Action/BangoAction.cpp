@@ -2,7 +2,7 @@
 
 #include "Bango/Action/BangoAction.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
 
 void UBangoAction::ReceiveEventSignal_Implementation(EBangoSignal Signal, UObject* SignalInstigator)
@@ -24,6 +24,10 @@ UWorld* UBangoAction::GetWorld() const
 ABangoEvent* UBangoAction::GetEvent() const
 {
 	return Cast<ABangoEvent>(GetOuter());
+}
+
+void UBangoAction::GetDebugDataString(TArray<FBangoDebugTextEntry>& Data)
+{
 }
 
 #if WITH_EDITOR

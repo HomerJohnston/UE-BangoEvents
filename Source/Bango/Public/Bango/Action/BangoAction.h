@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "BangoAction.generated.h"
 
@@ -7,7 +9,9 @@ class ABangoEvent;
 class UWorld;
 class UCanvas;
 class APlayerController;
+struct  FBangoDebugTextEntry;
 
+/** Generic action class, usable in any event type. */
 UCLASS(Abstract, Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
 {
@@ -71,5 +75,7 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	void GetDebugDataString(TArray<FBangoDebugTextEntry>& Data);
 #endif
 };

@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 namespace BangoColors
 {
@@ -7,11 +9,11 @@ namespace BangoColors
 
 	inline FLinearColor Error				(1.00,	0.00,	1.00);
 
-	inline FLinearColor RedBase			(0.20,	0.00,	0.00);
-	inline FLinearColor OrangeBase			(0.15,	0.05,	0.00);
-	inline FLinearColor YellowBase			(0.10,	0.10,	0.00);
-	inline FLinearColor GreenBase			(0.00,	0.20,	0.00);
-	inline FLinearColor BlueBase			(0.00,	0.00,	0.20);
+	inline FLinearColor RedBase				(0.80,	0.10,	0.10);
+	inline FLinearColor OrangeBase			(0.70,	0.40,	0.00);
+	inline FLinearColor YellowBase			(0.60,	0.60,	0.00);
+	inline FLinearColor GreenBase			(0.20,	0.90,	0.10);
+	inline FLinearColor BlueBase			(0.15,	0.25,	0.80);
 }
 
 namespace BangoColorOps
@@ -19,14 +21,14 @@ namespace BangoColorOps
 	
 	static FLinearColor BrightenColor(FLinearColor C)
 	{
-		float M = 18.0f;
+		float M = 6.0f;
 		float N = 0.40f;
 		return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
 	}
 
 	static FLinearColor EnhanceColor(FLinearColor C)
 	{
-		float M = 2.0f;
+		float M = 1.5f;
 		float N = -0.05f;
 		return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
 	}

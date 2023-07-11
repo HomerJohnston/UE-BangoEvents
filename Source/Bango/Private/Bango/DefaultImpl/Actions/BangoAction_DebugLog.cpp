@@ -1,6 +1,6 @@
 ﻿#include "Bango/DefaultImpl/Actions/BangoAction_DebugLog.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
 #include "Engine/Light.h"
 

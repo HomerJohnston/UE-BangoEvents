@@ -1,16 +1,6 @@
 ﻿#include "Bango/Action/BangoToggleAction.h"
 #include "Bango/Event/BangoEvent.h"
 
-bool UBangoToggleAction::GetUseStopDelay()
-{
-	return bUseStopDelay;
-}
-
-double UBangoToggleAction::GetStopDelay()
-{
-	return StopDelay;
-}
-
 void UBangoToggleAction::Start(UObject* StartInstigator)
 {	
 	if (bBlockFromStarting)

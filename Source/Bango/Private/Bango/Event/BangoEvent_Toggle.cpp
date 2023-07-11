@@ -1,26 +1,26 @@
-﻿#include "Bango/Event/BangoToggleEvent.h"
+﻿#include "Bango/Event/BangoEvent_Toggle.h"
 
-#include "Bango/Log.h"
+#include "Bango/Utility/Log.h"
 #include "Bango/Action/BangoAction.h"
 #include "Bango/Trigger/BangoTrigger.h"
 #include "Bango/Utility/BangoColorOps.h"
 
-ABangoToggleEvent::ABangoToggleEvent()
+ABangoEvent_Toggle::ABangoEvent_Toggle()
 {
 	DeactivateCondition = EBangoToggleDeactivateCondition::AllInstigatorsRemoved;
 }
 
-EBangoToggleDeactivateCondition ABangoToggleEvent::GetDeactivateCondition() const
+EBangoToggleDeactivateCondition ABangoEvent_Toggle::GetDeactivateCondition() const
 {
 	return DeactivateCondition;
 }
 
-EBangoToggleState ABangoToggleEvent::GetToggleState()
+EBangoToggleState ABangoEvent_Toggle::GetToggleState()
 {
 	return ToggleState;
 }
 
-bool ABangoToggleEvent::SetToggleState(EBangoToggleState NewState, UObject* ByInstigator)
+bool ABangoEvent_Toggle::SetToggleState(EBangoToggleState NewState, UObject* ByInstigator)
 {
 	if (ToggleState == NewState) { return false; }
 
@@ -46,7 +46,7 @@ bool ABangoToggleEvent::SetToggleState(EBangoToggleState NewState, UObject* ByIn
 
 }
 
-bool ABangoToggleEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
+bool ABangoEvent_Toggle::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
 {
 	switch (Signal)
 	{
@@ -65,16 +65,16 @@ bool ABangoToggleEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewIn
 	}
 }
 
-bool ABangoToggleEvent::HasInvalidData() const
+bool ABangoEvent_Toggle::HasInvalidData() const
 {
 	return Super::HasInvalidData();
 }
 
-bool ABangoToggleEvent::Activate(UObject* ActivateInstigator)
+bool ABangoEvent_Toggle::Activate(UObject* ActivateInstigator)
 {
-	FBangoInstigationDataCtr& ActivateInstigations = InstigatorData.FindOrAdd(EBangoSignal::Activate);
+	FBangoEventInstigationArray& ActivateInstigations = InstigatorData.FindOrAdd(EBangoSignal::Activate);
 
-	FBangoInstigationData* InstigationData = ActivateInstigations.Array.FindByPredicate([ActivateInstigator](FBangoInstigationData& ArrayElement) { return ArrayElement.Equals(ActivateInstigator); } );
+	FBangoEventInstigation* InstigationData = ActivateInstigations.Array.FindByPredicate([ActivateInstigator](FBangoEventInstigation& ArrayElement) { return ArrayElement.Equals(ActivateInstigator); } );
 
 	if (InstigationData)
 	{
@@ -92,18 +92,18 @@ bool ABangoToggleEvent::Activate(UObject* ActivateInstigator)
 	return false;
 }
 
-bool ABangoToggleEvent::Deactivate(UObject* DeactivateInstigator)
+bool ABangoEvent_Toggle::Deactivate(UObject* DeactivateInstigator)
 {
 	bool bDoDeactivate;
 	
-	FBangoInstigationDataCtr* DeactivateInstigations = InstigatorData.Find(EBangoSignal::Activate);
+	FBangoEventInstigationArray* DeactivateInstigations = InstigatorData.Find(EBangoSignal::Activate);
 
 	if (!DeactivateInstigations)
 	{
 		return false;
 	}
 
-	int32 Index = DeactivateInstigations->Array.IndexOfByPredicate([DeactivateInstigator](const FBangoInstigationData& ArrayElement) { return ArrayElement.Equals(DeactivateInstigator); });
+	int32 Index = DeactivateInstigations->Array.IndexOfByPredicate([DeactivateInstigator](const FBangoEventInstigation& ArrayElement) { return ArrayElement.Equals(DeactivateInstigator); });
 	
 	switch (GetDeactivateCondition())
 	{
@@ -147,7 +147,7 @@ bool ABangoToggleEvent::Deactivate(UObject* DeactivateInstigator)
 	return false;
 }
 
-void ABangoToggleEvent::SignalActions(EBangoSignal Signal, UObject* StartInstigator)
+void ABangoEvent_Toggle::SignalActions(EBangoSignal Signal, UObject* StartInstigator)
 {
 	for (UBangoAction* Action : Actions)
 	{
@@ -155,7 +155,12 @@ void ABangoToggleEvent::SignalActions(EBangoSignal Signal, UObject* StartInstiga
 	}
 }
 
-void ABangoToggleEvent::SetFrozen(bool bFreeze)
+void ABangoEvent_Toggle::ResetRemainingTriggerLimits()
+{
+	RemainingTriggerLimits = { EBangoSignal::Activate, EBangoSignal::Deactivate };
+}
+
+void ABangoEvent_Toggle::SetFrozen(bool bFreeze)
 {
 	if (bFreeze)
 	{
@@ -175,7 +180,7 @@ void ABangoToggleEvent::SetFrozen(bool bFreeze)
 	}
 }
 
-void ABangoToggleEvent::PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Signal, UObject* NewInstigator)
+void ABangoEvent_Toggle::PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Signal, UObject* NewInstigator)
 {
 	if (Signal == EBangoSignal::Deactivate)
 	{
@@ -183,13 +188,12 @@ void ABangoToggleEvent::PerformPendingFreeze(ABangoEvent* Event, EBangoSignal Si
 	}
 }
 
-
 // ================================================================================================
 // EDITOR
 // ================================================================================================
 
 #if WITH_EDITOR
-void ABangoToggleEvent::UpdateProxyState()
+void ABangoEvent_Toggle::UpdateProxyState()
 {
 	Super::UpdateProxyState();
 
@@ -206,14 +210,14 @@ void ABangoToggleEvent::UpdateProxyState()
 #endif
 
 #if WITH_EDITOR
-FLinearColor ABangoToggleEvent::GetColorBase() const
+FLinearColor ABangoEvent_Toggle::GetColorBase() const
 {
-	return FColor::Green;
+	return BangoColors::GreenBase;
 }
 #endif
 
 #if WITH_EDITOR
-FLinearColor ABangoToggleEvent::GetColorForProxy() const
+FLinearColor ABangoEvent_Toggle::GetColorForProxy() const
 {
 	FLinearColor Color = Super::GetColorForProxy();
 
@@ -247,7 +251,7 @@ FLinearColor ABangoToggleEvent::GetColorForProxy() const
 #endif
 
 #if WITH_EDITOR
-TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Game() const
+TArray<FBangoDebugTextEntry> ABangoEvent_Toggle::GetDebugDataString_Game() const
 {
 	TArray<FBangoDebugTextEntry> Data = Super::GetDebugDataString_Game(); 
 
@@ -263,7 +267,7 @@ TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Game() const
 #endif
 
 #if WITH_EDITOR
-TArray<FBangoDebugTextEntry> ABangoToggleEvent::GetDebugDataString_Editor() const
+TArray<FBangoDebugTextEntry> ABangoEvent_Toggle::GetDebugDataString_Editor() const
 {
 	return Super::GetDebugDataString_Editor();
 }

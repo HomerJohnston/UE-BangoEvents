@@ -1,17 +1,20 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "Bango/Action/BangoAction.h"
 #include "BangoToggleAction.generated.h"
 
-UCLASS(Abstract, Within="BangoToggleEvent")
-class BANGO_API UBangoToggleAction : public UBangoAction//, public IBangoToggleActionInterface
+/** Optional "Toggle" action, usable only in Toggle events. Has start/stop delay features built-in. */
+UCLASS(Abstract, Within="BangoEvent_Toggle")
+class BANGO_API UBangoToggleAction : public UBangoAction
 {
 	GENERATED_BODY()
 	
 	// ============================================================================================
 	// Settings
 	// ============================================================================================
-	
+protected:
 	/** When set, starting of action will be delayed by the specified length of time. */
 	UPROPERTY(Category="Action Settings", EditAnywhere, meta=(EditCondition="bUseStartDelay", ClampMin = 0.0))
 	double StartDelay = 0;
@@ -37,13 +40,6 @@ class BANGO_API UBangoToggleAction : public UBangoAction//, public IBangoToggleA
 	// ------------------------------------------
 	// Settings Getters and Setters
 	// ------------------------------------------
-	public:
-	
-	UFUNCTION(BlueprintCallable)
-	bool GetUseStopDelay();
-	
-	UFUNCTION(BlueprintCallable)
-	double GetStopDelay();
 	
 	// ============================================================================================
 	// STATE
