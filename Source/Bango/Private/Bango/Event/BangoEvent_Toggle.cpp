@@ -43,7 +43,6 @@ bool ABangoEvent_Toggle::SetToggleState(EBangoToggleState NewState, UObject* ByI
 			return false;
 		}
 	}
-
 }
 
 bool ABangoEvent_Toggle::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
@@ -253,12 +252,20 @@ TArray<FBangoDebugTextEntry> ABangoEvent_Toggle::GetDebugDataString_Game() const
 {
 	TArray<FBangoDebugTextEntry> Data = Super::GetDebugDataString_Game(); 
 
-	/*
-	for(const FBangoInstigationData& InstigatorData : GetInstigators())
+	const FBangoEventInstigationArray* ActiveInstigators = InstigatorData.Find(EBangoSignal::Activate);
+	
+	if (ActiveInstigators)
 	{
-		Data.Add(FBangoDebugTextEntry("Instigator:", FString::Printf(TEXT("%s"), *InstigatorData.Instigator->GetName())));	
+		for (const FBangoEventInstigation& EventInstigation : ActiveInstigators->Array)
+		{
+			UObject* EventInstigator = EventInstigation.Instigator;
+
+			if (IsValid(EventInstigator))
+			{
+				Data.Add(FBangoDebugTextEntry("Instigator:", FString::Printf(TEXT("%s"), *EventInstigator->GetName())));	
+			}
+		}
 	}
-	*/
 	
 	return Data;
 }

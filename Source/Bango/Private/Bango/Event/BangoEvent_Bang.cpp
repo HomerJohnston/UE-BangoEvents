@@ -96,7 +96,16 @@ FLinearColor ABangoEvent_Bang::GetColorForProxy() const
 
 TArray<FBangoDebugTextEntry> ABangoEvent_Bang::GetDebugDataString_Game() const
 {
-	return Super::GetDebugDataString_Game();
+	TArray<FBangoDebugTextEntry> Data = Super::GetDebugDataString_Game(); 
+
+	const UObject* LastInstigator = GetLastInstigator(EBangoSignal::Activate);
+
+	if (IsValid(LastInstigator))
+	{
+		Data.Add(FBangoDebugTextEntry("Last Instigator:", FString::Printf(TEXT("%s"), *LastInstigator->GetName())));	
+	}
+	
+	return Data;
 }
 
 TArray<FBangoDebugTextEntry> ABangoEvent_Bang::GetDebugDataString_Editor() const

@@ -69,6 +69,9 @@ protected:
 	float CustomMeshOffset = 0.0;
 
 	const float CustomMeshOffsetBase = +100.0;
+	
+	const float DebugTextOffsetBase = +100.0;
+	const float DebugTextOffsetSizeScaler = +50.0;
 #endif
 	
 protected:
@@ -77,9 +80,6 @@ protected:
 
 	UPROPERTY()
 	bool bUseTriggerLimit = false;
-	
-	//UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(UIMin = 0, UIMax = 10))
-	//TMap<EBangoSignal, int32> TriggerLimits;
 	
 	/** Triggers send signals to events (i.e. to activate or deactivate). */
 	UPROPERTY(Category="Bango|Event", EditAnywhere, Instanced, meta=(ShowInnerProperties))
@@ -143,6 +143,9 @@ protected:
 	/**  */
 	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	TMap<EBangoSignal, double> LastTriggerTimes;
+
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
+	TMap<EBangoSignal, UObject*> LastInstigators;
 	
 	/**  */
 	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
@@ -183,6 +186,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	double GetLastTriggerTime(EBangoSignal Signal) const;
+
+	UFUNCTION(BlueprintCallable)
+	const UObject* GetLastInstigator(EBangoSignal Signal) const;
 	
 	UFUNCTION(BlueprintCallable)
 	bool GetIsFrozen() const;

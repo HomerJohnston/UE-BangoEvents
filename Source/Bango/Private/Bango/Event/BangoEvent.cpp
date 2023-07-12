@@ -141,6 +141,21 @@ double ABangoEvent::GetLastTriggerTime(EBangoSignal Signal) const
 	return INDEX_NONE;
 }
 
+const UObject* ABangoEvent::GetLastInstigator(EBangoSignal Signal) const
+{
+	const UObject*const* LastInstigator = LastInstigators.Find(Signal);
+
+	if (LastInstigator)
+	{
+		if (IsValid(*LastInstigator))
+		{
+			return *LastInstigator;
+		}
+	}
+
+	return nullptr;
+}
+
 // ============================================================================================
 // API
 // ============================================================================================
@@ -221,6 +236,9 @@ void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 
 		double& TriggerTime = LastTriggerTimes.FindOrAdd(Signal);
 		TriggerTime = GetWorld()->GetTimeSeconds();
+
+		UObject*& LastInstigator = LastInstigators.FindOrAdd(Signal);
+		LastInstigator = NewInstigator; 
 		
 		if (bUseTriggerLimit && TriggerLimitReached(Signal))
 		{
@@ -413,10 +431,10 @@ void ABangoEvent::DebugDraw(UCanvas* Canvas, APlayerController* PlayerController
 	if (DistanceSqrd > FMath::Square(GetDefault<UBangoDevSettings>()->GetFarDisplayDistance())) { return; }
 	
 	double Distance = FMath::Sqrt(DistanceSqrd);
-	
-	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);
-	Canvas->DrawItem(HeaderText);
 
+	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);
+
+	Canvas->DrawItem(HeaderText);
 	if (Distance < DevSettings->GetNearDisplayDistance())
 	{
 		TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter;
@@ -471,7 +489,10 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, do
 	Canvas->GetCenter(X, Y);
 	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
 
-	FVector WorldDrawLocation = GetActorLocation() + FVector(0,0,100);
+	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
+	float DebugTextOffset = DebugTextOffsetBase + DebugTextOffsetSizeScaler * DevSettings->GetEventDisplaySize();
+	
+	FVector WorldDrawLocation = GetActorLocation() + FVector(0, 0, DebugTextOffset);
 
 	DistSqrd = FVector::DistSquared(WorldDrawLocation, WorldCameraPos);
 
@@ -491,8 +512,12 @@ bool ABangoEvent::GetScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, do
 // TODO I should lift the text up higher if the bango plunger mesh scale is increased
 #if WITH_EDITOR
 FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCentre, double Distance) const
-{	
+{
+	// TODO can I get an actual font that doesn't fucking suck?
 	UFont* TextFont = GEngine->GetLargeFont();
+
+	TextFont->SetFontScalingFactor(2.f);
+	TextFont->ScalingFactor = 2.0;
 	
 	FVector2D HeaderTextPos(ScreenLocationCentre.X, ScreenLocationCentre.Y - 8);
 
@@ -530,7 +555,7 @@ FCanvasTextItem ABangoEvent::GetDebugHeaderText(const FVector& ScreenLocationCen
 	Text.bCentreY = true;
 	Text.bOutlined = true;
 	Text.OutlineColor = FLinearColor(0, 0, 0, OutlineAlpha);
-	Text.Scale = FVector2d(1.0, 1.0);
+	Text.Scale = FVector2d(1.1, 1.1);
 
 	return Text;
 }
@@ -556,7 +581,7 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 	
 	float LerpAlpha = FMath::Clamp((NearDisplayDistance - Distance) / (1.25 * NearDisplayDistance - NearDisplayDistance), 0, 1);
 	float ColorAlpha = FMath::Lerp(0.0, 1.0, LerpAlpha);
-	float OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
+	float OutlineAlpha = FMath::Lerp(0.0, 0.3, FMath::Square(LerpAlpha));
 	
 	for(const FBangoDebugTextEntry& S : Data)
 	{
@@ -576,7 +601,7 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		TextLeft.Position.Y += CurrentLineOffset;
 		TextLeft.Scale = FVector2d(1.0);
 		TextLeft.bOutlined = true;
-		TextLeft.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
+		TextLeft.OutlineColor = FLinearColor(0, 0, 0, OutlineAlpha);
 
 		FLinearColor RColor = S.Color;
 		RColor.A = ColorAlpha;
@@ -586,7 +611,7 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		TextRight.Position.Y += CurrentLineOffset;
 		TextRight.Scale = FVector2d(1.0);
 		TextRight.bOutlined = true;
-		TextRight.OutlineColor = FColor(50, 50, 50, OutlineAlpha);
+		TextRight.OutlineColor = FLinearColor(0, 0, 0, OutlineAlpha);
 		
 		CanvasTextItems.Add(TextLeft);
 		CanvasTextItems.Add(TextRight);

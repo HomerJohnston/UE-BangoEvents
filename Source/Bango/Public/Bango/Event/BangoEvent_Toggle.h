@@ -32,12 +32,23 @@ class BANGO_API ABangoEvent_Toggle : public ABangoEvent
 {
 	GENERATED_BODY()
 
+	// ============================================================================================
+	// CONSTRUCTION
+	// ============================================================================================
 public:
 	ABangoEvent_Toggle();
 
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
+
+	// TODO details customization to remove this bullshit
+#if WITH_EDITORONLY_DATA
+private:
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="1==2", EditConditionHides))
+	uint8 IReallyWantTheDisplayCategoryToAppearFirstAndIHateMyLife;
+#endif
+	
 protected:
 	/** Determines how the event can be deactivated. */
 	UPROPERTY(Category="Bango|Event", EditAnywhere, DisplayName="Deactivate When")
