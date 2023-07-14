@@ -3,11 +3,11 @@
 #pragma once
 
 #include "Bango/Action/BangoAction.h"
-#include "BangoBangAction.generated.h"
+#include "BangoAction_Bang.generated.h"
 
 /** Optional "Bang" action, usable only in Bang events. Has start delay feature built-in. */
 UCLASS(Abstract, Within="BangoEvent_Bang")
-class BANGO_API UBangoBangAction : public UBangoAction
+class BANGO_API UBangoAction_Bang : public UBangoAction
 {
 	GENERATED_BODY()
 	

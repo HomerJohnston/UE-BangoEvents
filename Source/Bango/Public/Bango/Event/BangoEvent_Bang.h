@@ -6,8 +6,8 @@
 
 #include "BangoEvent_Bang.generated.h"
 
-class UBangoBangTrigger;
-class UBangoBangAction;
+class UBangoTrigger_Bang;
+class UBangoAction_Bang;
 
 UCLASS()
 class BANGO_API ABangoEvent_Bang : public ABangoEvent

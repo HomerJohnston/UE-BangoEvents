@@ -1,22 +1,25 @@
 ﻿#include "Bango/DefaultImpl/Actions/BangoAction_FreezeThawEvent.h"
+
+#include "Bango/Core/BangoSignal.h"
 #include "Bango/Event/BangoEvent.h"
 #include "Bango/Utility/Log.h"
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
-	OnStartAction = EBangoFreezeThawEventAction::DoNothing;
-	
-	OnStopAction = EBangoFreezeThawEventAction::DoNothing;
+	BangoUtility::Signals::FillMap(SignalActions, EBangoFreezeThawEventAction::DoNothing);
 }
 
-void UBangoAction_FreezeThawEvent::OnStart_Implementation()
+void UBangoAction_FreezeThawEvent::ReceiveEventSignal_Implementation(EBangoSignal Signal, UObject* SignalInstigator)
 {
-	Execute(OnStartAction);
-}
+	EBangoFreezeThawEventAction* Action = SignalActions.Find(Signal);
 
-void UBangoAction_FreezeThawEvent::OnStop_Implementation()
-{
-	Execute(OnStopAction);
+	if (Action)
+	{
+		Execute(*Action);
+		return;
+	}
+
+	UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent - failed to find a valid signal map entry"));
 }
 
 void UBangoAction_FreezeThawEvent::Execute(EBangoFreezeThawEventAction Type)

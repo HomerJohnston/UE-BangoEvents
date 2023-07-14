@@ -17,12 +17,31 @@ UCLASS(Abstract, Blueprintable, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoTrigger : public UObject
 {
 	GENERATED_BODY()
-
+	// ============================================================================================
+	// CONSTRUCTION
+	// ============================================================================================
+public:
+	UBangoTrigger();
+	
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
 protected:
+	/** Whether to use timed signal features or not. */
+	UPROPERTY(EditAnywhere, Category="Advanced")
+	bool bUseSignalDelays = false;
 	
+	/** Set delays to use before sending trigger signals. */
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(ReadOnlyKeys, UIMin = 0.0, UIMax = 60.0, EditCondition="bUseSignalDelays", EditConditionHides))
+	TMap<EBangoSignal, float> SignalDelays;
+
+	/** If true, broadcasting a Deactivate signal while an Activate signal is pending will cancel the Activate signal, and vice versa. */
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides))
+	bool bCancelOpposingSignals = true;
+
+	/** If true, when other triggers send activate/deactivate signals to the event, this trigger will respond in turn. */
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides))
+	bool bReactToEventSignalling = true;
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
@@ -33,6 +52,12 @@ public:
 	UPROPERTY()
 	FTriggerDelegate TriggerSignal;
 
+	UPROPERTY()
+	TMap<EBangoSignal, FTimerHandle> DelayedSignalTimers; 
+
+	// ------------------------------------------
+	// State Getters/Setters
+	// ------------------------------------------
 protected:
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName="Get Event")
 	ABangoEvent* GetEventBP();
@@ -41,7 +66,10 @@ protected:
 	
 	template<class T>
 	T* GetEvent();
-	
+
+	// ============================================================================================
+	// API
+	// ============================================================================================
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetEnabled(bool bEnabled);
@@ -59,6 +87,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SendTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
 
+	void SendTriggerSignal_Delayed(EBangoSignal Signal, TWeakObjectPtr<UObject> NewInstigator);
+	
 	// ============================================================================================
 	// EDITOR
 	// ============================================================================================
@@ -66,6 +96,8 @@ protected:
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	void DebugPrintTimeRemaining(TArray<FBangoDebugTextEntry>& Data, const FString& Label, EBangoSignal Signal);
 
 	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
 	

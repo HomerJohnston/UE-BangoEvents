@@ -4,11 +4,11 @@
 
 #include "Bango/Trigger/BangoTrigger.h"
 
-#include "BangoBangTrigger.generated.h"
+#include "BangoTrigger_Bang.generated.h"
 
 /** Optional "Bang" trigger, usable only on Bang events. */
 UCLASS(Abstract, Within="BangoEvent_Bang")
-class BANGO_API UBangoBangTrigger : public UBangoTrigger
+class BANGO_API UBangoTrigger_Bang : public UBangoTrigger
 {
 	GENERATED_BODY()
 };

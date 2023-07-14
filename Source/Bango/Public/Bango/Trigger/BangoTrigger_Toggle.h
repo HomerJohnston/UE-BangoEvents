@@ -4,11 +4,11 @@
 
 #include "Bango/Trigger/BangoTrigger.h"
 
-#include "BangoToggleTrigger.generated.h"
+#include "BangoTrigger_Toggle.generated.h"
 
 /** Optional "Toggle" trigger, usable only on Toggle events. */
 UCLASS(Abstract, Within="BangoEvent_Toggle")
-class BANGO_API UBangoToggleTrigger : public UBangoTrigger
+class BANGO_API UBangoTrigger_Toggle : public UBangoTrigger
 {
 	GENERATED_BODY()
 };

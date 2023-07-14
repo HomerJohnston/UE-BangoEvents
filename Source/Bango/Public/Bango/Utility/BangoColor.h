@@ -9,10 +9,12 @@ namespace BangoColor
 
 	inline FLinearColor Error				(1.00,	0.00,	1.00);
 
+	inline FLinearColor Red					(1.20,	0.10,	0.10);
 	inline FLinearColor RedBase				(0.80,	0.10,	0.10);
 	inline FLinearColor OrangeBase			(0.70,	0.40,	0.00);
 	inline FLinearColor YellowBase			(0.60,	0.60,	0.00);
 	inline FLinearColor GreenBase			(0.20,	0.90,	0.10);
+	inline FLinearColor Green				(0.10,	1.20,	0.10);
 	inline FLinearColor BlueBase			(0.15,	0.25,	0.80);
 	inline FLinearColor LightBlue			(0.45,	0.55,	1.20);
 

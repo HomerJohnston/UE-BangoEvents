@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Bango/Trigger/BangoToggleTrigger.h"
+#include "Bango/Trigger/BangoTrigger_Toggle.h"
 
 #include "BangoTrigger_ActorOverlap.generated.h"
 

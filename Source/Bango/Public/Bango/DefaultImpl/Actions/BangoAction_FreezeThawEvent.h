@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Bango/Action/BangoToggleAction.h"
+#include "Bango/Action/BangoAction_Toggle.h"
+#include "Bango/Action/BangoAction_Bang.h"
 
 #include "BangoAction_FreezeThawEvent.generated.h"
 
@@ -31,12 +32,9 @@ protected:
 	UPROPERTY(Category="Settings", EditInstanceOnly)
 	TSoftObjectPtr<ABangoEvent> TargetEvent;
 
-	UPROPERTY(Category="Settings", EditAnywhere, DisplayName = "On Start")
-	EBangoFreezeThawEventAction OnStartAction;
-
-	UPROPERTY(Category="Settings", EditAnywhere, DisplayName = "On Stop")
-	EBangoFreezeThawEventAction OnStopAction;
-	
+	UPROPERTY(Category="Settings", EditAnywhere, meta = (ReadOnlyKeys))
+	TMap<EBangoSignal, EBangoFreezeThawEventAction> SignalActions;
+		
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
@@ -45,9 +43,7 @@ protected:
 	// API
 	// ============================================================================================
 public:
-	void OnStart_Implementation(); // override;
-
-	void OnStop_Implementation(); // override;
+	void ReceiveEventSignal_Implementation(EBangoSignal Signal, UObject* SignalInstigator) override;
 
 private:
 	void Execute(EBangoFreezeThawEventAction Type);

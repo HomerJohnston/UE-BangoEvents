@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Bango/Action/BangoToggleAction.h"
+#include "Bango/Action/BangoAction_Toggle.h"
 
 #include "BangoAction_ActivateDeactivateEvent.generated.h"
 

@@ -593,7 +593,7 @@ TArray<FCanvasTextItem> ABangoEvent::GetDebugDataText(UCanvas* Canvas, const FVe
 		Canvas->StrLen(TextFont, S.TextL, LX, LY, false);
 		Canvas->StrLen(TextFont, S.TextR, RX, RY, false);
 
-		FLinearColor LColor = FLinearColor::White;
+		FLinearColor LColor = S.Color;
 		LColor.A = ColorAlpha;
 		
 		FCanvasTextItem TextLeft(DataTextPos, FText::FromString(S.TextL), TextFont, LColor);
@@ -695,6 +695,25 @@ TArray<FBangoDebugTextEntry> ABangoEvent::GetDebugDataString_Game() const
 		Data.Add(FBangoDebugTextEntry("Activations:", FString::Printf(TEXT("(%i/%i)"), GetTriggerCount(EBangoSignal::Activate), TriggerLimit)));
 	}
 	
+	for (UBangoTrigger* Trigger : Triggers)
+	{
+		if (!IsValid(Trigger))
+		{			
+			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", BangoColor::Orange));
+		}
+		else
+		{
+			FString Prefix = "Trigger:";
+			
+			TStringBuilder<128> TriggerEntry;
+
+			TriggerEntry.Append(Trigger->GetDisplayName().ToString());
+
+			Data.Add(FBangoDebugTextEntry(Prefix, TriggerEntry.ToString()));
+
+			Trigger->AppendDebugData(Data);
+		}
+	}
 	return Data;
 }
 #endif

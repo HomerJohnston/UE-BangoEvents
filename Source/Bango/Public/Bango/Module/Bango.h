@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-
 class FBangoModule : public IModuleInterface
 {
 public:

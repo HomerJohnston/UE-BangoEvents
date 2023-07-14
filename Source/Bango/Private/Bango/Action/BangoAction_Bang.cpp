@@ -1,7 +1,7 @@
-﻿#include "Bango/Action/BangoBangAction.h"
+﻿#include "Bango/Action/BangoAction_Bang.h"
 #include "Bango/Event/BangoEvent.h"
 
-void UBangoBangAction::Start(UObject* StartInstigator)
+void UBangoAction_Bang::Start(UObject* StartInstigator)
 {
 	if (bBlockFromStarting)
 	{
@@ -23,7 +23,7 @@ void UBangoBangAction::Start(UObject* StartInstigator)
 	}
 }
 
-void UBangoBangAction::StartDelayed()
+void UBangoAction_Bang::StartDelayed()
 {	
 	StartTimerHandle.Invalidate();
 	StopTimerHandle.Invalidate();

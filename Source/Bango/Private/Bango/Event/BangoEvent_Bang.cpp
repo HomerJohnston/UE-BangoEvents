@@ -1,8 +1,8 @@
 ﻿#include "Bango/Event/BangoEvent_Bang.h"
 
 #include "Bango/Utility/Log.h"
-#include "Bango/Trigger/BangoBangTrigger.h"
-#include "Bango/Action/BangoBangAction.h"
+#include "Bango/Trigger/BangoTrigger_Bang.h"
+#include "Bango/Action/BangoAction_Bang.h"
 #include "Bango/Utility/BangoColor.h"
 #include "VisualLogger/VisualLogger.h"
 

@@ -1,1 +1,0 @@
-﻿#include "Bango/Trigger/BangoBangTrigger.h"

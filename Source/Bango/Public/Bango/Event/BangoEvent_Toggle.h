@@ -6,8 +6,8 @@
 
 #include "BangoEvent_Toggle.generated.h"
 
-class UBangoToggleTrigger;
-class UBangoToggleAction;
+class UBangoTrigger_Toggle;
+class UBangoAction_Toggle;
 
 UENUM(BlueprintType)
 enum class EBangoToggleDeactivateCondition : uint8

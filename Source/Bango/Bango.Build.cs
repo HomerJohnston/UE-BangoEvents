@@ -42,7 +42,7 @@ public class Bango : ModuleRules
 				"GameplayTags",
 				"DeveloperSettings",
 				"RHI",
-				"RenderCore"
+				"RenderCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

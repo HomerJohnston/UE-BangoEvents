@@ -3,11 +3,11 @@
 #pragma once
 
 #include "Bango/Action/BangoAction.h"
-#include "BangoToggleAction.generated.h"
+#include "BangoAction_Toggle.generated.h"
 
 /** Optional "Toggle" action, usable only in Toggle events. Has start/stop delay features built-in. */
 UCLASS(Abstract, Within="BangoEvent_Toggle")
-class BANGO_API UBangoToggleAction : public UBangoAction
+class BANGO_API UBangoAction_Toggle : public UBangoAction
 {
 	GENERATED_BODY()
 	

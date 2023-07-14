@@ -95,6 +95,7 @@ protected:
 
 	UPROPERTY(Category="Bango", AdvancedDisplay, EditAnywhere)
 	bool bFreezeWhenAllTriggerLimitsReached = true;
+
 	
 	// ------------------------------------------
 	// Settings Getters and Setters

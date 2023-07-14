@@ -1,7 +1,7 @@
-﻿#include "Bango/Action/BangoToggleAction.h"
+﻿#include "Bango/Action/BangoAction_Toggle.h"
 #include "Bango/Event/BangoEvent.h"
 
-void UBangoToggleAction::Start(UObject* StartInstigator)
+void UBangoAction_Toggle::Start(UObject* StartInstigator)
 {	
 	if (bBlockFromStarting)
 	{
@@ -23,7 +23,7 @@ void UBangoToggleAction::Start(UObject* StartInstigator)
 	}
 }
 
-void UBangoToggleAction::StartDelayed()
+void UBangoAction_Toggle::StartDelayed()
 {
 	StartTimerHandle.Invalidate();
 	StopTimerHandle.Invalidate();
@@ -33,7 +33,7 @@ void UBangoToggleAction::StartDelayed()
 	//OnStart();
 }
 
-void UBangoToggleAction::Stop(UObject* StopInstigator)
+void UBangoAction_Toggle::Stop(UObject* StopInstigator)
 {
 	if (bBlockFromStopping)
 	{
@@ -57,7 +57,7 @@ void UBangoToggleAction::Stop(UObject* StopInstigator)
 	}
 }
 
-void UBangoToggleAction::StopDelayed()
+void UBangoAction_Toggle::StopDelayed()
 {
 	StopTimerHandle.Invalidate();
 	StartTimerHandle.Invalidate();
