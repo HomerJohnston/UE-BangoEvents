@@ -9,7 +9,7 @@
 class UBangoTrigger_Bang;
 class UBangoAction_Bang;
 
-UCLASS()
+UCLASS(DisplayName="Bango - Bang Event")
 class BANGO_API ABangoEvent_Bang : public ABangoEvent
 {
 	GENERATED_BODY()

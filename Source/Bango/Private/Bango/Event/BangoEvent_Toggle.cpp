@@ -36,6 +36,9 @@ bool ABangoEvent_Toggle::SetToggleState(EBangoToggleState NewState, UObject* ByI
 		case EBangoToggleState::Deactivated:
 		{
 			SignalActions(EBangoSignal::Deactivate, ByInstigator);
+
+			InstigatorData.Empty();
+			
 			return true;
 		}
 		default:
@@ -47,6 +50,8 @@ bool ABangoEvent_Toggle::SetToggleState(EBangoToggleState NewState, UObject* ByI
 
 bool ABangoEvent_Toggle::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)
 {
+	UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *NewInstigator->GetName());
+	
 	switch (Signal)
 	{
 		case EBangoSignal::Activate:
@@ -78,14 +83,17 @@ bool ABangoEvent_Toggle::Activate(UObject* ActivateInstigator)
 	if (InstigationData)
 	{
 		InstigationData->Time = GetWorld()->GetTimeSeconds();
-		return false;
+
+		return true;
 	}
-
-	int32 InstigatorIndex = ActivateInstigations.Array.Emplace(ActivateInstigator, GetWorld()->GetTimeSeconds());
-
-	if (InstigatorIndex == 0)
+	else
 	{
-		return SetToggleState(EBangoToggleState::Activated, ActivateInstigator);
+		int32 InstigatorIndex = ActivateInstigations.Array.Emplace(ActivateInstigator, GetWorld()->GetTimeSeconds());
+		
+		if (InstigatorIndex == 0)
+		{
+			return SetToggleState(EBangoToggleState::Activated, ActivateInstigator);
+		}
 	}
 
 	return false;
@@ -234,13 +242,13 @@ FLinearColor ABangoEvent_Toggle::GetColorForProxy() const
 			Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
 		}
 		
-		double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
+		/*double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - LastHandleUpTime;
 		double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / (2.f * 0.2), 0, 1);
 			
 		if (IsValid(GWorld) && (DeactivationAlpha > 0))
 		{
 			Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
-		}
+		}*/
 	}
 
 	return Color;

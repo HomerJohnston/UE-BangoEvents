@@ -26,10 +26,20 @@ void UBangoTrigger::SetEnabled(bool bEnabled)
 	if (bEnabled)
 	{
 		Enable();
+
+		if (bUseSignalDelays && bReactToEventSignalling)
+		{
+			GetEvent()->OnEventSignalled.AddDynamic(this, &ThisClass::ReactToEventSignal);
+		}
 	}
 	else
 	{
 		Disable();
+
+		if (bUseSignalDelays && bReactToEventSignalling)
+		{
+			GetEvent()->OnEventSignalled.RemoveDynamic(this, &ThisClass::ReactToEventSignal);
+		}
 	}
 }
 
@@ -47,42 +57,112 @@ void UBangoTrigger::SendTriggerSignal(EBangoSignal Signal, UObject* NewInstigato
 {
 	if (Signal == EBangoSignal::None) { return; }
 
-	if (bUseSignalDelays)
+	if (!PerformDelayedSignal(Signal, NewInstigator))
 	{
-		float* Delay = SignalDelays.Find(Signal);
+		UE_LOG(Bango, Display, TEXT("Trigger %s sending %s to %s"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *GetEvent()->GetName());
 
-		if (Delay && *Delay >= 0.0f)
+		bIgnoreEventSignalling = true;
+		TriggerSignal.Broadcast(Signal, NewInstigator);
+		bIgnoreEventSignalling = false;
+	}
+}
+
+bool UBangoTrigger::PerformDelayedSignal(EBangoSignal Signal, UObject* NewInstigator)
+{
+	if (!bUseSignalDelays)
+	{
+		return false;
+	}
+
+	float* Delay = SignalDelays.Find(Signal);
+
+	if (!Delay)
+	{
+		return false;
+	}
+
+	if (*Delay <= 0.0f)
+	{
+		return false;
+	}
+
+	FTimerHandle* Handle = DelayedSignalTimers.Find(Signal);
+
+	if (Handle)
+	{
+		// A timer *might* be in progress, the only way to find out is to query the timer manager.
+		float Time = GetWorld()->GetTimerManager().GetTimerRemaining(*Handle);
+
+		if (Time >= 0 && !bAllowRestartingTimer)
 		{
-			FTimerHandle& Handle = DelayedSignalTimers.FindOrAdd(Signal);
-			
-			if (bCancelOpposingSignals)
-			{
-				EBangoSignal OpposingSignal = BangoUtility::Signals::GetOpposite(Signal);
-				FTimerHandle* OtherHandle = DelayedSignalTimers.Find(OpposingSignal);
-
-				if (OtherHandle)
-				{
-					GetWorld()->GetTimerManager().ClearTimer(*OtherHandle);
-					DelayedSignalTimers.Remove(OpposingSignal);
-				}
-			}
-
-			FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::SendTriggerSignal_Delayed, Signal, TWeakObjectPtr<UObject>(NewInstigator));
-			GetWorld()->GetTimerManager().SetTimer(Handle, Delegate, *Delay, false);
-
-			return;
+			return true;
 		}
 	}
 
-	TriggerSignal.Broadcast(Signal, NewInstigator);
+	if (!Handle)
+	{
+		Handle = &DelayedSignalTimers.Add(Signal);
+	}
+	
+	if (!CancelOpposingSignal(Signal))
+	{
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::SendTriggerSignal_Delayed, Signal, TWeakObjectPtr<UObject>(NewInstigator));
+		GetWorld()->GetTimerManager().SetTimer(*Handle, Delegate, *Delay, false);
+	}
+
+	return true;
+}
+
+bool UBangoTrigger::CancelOpposingSignal(EBangoSignal Signal)
+{
+	if (!bCancelOpposingSignals) { return false; }
+
+	EBangoSignal OpposingSignal = BangoUtility::Signals::GetOpposite(Signal);
+	FTimerHandle* OtherHandle = DelayedSignalTimers.Find(OpposingSignal);
+
+	if (OtherHandle)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(*OtherHandle);
+		DelayedSignalTimers.Remove(OpposingSignal);
+
+		return true;
+	}
+	
+	return false;
 }
 
 void UBangoTrigger::SendTriggerSignal_Delayed(EBangoSignal Signal, TWeakObjectPtr<UObject> NewInstigator)
 {
 	if (NewInstigator.IsValid())
 	{
+		UE_LOG(Bango, Display, TEXT("Trigger %s sending %s to %s (was delayed)"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *GetEvent()->GetName());
+
+		bIgnoreEventSignalling = true;
 		TriggerSignal.Broadcast(Signal, NewInstigator.Get());
+		bIgnoreEventSignalling = false;
+		
 		DelayedSignalTimers.Remove(Signal);
+	}
+}
+
+void UBangoTrigger::ReactToEventSignal(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
+{
+	//if (bIgnoreEventSignalling) { return; }
+	
+	UE_LOG(Bango, Display, TEXT("Trigger %s reacting to %s signal from %s"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *Event->GetName());
+
+	if (Signal == EBangoSignal::None) { return; }
+
+	if (bCancelOpposingSignals)
+	{
+		EBangoSignal OpposingSignal = BangoUtility::Signals::GetOpposite(Signal);
+		FTimerHandle* OtherHandle = DelayedSignalTimers.Find(OpposingSignal);
+
+		if (OtherHandle)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(*OtherHandle);
+			DelayedSignalTimers.Remove(OpposingSignal);
+		}
 	}
 }
 

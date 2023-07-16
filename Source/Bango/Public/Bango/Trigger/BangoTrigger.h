@@ -39,9 +39,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides))
 	bool bCancelOpposingSignals = true;
 
-	/** If true, when other triggers send activate/deactivate signals to the event, this trigger will respond in turn. */
+	/** If true, when other triggers send activate/deactivate signals to the event, this trigger will react. This enables other triggers to cancel this trigger's pending delayed signals. */
 	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides))
 	bool bReactToEventSignalling = true;
+
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides))
+	bool bAllowRestartingTimer = false;
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
@@ -55,6 +58,8 @@ public:
 	UPROPERTY()
 	TMap<EBangoSignal, FTimerHandle> DelayedSignalTimers; 
 
+	UPROPERTY()
+	bool bIgnoreEventSignalling = false;
 	// ------------------------------------------
 	// State Getters/Setters
 	// ------------------------------------------
@@ -87,7 +92,14 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SendTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
 
+	bool PerformDelayedSignal(EBangoSignal Signal, UObject* NewInstigator);
+
+	bool CancelOpposingSignal(EBangoSignal Signal);
+	
 	void SendTriggerSignal_Delayed(EBangoSignal Signal, TWeakObjectPtr<UObject> NewInstigator);
+
+	UFUNCTION()
+	void ReactToEventSignal(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator);
 	
 	// ============================================================================================
 	// EDITOR

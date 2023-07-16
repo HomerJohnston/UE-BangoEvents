@@ -27,7 +27,7 @@ enum class EBangoToggleState : uint8
 	Deactivated,
 };
 
-UCLASS()
+UCLASS(DisplayName="Bango - Toggle Event")
 class BANGO_API ABangoEvent_Toggle : public ABangoEvent
 {
 	GENERATED_BODY()
@@ -60,8 +60,8 @@ protected:
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-private:
-	UPROPERTY(Transient)
+protected:
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintReadOnly, VisibleInstanceOnly)
 	EBangoToggleState ToggleState = EBangoToggleState::Deactivated;
 	
 	// ------------------------------------------
@@ -75,7 +75,7 @@ private:
 	// ============================================================================================
 	// API
 	// ============================================================================================
-public:
+protected:
 	virtual bool ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator) override;
 
 protected:

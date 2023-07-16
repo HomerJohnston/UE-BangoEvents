@@ -1,11 +1,11 @@
-#include "Bango/DefaultImpl/Triggers/BangoTrigger_EventSignalled.h"
+#include "Bango/DefaultImpl/Triggers/BangoTrigger_EventTriggered.h"
 
 #include "Algo/Count.h"
 #include "Bango/Utility/Log.h"
 #include "Bango/Event/BangoEvent.h"
 #include "Bango/Core/BangoSignal.h"
 
-UBangoTrigger_EventSignalled::UBangoTrigger_EventSignalled()
+UBangoTrigger_EventTriggered::UBangoTrigger_EventTriggered()
 {
 	bUseMasterEventInstigator = true;
 
@@ -16,10 +16,10 @@ UBangoTrigger_EventSignalled::UBangoTrigger_EventSignalled()
 		};
 }
 
-void UBangoTrigger_EventSignalled::Enable_Implementation()
+void UBangoTrigger_EventTriggered::Enable_Implementation()
 {
 	MasterEventMostRecentSignals.Reserve(FMath::Max(MasterEvents.Num(), 1));
-	
+
 	if (!bWatchOtherEvents)
 	{
 		MasterEvents.Empty();
@@ -28,7 +28,7 @@ void UBangoTrigger_EventSignalled::Enable_Implementation()
 
 	if (MasterEvents.Num() == 0)
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_EventTriggered on event %s is set to use other events, but none were set!"), *GetEvent()->GetName());
+		UE_LOG(Bango, Error, TEXT("UBangoTrigger_EventTriggered on event %s is not watching any events!"), *GetEvent()->GetName());
 	}
 	
 	for (TSoftObjectPtr<ABangoEvent> MasterEvent : MasterEvents)
@@ -45,28 +45,28 @@ void UBangoTrigger_EventSignalled::Enable_Implementation()
 			return;
 		}
 
-		MasterEvent->OnEventSignalled.AddDynamic(this, &ThisClass::OnTargetEventSignalled);
+		MasterEvent->OnEventTriggered.AddDynamic(this, &ThisClass::OnTargetEventTriggered);
 		MasterEventMostRecentSignals.Add(EBangoSignal::None);
 	}
 }
 
-void UBangoTrigger_EventSignalled::Disable_Implementation()
+void UBangoTrigger_EventTriggered::Disable_Implementation()
 {
 	for (TSoftObjectPtr<ABangoEvent> MasterEvent : MasterEvents)
 	{
-		MasterEvent->OnEventTriggered.RemoveDynamic(this, &ThisClass::OnTargetEventSignalled);
+		MasterEvent->OnEventTriggered.RemoveDynamic(this, &ThisClass::OnTargetEventTriggered);
 	}
 
 	MasterEventMostRecentSignals.Empty();
 }
 
-void UBangoTrigger_EventSignalled::OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
+void UBangoTrigger_EventTriggered::OnTargetEventTriggered(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator)
 {
 	int32 Index = MasterEvents.Find(Event);
 
 	if (Index == INDEX_NONE)
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_EventSignalled::OnTargetEventSignalled was called with an event that was not set in its list!"));
+		UE_LOG(Bango, Error, TEXT("UBangoTrigger_EventTriggered::OnTargetEventTriggered was called with an event that was not set in its list!"));
 		return;
 	}
 
@@ -79,17 +79,17 @@ void UBangoTrigger_EventSignalled::OnTargetEventSignalled(ABangoEvent* Event, EB
 	
 	switch(Requirement)
 	{
-		case (EBangoEventSignalledRequirement::AnyChanged):
+		case (EBangoEventTriggeredRequirement::AnyChanged):
 		{
 			bPerformSignal = true;
 			break;
 		}
-		case (EBangoEventSignalledRequirement::AllChanged):
+		case (EBangoEventTriggeredRequirement::AllChanged):
 		{
 			bPerformSignal = Algo::Count(MasterEventMostRecentSignals, Signal) == MasterEventMostRecentSignals.Num();
 			break;
 		}
-		case (EBangoEventSignalledRequirement::AllActivateAnyDeactivate):
+		case (EBangoEventTriggeredRequirement::AllActivateAnyDeactivate):
 		{
 			if (Signal == EBangoSignal::Activate)
 			{
@@ -103,7 +103,7 @@ void UBangoTrigger_EventSignalled::OnTargetEventSignalled(ABangoEvent* Event, EB
 			}
 			checkNoEntry();
 		}
-		case (EBangoEventSignalledRequirement::AnyActivateAllDeactivate):
+		case (EBangoEventTriggeredRequirement::AnyActivateAllDeactivate):
 		{
 			if (Signal == EBangoSignal::Activate)
 			{

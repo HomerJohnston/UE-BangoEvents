@@ -134,6 +134,9 @@ public:
 	FOnBangoEventTriggered OnEventTriggered;
 
 	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
+	FOnBangoEventTriggered OnEventSignalled;
+	
+	UPROPERTY(Category="Bango|Debug", Transient, BlueprintAssignable, BlueprintReadOnly, VisibleInstanceOnly)
 	FOnBangoEventSignalLimitReached OnSignalLimitReached;
 	
 protected:
@@ -198,18 +201,19 @@ public:
 	// API
 	// ============================================================================================
 public:
-	void BeginPlay() override;
-
 	UFUNCTION(BlueprintCallable)
 	void Trigger(EBangoSignal Signal, UObject* NewInstigator);
 
-	virtual bool ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
-	
 	UFUNCTION(BlueprintCallable)
 	void ResetEvent(bool bUnfreeze = false);
 
 	UFUNCTION(BlueprintCallable)
 	virtual void SetFrozen(bool bNewFrozen);
+	
+protected:
+	void BeginPlay() override;
+
+	virtual bool ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator);
 
 protected:
 	virtual void ResetRemainingTriggerLimits();

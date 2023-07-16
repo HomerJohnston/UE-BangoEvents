@@ -31,5 +31,5 @@ void UBangoAction_ActivateDeactivateEvent::Execute(EBangoSignal Signal)
 		return;
 	}
 
-	TargetEvent->ProcessTriggerSignal(Signal, GetEvent());
+	TargetEvent->Trigger(Signal, GetEvent());
 }

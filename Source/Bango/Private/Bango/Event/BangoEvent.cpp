@@ -250,12 +250,16 @@ void ABangoEvent::Trigger(EBangoSignal Signal, UObject* NewInstigator)
 			{
 				SetFrozen(true);
 			}
-		}				
+		}
 		
 		UpdateProxyState();
-		
+
+		UE_LOG(Bango, Display, TEXT("Event %s broadcasting OnEventTriggered: %s from %s"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *NewInstigator->GetName());
 		OnEventTriggered.Broadcast(this, Signal, NewInstigator);
 	}
+	
+	UE_LOG(Bango, Display, TEXT("Event %s broadcasting OnEventSignalled: %s from %s"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal), *NewInstigator->GetName());
+	OnEventSignalled.Broadcast(this, Signal, NewInstigator);
 }
 
 bool ABangoEvent::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewInstigator)

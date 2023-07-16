@@ -17,7 +17,7 @@ bool ABangoEvent_Bang::ProcessTriggerSignal(EBangoSignal Signal, UObject* NewIns
 		return Activate(NewInstigator);
 	}
 
-	UE_LOG(Bango, Warning, TEXT("Bang Event <%s> ignoring trigger signal <%s>, Bang Event not configured to repond to it"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal));
+	UE_LOG(Bango, Warning, TEXT("Bang Event <%s> ignoring trigger signal <%s>, Bang Event not configured to respond to it"), *GetName(), *StaticEnum<EBangoSignal>()->GetValueAsString(Signal));
 
 	return false;
 }

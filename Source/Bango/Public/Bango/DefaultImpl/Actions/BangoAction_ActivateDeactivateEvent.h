@@ -26,7 +26,7 @@ protected:
 	TSoftObjectPtr<ABangoEvent> TargetEvent;
 	
 	/** When our event responds to left signal, send target event the right signal. */
-	UPROPERTY(EditAnywhere, Category="Settings", DisplayName="OnStop");
+	UPROPERTY(EditAnywhere, Category="Settings");
 	TMap<EBangoSignal, EBangoSignal> ActionSignalMap;
 	
 	// ============================================================================================

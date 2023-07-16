@@ -4,12 +4,12 @@
 
 #include "Bango/Trigger/BangoTrigger.h"
 
-#include "BangoTrigger_EventSignalled.generated.h"
+#include "BangoTrigger_EventTriggered.generated.h"
 
 enum class EBangoActivateDeactivateEventAction : uint8;
 
 UENUM()
-enum class EBangoEventSignalledRequirement : uint8
+enum class EBangoEventTriggeredRequirement : uint8
 {
 	/** No effect. */
 	None,
@@ -25,15 +25,15 @@ enum class EBangoEventSignalledRequirement : uint8
 	Max
 };
 
-UCLASS(DisplayName="Other Event Signalled")
-class BANGO_API UBangoTrigger_EventSignalled : public UBangoTrigger
+UCLASS(DisplayName="Other Event Triggered")
+class BANGO_API UBangoTrigger_EventTriggered : public UBangoTrigger
 {
 	GENERATED_BODY()
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
 public:
-	UBangoTrigger_EventSignalled();
+	UBangoTrigger_EventTriggered();
 	
 	// ============================================================================================
 	// SETTINGS
@@ -41,7 +41,7 @@ public:
 protected:
 	/** Should this trigger fire when any master events activate, or only when all activate? */
 	UPROPERTY(EditAnywhere, Category="Settings")
-	EBangoEventSignalledRequirement Requirement;
+	EBangoEventTriggeredRequirement Requirement;
 
 	/** If false, this trigger will watch its own event. This is useful to program simple cooldown-style effects. */
 	UPROPERTY(EditAnywhere, Category="Settings")
@@ -79,5 +79,5 @@ public:
 
 private:
 	UFUNCTION()
-	void OnTargetEventSignalled(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator);
+	void OnTargetEventTriggered(ABangoEvent* Event, EBangoSignal Signal, UObject* SignalInstigator);
 };
