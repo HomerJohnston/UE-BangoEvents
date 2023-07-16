@@ -22,6 +22,8 @@ void UPunyEventComponent::BeginPlay()
 		UE_LOG(Bango, Error, TEXT("UPunyEventComponent of <%s> has no event handler set!"), *GetOwner()->GetName());
 		return;
 	}
+
+	Event->Init();
 	
 	for (UPunyTrigger* Trigger : Triggers)
 	{

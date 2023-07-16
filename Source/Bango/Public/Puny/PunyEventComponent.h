@@ -62,7 +62,8 @@ protected:
 	const float DebugTextOffsetSizeScaler = +50.0;
 #endif
 	
-	UPROPERTY(Category="Bango|Event", DisplayName="Event Type", EditAnywhere)
+	// TODO check ShowInnerProperties meta on 5.2
+	UPROPERTY(Category="Bango|Event", DisplayName="Event Type", EditAnywhere, meta=(ShowInnerProperties))
 	UPunyEvent* Event;
 	
 	UPROPERTY(Category="Bango|Event", EditAnywhere)

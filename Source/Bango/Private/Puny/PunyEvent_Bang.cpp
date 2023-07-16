@@ -5,7 +5,7 @@
 #include "Puny/PunyTriggerSignal.h"
 #include "Puny/PunyTriggerSignalType.h"
 
-void UPunyEvent_Bang::RespondToTrigger(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
+void UPunyEvent_Bang::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {
 	EPunyEventSignalType ActionSignal;
 
@@ -29,5 +29,5 @@ void UPunyEvent_Bang::RespondToTrigger(UPunyTrigger* Trigger, FPunyTriggerSignal
 		}
 	}
 	
-	ActionTrigger.Broadcast(this, FPunyEventSignal(ActionSignal, Signal.Instigator));
+	EventSignal.Broadcast(this, FPunyEventSignal(ActionSignal, Signal.Instigator));
 }

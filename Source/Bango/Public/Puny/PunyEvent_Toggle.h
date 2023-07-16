@@ -11,6 +11,16 @@ enum class EPunyEvent_ToggleState : uint8
 	Deactivated,
 };
 
+UENUM(BlueprintType)
+enum class EPunyEvent_ToggleDeactivateCondition : uint8
+{
+	AnyDeactivateTrigger,
+	AnyInstigatorRemoved,
+	AllInstigatorsRemoved,
+	OriginalInstigatorRemoved,
+	MAX						UMETA(Hidden)
+};
+
 UCLASS(DisplayName="Toggle")
 class BANGO_API UPunyEvent_Toggle : public UPunyEvent
 {
@@ -18,11 +28,21 @@ class BANGO_API UPunyEvent_Toggle : public UPunyEvent
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
+public:
+	UPunyEvent_Toggle();
 	
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
+protected:
+	/** If true, the event will be activated with its owning actor as an instigator on BeginPlay. */
+	UPROPERTY(Category="Settings", EditAnywhere)
+	bool bStartActivated = false;
 
+	/**  */
+	UPROPERTY(Category="Settings", EditAnywhere)
+	EPunyEvent_ToggleDeactivateCondition DeactivateCondition;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -45,15 +65,17 @@ class BANGO_API UPunyEvent_Toggle : public UPunyEvent
 	// METHODS
 	// ============================================================================================
 public:
-	void RespondToTrigger(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
+	void Init() override;
+	
+public:
+	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
 
 protected:
+	void Activate(UObject* Instigator);
 
-	void Activate(FPunyEventSignal Signal);
+	void Deactivate(UObject* Instigator);
 
-	void Deactivate(FPunyEventSignal Signal);
-
-	void SetToggleState(EPunyEvent_ToggleState NewState);
+	bool SetToggleState(EPunyEvent_ToggleState NewState);
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

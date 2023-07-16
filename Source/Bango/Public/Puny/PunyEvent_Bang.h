@@ -36,7 +36,7 @@ public:
 	// METHODS
 	// ============================================================================================
 public:
-	void RespondToTrigger(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
+	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

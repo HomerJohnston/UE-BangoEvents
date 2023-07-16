@@ -90,7 +90,7 @@ FLinearColor ABangoEvent_Bang::GetColorForProxy() const
 			Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
 		}
 	}
-
+	
 	return Color;
 }
 

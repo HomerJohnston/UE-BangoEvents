@@ -1,12 +1,15 @@
 ﻿#pragma once
-#include "PunyEventSignal.h"
+#include "Puny/PunyEventSignal.h"
+#include "Puny/PunyInstigatorRecords.h"
 
 #include "PunyEvent.generated.h"
 
+class UPunyEventComponent;
 class UPunyAction;
 struct FPunyTriggerSignal;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FPunyEventActionTrigger, UPunyEvent*, Event, FPunyEventSignal, Signal);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FPunyEventSignalDelegate, UPunyEvent*, Event, FPunyEventSignal, Signal);
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UPunyEvent : public UObject
@@ -31,6 +34,9 @@ public:
 	// STATE
 	// ============================================================================================
 
+	UPROPERTY()
+	TMap<UObject*, FPunyInstigatorRecords> InstigatorRecords;
+	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
@@ -39,19 +45,27 @@ public:
 	// Delegates/Events
 	// -------------------------------------------------------------------
 protected:
-	FPunyEventActionTrigger ActionTrigger;
+	FPunyEventSignalDelegate EventSignal;
 	
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
+public:
+	virtual void Init();
+	
 public:
 	void RegisterAction(UPunyAction* Action);
 
 	void UnregisterAction(UPunyAction* Action);
 	
 	UFUNCTION()
-	virtual void RespondToTrigger(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
+	virtual void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
 
+protected:
+	
+	UPunyEventComponent* GetEventComponent();
+
+	AActor* GetActor();
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
