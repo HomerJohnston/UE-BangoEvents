@@ -43,8 +43,30 @@ void UPunyEvent_Toggle::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTrigg
 
 void UPunyEvent_Toggle::Activate(UObject* Instigator)
 {
-	bool bSetToggleState;
-	
+	bool bSetToggleState = ToggleState != EPunyEvent_ToggleState::Activated;
+
+	if (bSetToggleState)
+	{
+		if (SetToggleState(EPunyEvent_ToggleState::Activated))
+		{
+			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
+			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StartAction, Instigator));
+		}
+		else
+		{
+			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
+		}	
+	}
+
+	InstigatorRecords.UpdateInstigatorRecord(Instigator, EPunyEventSignalType::StartAction, GetWorld()->GetTimeSeconds());
+
+	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+}
+
+void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
+{
+	bool bSetToggleState = false;
+
 	switch (DeactivateCondition)
 	{
 		case EPunyEvent_ToggleDeactivateCondition::AnyDeactivateTrigger:
@@ -54,15 +76,17 @@ void UPunyEvent_Toggle::Activate(UObject* Instigator)
 		}
 		case EPunyEvent_ToggleDeactivateCondition::AnyInstigatorRemoved:
 		{
-			
+			bSetToggleState = !InstigatorRecords.IsInstigatorActive(Instigator);
 			break;
 		}
 		case EPunyEvent_ToggleDeactivateCondition::AllInstigatorsRemoved:
 		{
+			bSetToggleState = InstigatorRecords.GetNumActiveInstigators() == 1 && InstigatorRecords.IsInstigatorActive(Instigator);
 			break;
 		}
 		case EPunyEvent_ToggleDeactivateCondition::OriginalInstigatorRemoved:
 		{
+			bSetToggleState = Instigator == InstigatorRecords.GetFirstInstigator();
 			break;
 		}
 		default:
@@ -71,32 +95,23 @@ void UPunyEvent_Toggle::Activate(UObject* Instigator)
 			bSetToggleState = false;
 		}
 	}
-	
+
 	if (bSetToggleState)
 	{
-		if (SetToggleState(EPunyEvent_ToggleState::Activated))
+		if (SetToggleState(EPunyEvent_ToggleState::Deactivated))
 		{
-			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
-			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StartAction, Instigator));
+			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
+			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StopAction, Instigator));
+		}
+		else
+		{
+			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
 		}
 	}
-	else
-	{
-		UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
-	}
-}
 
-void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
-{
-	if (SetToggleState(EPunyEvent_ToggleState::Deactivated))
-	{
-		UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
-		EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StopAction, Instigator));
-	}
-	else
-	{
-		UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
-	}
+	InstigatorRecords.UpdateInstigatorRecord(Instigator, EPunyEventSignalType::StopAction, GetWorld()->GetTimeSeconds());
+
+	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 }
 
 bool UPunyEvent_Toggle::SetToggleState(EPunyEvent_ToggleState NewState)

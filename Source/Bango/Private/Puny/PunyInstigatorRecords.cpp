@@ -1,19 +1,92 @@
 ﻿#include "Puny/PunyInstigatorRecords.h"
 
-#include "Puny/PunyTriggerSignalType.h"
+#include "Puny/PunyEventSignalType.h"
 
-FPunyInstigatorRecord::FPunyInstigatorRecord() : SignalType(EPunyTriggerSignalType::None), Time(-1.0)
+TMap<UObject*, FPunyInstigatorRecord> FPunyInstigatorRecordCollection::GetData()
+{ return AllInstigatorRecords; }
+
+FPunyInstigatorRecord* FPunyInstigatorRecordCollection::FindRecordFor(UObject* PotentialInstigator)
 {
+	return (AllInstigatorRecords.Find(PotentialInstigator));
 }
 
-FPunyInstigatorRecord::FPunyInstigatorRecord(EPunyTriggerSignalType InSignalType, double InTime) : SignalType(InSignalType), Time(InTime)
+bool FPunyInstigatorRecordCollection::IsInstigatorActive(UObject* Instigator)
 {
+	return ActiveInstigators.Contains(Instigator);
 }
 
-FPunyInstigatorRecords::FPunyInstigatorRecords() : Instigator(nullptr)
+int32 FPunyInstigatorRecordCollection::GetNumActiveInstigators()
 {
+	return ActiveInstigators.Num();
 }
 
-FPunyInstigatorRecords::FPunyInstigatorRecords(UObject* InInstigator) : Instigator(InInstigator)
+void FPunyInstigatorRecordCollection::UpdateInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType, double Time)
 {
+	auto& Record = AllInstigatorRecords.FindOrAdd(Instigator);
+	Record.Instigator = Instigator;
+
+	switch (SignalType)
+	{
+		case EPunyEventSignalType::StartAction:
+		{
+			Record.StartTime = Time;
+			
+			if (ActiveInstigators.Num() == 0)
+			{
+				FirstInstigator = Instigator;
+			}
+
+			ActiveInstigators.Add(Instigator);
+			
+			break;
+		}
+		case EPunyEventSignalType::StopAction:
+		{
+			Record.StopTime = Time;
+			
+			ActiveInstigators.Remove(Instigator);
+
+			if (FirstInstigator == Instigator)
+			{
+				FirstInstigator = nullptr;
+			}
+			
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+}
+
+bool FPunyInstigatorRecordCollection::GetInstigationTime(UObject* Instigator, EPunyEventSignalType SignalType, double& OutTime)
+{
+	if (FPunyInstigatorRecord* Record = AllInstigatorRecords.Find(Instigator))
+	{
+		switch (SignalType)
+		{
+			case EPunyEventSignalType::StartAction:
+			{
+				OutTime = Record->StartTime;
+				return OutTime >= 0.0;
+			}
+			case EPunyEventSignalType::StopAction:
+			{
+				OutTime = Record->StopTime;
+				return OutTime >= 0.0;
+			}
+			default:
+			{
+				return false;
+			}
+		}
+	}
+
+	return false;
+}
+
+UObject* FPunyInstigatorRecordCollection::GetFirstInstigator()
+{
+	return FirstInstigator;
 }

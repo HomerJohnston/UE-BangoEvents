@@ -28,6 +28,11 @@ void UPunyEvent::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSigna
 {
 }
 
+void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType)
+{
+	InstigatorRecords.UpdateInstigatorRecord(Instigator, SignalType, GetWorld()->GetTimeSeconds());
+}
+
 UPunyEventComponent* UPunyEvent::GetEventComponent()
 {
 	return Cast<UPunyEventComponent>(GetOuter());

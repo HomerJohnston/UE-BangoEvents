@@ -1,36 +1,52 @@
 ﻿#pragma once
+#include "PunyEventSignalType.h"
 
 #include "PunyInstigatorRecords.generated.h"
 
-enum class EPunyTriggerSignalType : uint8;
+enum class EPunyEventSignalType : uint8;
+
 USTRUCT()
 struct FPunyInstigatorRecord
 {
 	GENERATED_BODY()
 
-	FPunyInstigatorRecord();
-	
-	FPunyInstigatorRecord(EPunyTriggerSignalType InSignalType, double InTime);
+	UPROPERTY()
+	UObject* Instigator = nullptr;
 	
 	UPROPERTY()
-	EPunyTriggerSignalType SignalType;
+	double StartTime = -1.0;
 	
 	UPROPERTY()
-	double Time;
+	double StopTime = -1.0;
 };
 
 USTRUCT()
-struct FPunyInstigatorRecords
+struct FPunyInstigatorRecordCollection
 {
 	GENERATED_BODY()
 
-	FPunyInstigatorRecords();
+private:
+	UPROPERTY()
+	TMap<UObject*, FPunyInstigatorRecord> AllInstigatorRecords;
 
-	FPunyInstigatorRecords(UObject* InInstigator);
+	UPROPERTY()
+	TSet<UObject*> ActiveInstigators;
+
+	UPROPERTY()
+	UObject* FirstInstigator = nullptr;
 	
-	UPROPERTY()
-	UObject* Instigator;
+public:
+	TMap<UObject*, FPunyInstigatorRecord> GetData();
 
-	UPROPERTY()
-	TMap<EPunyTriggerSignalType, FPunyInstigatorRecord> SignalRecords;
+	FPunyInstigatorRecord* FindRecordFor(UObject* PotentialInstigator);
+
+	bool IsInstigatorActive(UObject* Instigator);
+
+	int32 GetNumActiveInstigators();
+	
+	void UpdateInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType, double Time);
+
+	bool GetInstigationTime(UObject* Instigator, EPunyEventSignalType SignalType, double& OutTime);
+
+	UObject* GetFirstInstigator();
 };

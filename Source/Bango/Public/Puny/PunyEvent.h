@@ -35,7 +35,7 @@ public:
 	// ============================================================================================
 
 	UPROPERTY()
-	TMap<UObject*, FPunyInstigatorRecords> InstigatorRecords;
+	FPunyInstigatorRecordCollection InstigatorRecords;
 	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
@@ -62,6 +62,8 @@ public:
 	virtual void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
 
 protected:
+
+	void AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType);
 	
 	UPunyEventComponent* GetEventComponent();
 
