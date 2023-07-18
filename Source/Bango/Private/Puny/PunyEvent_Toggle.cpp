@@ -1,5 +1,6 @@
 ﻿#include "Puny/PunyEvent_Toggle.h"
 
+#include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 #include "Puny/PunyEventSignalType.h"
 #include "Puny/PunyTriggerSignal.h"
@@ -14,7 +15,7 @@ void UPunyEvent_Toggle::Init()
 {
 	if (bStartActivated)
 	{
-		SetToggleState(EPunyEvent_ToggleState::Activated);
+		Activate(GetActor());
 	}
 }
 
@@ -76,7 +77,7 @@ void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 		}
 		case EPunyEvent_ToggleDeactivateCondition::AnyInstigatorRemoved:
 		{
-			bSetToggleState = !InstigatorRecords.IsInstigatorActive(Instigator);
+			bSetToggleState = InstigatorRecords.IsInstigatorActive(Instigator);
 			break;
 		}
 		case EPunyEvent_ToggleDeactivateCondition::AllInstigatorsRemoved:
@@ -102,6 +103,7 @@ void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 		{
 			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
 			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StopAction, Instigator));
+			InstigatorRecords.ClearActiveInstigators();
 		}
 		else
 		{
@@ -124,4 +126,9 @@ bool UPunyEvent_Toggle::SetToggleState(EPunyEvent_ToggleState NewState)
 	ToggleState = NewState;
 
 	return true;
+}
+
+FLinearColor UPunyEvent_Toggle::GetDisplayColor()
+{
+	return BangoColor::GreenBase;
 }

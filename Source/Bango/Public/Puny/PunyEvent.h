@@ -33,14 +33,34 @@ public:
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-
+protected:
 	UPROPERTY()
 	FPunyInstigatorRecordCollection InstigatorRecords;
+
+private:
+	// TODO can this be editor only?
+	// TODO \/
+	UObject* LastActivateInstigator = nullptr;
+
+	UObject* LastDeactivateInstigator = nullptr;
+
+	double LastActivateTime = -1.0;
+
+	double LastDeactivateTime = -1.0;
+	// TODO /\
 	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
+public:
+	
+	UObject* GetLastActivateInstigator();
 
+	UObject* GetLastDeactivateInstigator();
+
+	double GetLastActivateTime();
+
+	double GetLastDeactivateTime();
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
@@ -68,10 +88,14 @@ protected:
 	UPunyEventComponent* GetEventComponent();
 
 	AActor* GetActor();
+
+#if WITH_EDITORONLY_DATA
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
-
+public:
+	static TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> PunyEventsShowFlag;
+	
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -83,11 +107,13 @@ protected:
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
-
+public:
+	virtual FLinearColor GetDisplayColor();
+	
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
 	
 	
-	
+#endif
 };

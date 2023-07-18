@@ -90,3 +90,8 @@ UObject* FPunyInstigatorRecordCollection::GetFirstInstigator()
 {
 	return FirstInstigator;
 }
+
+void FPunyInstigatorRecordCollection::ClearActiveInstigators()
+{
+	ActiveInstigators.Empty();
+}

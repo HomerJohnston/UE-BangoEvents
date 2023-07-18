@@ -1,5 +1,6 @@
 ﻿#include "Puny/PunyEvent_Bang.h"
 
+#include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 #include "Puny/PunyEventSignalType.h"
 #include "Puny/PunyTriggerSignal.h"
@@ -30,4 +31,9 @@ void UPunyEvent_Bang::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTrigger
 	}
 	
 	EventSignal.Broadcast(this, FPunyEventSignal(ActionSignal, Signal.Instigator));
+}
+
+FLinearColor UPunyEvent_Bang::GetDisplayColor()
+{
+	return BangoColor::RedBase;
 }

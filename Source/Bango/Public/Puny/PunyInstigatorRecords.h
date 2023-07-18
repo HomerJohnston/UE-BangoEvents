@@ -49,4 +49,6 @@ public:
 	bool GetInstigationTime(UObject* Instigator, EPunyEventSignalType SignalType, double& OutTime);
 
 	UObject* GetFirstInstigator();
+
+	void ClearActiveInstigators();
 };

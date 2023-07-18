@@ -55,9 +55,13 @@ FBoxSphereBounds UBangoPlungerComponent::CalcBounds(const FTransform& LocalToWor
 FLinearColor UBangoPlungerComponent::GetColorForProxy()
 {
 	ABangoEvent* Event = GetOwner<ABangoEvent>();
-	check(Event);
 
-	return Event->GetColorForProxy();
+	if (IsValid(Event))
+	{
+		return Event->GetColorForProxy();
+	}
+
+	return FLinearColor::Black;
 }
 #endif
 
@@ -103,5 +107,6 @@ void UBangoPlungerComponent::OnCvarChange()
 
 bool UBangoPlungerComponent::GetEventHasCustomMesh()
 {
-	return GetOuterABangoEvent()->GetUsesCustomMesh();
+	return false;
+	//return GetOuterABangoEvent()->GetUsesCustomMesh(); // WITHIN specifier on uclass
 }

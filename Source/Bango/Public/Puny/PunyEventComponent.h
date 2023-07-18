@@ -2,6 +2,7 @@
 #include "PunyEventSignal.h"
 #include "PunyEventComponent.generated.h"
 
+class UPunyPlungerComponent;
 struct FPunyTriggerSignal;
 class UPunyEvent;
 class UPunyTrigger;
@@ -11,7 +12,7 @@ struct FPunySignal;
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPunyEventSignalLimitReached, UPunyEvent*, Event, EBangoSignal, Signal);
 
-UCLASS()
+UCLASS(meta=(BlueprintSpawnableComponent))
 class BANGO_API UPunyEventComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -21,7 +22,7 @@ class BANGO_API UPunyEventComponent : public UActorComponent
 	// ============================================================================================
 public:
 	UPunyEventComponent();
-	
+
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
@@ -75,11 +76,19 @@ protected:
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
-
+public:
+	/**  */
+	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
+private:
+	UPROPERTY(Transient)
+	UPunyPlungerComponent* Plunger;
 
+	UPROPERTY(Transient)
+	UStaticMeshComponent* OverrideDisplayMesh;
+	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
@@ -98,11 +107,16 @@ public:
 
 public:
 	FText GetDisplayName();
-	
+
+#if WITH_EDITORONLY_DATA
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
+protected:
+	void OnRegister() override;
 
+	void OnUnregister() override;
+	
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -114,8 +128,11 @@ public:
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
-
+public:
+	virtual FLinearColor GetDisplayColor() const;
+	
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+#endif
 };
