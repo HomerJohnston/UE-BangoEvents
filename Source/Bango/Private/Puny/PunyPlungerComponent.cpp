@@ -75,7 +75,7 @@ bool UPunyPlungerComponent::GetIsPushed()
 		return false;
 	}
 	
-	return Event->GetLastActivateTime() > Event->GetLastDeactivateTime();
+	return Event->GetIsPlungerPushed();
 }
 
 void UPunyPlungerComponent::OnCvarChange()

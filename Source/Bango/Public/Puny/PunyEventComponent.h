@@ -78,17 +78,12 @@ protected:
 	// -------------------------------------------------------------------
 public:
 	/**  */
+	 
 	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-private:
-	UPROPERTY(Transient)
-	UPunyPlungerComponent* Plunger;
-
-	UPROPERTY(Transient)
-	UStaticMeshComponent* OverrideDisplayMesh;
-	
+private:	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
@@ -125,6 +120,12 @@ protected:
 	// EDITOR STATE
 	// ============================================================================================
 
+	UPROPERTY()
+	UPunyPlungerComponent* Plunger;
+
+	UPROPERTY()
+	UStaticMeshComponent* OverrideDisplayMesh;
+	
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
@@ -135,4 +136,12 @@ public:
 	// EDITOR METHODS
 	// ============================================================================================
 #endif
+
+	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
+
+	void DestroyComponent(bool bPromoteChildren) override;
+
+	void InitializeComponent() override;
+
+	void UninitializeComponent() override;
 };

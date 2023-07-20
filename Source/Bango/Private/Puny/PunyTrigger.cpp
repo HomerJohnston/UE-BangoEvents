@@ -18,12 +18,12 @@ void UPunyTrigger::SetEnabled(bool bEnabled)
 
 void UPunyTrigger::RegisterEvent(UPunyEvent* Event)
 {
-	TriggerSignal.AddDynamic(Event, &UPunyEvent::RespondToTriggerSignal);
+	TriggerSignal.BindDynamic(Event, &UPunyEvent::RespondToTriggerSignal);
 }
 
 void UPunyTrigger::UnregisterEvent(UPunyEvent* Event)
 {
-	TriggerSignal.RemoveDynamic(Event, &UPunyEvent::RespondToTriggerSignal);
+	TriggerSignal.Clear();
 }
 
 void UPunyTrigger::Enable_Implementation()
@@ -43,7 +43,7 @@ void UPunyTrigger::SendSignal(FPunyTriggerSignal Signal)
 		return;
 	}
 	
-	TriggerSignal.Broadcast(this, Signal);
+	TriggerSignal.Execute(this, Signal);
 }
 
 UPunyEventComponent* UPunyTrigger::GetEventComponent()

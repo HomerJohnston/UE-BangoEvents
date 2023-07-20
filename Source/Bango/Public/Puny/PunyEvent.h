@@ -25,7 +25,14 @@ public:
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
+	/**  */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseActivateLimit", UIMin = 1, UIMax = 10, DisplayPriority=-1))
+	int32 ActivateLimit = 1;
 
+	/**  */
+	UPROPERTY()
+	bool bUseActivateLimit = false;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -79,10 +86,12 @@ public:
 	void UnregisterAction(UPunyAction* Action);
 	
 	UFUNCTION()
-	virtual void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
+	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
 
+	virtual EPunyEventSignalType RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
 protected:
 
+	UFUNCTION()
 	void AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType);
 	
 	UPunyEventComponent* GetEventComponent();
@@ -108,7 +117,11 @@ public:
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
 public:
-	virtual FLinearColor GetDisplayColor();
+	virtual FLinearColor GetDisplayBaseColor();
+
+	virtual void ApplyColorEffects(FLinearColor& Color);
+	
+	virtual bool GetIsPlungerPushed();
 	
 	// ============================================================================================
 	// EDITOR METHODS

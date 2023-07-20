@@ -8,7 +8,7 @@ class UPunyEvent;
 class UPunyEventComponent;
 
 UDELEGATE()
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FPunyTriggerSignalDelegate, UPunyTrigger*, Trigger, FPunyTriggerSignal, Signal);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FPunyTriggerSignalDelegate, UPunyTrigger*, Trigger, FPunyTriggerSignal, Signal);
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UPunyTrigger : public UObject

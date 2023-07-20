@@ -68,12 +68,12 @@ public:
 	void Init() override;
 	
 public:
-	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
+	EPunyEventSignalType RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
 
 protected:
-	void Activate(UObject* Instigator);
+	bool Activate(UObject* Instigator);
 
-	void Deactivate(UObject* Instigator);
+	bool Deactivate(UObject* Instigator);
 
 	bool SetToggleState(EPunyEvent_ToggleState NewState);
 	
@@ -93,8 +93,12 @@ protected:
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
 public:
-	FLinearColor GetDisplayColor() override;
+	FLinearColor GetDisplayBaseColor() override;
+
+	void ApplyColorEffects(FLinearColor& Color) override;
 	
+	bool GetIsPlungerPushed() override;
+
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================

@@ -1,6 +1,7 @@
 ﻿#include "Puny/PunyEventComponent.h"
 
 #include "Bango/Settings/BangoDevSettings.h"
+#include "Bango/Utility/BangoColor.h"
 #include "Puny/PunyPlungerComponent.h"
 #include "Bango/Utility/Log.h"
 #include "Puny/PunyTrigger.h"
@@ -14,6 +15,16 @@
 
 UPunyEventComponent::UPunyEventComponent()
 {
+#if WITH_EDITORONLY_DATA
+
+	AActor* OuterActor = Cast<AActor>(GetOuter());
+
+	if (OuterActor)
+	{
+		Plunger = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("PlungerDisplay");
+		Plunger->SetupAttachment(OuterActor->GetRootComponent());
+	}
+#endif
 }
 
 void UPunyEventComponent::BeginPlay()
@@ -45,6 +56,13 @@ void UPunyEventComponent::BeginPlay()
 	{
 		OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 	}
+
+#if WITH_EDITORONLY_DATA
+	if (IsValid(Plunger))
+	{
+		Plunger->SetSourceEvent(Event);
+	}
+#endif
 }
 
 void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -89,6 +107,8 @@ void UPunyEventComponent::OnRegister()
 {
 	Super::OnRegister();
 
+	
+	/*
 	if (!IsValid(Plunger))
 	{
 		AActor* OuterActor = Cast<AActor>(GetOuter());
@@ -98,12 +118,15 @@ void UPunyEventComponent::OnRegister()
 			Plunger = NewObject<UPunyPlungerComponent>(this);
 			Plunger->RegisterComponent();
 			Plunger->SetSourceEvent(Event);
+			OuterActor->AddInstanceComponent(Plunger);
 
 			FAttachmentTransformRules Rules(EAttachmentRule::KeepRelative, true);
 			Plunger->AttachToComponent(OuterActor->GetRootComponent(), Rules);
 		}
 	}
+	*/
 
+	/*
 	if (bUseCustomMesh && IsValid(CustomMesh))
 	{
 		if (!IsValid(OverrideDisplayMesh))
@@ -125,26 +148,78 @@ void UPunyEventComponent::OnRegister()
 			}
 		}
 	}
+	*/
 }
 
 void UPunyEventComponent::OnUnregister()
 {
+	/*
 	if (IsValid(Plunger))
 	{
+		AActor* OuterActor = Cast<AActor>(GetOuter());
+		OuterActor->RemoveInstanceComponent(Plunger);
+		
 		Plunger->UnregisterComponent();
 		Plunger = nullptr;
 	}
+	*/
 	
 	Super::OnUnregister();
 }
 
 FLinearColor UPunyEventComponent::GetDisplayColor() const
 {
-	if (!IsValid(Event))
+	if (!IsValid(Event) || !IsValid(GetWorld()))
 	{
-		return FColor::Magenta;
+		return BangoColor::Error;
 	}
+
+	UWorld* World = GetWorld();
+
+	FLinearColor Color = (bUseCustomColor) ? CustomColor : Event->GetDisplayBaseColor();
+
+	Event->ApplyColorEffects(Color);
 	
-	return Event->GetDisplayColor();
+	if (World->IsGameWorld())
+	{
+		//if (State.HasFlag(EBangoEventState::Expired))
+		//{
+		//	Color = BangoColorOps::DarkDesatColor(Color);
+		//}
+		//if (State.HasFlag(EBangoEventState::Frozen))
+		//{
+		//	Color = BangoColorOps::LightDesatColor(Color);
+		//}
+		
+		return Color;
+	}
+	else if (GetWorld()->IsEditorWorld())
+	{
+		return Color; // GetStartsFrozen() ? BangoColorOps::LightDesatColor(Color) : Color;
+	}
+	else
+	{
+		return BangoColor::Error;
+	}
+}
+
+void UPunyEventComponent::PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph)
+{
+	Super::PostLoadSubobjects(OuterInstanceGraph);
+}
+
+void UPunyEventComponent::DestroyComponent(bool bPromoteChildren)
+{
+	Super::DestroyComponent(bPromoteChildren);
+}
+
+void UPunyEventComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+}
+
+void UPunyEventComponent::UninitializeComponent()
+{
+	Super::UninitializeComponent();
 }
 #endif

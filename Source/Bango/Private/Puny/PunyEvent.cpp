@@ -51,10 +51,24 @@ void UPunyEvent::UnregisterAction(UPunyAction* Action)
 
 void UPunyEvent::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {
+	EPunyEventSignalType ActionSignal = RespondToTriggerSignal_Impl(Trigger, Signal);
+	
+	if (ActionSignal == EPunyEventSignalType::None)
+	{
+		return;
+	}
+
+	EventSignal.Broadcast(this, FPunyEventSignal(ActionSignal, Signal.Instigator));
+	AddInstigatorRecord(Signal.Instigator, ActionSignal);
+}
+
+EPunyEventSignalType UPunyEvent::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
+{
+	return EPunyEventSignalType::None;
 }
 
 void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType SignalType)
-{
+{	
 	double CurrentTime = GetWorld()->GetTimeSeconds();
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, SignalType, CurrentTime);
 
@@ -93,7 +107,18 @@ AActor* UPunyEvent::GetActor()
 	return GetEventComponent()->GetOwner();
 }
 
-FLinearColor UPunyEvent::GetDisplayColor()
+FLinearColor UPunyEvent::GetDisplayBaseColor()
 {
 	return FColor::Magenta;
 }
+
+void UPunyEvent::ApplyColorEffects(FLinearColor& Color)
+{
+}
+
+#if WITH_EDITORONLY_DATA
+bool UPunyEvent::GetIsPlungerPushed()
+{
+	return false;
+}
+#endif

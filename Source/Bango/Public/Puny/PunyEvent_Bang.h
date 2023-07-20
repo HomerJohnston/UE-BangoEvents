@@ -36,7 +36,7 @@ public:
 	// METHODS
 	// ============================================================================================
 public:
-	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
+	EPunyEventSignalType RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal) override;
 	
 	// ============================================================================================
 	// EDITOR SETTINGS
@@ -54,7 +54,11 @@ public:
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
 public:
-	FLinearColor GetDisplayColor() override;
+	FLinearColor GetDisplayBaseColor() override;
+
+	void ApplyColorEffects(FLinearColor& Color) override;
+	
+	bool GetIsPlungerPushed() override;
 	
 	// ============================================================================================
 	// EDITOR METHODS

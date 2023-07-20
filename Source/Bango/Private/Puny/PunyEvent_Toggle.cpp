@@ -19,7 +19,7 @@ void UPunyEvent_Toggle::Init()
 	}
 }
 
-void UPunyEvent_Toggle::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
+EPunyEventSignalType UPunyEvent_Toggle::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {
 	UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EPunyTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	
@@ -27,22 +27,21 @@ void UPunyEvent_Toggle::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTrigg
 	{
 		case EPunyTriggerSignalType::ActivateEvent:
 		{
-			Activate(Signal.Instigator);
-			break;
+			return (Activate(Signal.Instigator)) ? EPunyEventSignalType::StartAction : EPunyEventSignalType::None;
 		}
 		case EPunyTriggerSignalType::DeactivateEvent:
 		{
-			Deactivate(Signal.Instigator);
-			break;
+			return (Deactivate(Signal.Instigator)) ? EPunyEventSignalType::StopAction : EPunyEventSignalType::None;
 		}
 		default:
 		{
-			break;
+			UE_LOG(Bango, Warning, TEXT("UPunyEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
+			return EPunyEventSignalType::None;
 		}
 	}
 }
 
-void UPunyEvent_Toggle::Activate(UObject* Instigator)
+bool UPunyEvent_Toggle::Activate(UObject* Instigator)
 {
 	bool bSetToggleState = ToggleState != EPunyEvent_ToggleState::Activated;
 
@@ -58,13 +57,12 @@ void UPunyEvent_Toggle::Activate(UObject* Instigator)
 			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
 		}	
 	}
-
-	InstigatorRecords.UpdateInstigatorRecord(Instigator, EPunyEventSignalType::StartAction, GetWorld()->GetTimeSeconds());
-
+	
 	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	return true;
 }
 
-void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
+bool UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 {
 	bool bSetToggleState = false;
 
@@ -114,6 +112,7 @@ void UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, EPunyEventSignalType::StopAction, GetWorld()->GetTimeSeconds());
 
 	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	return true;
 }
 
 bool UPunyEvent_Toggle::SetToggleState(EPunyEvent_ToggleState NewState)
@@ -128,7 +127,25 @@ bool UPunyEvent_Toggle::SetToggleState(EPunyEvent_ToggleState NewState)
 	return true;
 }
 
-FLinearColor UPunyEvent_Toggle::GetDisplayColor()
+FLinearColor UPunyEvent_Toggle::GetDisplayBaseColor()
 {
 	return BangoColor::GreenBase;
+}
+
+void UPunyEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
+{
+	if (!GetWorld()->IsGameWorld())
+	{
+		return;
+	}
+	
+	if (ToggleState == EPunyEvent_ToggleState::Activated)
+	{
+		Color = BangoColorOps::BrightenColor(Color);
+	}
+}
+
+bool UPunyEvent_Toggle::GetIsPlungerPushed()
+{
+	return ToggleState == EPunyEvent_ToggleState::Activated;
 }
