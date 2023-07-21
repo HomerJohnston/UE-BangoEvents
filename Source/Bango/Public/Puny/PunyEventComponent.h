@@ -62,14 +62,28 @@ protected:
 	const float DebugTextOffsetBase = +100.0;
 	const float DebugTextOffsetSizeScaler = +50.0;
 #endif
+	/** */
+	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bStartFrozen = false;
+
+	/**  */
+	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bDoNotFreezeWhenExpired = false;
+
+	/**  */
+	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
+	bool DestroyWhenExpired = false;
 	
 	// TODO check ShowInnerProperties meta on 5.2
+	/**  */
 	UPROPERTY(Category="Bango|Event", DisplayName="Event Type", EditAnywhere, meta=(ShowInnerProperties))
 	UPunyEvent* Event;
-	
+
+	/**  */
 	UPROPERTY(Category="Bango|Event", EditAnywhere)
 	TArray<UPunyTrigger*> Triggers;
-	
+
+	/**  */
 	UPROPERTY(Category="Bango|Event", EditAnywhere)
 	TArray<UPunyAction*> Actions;
 
@@ -78,16 +92,22 @@ protected:
 	// -------------------------------------------------------------------
 public:
 	/**  */
-	 
+	bool GetStartsFrozen() const;
 	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-private:	
+private:
+	/**  */
+	bool bIsFrozen = false;
+	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
-
+public:
+	/**  */
+	bool GetIsFrozen() const;
+	
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
@@ -102,6 +122,12 @@ public:
 
 public:
 	FText GetDisplayName();
+
+	void SetFrozen(bool bNewFrozen, bool bForceSet = false);
+
+public:
+	UFUNCTION()
+	void OnEventExpired(UPunyEvent* InEvent);
 
 #if WITH_EDITORONLY_DATA
 	// ============================================================================================

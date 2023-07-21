@@ -11,8 +11,25 @@ UPunyEvent_Toggle::UPunyEvent_Toggle()
 	ToggleState = EPunyEvent_ToggleState::Deactivated;
 }
 
+bool UPunyEvent_Toggle::GetIsExpired()
+{
+	if (ToggleState == EPunyEvent_ToggleState::Activated)
+	{
+		return false;
+	}
+	
+	if (!GetUsesActivateLimit())
+	{
+		return false;
+	}
+
+	return GetActivateCount() >= GetActivateLimit();
+}
+
 void UPunyEvent_Toggle::Init()
 {
+	Super::Init();
+	
 	if (bStartActivated)
 	{
 		Activate(GetActor());
@@ -20,13 +37,13 @@ void UPunyEvent_Toggle::Init()
 }
 
 EPunyEventSignalType UPunyEvent_Toggle::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
-{
+{	
 	UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EPunyTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	
 	switch (Signal.Type)
 	{
 		case EPunyTriggerSignalType::ActivateEvent:
-		{
+		{			
 			return (Activate(Signal.Instigator)) ? EPunyEventSignalType::StartAction : EPunyEventSignalType::None;
 		}
 		case EPunyTriggerSignalType::DeactivateEvent:
@@ -42,7 +59,12 @@ EPunyEventSignalType UPunyEvent_Toggle::RespondToTriggerSignal_Impl(UPunyTrigger
 }
 
 bool UPunyEvent_Toggle::Activate(UObject* Instigator)
-{
+{	
+	if (GetUsesActivateLimit() && GetActivateCount() >= GetActivateLimit())
+	{
+		return false;
+	}
+	
 	bool bSetToggleState = ToggleState != EPunyEvent_ToggleState::Activated;
 
 	if (bSetToggleState)
@@ -64,7 +86,7 @@ bool UPunyEvent_Toggle::Activate(UObject* Instigator)
 
 bool UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 {
-	bool bSetToggleState = false;
+	bool bSetToggleState;
 
 	switch (DeactivateCondition)
 	{

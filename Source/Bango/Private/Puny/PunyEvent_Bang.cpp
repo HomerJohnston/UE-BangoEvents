@@ -6,18 +6,50 @@
 #include "Puny/PunyTriggerSignal.h"
 #include "Puny/PunyTriggerSignalType.h"
 
+bool UPunyEvent_Bang::GetIsExpired()
+{
+	if (!GetUsesActivateLimit())
+	{
+		return false;
+	}
+
+	bool bExpired = GetActivateCount() >= GetActivateLimit();
+
+	if (bExpired && bRespondToDeactivateTriggers)
+	{
+		bExpired = GetDeactivateCount() >= DeactivateLimit;
+	}
+
+	return bExpired;
+}
+
 EPunyEventSignalType UPunyEvent_Bang::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {
 	switch (Signal.Type)
 	{
 		case EPunyTriggerSignalType::ActivateEvent:
 		{
+			if (GetUsesActivateLimit() && GetActivateCount() >= GetActivateLimit())
+			{
+				return EPunyEventSignalType::None;
+			}
+			
 			return EPunyEventSignalType::StartAction;
 		}
 		case EPunyTriggerSignalType::DeactivateEvent:
 		{
-			UE_LOG(Bango, Warning, TEXT("UPunyEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
-			return EPunyEventSignalType::None;
+			if (!bRespondToDeactivateTriggers)
+			{
+				UE_LOG(Bango, Warning, TEXT("UPunyEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
+				return EPunyEventSignalType::None;
+			}
+			
+			if (bUseDeactivateLimit && GetDeactivateCount() >= DeactivateLimit)
+			{
+				return EPunyEventSignalType::None;
+			}
+
+			return EPunyEventSignalType::StopAction;
 		}
 		default:
 		{
@@ -39,20 +71,35 @@ void UPunyEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 		return;
 	}
 
-	double LastHandleDownTime = GetLastActivateTime();
-		
-	FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
-		
-	double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - LastHandleDownTime;
+	double ElapsedTimeSinceLastActivation = GetWorld()->GetTimeSeconds() - GetLastActivateTime();
 	double ActivationAlpha = FMath::Clamp(ElapsedTimeSinceLastActivation / 0.25, 0, 1);
-		
+			
 	if (ActivationAlpha > 0)
 	{
+		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
 		Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
+	}
+	
+	if (bRespondToDeactivateTriggers)
+	{
+		double ElapsedTimeSinceLastDeactivation = GetWorld()->GetTimeSeconds() - GetLastDeactivateTime();
+		double DeactivationAlpha = FMath::Clamp(ElapsedTimeSinceLastDeactivation / 0.25, 0, 1);
+
+		if (DeactivationAlpha > 0)
+		{
+			FLinearColor DeactivationColor = BangoColorOps::DarkDesatColor(Color);
+			Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
+		}
 	}
 }
 
 bool UPunyEvent_Bang::GetIsPlungerPushed()
 {
-	return (GetWorld()->GetTimeSeconds() - GetLastActivateTime() <= 0.25f);
+	double WorldTime = GetWorld()->GetTimeSeconds();
+	
+	bool ActivatePushed = (WorldTime - GetLastActivateTime()) <= 0.25f;
+
+	bool DeactivatePushed = (bRespondToDeactivateTriggers) ? (WorldTime - GetLastDeactivateTime() <= 0.25f) : false;
+
+	return ActivatePushed || DeactivatePushed;
 }

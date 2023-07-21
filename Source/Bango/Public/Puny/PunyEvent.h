@@ -8,7 +8,8 @@ class UPunyEventComponent;
 class UPunyAction;
 struct FPunyTriggerSignal;
 
-
+// TODO do I really need Dynamic
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPunyEventExpiredDelegate, UPunyEvent*, Event);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FPunyEventSignalDelegate, UPunyEvent*, Event, FPunyEventSignal, Signal);
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
@@ -25,18 +26,30 @@ public:
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-	/**  */
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseActivateLimit", UIMin = 1, UIMax = 10, DisplayPriority=-1))
-	int32 ActivateLimit = 1;
-
+private:
 	/**  */
 	UPROPERTY()
 	bool bUseActivateLimit = false;
+
+	/**  */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseActivateLimit", UIMin = 1, UIMax = 10, DisplayPriority=-1))
+	uint32 ActivateLimit = 1;
+
+	// TODO do I want this to error during packaging if true? Can I use IsDataValid for that?
+	/** If set, the event will never initialize itself. Only takes effect at BeginPlay (you cannot re-enable during play). */
+	UPROPERTY(Category="Debug", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bForceDisable = false;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
+public:
+	bool GetUsesActivateLimit();
 
+	uint32 GetActivateLimit();
+
+	bool GetIsForceDisabled();
+		
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
@@ -45,16 +58,25 @@ protected:
 	FPunyInstigatorRecordCollection InstigatorRecords;
 
 private:
-	// TODO can this be editor only?
-	// TODO \/
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1, DisplayThumbnail=false))
 	UObject* LastActivateInstigator = nullptr;
 
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1, DisplayThumbnail=false))
 	UObject* LastDeactivateInstigator = nullptr;
 
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1))
 	double LastActivateTime = -1.0;
 
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1))
 	double LastDeactivateTime = -1.0;
-	// TODO /\
+
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1))
+	uint32 ActivateCount = 0;
+
+	UPROPERTY(VisibleAnywhere, Category="Debug", meta=(DisplayPriority=-1))
+	uint32 DeactivateCount = 0;
+
+	bool bFrozen = false;
 	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
@@ -68,11 +90,22 @@ public:
 	double GetLastActivateTime();
 
 	double GetLastDeactivateTime();
+
+	uint32 GetActivateCount();
+
+	uint32 GetDeactivateCount();
+
+	virtual bool GetIsExpired();
+	
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
 protected:
+	UPROPERTY(Transient)
 	FPunyEventSignalDelegate EventSignal;
+
+	UPROPERTY(Transient)
+	FPunyEventExpiredDelegate ExpiryDelegate;
 	
 	// ============================================================================================
 	// METHODS
@@ -89,6 +122,7 @@ public:
 	void RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
 
 	virtual EPunyEventSignalType RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal);
+
 protected:
 
 	UFUNCTION()
@@ -125,8 +159,7 @@ public:
 	
 	// ============================================================================================
 	// EDITOR METHODS
-	// ============================================================================================
-	
+	// ============================================================================================\
 	
 #endif
 };

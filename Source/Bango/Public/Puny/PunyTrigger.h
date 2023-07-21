@@ -45,16 +45,21 @@ private:
 	// METHODS
 	// ============================================================================================
 public:
+	/**  */
 	void SetEnabled(bool bEnabled);
 
+	/**  */
 	void RegisterEvent(UPunyEvent* Event);
 
+	/**  */
 	void UnregisterEvent(UPunyEvent* Event);
 	
 protected:
+	/** Set up logic to enable the trigger here (subscribe to world events, start running timers or ticking logic, etc). */
 	UFUNCTION(BlueprintNativeEvent)
 	void Enable();
 
+	/** Set up logic to disable the trigger here (unsubscribe to world events, stop running timers or ticking logic, etc). */
 	UFUNCTION(BlueprintNativeEvent)
 	void Disable();
 

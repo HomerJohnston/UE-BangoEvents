@@ -38,7 +38,7 @@ protected:
 	/** If true, the event will be activated with its owning actor as an instigator on BeginPlay. */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	bool bStartActivated = false;
-
+	
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	EPunyEvent_ToggleDeactivateCondition DeactivateCondition;
@@ -56,11 +56,13 @@ protected:
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
-
+public:
+	bool GetIsExpired() override;
+	
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
-
+	
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================

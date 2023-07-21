@@ -27,6 +27,16 @@ UPunyEventComponent::UPunyEventComponent()
 #endif
 }
 
+bool UPunyEventComponent::GetStartsFrozen() const
+{
+	return bStartFrozen;
+}
+
+bool UPunyEventComponent::GetIsFrozen() const
+{
+	return bIsFrozen;
+}
+
 void UPunyEventComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -38,17 +48,8 @@ void UPunyEventComponent::BeginPlay()
 	}
 
 	Event->Init();
-	
-	for (UPunyTrigger* Trigger : Triggers)
-	{
-		Trigger->RegisterEvent(Event);
-		Trigger->SetEnabled(true);
-	}
 
-	for (UPunyAction* Action : Actions)
-	{
-		Event->RegisterAction(Action);
-	}
+	SetFrozen(bStartFrozen, true);
 	
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
 
@@ -102,68 +103,66 @@ FText UPunyEventComponent::GetDisplayName()
 	return FText::FromString(GetOwner()->GetActorNameOrLabel());
 }
 
+void UPunyEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
+{
+	if (!bForceSet && bIsFrozen == bNewFrozen)
+	{
+		return;
+	}
+
+	UE_LOG(Bango, Display, TEXT("UPunyEventComponent SetFrozen: %s"), (bNewFrozen ? TEXT("True") : TEXT("False")));
+
+	bIsFrozen = bNewFrozen;
+
+	switch (bIsFrozen)
+	{
+		case false:
+		{
+			for (UPunyTrigger* Trigger : Triggers)
+			{
+				Trigger->RegisterEvent(Event);
+				Trigger->SetEnabled(true);
+			}
+
+			for (UPunyAction* Action : Actions)
+			{
+				Event->RegisterAction(Action);
+			}
+			break;
+		}
+		case true:
+		{
+			for (UPunyTrigger* Trigger : Triggers)
+			{
+				Trigger->UnregisterEvent(Event);
+				Trigger->SetEnabled(false);
+			}
+
+			for (UPunyAction* Action : Actions)
+			{
+				Event->UnregisterAction(Action);
+			}
+			break;
+		}
+	}
+}
+
+void UPunyEventComponent::OnEventExpired(UPunyEvent* InEvent)
+{
+	if (!bDoNotFreezeWhenExpired)
+	{
+		SetFrozen(true);
+	}
+}
+
 #if WITH_EDITOR
 void UPunyEventComponent::OnRegister()
 {
 	Super::OnRegister();
-
-	
-	/*
-	if (!IsValid(Plunger))
-	{
-		AActor* OuterActor = Cast<AActor>(GetOuter());
-
-		if (OuterActor)
-		{
-			Plunger = NewObject<UPunyPlungerComponent>(this);
-			Plunger->RegisterComponent();
-			Plunger->SetSourceEvent(Event);
-			OuterActor->AddInstanceComponent(Plunger);
-
-			FAttachmentTransformRules Rules(EAttachmentRule::KeepRelative, true);
-			Plunger->AttachToComponent(OuterActor->GetRootComponent(), Rules);
-		}
-	}
-	*/
-
-	/*
-	if (bUseCustomMesh && IsValid(CustomMesh))
-	{
-		if (!IsValid(OverrideDisplayMesh))
-		{
-			AActor* OuterActor = Cast<AActor>(GetOuter());
-
-			if (OuterActor)
-			{
-				OverrideDisplayMesh = NewObject<UStaticMeshComponent>(this);
-
-				OverrideDisplayMesh->SetCastShadow(false);
-				OverrideDisplayMesh->SetHiddenInGame(true);
-				OverrideDisplayMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-				OverrideDisplayMesh->RegisterComponent();
-
-				FAttachmentTransformRules Rules(EAttachmentRule::KeepRelative, true);
-				OverrideDisplayMesh->AttachToComponent(OuterActor->GetRootComponent(), Rules);
-			}
-		}
-	}
-	*/
 }
 
 void UPunyEventComponent::OnUnregister()
-{
-	/*
-	if (IsValid(Plunger))
-	{
-		AActor* OuterActor = Cast<AActor>(GetOuter());
-		OuterActor->RemoveInstanceComponent(Plunger);
-		
-		Plunger->UnregisterComponent();
-		Plunger = nullptr;
-	}
-	*/
-	
+{	
 	Super::OnUnregister();
 }
 
@@ -182,20 +181,20 @@ FLinearColor UPunyEventComponent::GetDisplayColor() const
 	
 	if (World->IsGameWorld())
 	{
-		//if (State.HasFlag(EBangoEventState::Expired))
-		//{
-		//	Color = BangoColorOps::DarkDesatColor(Color);
-		//}
-		//if (State.HasFlag(EBangoEventState::Frozen))
-		//{
-		//	Color = BangoColorOps::LightDesatColor(Color);
-		//}
+		if (Event->GetIsExpired())
+		{
+			Color = BangoColorOps::DarkDesatColor(Color);
+		}
+		if (GetIsFrozen())
+		{
+			Color = BangoColorOps::LightDesatColor(Color);
+		}
 		
 		return Color;
 	}
 	else if (GetWorld()->IsEditorWorld())
 	{
-		return Color; // GetStartsFrozen() ? BangoColorOps::LightDesatColor(Color) : Color;
+		return GetStartsFrozen() ? BangoColorOps::LightDesatColor(Color) : Color;
 	}
 	else
 	{

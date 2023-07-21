@@ -1,5 +1,6 @@
 ﻿#include "Puny/PunyEvent.h"
 
+#include "Bango/Utility/Log.h"
 #include "Puny/PunyAction.h"
 #include "Puny/PunyEventComponent.h"
 #include "Puny/PunyEventSignalType.h"
@@ -13,6 +14,21 @@ TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> UPunyEvent::PunyEventsSho
 
 UPunyEvent::UPunyEvent()
 {
+}
+
+bool UPunyEvent::GetUsesActivateLimit()
+{
+	return bUseActivateLimit;
+}
+
+uint32 UPunyEvent::GetActivateLimit()
+{
+	return ActivateLimit;
+}
+
+bool UPunyEvent::GetIsForceDisabled()
+{
+	return bForceDisable;
 }
 
 UObject* UPunyEvent::GetLastActivateInstigator()
@@ -35,8 +51,25 @@ double UPunyEvent::GetLastDeactivateTime()
 	return LastDeactivateTime;
 }
 
+uint32 UPunyEvent::GetActivateCount()
+{
+	return ActivateCount;
+}
+
+uint32 UPunyEvent::GetDeactivateCount()
+{
+	return DeactivateCount;
+}
+
+bool UPunyEvent::GetIsExpired()
+{
+	checkNoEntry();
+	return false;
+}
+
 void UPunyEvent::Init()
 {
+	ExpiryDelegate.AddDynamic(GetEventComponent(), &UPunyEventComponent::OnEventExpired);
 }
 
 void UPunyEvent::RegisterAction(UPunyAction* Action)
@@ -51,6 +84,11 @@ void UPunyEvent::UnregisterAction(UPunyAction* Action)
 
 void UPunyEvent::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {
+	if (GetIsExpired())
+	{
+		return;
+	}
+
 	EPunyEventSignalType ActionSignal = RespondToTriggerSignal_Impl(Trigger, Signal);
 	
 	if (ActionSignal == EPunyEventSignalType::None)
@@ -59,7 +97,13 @@ void UPunyEvent::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSigna
 	}
 
 	EventSignal.Broadcast(this, FPunyEventSignal(ActionSignal, Signal.Instigator));
+
 	AddInstigatorRecord(Signal.Instigator, ActionSignal);
+	
+	if (GetIsExpired())
+	{
+		ExpiryDelegate.Broadcast(this);
+	}
 }
 
 EPunyEventSignalType UPunyEvent::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
@@ -72,20 +116,20 @@ void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType S
 	double CurrentTime = GetWorld()->GetTimeSeconds();
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, SignalType, CurrentTime);
 
-	// TODO can this all be editor only?
-	// TODO \/
 	switch (SignalType)
 	{
 		case EPunyEventSignalType::StartAction:
 		{
 			LastActivateInstigator = Instigator;
 			LastActivateTime = CurrentTime;
+			ActivateCount++;
 			break;
 		}
 		case EPunyEventSignalType::StopAction:
 		{
 			LastDeactivateInstigator = Instigator;
 			LastDeactivateTime = CurrentTime;
+			DeactivateCount++;
 			break;
 		}
 		default:
@@ -93,8 +137,6 @@ void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType S
 			
 		}
 	}
-	// TODO /\
-	
 }
 
 UPunyEventComponent* UPunyEvent::GetEventComponent()
@@ -121,4 +163,5 @@ bool UPunyEvent::GetIsPlungerPushed()
 {
 	return false;
 }
+
 #endif
