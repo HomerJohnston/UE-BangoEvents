@@ -26,11 +26,6 @@ uint32 UPunyEvent::GetActivateLimit()
 	return ActivateLimit;
 }
 
-bool UPunyEvent::GetIsForceDisabled()
-{
-	return bForceDisable;
-}
-
 UObject* UPunyEvent::GetLastActivateInstigator()
 {
 	return LastActivateInstigator;

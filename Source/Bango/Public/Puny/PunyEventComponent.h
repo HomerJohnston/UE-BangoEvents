@@ -44,36 +44,25 @@ protected:
 	bool bUseCustomColor = false;
 
 	/** Set to add a custom mesh display above the event proxy. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh"))
-	UStaticMesh* CustomMesh = nullptr;
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh"))
+	UStaticMesh* DisplayMesh = nullptr;
 
 	UPROPERTY()
-	bool bUseCustomMesh = false;
+	bool bUseDisplayMesh = false;
 
 	/** Set to change the display scale of the mesh. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0))
-	float CustomMeshScale = 1.0;
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0))
+	float DisplayMeshScale = 1.0;
 
 	/** Set to change the elevation of the mesh. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh", EditConditionHides, HideEditConditionToggle, UIMin = -1000, UIMax = 1000))
-	float CustomMeshOffset = 0.0;
+	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = -1000, UIMax = 1000))
+	float DisplayMeshOffset = 0.0;
 
-	const float CustomMeshOffsetBase = +100.0;
+	const float DisplayMeshOffsetBase = +100.0;
 	const float DebugTextOffsetBase = +100.0;
 	const float DebugTextOffsetSizeScaler = +50.0;
-#endif
-	/** */
-	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
-	bool bStartFrozen = false;
 
-	/**  */
-	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
-	bool bDoNotFreezeWhenExpired = false;
-
-	/**  */
-	UPROPERTY(Category="Bango|Event", EditAnywhere, meta=(DisplayPriority=-1))
-	bool DestroyWhenExpired = false;
-	
+#endif	
 	// TODO check ShowInnerProperties meta on 5.2
 	/**  */
 	UPROPERTY(Category="Bango|Event", DisplayName="Event Type", EditAnywhere, meta=(ShowInnerProperties))
@@ -87,6 +76,22 @@ protected:
 	UPROPERTY(Category="Bango|Event", EditAnywhere)
 	TArray<UPunyAction*> Actions;
 
+	/** Intended for debug purposes. If true, the event will never be active or usable in any way during gameplay. */
+	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bDisable = false;
+	
+	/**  */
+	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bStartFrozen = false;
+
+	/**  */
+	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
+	bool bDoNotFreezeWhenExpired = false;
+
+	/**  */
+	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
+	bool DestroyWhenExpired = false;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -120,6 +125,8 @@ public:
 
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override; 
 
+	void DestroyOnBeginPlay();
+	
 public:
 	FText GetDisplayName();
 
@@ -134,9 +141,6 @@ public:
 	// EDITOR SETTINGS
 	// ============================================================================================
 protected:
-	void OnRegister() override;
-
-	void OnUnregister() override;
 	
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
@@ -150,7 +154,7 @@ protected:
 	UPunyPlungerComponent* Plunger;
 
 	UPROPERTY()
-	UStaticMeshComponent* OverrideDisplayMesh;
+	UStaticMeshComponent* DisplayMeshComponent;
 	
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
@@ -161,13 +165,11 @@ public:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+
+	bool CanEditChange(const FProperty* InProperty) const override;
+	
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	void UpdateDisplayMesh();
 #endif
-
-	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
-
-	void DestroyComponent(bool bPromoteChildren) override;
-
-	void InitializeComponent() override;
-
-	void UninitializeComponent() override;
 };

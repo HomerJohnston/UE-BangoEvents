@@ -35,11 +35,6 @@ private:
 	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseActivateLimit", UIMin = 1, UIMax = 10, DisplayPriority=-1))
 	uint32 ActivateLimit = 1;
 
-	// TODO do I want this to error during packaging if true? Can I use IsDataValid for that?
-	/** If set, the event will never initialize itself. Only takes effect at BeginPlay (you cannot re-enable during play). */
-	UPROPERTY(Category="Debug", EditAnywhere, meta=(DisplayPriority=-1))
-	bool bForceDisable = false;
-	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------

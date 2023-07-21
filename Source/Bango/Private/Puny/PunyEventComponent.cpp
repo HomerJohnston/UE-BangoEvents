@@ -23,6 +23,12 @@ UPunyEventComponent::UPunyEventComponent()
 	{
 		Plunger = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("PlungerDisplay");
 		Plunger->SetupAttachment(OuterActor->GetRootComponent());
+
+		DisplayMeshComponent = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>("DisplayMesh");
+		DisplayMeshComponent->SetupAttachment(OuterActor->GetRootComponent());
+		DisplayMeshComponent->SetCastShadow(false);
+		DisplayMeshComponent->SetHiddenInGame(true);
+		DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 #endif
 }
@@ -41,6 +47,15 @@ void UPunyEventComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (bDisable)
+	{
+		UE_LOG(Bango, Warning, TEXT("Event on %s is set to be disabled during play and will be destroyed."), *GetOwner()->GetName());
+
+		GetWorld()->OnWorldBeginPlay.AddUObject(this, &ThisClass::DestroyOnBeginPlay);
+		
+		return;
+	}
+	
 	if (!IsValid(Event))
 	{
 		UE_LOG(Bango, Error, TEXT("UPunyEventComponent of <%s> has no event handler set!"), *GetOwner()->GetName());
@@ -53,9 +68,9 @@ void UPunyEventComponent::BeginPlay()
 	
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
 
-	if (IsValid(OverrideDisplayMesh))
+	if (IsValid(DisplayMeshComponent))
 	{
-		OverrideDisplayMesh->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
+		DisplayMeshComponent->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 	}
 
 #if WITH_EDITORONLY_DATA
@@ -86,6 +101,21 @@ void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	Super::EndPlay(EndPlayReason);
+}
+
+void UPunyEventComponent::DestroyOnBeginPlay()
+{
+	if (Plunger)
+	{
+		Plunger->DestroyComponent();
+	}
+
+	if (DisplayMeshComponent)
+	{
+		DisplayMeshComponent->DestroyComponent();
+	}
+	
+	DestroyComponent();
 }
 
 FText UPunyEventComponent::GetDisplayName()
@@ -156,21 +186,16 @@ void UPunyEventComponent::OnEventExpired(UPunyEvent* InEvent)
 }
 
 #if WITH_EDITOR
-void UPunyEventComponent::OnRegister()
-{
-	Super::OnRegister();
-}
-
-void UPunyEventComponent::OnUnregister()
-{	
-	Super::OnUnregister();
-}
-
 FLinearColor UPunyEventComponent::GetDisplayColor() const
 {
 	if (!IsValid(Event) || !IsValid(GetWorld()))
 	{
 		return BangoColor::Error;
+	}
+
+	if (bDisable)
+	{
+		return BangoColor::DarkGrey;
 	}
 
 	UWorld* World = GetWorld();
@@ -202,23 +227,46 @@ FLinearColor UPunyEventComponent::GetDisplayColor() const
 	}
 }
 
-void UPunyEventComponent::PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph)
+bool UPunyEventComponent::CanEditChange(const FProperty* InProperty) const
 {
-	Super::PostLoadSubobjects(OuterInstanceGraph);
+	if (bDisable && InProperty->GetFName() != FName("bDisable"))
+	{
+		return false;
+	}
+	
+	return Super::CanEditChange(InProperty);
 }
 
-void UPunyEventComponent::DestroyComponent(bool bPromoteChildren)
+void UPunyEventComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	Super::DestroyComponent(bPromoteChildren);
+	FName PropName = PropertyChangedEvent.GetPropertyName();
+
+	TArray MeshProps {"bUseDisplayMesh", "DisplayMesh", "DisplayMeshScale", "DisplayMeshOffset"};
+
+	if (MeshProps.Contains(PropName))
+	{
+		UpdateDisplayMesh();
+	}
+
+	
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
-void UPunyEventComponent::InitializeComponent()
+void UPunyEventComponent::UpdateDisplayMesh()
 {
-	Super::InitializeComponent();
-}
-
-void UPunyEventComponent::UninitializeComponent()
-{
-	Super::UninitializeComponent();
+	if (bUseDisplayMesh && IsValid(DisplayMesh))
+	{
+		DisplayMeshComponent->SetStaticMesh(DisplayMesh);
+		DisplayMeshComponent->SetVisibility(true);
+		
+		DisplayMeshComponent->SetWorldScale3D(FVector(DisplayMeshScale));
+		DisplayMeshComponent->SetRelativeLocation(FVector(0, 0, DisplayMeshOffsetBase + DisplayMeshOffset));
+	}
+	else
+	{
+		DisplayMeshComponent->SetStaticMesh(nullptr);
+		DisplayMeshComponent->SetVisibility(false);
+	}	
 }
 #endif
