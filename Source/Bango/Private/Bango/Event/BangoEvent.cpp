@@ -5,7 +5,7 @@
 #include "Bango/Utility/Log.h"
 #include "Bango/Action/BangoAction.h"
 #include "Bango/Trigger/BangoTrigger.h"
-#include "Bango/Editor/PlungerComponent.h"
+#include "Bango/Editor/BangoPlungerComponent.h"
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Engine/AssetManager.h"
