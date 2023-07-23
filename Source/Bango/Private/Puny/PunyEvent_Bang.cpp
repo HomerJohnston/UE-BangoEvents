@@ -17,7 +17,7 @@ bool UPunyEvent_Bang::GetIsExpired()
 
 	if (bExpired && bRespondToDeactivateTriggers)
 	{
-		bExpired = GetDeactivateCount() >= DeactivateLimit;
+		bExpired = GetDeactivateCount() >= GetDeactivateLimit();
 	}
 
 	return bExpired;
@@ -44,7 +44,7 @@ EPunyEventSignalType UPunyEvent_Bang::RespondToTriggerSignal_Impl(UPunyTrigger* 
 				return EPunyEventSignalType::None;
 			}
 			
-			if (bUseDeactivateLimit && GetDeactivateCount() >= DeactivateLimit)
+			if (GetUsesActivateLimit() && GetDeactivateCount() >= GetDeactivateLimit())
 			{
 				return EPunyEventSignalType::None;
 			}

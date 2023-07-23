@@ -8,7 +8,7 @@
 
 #include "PunyPlungerComponent.generated.h"
 
-UCLASS(Within=PunyEventComponent, meta = (BlueprintSpawnableComponent))
+UCLASS()
 class UPunyPlungerComponent : public UPrimitiveComponent
 {
 	GENERATED_BODY()
@@ -36,17 +36,11 @@ public:
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
-private:
-
-	/**  */
-	TWeakObjectPtr<UPunyEvent> Event;
 
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
 public:
-	/**  */
-	void SetSourceEvent(UPunyEvent* InEvent);
 	
 	// API
 	// ============================================================================================
@@ -74,4 +68,6 @@ public:
 	void OnCvarChange();
 
 	UPunyEventComponent* GetEventComponent();
+
+	UPunyEvent* GetEvent();
 };

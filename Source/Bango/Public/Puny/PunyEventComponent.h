@@ -8,12 +8,11 @@ class UPunyEvent;
 class UPunyTrigger;
 class UPunyAction;
 struct FPunySignal;
-
-
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPunyEventSignalLimitReached, UPunyEvent*, Event, EBangoSignal, Signal);
+class FCanvasTextItem;
+struct FBangoDebugTextEntry;
 
 UCLASS(meta=(BlueprintSpawnableComponent))
-class BANGO_API UPunyEventComponent : public UActorComponent
+class BANGO_API UPunyEventComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
@@ -26,54 +25,17 @@ public:
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-
-#if WITH_EDITORONLY_DATA
-protected:
-	/** Set to override the editor display name. */
-	UPROPERTY(Category="Bango|Display", DisplayName="Display Name Override", EditInstanceOnly, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
-	FText DisplayName;
-
-	UPROPERTY()
-	bool bUseDisplayName = false;
-	
-	/** Set to override the editor display color. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
-	FLinearColor CustomColor = FColor::White;
-
-	UPROPERTY()
-	bool bUseCustomColor = false;
-
-	/** Set to add a custom mesh display above the event proxy. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh"))
-	UStaticMesh* DisplayMesh = nullptr;
-
-	UPROPERTY()
-	bool bUseDisplayMesh = false;
-
-	/** Set to change the display scale of the mesh. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0))
-	float DisplayMeshScale = 1.0;
-
-	/** Set to change the elevation of the mesh. */
-	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = -1000, UIMax = 1000))
-	float DisplayMeshOffset = 0.0;
-
-	const float DisplayMeshOffsetBase = +100.0;
-	const float DebugTextOffsetBase = +100.0;
-	const float DebugTextOffsetSizeScaler = +50.0;
-
-#endif	
 	// TODO check ShowInnerProperties meta on 5.2
 	/**  */
-	UPROPERTY(Category="Bango|Event", DisplayName="Event Type", EditAnywhere, meta=(ShowInnerProperties))
+	UPROPERTY(Category="Bango", DisplayName="Type", EditAnywhere, meta=(ShowInnerProperties))
 	UPunyEvent* Event;
 
 	/**  */
-	UPROPERTY(Category="Bango|Event", EditAnywhere)
+	UPROPERTY(Category="Bango", EditAnywhere)
 	TArray<UPunyTrigger*> Triggers;
 
 	/**  */
-	UPROPERTY(Category="Bango|Event", EditAnywhere)
+	UPROPERTY(Category="Bango", EditAnywhere)
 	TArray<UPunyAction*> Actions;
 
 	/** Intended for debug purposes. If true, the event will never be active or usable in any way during gameplay. */
@@ -98,12 +60,15 @@ protected:
 public:
 	/**  */
 	bool GetStartsFrozen() const;
+
+	UPunyEvent* GetEvent() const;
 	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
 private:
 	/**  */
+	UPROPERTY(Category="Bango|Debug", DisplayName="Frozen", VisibleAnywhere, meta=(DisplayPriority=-1))
 	bool bIsFrozen = false;
 	
 	// -------------------------------------------------------------------
@@ -136,40 +101,118 @@ public:
 	UFUNCTION()
 	void OnEventExpired(UPunyEvent* InEvent);
 
-#if WITH_EDITORONLY_DATA
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
-protected:
 	
+#if WITH_EDITORONLY_DATA
+protected:
+
+	/** Set to override the editor display name. */
+	UPROPERTY(Category="Bango|Advanced|Display", DisplayName="Display Name Override", EditAnywhere, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName", DisplayPriority = -2))
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle, DisplayPriority = -2))
+	bool bUseDisplayName = false;
+	
+	static TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> PunyEventsShowFlag;
+
+	/** Set to override the editor display color. */
+	UPROPERTY(Category="Bango|Advanced|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor", DisplayPriority = -2))
+	FLinearColor CustomColor = FColor::White;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle, DisplayPriority = -2))
+	bool bUseCustomColor = false;
+
+	/** Set to add a custom mesh display above the event proxy. */
+	UPROPERTY(Category="Bango|Advanced|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", DisplayPriority = -2))
+	UStaticMesh* DisplayMesh = nullptr;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle, DisplayPriority = -2))
+	bool bUseDisplayMesh = false;
+
+	/** Set to change the display scale of the mesh. */
+	UPROPERTY(Category="Bango|Advanced|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = 0.1, UIMax = 10.0, Delta=0.1, DisplayPriority = -2))
+	float DisplayMeshScale = 1.0;
+
+	/** Set to change the elevation of the mesh. */
+	UPROPERTY(Category="Bango|Advanced|Display", EditAnywhere, meta=(EditCondition="bUseDisplayMesh", EditConditionHides, HideEditConditionToggle, UIMin = -200, UIMax = 200, Delta=10, DisplayPriority = -2))
+	float DisplayMeshOffset = 0.0;
+
+	const float DisplayMeshOffsetBase = +100.0;
+	const float DebugTextOffsetBase = +100.0;
+	const float DebugTextOffsetSizeScaler = +50.0;
+#endif
+
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
 	// -------------------------------------------------------------------
 
+#if WITH_EDITOR
+#endif
+
 	// ============================================================================================
 	// EDITOR STATE
 	// ============================================================================================
+	
+#if WITH_EDITORONLY_DATA
 
-	UPROPERTY()
-	UPunyPlungerComponent* Plunger;
+	UPROPERTY(Transient)
+	UPunyPlungerComponent* PlungerComponent;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	UStaticMeshComponent* DisplayMeshComponent;
 	
+	FDelegateHandle DebugDrawService_Editor;
+	FDelegateHandle DebugDrawService_Game;
+#endif
+
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
+
+#if WITH_EDITOR
 public:
 	virtual FLinearColor GetDisplayColor() const;
+#endif
 	
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+	
+#if WITH_EDITOR
+	void OnRegister() override;
 
+	void UnregisterDebugDraw(const bool PIE);
+	
+	void ReregisterDebugDraw(const bool PIE);
+	
+	void OnUnregister() override;
+	
 	bool CanEditChange(const FProperty* InProperty) const override;
 	
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
+	void DebugDrawEditor(UCanvas* Canvas, APlayerController* PlayerController) const;
+
+	void DebugDrawGame(UCanvas* Canvas, APlayerController* PlayerController) const;
+
+protected:
 	void UpdateDisplayMesh();
+
+	bool GetDebugTextScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const;
+
+	FCanvasTextItem GetDebugHeaderText(const FVector& ScreenLocationCentre, double Distance) const;
+
+	TArray<FCanvasTextItem> GetDebugFooterText(UCanvas* Canvas, const FVector& ScreenLocationCentre, TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter, double Distance) const;
+	
+	virtual TArray<FBangoDebugTextEntry> GetDebugDataString_Editor() const;
+
+	virtual TArray<FBangoDebugTextEntry> GetDebugDataString_Game() const;
+	
+	FVector GetPlungerWorldLocation() const;
+
+	bool HasInvalidData() const;
 #endif
+	
 };

@@ -18,12 +18,17 @@ UPunyEvent::UPunyEvent()
 
 bool UPunyEvent::GetUsesActivateLimit()
 {
-	return bUseActivateLimit;
+	return bUseTriggerLimits;
 }
 
 uint32 UPunyEvent::GetActivateLimit()
 {
 	return ActivateLimit;
+}
+
+uint32 UPunyEvent::GetDeactivateLimit()
+{
+	return DeactivateLimit;
 }
 
 UObject* UPunyEvent::GetLastActivateInstigator()

@@ -18,11 +18,6 @@ UPunyPlungerComponent::UPunyPlungerComponent()
 	FAutoConsoleVariableSink CVarSink(FConsoleCommandDelegate::CreateUObject(this, &ThisClass::OnCvarChange));
 }
 
-void UPunyPlungerComponent::SetSourceEvent(UPunyEvent* InEvent)
-{
-	Event = InEvent;
-}
-
 FPrimitiveSceneProxy* UPunyPlungerComponent::CreateSceneProxy()
 {
 	return new FPunyPlungerSceneProxy(this);
@@ -70,7 +65,9 @@ bool UPunyPlungerComponent::GetIsPushed()
 		return false;
 	}
 
-	if (!Event.IsValid())
+	UPunyEvent* Event = GetEvent();
+	
+	if (!IsValid(Event))
 	{
 		return false;
 	}
@@ -104,4 +101,9 @@ void UPunyPlungerComponent::OnCvarChange()
 UPunyEventComponent* UPunyPlungerComponent::GetEventComponent()
 {
 	return Cast<UPunyEventComponent>(GetOuter());
+}
+
+UPunyEvent* UPunyPlungerComponent::GetEvent()
+{
+	return GetEventComponent()->GetEvent();
 }

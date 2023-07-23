@@ -27,14 +27,32 @@ public:
 	// SETTINGS
 	// ============================================================================================
 private:
-	/**  */
+	/** Whether to use activate limit features or not. */
 	UPROPERTY()
-	bool bUseActivateLimit = false;
+	bool bUseTriggerLimits = false;
 
-	/**  */
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseActivateLimit", UIMin = 1, UIMax = 10, DisplayPriority=-1))
+	/** Number of times this event can be activated. */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseTriggerLimits", UIMin = 1, UIMax = 10, DisplayPriority=-1))
 	uint32 ActivateLimit = 1;
+	
+	/**  */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseTriggerLimits", UIMin = 1, UIMax = 10, DisplayPriority=-1))
+	uint32 DeactivateLimit = 1;
+	
+	/** Whether to use timed signal features or not. */
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(DisplayPriority=-1))
+	bool bUseSignalDelays = false;
 
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides, UIMin=0, ClampMin=0, UIMax=60, Units="s", Delta=0.5, DisplayPriority=-1))
+	float ActivateDelay = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides, UIMin=0, ClampMin=0, UIMax=60, Units="s", Delta=0.5, DisplayPriority=-1))
+	float DeactivateDelay = 0.0f;
+
+	/** By default, broadcasting a Deactivate signal while an Activate signal is pending will cancel the Activate signal, and vice versa. */
+	UPROPERTY(EditAnywhere, Category="Advanced", meta=(EditCondition="bUseSignalDelays", EditConditionHides, DisplayPriority=-1))
+	bool bDoNotCancelOpposingSignals = false;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -43,8 +61,8 @@ public:
 
 	uint32 GetActivateLimit();
 
-	bool GetIsForceDisabled();
-		
+	uint32 GetDeactivateLimit();
+
 	// ============================================================================================
 	// STATE
 	// ============================================================================================

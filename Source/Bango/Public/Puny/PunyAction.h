@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Bango/Editor/BangoDebugTextEntry.h"
+
 #include "PunyAction.generated.h"
 
 struct FPunyEventSignal;
@@ -48,14 +50,28 @@ protected:
 	UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintCallable)
-	UPunyEventComponent* GetEvent() const;
+	UPunyEventComponent* GetEventComponent() const;
 
 	UFUNCTION(BlueprintCallable)
-	AActor* GetActor() const;
+	UPunyEvent* GetEvent() const;
 	
+	UFUNCTION(BlueprintCallable)
+	AActor* GetActor() const;
+
+// TODO check all files for proper WITH_EDITORONLY_DATA usage, compare .h and .cpp 
 	// ============================================================================================
-	// EDITOR SETTINGS
+	// EDITOR_SETTINGS
 	// ============================================================================================
+
+#if WITH_EDITORONLY_DATA
+private:
+	/** Set to override the editor display name. */
+	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName"))
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseDisplayName = false;
+#endif
 
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
@@ -72,5 +88,14 @@ protected:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+#if WITH_EDITOR
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	UFUNCTION(BlueprintCallable)
+	FText GetDisplayName() const;
 	
+	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
+#endif
 };

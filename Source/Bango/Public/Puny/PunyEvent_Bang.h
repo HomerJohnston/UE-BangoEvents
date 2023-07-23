@@ -19,13 +19,6 @@ protected:
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	bool bRespondToDeactivateTriggers = false;
-
-	/**  */
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseDeactivateLimit", UIMin = 1, UIMax = 10))
-	uint32 DeactivateLimit = 1;
-	
-	UPROPERTY()
-	bool bUseDeactivateLimit = false;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters

@@ -55,3 +55,23 @@ AActor* UPunyTrigger::GetActor()
 {
 	return GetEventComponent()->GetOwner();
 }
+
+FText UPunyTrigger::GetDisplayName() const
+{
+	if (bUseDisplayName && !DisplayName.IsEmpty())
+	{
+		return DisplayName;
+	}
+
+	return GetClass()->GetDisplayNameText();
+}
+
+void UPunyTrigger::AppendDebugData(TArray<FBangoDebugTextEntry>& Data)
+{
+	
+}
+
+void UPunyTrigger::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
+{
+	// Child classes may implement custom draw logic here
+}

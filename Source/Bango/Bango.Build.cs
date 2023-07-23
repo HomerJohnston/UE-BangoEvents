@@ -43,6 +43,9 @@ public class Bango : ModuleRules
 				"DeveloperSettings",
 				"RHI",
 				"RenderCore",
+
+
+				"UnrealEd"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -42,6 +42,9 @@ protected:
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	EPunyEvent_ToggleDeactivateCondition DeactivateCondition;
+
+	UPROPERTY(Category="Advanced", EditAnywhere, meta=(EditCondition="false", EditConditionHides))
+	uint8 UPunyEvent_Toggle_AdvancedCategorySorter;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters

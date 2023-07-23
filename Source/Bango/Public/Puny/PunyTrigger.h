@@ -1,11 +1,13 @@
 ﻿#pragma once
 
+#include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Puny/PunyTriggerSignal.h"
 
 #include "PunyTrigger.generated.h"
 
 class UPunyEvent;
 class UPunyEventComponent;
+struct FBangoDebugTextEntry;
 
 UDELEGATE()
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FPunyTriggerSignalDelegate, UPunyTrigger*, Trigger, FPunyTriggerSignal, Signal);
@@ -22,7 +24,7 @@ class BANGO_API UPunyTrigger : public UObject
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-	
+
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -69,11 +71,20 @@ protected:
 	UPunyEventComponent* GetEventComponent();
 
 	AActor* GetActor();
-	
+
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
 
+	#if WITH_EDITORONLY_DATA
+private:
+	/** Set to override the editor display name. */
+	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName", DisplayPriority=-2))
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseDisplayName = false;
+#endif
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -89,4 +100,16 @@ protected:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+
+#if WITH_EDITOR	
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	UFUNCTION(BlueprintCallable)
+	FText GetDisplayName() const;
+
+	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
+
+#endif
 };

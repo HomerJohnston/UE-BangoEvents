@@ -7,4 +7,5 @@ APunyEventActor::APunyEventActor()
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 
 	EventComponent = CreateDefaultSubobject<UPunyEventComponent>("EventComponent");
+	EventComponent->SetupAttachment(RootComponent);
 }

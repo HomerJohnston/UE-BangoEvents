@@ -30,7 +30,7 @@ void UPunyAction_DebugLog::HandleSignal_Implementation(UPunyEvent* Event, FPunyE
 FText UPunyAction_DebugLog::GetEventName()
 {
 #if WITH_EDITOR
-	return GetEvent()->GetDisplayName();
+	return GetEventComponent()->GetDisplayName();
 #else
 	return FText::FromName(GetEvent()->GetFName());
 #endif

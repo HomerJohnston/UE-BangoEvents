@@ -402,12 +402,14 @@ void ABangoEvent::OnConstruction(const FTransform& Transform)
 
 #if WITH_EDITOR
 void ABangoEvent::UpdateProxyState()
-{	
+{
+	/*
 	if (bUseCustomMesh && IsValid(CustomMaterialDynamic))
 	{
 		FLinearColor C = GetColorForProxy();
 		CustomMaterialDynamic->SetVectorParameterValue("Color", C);
 	}
+*/
 
 	CurrentState.SetFlag(EBangoEventState::Frozen, GetIsFrozen());
 }

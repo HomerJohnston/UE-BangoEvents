@@ -24,7 +24,6 @@ namespace BangoColor
 
 namespace BangoColorOps
 {
-	
 	static FLinearColor BrightenColor(FLinearColor C)
 	{
 		float M = 10.0f;
@@ -41,8 +40,8 @@ namespace BangoColorOps
 
 	static FLinearColor LightDesatColor(FLinearColor C)
 	{
-		float M = 0.30f;
-		float N = 0.60f;
+		float M = 0.50f;
+		float N = 0.50f;
 		return FLinearColor(M * C.R + N, M * C.G + N, M * C.B + N);
 	}
 

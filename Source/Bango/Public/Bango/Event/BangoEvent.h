@@ -40,24 +40,24 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Bango|Display", DisplayName="Display Name Override", EditInstanceOnly, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
+	UPROPERTY(Category="Bango|Display", DisplayName="Display Name Override", EditAnywhere, BlueprintReadOnly, meta=(EditCondition="bUseDisplayName"))
 	FText DisplayName;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseDisplayName = false;
 	
 	/** Set to override the editor display color. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomColor"))
 	FLinearColor CustomColor = FColor::White;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseCustomColor = false;
 
 	/** Set to add a custom mesh display above the event proxy. */
 	UPROPERTY(Category="Bango|Display", EditAnywhere, meta=(EditCondition="bUseCustomMesh"))
 	UStaticMesh* CustomMesh = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseCustomMesh = false;
 
 	/** Set to change the display scale of the mesh. */
