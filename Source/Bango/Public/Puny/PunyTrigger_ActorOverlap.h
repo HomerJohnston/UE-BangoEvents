@@ -3,7 +3,7 @@
 #include "PunyTrigger.h"
 #include "PunyTrigger_ActorOverlap.generated.h"
 
-UCLASS()
+UCLASS(DisplayName="Actor Overlap")
 class BANGO_API UPunyTrigger_ActorOverlap : public UPunyTrigger
 {
 	GENERATED_BODY()
@@ -21,6 +21,19 @@ protected:
 
 	UPROPERTY(Category="Settings", EditAnywhere)
 	EPunyTriggerSignalType OnEndOverlap;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseTargetActor;
+	
+	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
+	UPROPERTY(DisplayName = "Get Overlap Events From Other Actor", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	AActor* TargetActor;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseSpecificComponent;
+
+	UPROPERTY(DisplayName = "Get Overlap Events From Specific Component", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseSpecificComponent", UseComponentPicker))
+	FComponentReference Component;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
@@ -29,6 +42,13 @@ protected:
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
+
+private:
+	/** */
+	TWeakObjectPtr<UPrimitiveComponent> SubscribedComponent = nullptr;
+	
+	/** */
+	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
 
 	// -------------------------------------------------------------------
 	// State Getters/Setters
@@ -47,6 +67,12 @@ public:
 	virtual void Enable_Implementation() override;
 
 protected:
+	UFUNCTION()
+	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
 	UFUNCTION()
 	void OnActorBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor);
 

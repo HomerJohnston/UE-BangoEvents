@@ -5,7 +5,7 @@
 
 struct FPunyEventSignal;
 enum class EPunyEventSignalType : uint8;
-UCLASS()
+UCLASS(DisplayName="Debug Log")
 class BANGO_API UPunyAction_DebugLog : public UPunyAction
 {
 	GENERATED_BODY()
@@ -19,8 +19,19 @@ public:
 	// SETTINGS
 	// ============================================================================================
 protected:
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(ReadOnlyKeys))
-	TMap<EPunyEventSignalType, FString> SignalMessages;
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseActivateMessage = false;
+
+	UPROPERTY(Category="Settings", DisplayName="Override Activate Message", EditAnywhere, meta=(EditCondition="bUseActivateMessage"))
+	FString ActivateMessage;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseDeactivateMessage;
+	
+	UPROPERTY(Category="Settings", DisplayName="Override Deactivate Message", EditAnywhere, meta=(EditCondition="bUseDeactivateMessage"))
+	FString DeactivateMessage;
+
+	// TODO: Print to screen options, or enum for destinations
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
@@ -46,6 +57,8 @@ public:
 	
 protected:
 	FText GetEventName();
+
+	FString GetDefaultMessage(FPunyEventSignal Signal);
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

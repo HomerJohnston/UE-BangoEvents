@@ -7,24 +7,48 @@
 
 UPunyAction_DebugLog::UPunyAction_DebugLog()
 {
-	SignalMessages = { {EPunyEventSignalType::StartAction, ""}, {EPunyEventSignalType::StopAction, ""} };
 }
 
 void UPunyAction_DebugLog::HandleSignal_Implementation(UPunyEvent* Event, FPunyEventSignal Signal)
 {
-	if (FString* Log = SignalMessages.Find(Signal.Type))
+	FString ActionName = StaticEnum<EPunyEventSignalType>()->GetValueAsString(Signal.Type);
+	
+	FString Message;
+
+	switch(Signal.Type)
 	{
-		if (Log->IsEmpty())
+		case EPunyEventSignalType::StartAction:
 		{
-			FString ActionName = StaticEnum<EPunyEventSignalType>()->GetValueAsString(Signal.Type);
-			
-			UE_LOG(Bango, Log, TEXT("Action <%s> called on <%s> for instigator <%s>"), *ActionName, *GetEventName().ToString(), *(IsValid(Signal.Instigator) ? *Signal.Instigator->GetName() : FString("NULL")));
+			if (bUseActivateMessage)
+			{
+				Message = ActivateMessage;
+			}
+			else
+			{
+				Message = GetDefaultMessage(Signal);
+			}
+			break;
 		}
-		else
+		case EPunyEventSignalType::StopAction:
 		{
-			UE_LOG(Bango, Display, TEXT("%s"), **Log);
+			if (bUseDeactivateMessage)
+			{
+				Message = DeactivateMessage;
+			}
+			else
+			{
+				Message = GetDefaultMessage(Signal);
+			}
+			break;
+		}
+		default:
+		{
+			Message = "UPunyAction_DebugLog - ERROR";
+			break;
 		}
 	}
+	
+	UE_LOG(Bango, Display, TEXT("%s"), *Message);
 }
 
 FText UPunyAction_DebugLog::GetEventName()
@@ -34,4 +58,16 @@ FText UPunyAction_DebugLog::GetEventName()
 #else
 	return FText::FromName(GetEvent()->GetFName());
 #endif
+}
+
+FString UPunyAction_DebugLog::GetDefaultMessage(FPunyEventSignal Signal)
+{
+	FString ActionName = StaticEnum<EPunyEventSignalType>()->GetValueAsString(Signal.Type);
+
+	return FString::Format(TEXT("Action <{Name}> called on <{Actor}}> for instigator <{Instigator}>"),
+	{
+		{ TEXT("Name"), ActionName },
+		{ TEXT("Actor"), GetEventName().ToString() },
+		{ TEXT("Instigator"), IsValid(Signal.Instigator) ? Signal.Instigator->GetName() : FString("NULL") }
+	});
 }

@@ -1,5 +1,6 @@
 ﻿#include "Puny/PunyEvent_Toggle.h"
 
+#include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 #include "Puny/PunyEventSignalType.h"
@@ -38,7 +39,7 @@ void UPunyEvent_Toggle::Init()
 
 EPunyEventSignalType UPunyEvent_Toggle::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
 {	
-	UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EPunyTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
+	UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EPunyTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	
 	switch (Signal.Type)
 	{
@@ -52,7 +53,7 @@ EPunyEventSignalType UPunyEvent_Toggle::RespondToTriggerSignal_Impl(UPunyTrigger
 		}
 		default:
 		{
-			UE_LOG(Bango, Warning, TEXT("UPunyEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
+			UE_LOG(Bango, Error, TEXT("UPunyEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
 			return EPunyEventSignalType::None;
 		}
 	}
@@ -71,16 +72,15 @@ bool UPunyEvent_Toggle::Activate(UObject* Instigator)
 	{
 		if (SetToggleState(EPunyEvent_ToggleState::Activated))
 		{
-			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
-			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StartAction, Instigator));
+			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
 		}
 		else
 		{
-			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
+			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
 		}	
 	}
 	
-	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	UE_LOG(Bango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 	return true;
 }
 
@@ -121,19 +121,18 @@ bool UPunyEvent_Toggle::Deactivate(UObject* Instigator)
 	{
 		if (SetToggleState(EPunyEvent_ToggleState::Deactivated))
 		{
-			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
-			EventSignal.Broadcast(this, FPunyEventSignal(EPunyEventSignalType::StopAction, Instigator));
+			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
 			InstigatorRecords.ClearActiveInstigators();
 		}
 		else
 		{
-			UE_LOG(Bango, Display, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
+			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
 		}
 	}
 
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, EPunyEventSignalType::StopAction, GetWorld()->GetTimeSeconds());
 
-	UE_LOG(Bango, Display, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	UE_LOG(Bango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 	return true;
 }
 
@@ -170,4 +169,21 @@ void UPunyEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
 bool UPunyEvent_Toggle::GetIsPlungerPushed()
 {
 	return ToggleState == EPunyEvent_ToggleState::Activated;
+}
+
+void UPunyEvent_Toggle::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
+{
+	Super::AppendDebugDataString_Game(Data);
+
+	for (TTuple<UObject*, FPunyInstigatorRecord>& KVP : InstigatorRecords.GetData())
+	{
+		UObject* Instigator = KVP.Key;
+
+		if (!InstigatorRecords.IsInstigatorActive(KVP.Key))
+		{
+			return;
+		}
+
+		Data.Add(FBangoDebugTextEntry("Instigator:", FString::Printf(TEXT("%s"), *Instigator->GetName())));	
+	}
 }

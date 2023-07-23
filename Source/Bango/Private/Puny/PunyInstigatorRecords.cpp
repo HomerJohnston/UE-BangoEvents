@@ -12,6 +12,11 @@ FPunyInstigatorRecord* FPunyInstigatorRecordCollection::FindRecordFor(UObject* P
 
 bool FPunyInstigatorRecordCollection::IsInstigatorActive(UObject* Instigator)
 {
+	if (!IsValid(Instigator))
+	{
+		return false;
+	}
+	
 	return ActiveInstigators.Contains(Instigator);
 }
 

@@ -162,8 +162,9 @@ protected:
 
 	UPROPERTY(Transient)
 	UStaticMeshComponent* DisplayMeshComponent;
-	
+
 	FDelegateHandle DebugDrawService_Editor;
+	
 	FDelegateHandle DebugDrawService_Game;
 #endif
 

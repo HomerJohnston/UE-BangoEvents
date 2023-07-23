@@ -319,8 +319,6 @@ void UPunyEventComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 
 void UPunyEventComponent::UpdateDisplayMesh()
 {
-	return;
-	
 	if (!IsValid(DisplayMeshComponent))
 	{
 		return;
@@ -681,6 +679,8 @@ TArray<FBangoDebugTextEntry> UPunyEventComponent::GetDebugDataString_Game() cons
 			Trigger->AppendDebugData(Data);
 		}
 	}
+
+	Event->AppendDebugDataString_Game(Data);
 
 	return Data;
 }

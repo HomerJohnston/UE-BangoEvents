@@ -69,4 +69,7 @@ public:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+#if WITH_EDITOR
+	void AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data) override;
+#endif
 };

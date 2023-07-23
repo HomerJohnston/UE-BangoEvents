@@ -1,5 +1,6 @@
 ﻿#include "Puny/PunyEvent_Bang.h"
 
+#include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 #include "Puny/PunyEventSignalType.h"
@@ -103,3 +104,17 @@ bool UPunyEvent_Bang::GetIsPlungerPushed()
 
 	return ActivatePushed || DeactivatePushed;
 }
+
+#if WITH_EDITOR
+void UPunyEvent_Bang::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
+{
+	Super::AppendDebugDataString_Game(Data);
+	
+	const UObject* LastInstigator = GetLastActivateInstigator();
+
+	if (IsValid(LastInstigator))
+	{
+		Data.Add(FBangoDebugTextEntry("Last Instigator:", FString::Printf(TEXT("%s"), *LastInstigator->GetName())));	
+	}
+}
+#endif

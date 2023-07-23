@@ -1,6 +1,8 @@
 ﻿#include "Puny/PunyEvent.h"
 
+#include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
+#include "Puny/PunyAction.h"
 #include "Puny/PunyAction.h"
 #include "Puny/PunyEventComponent.h"
 #include "Puny/PunyEventSignalType.h"
@@ -89,6 +91,136 @@ void UPunyEvent::RespondToTriggerSignal(UPunyTrigger* Trigger, FPunyTriggerSigna
 		return;
 	}
 
+	float Delay = 0.0;
+
+	FTimerHandle* TimerHandle = nullptr;
+	FTimerHandle* OppositeTimerHandle = nullptr;
+	
+	if (bUseSignalDelays)
+	{
+		switch (Signal.Type)
+		{
+			case EPunyTriggerSignalType::ActivateEvent:
+			{
+				Delay = ActivateDelay;
+				TimerHandle = &DelayedActivateHandle;
+				OppositeTimerHandle = &DelayedDeactivateHandle;
+				break;
+			}
+			case EPunyTriggerSignalType::DeactivateEvent:
+			{
+				Delay = DeactivateDelay;
+				TimerHandle = &DelayedDeactivateHandle;
+				OppositeTimerHandle = &DelayedActivateHandle;
+				break;
+			}
+			default:
+			{
+				return;
+			}
+		}
+	}
+
+	bool bBreakResponse = false;
+
+	if (TimerHandle && TimerHandle->IsValid())
+	{
+		switch (ExistingSignalHandling)
+		{
+			case EPunyExistingSignalHandling::LetRun:
+			{
+				bBreakResponse = true;
+				break;
+			}
+			case EPunyExistingSignalHandling::Restart:
+			{
+				GetWorld()->GetTimerManager().ClearTimer(*TimerHandle);
+				TimerHandle->Invalidate();
+				break;
+			}
+			default:
+			{
+				bBreakResponse = true;
+				checkNoEntry();
+			}
+		}
+		
+		if (bBreakResponse)
+		{
+			return;
+		}
+	}
+	
+	if (OppositeTimerHandle && OppositeTimerHandle->IsValid())
+	{
+		switch (OpposingSignalHandling)
+		{
+			case EPunyOpposingSignalHandling::CancelOpposingAndContinue:
+			{
+				GetWorld()->GetTimerManager().ClearTimer(*OppositeTimerHandle);
+				OppositeTimerHandle->Invalidate();
+				break;
+			}
+			case EPunyOpposingSignalHandling::CancelOpposing:
+			{
+				GetWorld()->GetTimerManager().ClearTimer(*OppositeTimerHandle);
+				OppositeTimerHandle->Invalidate();
+				bBreakResponse = true;
+				break;
+			}
+			case EPunyOpposingSignalHandling::IgnoreOpposing:
+			{
+				break;
+			}
+			case EPunyOpposingSignalHandling::Exclusive:
+			{
+				bBreakResponse = true;
+				break;
+			}
+			default:
+			{
+				bBreakResponse = true;
+				checkNoEntry();
+			}
+		}
+	}
+	
+	if (bBreakResponse)
+	{
+		return;
+	}
+
+	if (Delay > 0)
+	{
+		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::RespondToTriggerSignalDeferred, Trigger, Signal);
+		GetWorld()->GetTimerManager().SetTimer(*TimerHandle, Delegate, Delay, false);
+	}
+	else
+	{
+		RespondToTriggerSignalDeferred(Trigger, Signal);
+	}
+}
+
+void UPunyEvent::RespondToTriggerSignalDeferred(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
+{
+	switch (Signal.Type)
+	{
+		case EPunyTriggerSignalType::ActivateEvent:
+		{
+			DelayedActivateHandle.Invalidate();
+			break;
+		}
+		case EPunyTriggerSignalType::DeactivateEvent:
+		{
+			DelayedDeactivateHandle.Invalidate();
+			break;
+		}
+		default:
+		{
+			return;
+		}
+	}	
+	
 	EPunyEventSignalType ActionSignal = RespondToTriggerSignal_Impl(Trigger, Signal);
 	
 	if (ActionSignal == EPunyEventSignalType::None)
@@ -164,4 +296,29 @@ bool UPunyEvent::GetIsPlungerPushed()
 	return false;
 }
 
+void UPunyEvent::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
+{
+	if (bUseSignalDelays)
+	{
+		if (DelayedActivateHandle.IsValid())
+		{
+			float TimeLeft = GetWorld()->GetTimerManager().GetTimerRemaining(DelayedActivateHandle);
+
+			if (TimeLeft > 0)
+			{
+				Data.Add(FBangoDebugTextEntry("Activation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), BangoColor::GreenBase));
+			}
+		}
+
+		if (DelayedDeactivateHandle.IsValid())
+		{
+			float TimeLeft = GetWorld()->GetTimerManager().GetTimerRemaining(DelayedDeactivateHandle);
+
+			if (TimeLeft > 0)
+			{
+				Data.Add(FBangoDebugTextEntry("Deactivation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), BangoColor::GreenBase));
+			}
+		}
+	}
+}
 #endif
