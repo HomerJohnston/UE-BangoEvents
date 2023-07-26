@@ -45,6 +45,11 @@ void UPunyAction::AppendDebugData(TArray<FBangoDebugTextEntry>& Data)
 {
 }
 
+bool UPunyAction::HasValidSetup()
+{
+	return true;
+}
+
 void UPunyAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
 {
 }

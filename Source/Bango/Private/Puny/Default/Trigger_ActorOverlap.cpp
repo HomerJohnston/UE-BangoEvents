@@ -4,15 +4,15 @@
 
 void UPunyTrigger_ActorOverlap::Enable_Implementation()
 {
-	if (bUseSpecificComponent && bUseTargetActor)
+	if (bUseTargetComponent && bUseTargetActor)
 	{
 		UE_LOG(Bango, Error, TEXT("UPunyTrigger_ActorOverlap is set to use both a component and a target actor, can only be one or the other!"));
 		return;
 	}
 
-	UActorComponent* SpecificComponent = bUseSpecificComponent ? Component.GetComponent(GetActor()) : nullptr;
+	UActorComponent* SpecificComponent = bUseTargetComponent ? TargetComponent.GetComponent(GetActor()) : nullptr;
 	
-	if (bUseSpecificComponent && !IsValid(SpecificComponent))
+	if (bUseTargetComponent && !IsValid(SpecificComponent))
 	{
 		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use a component but no component was set!"));
 		return;
@@ -24,7 +24,7 @@ void UPunyTrigger_ActorOverlap::Enable_Implementation()
 		return;
 	}
 
-	if (bUseSpecificComponent)
+	if (bUseTargetComponent)
 	{
 		UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(SpecificComponent);
 
@@ -61,7 +61,7 @@ void UPunyTrigger_ActorOverlap::Enable_Implementation()
 
 void UPunyTrigger_ActorOverlap::Disable_Implementation()
 {
-	if (bUseSpecificComponent)
+	if (bUseTargetComponent)
 	{
 		if (!SubscribedComponent.IsValid())
 		{
@@ -97,7 +97,6 @@ void UPunyTrigger_ActorOverlap::OnComponentEndOverlap(UPrimitiveComponent* Overl
 	SendSignal(FPunyTriggerSignal(OnEndOverlap, OtherComp));
 }
 
-
 void UPunyTrigger_ActorOverlap::OnActorBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
 	SendSignal(FPunyTriggerSignal(OnBeginOverlap, InstigatorActor));
@@ -107,3 +106,36 @@ void UPunyTrigger_ActorOverlap::OnActorEndOverlap(AActor* OverlapActor, AActor* 
 {
 	SendSignal(FPunyTriggerSignal(OnEndOverlap, InstigatorActor));
 }
+
+void UPunyTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	TArray<FName> TargetActorProperties {"bUseTargetActor", "TargetActor"};
+	TArray<FName> TargetComponentProperties {"bUseTargetComponent", "TargetComponent"};
+	
+	// Ensure that 
+	if (bUseTargetActor && bUseTargetComponent)
+	{
+		if (TargetActorProperties.Contains(PropertyChangedEvent.Property->GetFName()))
+		{
+			bUseTargetComponent = false;
+		}
+		else if (TargetComponentProperties.Contains(PropertyChangedEvent.Property->GetFName()))
+		{
+			bUseTargetActor = false;
+		}
+		else
+		{
+			bUseTargetActor = false;
+			bUseTargetComponent = false;
+		}
+	}
+}
+
+#if WITH_EDITOR
+bool UPunyTrigger_ActorOverlap::HasValidSetup()
+{
+	return OnBeginOverlap != EPunyTriggerSignalType::None || OnEndOverlap != EPunyTriggerSignalType::None;
+}
+#endif

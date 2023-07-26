@@ -1,6 +1,8 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Event_BaseActor.generated.h"
+#pragma once
+
+#include "_EventBaseActor.generated.h"
 
 class UPunyEventComponent;
 UCLASS()

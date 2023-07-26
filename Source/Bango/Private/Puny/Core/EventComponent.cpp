@@ -88,7 +88,6 @@ void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (!IsValid(Event))
 	{
-		UE_LOG(Bango, Error, TEXT("UPunyEventComponent of <%s> has no event handler set!"), *GetOwner()->GetName());
 		return;
 	}
 	
@@ -583,7 +582,8 @@ TArray<FBangoDebugTextEntry> UPunyEventComponent::GetDebugDataString_Editor() co
 {
 	TArray<FBangoDebugTextEntry> Data;
 
-	FLinearColor TextColor(1.0, 1.0, 1.0);
+	FLinearColor NormalTextColor = BangoColor::White;
+	FLinearColor ErrorTextColor = BangoColor::Orange;
 	
 	if (!IsValid(Event))
 	{
@@ -592,28 +592,29 @@ TArray<FBangoDebugTextEntry> UPunyEventComponent::GetDebugDataString_Editor() co
 	
 	if (Event->GetUsesActivateLimit())
 	{
-		Data.Add(FBangoDebugTextEntry("Activation Limit:", FString::Printf(TEXT("%i"), Event->GetActivateLimit()), TextColor));
+		Data.Add(FBangoDebugTextEntry("Activation Limit:", FString::Printf(TEXT("%i"), Event->GetActivateLimit()), NormalTextColor));
 	}
 
 	if (Triggers.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", BangoColor::Orange));
+		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", ErrorTextColor));
 	}
 	
 	for (UPunyTrigger* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{			
-			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL", BangoColor::Orange));
+			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL", ErrorTextColor));
 			continue;
 		}
 
 		FString Prefix = "Trigger:";
 			
 		TStringBuilder<128> TriggerEntry;
-
 		TriggerEntry.Append(Trigger->GetDisplayName().ToString());
 
+		FLinearColor TextColor = (Trigger->HasValidSetup() ? NormalTextColor : ErrorTextColor);
+		
 		Data.Add(FBangoDebugTextEntry(Prefix, TriggerEntry.ToString(), TextColor));
 
 		Trigger->AppendDebugData(Data);
@@ -621,7 +622,7 @@ TArray<FBangoDebugTextEntry> UPunyEventComponent::GetDebugDataString_Editor() co
 
 	if (Actions.IsEmpty())
 	{
-		Data.Add(FBangoDebugTextEntry("Action:", "NONE", BangoColor::Orange));
+		Data.Add(FBangoDebugTextEntry("Action:", "NONE", ErrorTextColor));
 	}
 	
 	for (UPunyAction* Action : Actions)
@@ -630,11 +631,13 @@ TArray<FBangoDebugTextEntry> UPunyEventComponent::GetDebugDataString_Editor() co
 
 		if (!IsValid(Action))
 		{
-			Data.Add(FBangoDebugTextEntry("Action:", "NULL", BangoColor::Orange));
+			Data.Add(FBangoDebugTextEntry("Action:", "NULL", ErrorTextColor));
 			continue;
 		}
 		
 		ActionEntry.Append(*Action->GetDisplayName().ToString());
+		
+		FLinearColor TextColor = (Action->HasValidSetup() ? NormalTextColor : ErrorTextColor);
 		
 		Data.Add(FBangoDebugTextEntry("Action:", ActionEntry.ToString(), TextColor));
 

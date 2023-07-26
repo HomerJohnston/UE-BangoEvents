@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Puny/Core/TriggerSignal.h"
@@ -111,5 +113,6 @@ public:
 
 	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
 
+	virtual bool HasValidSetup();
 #endif
 };

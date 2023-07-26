@@ -20,6 +20,7 @@ namespace BangoColor
 
 	//inline FLinearColor Orange			(0.95,	0.60,	0.07);
 	inline FLinearColor Orange				(1.50,	0.50,	0.10);
+	inline FLinearColor White				(1.00,	1.00,	1.00);
 }
 
 namespace BangoColorOps

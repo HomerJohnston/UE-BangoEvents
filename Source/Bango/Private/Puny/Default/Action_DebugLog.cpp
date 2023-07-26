@@ -1,4 +1,6 @@
-﻿#include "Puny/Default/Action_DebugLog.h"
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#include "Puny/Default/Action_DebugLog.h"
 
 #include "Bango/Utility/Log.h"
 #include "Puny/Core/EventSignal.h"
@@ -10,8 +12,6 @@ UPunyAction_DebugLog::UPunyAction_DebugLog()
 
 void UPunyAction_DebugLog::HandleSignal_Implementation(UPunyEvent* Event, FPunyEventSignal Signal)
 {
-	FString ActionName = StaticEnum<EPunyEventSignalType>()->GetValueAsString(Signal.Type);
-	
 	FString Message;
 
 	switch(Signal.Type)
@@ -46,8 +46,16 @@ void UPunyAction_DebugLog::HandleSignal_Implementation(UPunyEvent* Event, FPunyE
 			break;
 		}
 	}
-	
-	UE_LOG(Bango, Display, TEXT("%s"), *Message);
+
+	if (PrintTo != EPunyAction_DebugLog_PrintTo::Screen)
+	{
+		UE_LOG(Bango, Display, TEXT("%s"), *Message);
+	}
+
+	if (PrintTo != EPunyAction_DebugLog_PrintTo::Log)
+	{
+		GEngine->AddOnScreenDebugMessage(OnScreenKey, OnScreenDisplayTime, OnScreenColor, Message);
+	}
 }
 
 FText UPunyAction_DebugLog::GetEventName()

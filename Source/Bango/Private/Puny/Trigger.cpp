@@ -70,6 +70,11 @@ void UPunyTrigger::AppendDebugData(TArray<FBangoDebugTextEntry>& Data)
 	
 }
 
+bool UPunyTrigger::HasValidSetup()
+{
+	return true;
+}
+
 void UPunyTrigger::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
 {
 	// Child classes may implement custom draw logic here

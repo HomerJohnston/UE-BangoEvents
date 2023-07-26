@@ -2,27 +2,47 @@
 
 #pragma once
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Puny/Core/EventSignal.h"
-#include "Action.generated.h"
+#include "Puny/Action.h"
 
-enum class EPunyEventSignalType : uint8;
-class UPunyEventComponent;
-class UPunyTrigger;
+#include "Action_FreezeThawEvent.generated.h"
 
-UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
-class BANGO_API UPunyAction : public UObject
+UENUM()
+enum class EPunyFreezeThawEventAction : uint8
+{
+	FreezeEvent,
+	UnfreezeEvent,
+	DoNothing,
+};
+
+UCLASS()
+class BANGO_API UPunyAction_FreezeThawEvent : public UPunyAction
 {
 	GENERATED_BODY()
 	
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
+
+public:
+	UPunyAction_FreezeThawEvent();
 	
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
 
+private:
+	// DisplayName = "Use Overlap Events From Component", 
+	/** Optionally choose a specific component to listen for overlap triggers from. Note:  */
+	UPROPERTY(Category="Settings", EditAnywhere)
+	FComponentReference TargetComponent;
+	
+private:
+	UPROPERTY(Category="Settings", EditAnywhere)
+	EPunyFreezeThawEventAction OnStart;
+
+	UPROPERTY(Category="Settings", EditAnywhere)
+	EPunyFreezeThawEventAction OnStop;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -42,36 +62,15 @@ class BANGO_API UPunyAction : public UObject
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
+
 public:
-	UFUNCTION(BlueprintNativeEvent)
-	void HandleSignal(UPunyEvent* Event, FPunyEventSignal Signal);
-	
-protected:
-	UWorld* GetWorld() const override;
+	virtual void HandleSignal_Implementation(UPunyEvent* Event, FPunyEventSignal Signal) override;
 
-	UFUNCTION(BlueprintCallable)
-	UPunyEventComponent* GetEventComponent() const;
-
-	UFUNCTION(BlueprintCallable)
-	UPunyEvent* GetEvent() const;
-	
-	UFUNCTION(BlueprintCallable)
-	AActor* GetActor() const;
-
-// TODO check all files for proper WITH_EDITORONLY_DATA usage, compare .h and .cpp 
+private:
+	void Handle(EPunyFreezeThawEventAction Action);
 	// ============================================================================================
 	// EDITOR_SETTINGS
 	// ============================================================================================
-
-#if WITH_EDITORONLY_DATA
-private:
-	/** Set to override the editor display name. */
-	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName"))
-	FText DisplayName;
-
-	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseDisplayName = false;
-#endif
 
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
@@ -90,14 +89,10 @@ private:
 	// ============================================================================================
 #if WITH_EDITOR
 public:
-	UFUNCTION(BlueprintNativeEvent)
-	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+	void DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont) override;
 
-	UFUNCTION(BlueprintCallable)
-	FText GetDisplayName() const;
-	
 	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
 
-	virtual bool HasValidSetup();
+	bool HasValidSetup() override;
 #endif
 };

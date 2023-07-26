@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
+
+#pragma once
 
 #include "Puny/Trigger.h"
 
@@ -16,10 +18,13 @@ class BANGO_API UPunyTrigger_ActorOverlap : public UPunyTrigger
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-protected:
+
+private:
+	/** Signal to event upon beginning overlap. */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	EPunyTriggerSignalType OnBeginOverlap;
 
+	/** Signal to event upon ending overlap. */
 	UPROPERTY(Category="Settings", EditAnywhere)
 	EPunyTriggerSignalType OnEndOverlap;
 
@@ -27,14 +32,15 @@ protected:
 	bool bUseTargetActor;
 	
 	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
-	UPROPERTY(DisplayName = "Get Overlap Events From Other Actor", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(DisplayName = "Use Overlap Events From Actor", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseSpecificComponent;
+	bool bUseTargetComponent;
 
-	UPROPERTY(DisplayName = "Get Overlap Events From Specific Component", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseSpecificComponent", UseComponentPicker))
-	FComponentReference Component;
+	/** Optionally choose a specific component to listen for overlap triggers from. Note:  */
+	UPROPERTY(DisplayName = "Use Overlap Events From Component", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
+	FComponentReference TargetComponent;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
@@ -45,10 +51,8 @@ protected:
 	// ============================================================================================
 
 private:
-	/** */
 	TWeakObjectPtr<UPrimitiveComponent> SubscribedComponent = nullptr;
 	
-	/** */
 	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
 
 	// -------------------------------------------------------------------
@@ -62,6 +66,7 @@ private:
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
+
 public:
 	virtual void Disable_Implementation() override;
 	
@@ -99,4 +104,10 @@ protected:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
+#if WITH_EDITOR
+public:
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
+	bool HasValidSetup() override;
+#endif
 };
