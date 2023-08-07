@@ -30,6 +30,8 @@ UPunyEventComponent::UPunyEventComponent()
 	RETURN_IF(!GetOwner());
 
 	RETURN_IF(GetOwner()->IsTemplate())
+
+	UpdatePlungerProxy();
 #endif
 }
 
@@ -272,7 +274,9 @@ void UPunyEventComponent::OnRegister()
 		}
 	}
 
-	UpdatePlungerProxy();
+	UE_LOG(Bango, Display, TEXT("UPunyEventComponent::OnRegister"));
+	
+	//UpdatePlungerProxy();
 	
 	UpdateDisplayMesh();
 #endif
@@ -352,19 +356,18 @@ void UPunyEventComponent::UpdatePlungerProxy()
 	if (!IsValid(PlungerComponent))
 	{
 		UE_LOG(Bango, Display, TEXT("UPunyEventComponent::UpdatePlungerProxy - Creating new plunger comp"));
-		PlungerComponent = NewObject<UPunyPlungerComponent>(this);
-		PlungerComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+		//PlungerComponent = NewObject<UPunyPlungerComponent>(this);
+		//PlungerComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+		//if (GetWorld()) { PlungerComponent->RegisterComponent(); }
+
+		PlungerComponent = CreateDefaultSubobject<UPunyPlungerComponent>("Test");
+		PlungerComponent->SetupAttachment(this);
+
 		PlungerComponent->SetCastShadow(false);
 		PlungerComponent->SetHiddenInGame(true); // TODO suit settings
 		PlungerComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		if (GetWorld())
-		{
-			PlungerComponent->RegisterComponent();
-		}
 	}
-
-	PlungerComponent->SetRelativeLocation(FVector(0, 0, 0));
 }
 
 void UPunyEventComponent::UpdateDisplayMesh()
