@@ -170,7 +170,7 @@ protected:
 	FDelegateHandle DebugDrawService_Game;
 
 public:
-	FSimpleDelegate OnSettingsChange;
+	//FSimpleDelegate OnSettingsChange;
 #endif
 
 	// -------------------------------------------------------------------

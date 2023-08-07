@@ -77,6 +77,10 @@ void UPunyEventComponent::BeginPlay()
 	{
 		DisplayMeshComponent->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 	}
+
+#if WITH_EDITOR
+	Event->OnStateChange.BindUObject(this, &ThisClass::OnEventStateChange);
+#endif
 }
 
 void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -337,11 +341,6 @@ void UPunyEventComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 		UpdateDisplayMesh();
 	}
 
-	if (!OnSettingsChange.ExecuteIfBound())
-	{
-		UE_LOG(Bango, Warning, TEXT("EventComponent PostEditChange not notifying anything!"));
-	}
-
 	if (IsValid(PlungerComponent))
 	{
 		PlungerComponent->MarkRenderDynamicDataDirty();
@@ -362,7 +361,6 @@ void UPunyEventComponent::UpdatePlungerProxy()
 		if (GetWorld())
 		{
 			PlungerComponent->RegisterComponent();
-			//GetOwner()->AddInstanceComponent(PlungerComponent);
 		}
 	}
 

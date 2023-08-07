@@ -79,10 +79,4 @@ public:
 	void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
 
 	void SendRenderDynamicData_Concurrent() override;
-	
-	void OnRegister() override;
-
-	void OnUnregister() override;
-
-	void OnStateChange();
 };
