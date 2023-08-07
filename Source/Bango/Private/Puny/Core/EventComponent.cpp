@@ -24,17 +24,12 @@ TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> UPunyEventComponent::Puny
 UPunyEventComponent::UPunyEventComponent()
 {
 #if WITH_EDITORONLY_DATA
-	if (IsTemplate())
-		return;
-	
-	PlungerComponent = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("PlungerDisplay");
-	PlungerComponent->SetupAttachment(this);
 
-	DisplayMeshComponent = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>("DisplayMesh");
-	DisplayMeshComponent->SetupAttachment(this);
-	DisplayMeshComponent->SetCastShadow(false);
-	DisplayMeshComponent->SetHiddenInGame(true);
-	DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	RETURN_IF(IsTemplate());
+
+	RETURN_IF(!GetOwner());
+
+	RETURN_IF(GetOwner()->IsTemplate())
 #endif
 }
 
@@ -101,8 +96,20 @@ void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		Event->UnregisterAction(Action);
 	}
-	
+
 	Super::EndPlay(EndPlayReason);
+
+#if WITH_EDITORONLY_DATA
+	if (IsValid(PlungerComponent))
+	{
+		PlungerComponent->DestroyComponent();
+	}
+
+	if (IsValid(DisplayMeshComponent))
+	{
+		DisplayMeshComponent->DestroyComponent();
+	}
+#endif
 }
 
 void UPunyEventComponent::DestroyOnBeginPlay()
@@ -181,6 +188,11 @@ void UPunyEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 
 void UPunyEventComponent::OnEventExpired(UPunyEvent* InEvent)
 {
+	if (bDestroyWhenExpired)
+	{
+		DestroyComponent();
+	}
+	
 	if (!bDoNotFreezeWhenExpired)
 	{
 		SetFrozen(true);
@@ -255,6 +267,10 @@ void UPunyEventComponent::OnRegister()
 			DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawGame));
 		}
 	}
+
+	UpdatePlungerProxy();
+	
+	UpdateDisplayMesh();
 #endif
 }
 
@@ -289,6 +305,11 @@ void UPunyEventComponent::OnUnregister()
 
 	DebugDrawService_Editor.Reset();
 	DebugDrawService_Game.Reset();
+
+	if (IsValid(DisplayMeshComponent))
+	{
+		DisplayMeshComponent->DestroyComponent();
+	}
 #endif
 }
 
@@ -310,37 +331,77 @@ void UPunyEventComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 	FName MemberName = PropertyChangedEvent.GetMemberPropertyName();
 	
 	TArray MeshProps {"bUseDisplayMesh", "DisplayMesh", "DisplayMeshScale", "DisplayMeshOffset"};
+
 	if (MeshProps.Contains(PropName))
 	{
 		UpdateDisplayMesh();
 	}
+
+	if (!OnSettingsChange.ExecuteIfBound())
+	{
+		UE_LOG(Bango, Warning, TEXT("EventComponent PostEditChange not notifying anything!"));
+	}
+
+	if (IsValid(PlungerComponent))
+	{
+		PlungerComponent->MarkRenderDynamicDataDirty();
+	}
+}
+
+void UPunyEventComponent::UpdatePlungerProxy()
+{
+	if (!IsValid(PlungerComponent))
+	{
+		UE_LOG(Bango, Display, TEXT("UPunyEventComponent::UpdatePlungerProxy - Creating new plunger comp"));
+		PlungerComponent = NewObject<UPunyPlungerComponent>(this);
+		PlungerComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+		PlungerComponent->SetCastShadow(false);
+		PlungerComponent->SetHiddenInGame(true); // TODO suit settings
+		PlungerComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		if (GetWorld())
+		{
+			PlungerComponent->RegisterComponent();
+			//GetOwner()->AddInstanceComponent(PlungerComponent);
+		}
+	}
+
+	PlungerComponent->SetRelativeLocation(FVector(0, 0, 0));
 }
 
 void UPunyEventComponent::UpdateDisplayMesh()
 {
+	if (!bUseDisplayMesh || !IsValid(DisplayMesh))
+	{
+		if (IsValid(DisplayMeshComponent))
+		{
+			DisplayMeshComponent->DestroyComponent();
+		}
+
+		DisplayMesh = nullptr;
+		
+		return;
+	}
+
 	if (!IsValid(DisplayMeshComponent))
 	{
-		return;
+		DisplayMeshComponent = NewObject<UStaticMeshComponent>(this);
+		DisplayMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+		DisplayMeshComponent->SetCastShadow(false);
+		DisplayMeshComponent->SetHiddenInGame(true); // TODO should this immediately follow settings?
+		DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		if (GetWorld())
+		{
+			DisplayMeshComponent->RegisterComponent();
+			GetOwner()->AddInstanceComponent(DisplayMeshComponent);
+		}
 	}
 	
-	if (bUseDisplayMesh && IsValid(DisplayMesh))
-	{
-		DisplayMeshComponent->SetStaticMesh(DisplayMesh);
-		DisplayMeshComponent->SetVisibility(true);
-		
-		DisplayMeshComponent->SetWorldScale3D(FVector(DisplayMeshScale));
-		DisplayMeshComponent->SetRelativeLocation(FVector(0, 0, DisplayMeshOffsetBase + DisplayMeshOffset));
-
-		return;
-	}
-
-	if (!bUseDisplayMesh)
-	{
-		DisplayMesh = nullptr;
-	}
-
-	DisplayMeshComponent->SetStaticMesh(nullptr);
-	DisplayMeshComponent->SetVisibility(false);
+	DisplayMeshComponent->SetStaticMesh(DisplayMesh);
+	DisplayMeshComponent->SetVisibility(true);
+	DisplayMeshComponent->SetWorldScale3D(FVector(DisplayMeshScale));
+	DisplayMeshComponent->SetRelativeLocation(FVector(0, 0, DisplayMeshOffsetBase + DisplayMeshOffset));
 }
 
 void UPunyEventComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController* PlayerController) const
@@ -433,6 +494,11 @@ void UPunyEventComponent::DebugDrawGame(UCanvas* Canvas, APlayerController* Play
 			Canvas->DrawItem(Text);	
 		}
 	}
+}
+
+void UPunyEventComponent::OnEventStateChange()
+{
+	PlungerComponent->MarkRenderDynamicDataDirty();
 }
 
 bool UPunyEventComponent::GetDebugTextScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const

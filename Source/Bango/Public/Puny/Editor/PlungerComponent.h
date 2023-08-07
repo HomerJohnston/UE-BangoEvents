@@ -7,6 +7,12 @@
 
 #include "PlungerComponent.generated.h"
 
+struct FPunyPlungerDynamicData
+{
+	FLinearColor Color;
+	bool bPlungerPushed;
+};
+
 UCLASS()
 class UPunyPlungerComponent : public UPrimitiveComponent
 {
@@ -58,7 +64,7 @@ public:
 	void BeginPlay() override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
-
+	
 public:
 	FLinearColor GetColor();
 	
@@ -69,4 +75,14 @@ public:
 	UPunyEventComponent* GetEventComponent();
 
 	UPunyEvent* GetEvent();
+
+	void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
+
+	void SendRenderDynamicData_Concurrent() override;
+	
+	void OnRegister() override;
+
+	void OnUnregister() override;
+
+	void OnStateChange();
 };

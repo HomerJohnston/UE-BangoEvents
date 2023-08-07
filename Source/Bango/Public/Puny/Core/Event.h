@@ -54,7 +54,7 @@ class BANGO_API UPunyEvent : public UObject
 public:
 	/**  */
 	UPunyEvent();
-	 
+	
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
@@ -232,6 +232,8 @@ public:
 	/**  */
 	static TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> PunyEventsShowFlag;
 #endif
+
+	FSimpleDelegate OnStateChange;
 	
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters

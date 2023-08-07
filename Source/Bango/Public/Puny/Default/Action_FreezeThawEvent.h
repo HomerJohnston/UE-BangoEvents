@@ -14,7 +14,7 @@ enum class EPunyFreezeThawEventAction : uint8
 	DoNothing,
 };
 
-UCLASS()
+UCLASS(DisplayName="Freeze/Thaw Event")
 class BANGO_API UPunyAction_FreezeThawEvent : public UPunyAction
 {
 	GENERATED_BODY()
@@ -31,9 +31,18 @@ public:
 	// ============================================================================================
 
 private:
-	// DisplayName = "Use Overlap Events From Component", 
-	/** Optionally choose a specific component to listen for overlap triggers from. Note:  */
-	UPROPERTY(Category="Settings", EditAnywhere)
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseTargetActor = true;
+
+	/** Freeze/thaw all events on a specified actor. TODO: need a way to limit to a single component. */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseTargetActor"))
+	AActor* TargetActor;
+	
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseTargetComponent = false;
+	
+	/** Freeze/thaw the specified event. Note: only works on self actor due to a bug in FComponentReference. */
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
 	FComponentReference TargetComponent;
 	
 private:
@@ -68,6 +77,11 @@ public:
 
 private:
 	void Handle(EPunyFreezeThawEventAction Action);
+
+	void HandleComponent(bool Val);
+
+	void HandleActor(bool Val);
+	
 	// ============================================================================================
 	// EDITOR_SETTINGS
 	// ============================================================================================
@@ -94,5 +108,7 @@ public:
 	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
 
 	bool HasValidSetup() override;
+
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 };

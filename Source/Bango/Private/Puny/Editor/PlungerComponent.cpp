@@ -3,6 +3,7 @@
 #include "Puny/Editor/PlungerComponent.h"
 
 #include "Bango/Settings/BangoDevSettings.h"
+#include "Bango/Utility/Log.h"
 #include "Puny/Core/EventComponent.h"
 #include "Puny/Editor/PlungerSceneProxy.h"
 
@@ -20,6 +21,8 @@ UPunyPlungerComponent::UPunyPlungerComponent()
 
 FPrimitiveSceneProxy* UPunyPlungerComponent::CreateSceneProxy()
 {
+	UE_LOG(Bango, Display, TEXT("UPunyPlungerComponent::CreateSceneProxy"));
+
 	return new FPunyPlungerSceneProxy(this);
 }
 
@@ -106,4 +109,93 @@ UPunyEventComponent* UPunyPlungerComponent::GetEventComponent()
 UPunyEvent* UPunyPlungerComponent::GetEvent()
 {
 	return GetEventComponent()->GetEvent();
+}
+
+void UPunyPlungerComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
+{
+	Super::CreateRenderState_Concurrent(Context);
+	
+	SendRenderDynamicData_Concurrent();
+}
+
+void UPunyPlungerComponent::SendRenderDynamicData_Concurrent()
+{
+	Super::SendRenderDynamicData_Concurrent();
+	
+	if (!SceneProxy)
+	{
+		return;
+	}
+	
+	FPunyPlungerDynamicData* DynamicData = new FPunyPlungerDynamicData();
+	DynamicData->Color = GetColor();
+	DynamicData->bPlungerPushed = GetIsPushed();
+	
+	FPunyPlungerSceneProxy* PlungerSceneProxy = static_cast<FPunyPlungerSceneProxy*>(SceneProxy);
+
+	UE_LOG(Bango, Display, TEXT("Sending updated dynamic data: %s, %i"), *DynamicData->Color.ToString(), (int32)DynamicData->bPlungerPushed);
+	
+	ENQUEUE_RENDER_COMMAND(FSendPlungerDynamicData)([PlungerSceneProxy, DynamicData](FRHICommandListImmediate& RHICmdList)
+	{
+		PlungerSceneProxy->SetDynamicData_RenderThread(DynamicData);
+	});
+}
+
+void UPunyPlungerComponent::OnRegister()
+{
+	Super::OnRegister();
+	
+	if (!IsTemplate())
+	{
+		UPunyEvent* Event = GetEvent();
+
+		if (Event)
+		{
+			Event->OnStateChange.BindUObject(this, &ThisClass::OnStateChange);
+		}
+		else
+		{
+			UE_LOG(Bango, Warning, TEXT("Failed to bind to event"));
+		}
+
+		UPunyEventComponent* Component = GetEventComponent();
+
+		if (Component)
+		{
+			Component->OnSettingsChange.BindUObject(this, &ThisClass::OnStateChange);
+		}
+		else
+		{
+			UE_LOG(Bango, Warning, TEXT("Failed to bind to event comp"));
+		}
+	}
+
+	MarkRenderDynamicDataDirty();
+}
+
+void UPunyPlungerComponent::OnUnregister()
+{
+	if (!IsTemplate())
+	{
+		UPunyEvent* Event = GetEvent();
+
+		if (Event)
+		{
+			Event->OnStateChange.Unbind();
+		}
+		
+		UPunyEventComponent* Component = GetEventComponent();
+
+		if (Component)
+		{
+			Component->OnSettingsChange.Unbind();
+		}
+	}
+	
+	Super::OnUnregister();
+}
+
+void UPunyPlungerComponent::OnStateChange()
+{
+	MarkRenderDynamicDataDirty();
 }

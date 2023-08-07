@@ -41,34 +41,65 @@ void UPunyAction_FreezeThawEvent::Handle(EPunyFreezeThawEventAction Action)
 	{
 		case EPunyFreezeThawEventAction::FreezeEvent:
 		{
-			UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(TargetComponent.GetComponent(GetActor()));
-
-			if (!IsValid(EventComponent))
+			if (bUseTargetComponent)
 			{
-				UE_LOG(Bango, Error, TEXT("Attempted to freeze other event but no target event was set!"));
-				break;
+				HandleComponent(true);
 			}
-			
-			EventComponent->SetFrozen(true);
+			else if (bUseTargetActor)
+			{
+				HandleActor(true);
+			}
 			break;
 		}
 		case EPunyFreezeThawEventAction::UnfreezeEvent:
 		{
-			UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(TargetComponent.GetComponent(GetActor()));
-
-			if (!IsValid(EventComponent))
+			if (bUseTargetComponent)
 			{
-				UE_LOG(Bango, Error, TEXT("Attempted to unfreeze other event but no target event was set!"));
-				break;
+				HandleComponent(false);
 			}
-
-			EventComponent->SetFrozen(false);
+			else if (bUseTargetActor)
+			{
+				HandleActor(false);
+			}
 			break;
 		}
 		default:
 		{
 			break;
 		}
+	}
+}
+
+void UPunyAction_FreezeThawEvent::HandleComponent(bool Val)
+{
+	UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(TargetComponent.GetComponent(GetActor()));
+
+	if (!IsValid(EventComponent))
+	{
+		UE_LOG(Bango, Error, TEXT("Attempted to unfreeze other event but no target event was set!"));
+		return;
+	}
+
+	EventComponent->SetFrozen(Val);
+}
+
+void UPunyAction_FreezeThawEvent::HandleActor(bool Val)
+{
+	for (UActorComponent* Component : TargetActor->GetComponents())
+	{
+		if (!IsValid(Component))
+		{
+			return;
+		}
+
+		UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(Component);
+
+		if (!IsValid(EventComponent))
+		{
+			continue;
+		}
+
+		EventComponent->SetFrozen(Val);
 	}
 }
 
@@ -101,14 +132,61 @@ void UPunyAction_FreezeThawEvent::AppendDebugData(TArray<FBangoDebugTextEntry>& 
 #if WITH_EDITOR
 bool UPunyAction_FreezeThawEvent::HasValidSetup()
 {
-	UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(TargetComponent.GetComponent(GetActor()));
+	if (bUseTargetComponent)
+	{
+		UPunyEventComponent* EventComponent = Cast<UPunyEventComponent>(TargetComponent.GetComponent(GetActor()));
 	
-	if (!IsValid(EventComponent))
+		if (!IsValid(EventComponent))
+		{
+			return false;
+		}	
+	}
+	else if (bUseTargetActor)
+	{
+		if (!IsValid(TargetActor))
+		{
+			return false;
+		}
+		
+		UPunyEventComponent* EventComponent = TargetActor->FindComponentByClass<UPunyEventComponent>();
+
+		if (!IsValid(EventComponent))
+		{
+			return false;
+		}
+	}
+	else
 	{
 		return false;
 	}
 	
 	return OnStart != EPunyFreezeThawEventAction::DoNothing || OnStop != EPunyFreezeThawEventAction::DoNothing;
+}
+
+void UPunyAction_FreezeThawEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	TArray<FName> TargetActorProperties {"bUseTargetActor", "TargetActor"};
+	TArray<FName> TargetComponentProperties {"bUseTargetComponent", "TargetComponent"};
+	
+	// Ensure that only one setting is in use
+	if (bUseTargetActor && bUseTargetComponent)
+	{
+		if (TargetActorProperties.Contains(PropertyChangedEvent.Property->GetFName()))
+		{
+			bUseTargetComponent = false;
+		}
+		else if (TargetComponentProperties.Contains(PropertyChangedEvent.Property->GetFName()))
+		{
+			bUseTargetActor = false;
+		}
+		else
+		{
+			bUseTargetActor = false;
+			bUseTargetComponent = false;
+		}
+	}
 }
 #endif
 

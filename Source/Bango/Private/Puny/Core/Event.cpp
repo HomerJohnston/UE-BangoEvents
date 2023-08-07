@@ -254,6 +254,7 @@ void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType S
 			LastActivateInstigator = Instigator;
 			LastActivateTime = CurrentTime;
 			ActivateCount++;
+			
 			break;
 		}
 		case EPunyEventSignalType::StopAction:
@@ -261,12 +262,18 @@ void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType S
 			LastDeactivateInstigator = Instigator;
 			LastDeactivateTime = CurrentTime;
 			DeactivateCount++;
+
 			break;
 		}
 		default:
 		{
 			
 		}
+	}
+	
+	if (!OnStateChange.ExecuteIfBound())
+	{
+		UE_LOG(Bango, Warning, TEXT("Event AddInstigatorRecord not notifying anything!"));
 	}
 }
 

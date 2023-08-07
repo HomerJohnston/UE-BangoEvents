@@ -7,7 +7,7 @@
 #include "LocalVertexFactory.h"
 
 struct FPunyEventStateFlag;
-
+struct FPunyPlungerDynamicData;
 class UPunyPlungerComponent;
 
 struct FPlungerMeshConstructionData
@@ -49,14 +49,16 @@ public:
 	const float HandleOffsetUp = 0.0f;
 	const float HandleOffsetDown = -10.0f;
 	
+	const bool bIsScreenSizeScaled;
+	
+	const float ScreenSize;
+	
 	// SETTINGS GETTERS AND SETTERS
 	// ------------------------------------------
 	
 	// STATE
 	// ============================================================================================
 private:
-	TWeakObjectPtr<UPunyPlungerComponent> Component;
-	
 	FVector Origin = FVector::ZeroVector;
 
 	FLinearColor DesiredColor = FLinearColor::White;
@@ -68,11 +70,19 @@ private:
 	FDynamicMeshIndexBuffer32 IndexBuffer_HandleDown;
 	FStaticMeshVertexBuffers VertexBuffers_HandleDown;
 	FLocalVertexFactory VertexFactory_HandleDown;
+
+private:
+	FLinearColor ColorState;
+	bool bPushState = false;
 	
 	// STATE GETTERS AND SETTERS
 	// ------------------------------------------
 public:
 	/**  */
+	void SetColorState(FLinearColor& NewColorState);
+
+	void SetPushState(bool bNewPushState);
+	
 	// API
 	// ============================================================================================
 public:	
@@ -86,6 +96,8 @@ public:
 
 	uint32 GetMemoryFootprint() const override;
 
+	void SetDynamicData_RenderThread(FPunyPlungerDynamicData* NewDynamicData);
+	
 private:
 	void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData);
 };

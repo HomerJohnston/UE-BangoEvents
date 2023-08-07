@@ -54,7 +54,7 @@ public:
 
 	/**  */
 	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
-	bool DestroyWhenExpired = false;
+	bool bDestroyWhenExpired = false;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
@@ -156,9 +156,9 @@ protected:
 	// ============================================================================================
 	// EDITOR STATE
 	// ============================================================================================
-	
-#if WITH_EDITORONLY_DATA
 
+#if WITH_EDITORONLY_DATA
+protected:	
 	UPROPERTY(Transient)
 	UPunyPlungerComponent* PlungerComponent;
 
@@ -168,6 +168,9 @@ protected:
 	FDelegateHandle DebugDrawService_Editor;
 	
 	FDelegateHandle DebugDrawService_Game;
+
+public:
+	FSimpleDelegate OnSettingsChange;
 #endif
 
 	// -------------------------------------------------------------------
@@ -200,7 +203,11 @@ public:
 
 	void DebugDrawGame(UCanvas* Canvas, APlayerController* PlayerController) const;
 
+	void OnEventStateChange();
+	
 protected:
+	void UpdatePlungerProxy();
+	
 	void UpdateDisplayMesh();
 
 	bool GetDebugTextScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const;

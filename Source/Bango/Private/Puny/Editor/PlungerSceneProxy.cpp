@@ -5,6 +5,7 @@
 #include "Puny/Core/Event.h"
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
+#include "Bango/Utility/Log.h"
 
 // Forward declarations
 //=================================================================================================
@@ -21,14 +22,15 @@ void BuildPunyCylinderVerts(const FVector& Base, const FVector& XAxis, const FVe
 FPunyPlungerSceneProxy::FPunyPlungerSceneProxy(UPunyPlungerComponent* OwnerComponent)
 	: FPrimitiveSceneProxy(OwnerComponent),
 	VertexFactory_HandleUp(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy"),
-	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy")
+	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy"),
+	bIsScreenSizeScaled(OwnerComponent->bIsScreenSizeScaled),
+	ScreenSize(OwnerComponent->ScreenSize)
 {
-	Component = OwnerComponent;
-
 	bWillEverBeLit = false;
 	bAffectDistanceFieldLighting = false;
 	bAffectDynamicIndirectLighting = false;
 	bAffectIndirectLightingWhileHidden = false;
+
 	
 	// Generate meshes
 	FPlungerMeshConstructionData MeshData;
@@ -90,6 +92,16 @@ FPunyPlungerSceneProxy::~FPunyPlungerSceneProxy()
 // STATE GETTERS AND SETTERS
 // ------------------------------------------------------------------------------------------------
 
+void FPunyPlungerSceneProxy::SetColorState(FLinearColor& NewColorState)
+{
+	ColorState = NewColorState;
+}
+
+void FPunyPlungerSceneProxy::SetPushState(bool bNewPushState)
+{
+	bPushState = bNewPushState;
+}
+
 // API
 // ------------------------------------------------------------------------------------------------
 SIZE_T FPunyPlungerSceneProxy::GetTypeHash() const
@@ -100,14 +112,7 @@ SIZE_T FPunyPlungerSceneProxy::GetTypeHash() const
 
 void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
-	if (!Component.IsValid())
-	{
-		return;
-	}
-
-	FLinearColor Color = Component->GetColor();
-	
-	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), Color, "GizmoColor");
+	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), ColorState, "GizmoColor");
 
 	Collector.RegisterOneFrameMaterialProxy(MaterialRenderProxy);
 
@@ -123,13 +128,13 @@ void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 
 			float ViewScale = 1.0f;
 
-			if (Component->bIsScreenSizeScaled && (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f))
+			if (bIsScreenSizeScaled && (View->ViewMatrices.GetProjectionMatrix().M[3][3] != 1.0f))
 			{
 				const float ZoomFactor = FMath::Min<float>(View->ViewMatrices.GetProjectionMatrix().M[0][0], View->ViewMatrices.GetProjectionMatrix().M[1][1]);
 				
 				if (ZoomFactor != 0.0f)
 				{
-					const float Radius = FMath::Abs(View->WorldToScreen(Origin).W * (Component->ScreenSize / ZoomFactor));
+					const float Radius = FMath::Abs(View->WorldToScreen(Origin).W * (ScreenSize / ZoomFactor));
 
 					if (Radius < 1.0f)
 					{
@@ -144,8 +149,8 @@ void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 			FMeshBatch& Mesh = Collector.AllocateMesh();
 			FMeshBatchElement& BatchElement = Mesh.Elements[0];
 
-			const FLocalVertexFactory& VertexFactory = (Component->GetIsPushed()) ? VertexFactory_HandleDown : VertexFactory_HandleUp;
-			const FIndexBuffer& IndexBuffer = (Component->GetIsPushed()) ? IndexBuffer_HandleDown : IndexBuffer_HandleUp;
+			const FLocalVertexFactory& VertexFactory = bPushState ? VertexFactory_HandleDown : VertexFactory_HandleUp;
+			const FIndexBuffer& IndexBuffer = bPushState ? IndexBuffer_HandleDown : IndexBuffer_HandleUp;
 			
 			BatchElement.IndexBuffer = &IndexBuffer;
 			
@@ -206,6 +211,19 @@ void FPunyPlungerSceneProxy::OnTransformChanged()
 uint32 FPunyPlungerSceneProxy::GetMemoryFootprint() const
 {
 	return (sizeof(*this) + GetAllocatedSize());
+}
+
+void FPunyPlungerSceneProxy::SetDynamicData_RenderThread(FPunyPlungerDynamicData* NewDynamicData)
+{
+	check(IsInRenderingThread());
+
+	if (NewDynamicData == nullptr)
+	{
+		return;
+	}
+
+	ColorState = NewDynamicData->Color;
+	bPushState = NewDynamicData->bPlungerPushed;
 }
 
 // TODO move these to a separate geometry helper class?

@@ -114,7 +114,7 @@ void UPunyTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& Pr
 	TArray<FName> TargetActorProperties {"bUseTargetActor", "TargetActor"};
 	TArray<FName> TargetComponentProperties {"bUseTargetComponent", "TargetComponent"};
 	
-	// Ensure that 
+	// Ensure that only one setting is in use
 	if (bUseTargetActor && bUseTargetComponent)
 	{
 		if (TargetActorProperties.Contains(PropertyChangedEvent.Property->GetFName()))
