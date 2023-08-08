@@ -9,8 +9,16 @@
 
 struct FPunyPlungerDynamicData
 {
-	FLinearColor Color;
-	bool bPlungerPushed;
+	FLinearColor BaseColor = FLinearColor::Black;
+
+	double ActivationTime = -1;
+	double DeactivationTime = -1;
+
+	bool bIsDisabled = false;
+
+	bool bIsFrozen = false;
+	bool bIsExpired = false;
+	bool bIsActive = false;
 };
 
 UCLASS()
@@ -68,7 +76,7 @@ public:
 public:
 	FLinearColor GetColor();
 	
-	bool GetIsPushed();
+	bool GetIsActive();
 
 	void OnCvarChange();
 

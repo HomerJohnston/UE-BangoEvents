@@ -66,7 +66,7 @@ public:
 
 	void ApplyColorEffects(FLinearColor& Color) override;
 	
-	bool GetIsPlungerPushed() override;
+	bool GetIsActive() override;
 	
 	// ============================================================================================
 	// EDITOR METHODS

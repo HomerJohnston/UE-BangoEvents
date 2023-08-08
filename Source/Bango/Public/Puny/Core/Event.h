@@ -262,7 +262,7 @@ public:
 	virtual void ApplyColorEffects(FLinearColor& Color);
 	
 	/**  */
-	virtual bool GetIsPlungerPushed();
+	virtual bool GetIsActive();
 #endif
 	
 	// ============================================================================================

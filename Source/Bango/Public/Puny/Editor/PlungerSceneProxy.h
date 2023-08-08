@@ -72,17 +72,23 @@ private:
 	FLocalVertexFactory VertexFactory_HandleDown;
 
 private:
-	FLinearColor ColorState;
-	bool bPushState = false;
+	// Dynamic Data
+	FLinearColor BaseColor = FLinearColor::Black;
+
+	double ActivationTime = -1;
+	double DeactivationTime = -1;
+
+	bool bIsDisabled = false;
+	
+	bool bIsFrozen = false;
+	bool bIsActive = false;
+	bool bIsExpired = false;
 	
 	// STATE GETTERS AND SETTERS
 	// ------------------------------------------
 public:
-	/**  */
-	void SetColorState(FLinearColor& NewColorState);
+	void SetDynamicData_RenderThread(FPunyPlungerDynamicData* NewDynamicData);
 
-	void SetPushState(bool bNewPushState);
-	
 	// API
 	// ============================================================================================
 public:	
@@ -96,8 +102,8 @@ public:
 
 	uint32 GetMemoryFootprint() const override;
 
-	void SetDynamicData_RenderThread(FPunyPlungerDynamicData* NewDynamicData);
-	
 private:
 	void PreparePlungerMesh(const FPlungerMeshConstructionData& MeshData);
+
+	FLinearColor DetermineColor() const;
 };

@@ -93,15 +93,9 @@ void UPunyEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 	}
 }
 
-bool UPunyEvent_Bang::GetIsPlungerPushed()
+bool UPunyEvent_Bang::GetIsActive()
 {
-	double WorldTime = GetWorld()->GetTimeSeconds();
-	
-	bool ActivatePushed = (WorldTime - GetLastActivateTime()) <= 0.25f;
-
-	bool DeactivatePushed = (bRespondToDeactivateTriggers) ? (WorldTime - GetLastDeactivateTime() <= 0.25f) : false;
-
-	return ActivatePushed || DeactivatePushed;
+	return false;
 }
 
 #if WITH_EDITOR

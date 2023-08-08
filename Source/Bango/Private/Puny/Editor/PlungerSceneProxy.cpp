@@ -5,6 +5,7 @@
 #include "Puny/Core/Event.h"
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
+#include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 
 // Forward declarations
@@ -72,6 +73,43 @@ void FPunyPlungerSceneProxy::PreparePlungerMesh(const FPlungerMeshConstructionDa
 	BeginInitResource(MeshData.IndexBuffer);
 }
 
+FLinearColor FPunyPlungerSceneProxy::DetermineColor() const
+{
+	FLinearColor Color = BaseColor;
+
+	//Event->ApplyColorEffects(Color);
+	
+	if (bIsExpired)
+	{
+		Color = BangoColorOps::DarkDesatColor(Color);
+	}
+	if (bIsFrozen)
+	{
+		Color = BangoColorOps::LightDesatColor(Color);
+	}
+
+	double ElapsedSinceActivation = FPlatformTime::Seconds() - ActivationTime; 
+	double ElapsedSinceDeactivation = FPlatformTime::Seconds() - ActivationTime;
+
+	double ActivationAlpha = FMath::Clamp(ElapsedSinceActivation / 0.5, 0, 1);
+
+	if (ActivationAlpha > 0)
+	{
+		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
+		Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
+	}
+	
+	double DeactivationAlpha = FMath::Clamp(ElapsedSinceDeactivation / 0.5, 0, 1);
+
+	if (DeactivationAlpha > 0)
+	{
+		FLinearColor DeactivationColor = BangoColorOps::DarkDesatColor(Color);
+		Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
+	}
+
+	return Color;
+}
+
 FPunyPlungerSceneProxy::~FPunyPlungerSceneProxy()
 {
 	VertexBuffers_HandleUp.PositionVertexBuffer.ReleaseResource();
@@ -89,19 +127,6 @@ FPunyPlungerSceneProxy::~FPunyPlungerSceneProxy()
 	VertexFactory_HandleDown.ReleaseResource();
 }
 
-// STATE GETTERS AND SETTERS
-// ------------------------------------------------------------------------------------------------
-
-void FPunyPlungerSceneProxy::SetColorState(FLinearColor& NewColorState)
-{
-	ColorState = NewColorState;
-}
-
-void FPunyPlungerSceneProxy::SetPushState(bool bNewPushState)
-{
-	bPushState = bNewPushState;
-}
-
 // API
 // ------------------------------------------------------------------------------------------------
 SIZE_T FPunyPlungerSceneProxy::GetTypeHash() const
@@ -112,7 +137,7 @@ SIZE_T FPunyPlungerSceneProxy::GetTypeHash() const
 
 void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
-	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), ColorState, "GizmoColor");
+	auto MaterialRenderProxy = new FColoredMaterialRenderProxy(GEngine->ArrowMaterial->GetRenderProxy(), DetermineColor(), "GizmoColor");
 
 	Collector.RegisterOneFrameMaterialProxy(MaterialRenderProxy);
 
@@ -143,6 +168,8 @@ void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				}
 			}
 
+			bool bPushState = bIsActive || (FPlatformTime::Seconds() - ActivationTime <= 0.25f) || (FPlatformTime::Seconds() - DeactivationTime <= 0.25f);  
+			
 			const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>(); 
 			ViewScale *= DevSettings->GetEventDisplaySize();
 
@@ -222,8 +249,18 @@ void FPunyPlungerSceneProxy::SetDynamicData_RenderThread(FPunyPlungerDynamicData
 		return;
 	}
 
-	ColorState = NewDynamicData->Color;
-	bPushState = NewDynamicData->bPlungerPushed;
+	BaseColor = NewDynamicData->BaseColor;
+
+	ActivationTime = NewDynamicData->ActivationTime;
+	DeactivationTime = NewDynamicData->DeactivationTime;
+
+	bIsDisabled = NewDynamicData->bIsDisabled;
+	
+	bIsFrozen = NewDynamicData->bIsFrozen;
+	bIsActive = NewDynamicData->bIsActive;
+	bIsExpired = NewDynamicData->bIsExpired;
+
+	delete NewDynamicData;
 }
 
 // TODO move these to a separate geometry helper class?

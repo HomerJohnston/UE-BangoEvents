@@ -64,6 +64,8 @@ public:
 	bool GetStartsFrozen() const;
 
 	UPunyEvent* GetEvent() const;
+
+	bool GetIsDisabled() const;
 	
 	// ============================================================================================
 	// STATE
@@ -158,7 +160,7 @@ protected:
 	// ============================================================================================
 
 #if WITH_EDITORONLY_DATA
-protected:	
+protected:
 	UPROPERTY(Transient)
 	UPunyPlungerComponent* PlungerComponent;
 

@@ -235,6 +235,8 @@ void UPunyEvent::RespondToTriggerSignalDeferred(UPunyTrigger* Trigger, FPunyTrig
 	{
 		ExpiryDelegate.Broadcast(this);
 	}
+	
+	OnStateChange.ExecuteIfBound();
 }
 
 EPunyEventSignalType UPunyEvent::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)
@@ -270,11 +272,6 @@ void UPunyEvent::AddInstigatorRecord(UObject* Instigator, EPunyEventSignalType S
 			
 		}
 	}
-	
-	if (!OnStateChange.ExecuteIfBound())
-	{
-		UE_LOG(Bango, Warning, TEXT("Event AddInstigatorRecord not notifying anything!"));
-	}
 }
 
 UPunyEventComponent* UPunyEvent::GetEventComponent()
@@ -287,6 +284,7 @@ AActor* UPunyEvent::GetActor()
 	return GetEventComponent()->GetOwner();
 }
 
+#if WITH_EDITOR
 FLinearColor UPunyEvent::GetDisplayBaseColor()
 {
 	return FColor::Magenta;
@@ -296,12 +294,14 @@ void UPunyEvent::ApplyColorEffects(FLinearColor& Color)
 {
 }
 
-#if WITH_EDITORONLY_DATA
-bool UPunyEvent::GetIsPlungerPushed()
+bool UPunyEvent::GetIsActive()
 {
 	return false;
 }
+#endif
 
+
+#if WITH_EDITORONLY_DATA
 void UPunyEvent::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
 {
 	if (bUseSignalDelays)

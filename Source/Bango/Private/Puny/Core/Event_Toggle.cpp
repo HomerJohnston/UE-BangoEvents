@@ -165,7 +165,7 @@ void UPunyEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
 	}
 }
 
-bool UPunyEvent_Toggle::GetIsPlungerPushed()
+bool UPunyEvent_Toggle::GetIsActive()
 {
 	return ToggleState == EPunyEvent_ToggleState::Activated;
 }

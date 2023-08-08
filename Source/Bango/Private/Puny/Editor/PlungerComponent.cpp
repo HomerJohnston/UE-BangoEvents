@@ -21,8 +21,6 @@ UPunyPlungerComponent::UPunyPlungerComponent()
 
 FPrimitiveSceneProxy* UPunyPlungerComponent::CreateSceneProxy()
 {
-	UE_LOG(Bango, Display, TEXT("UPunyPlungerComponent::CreateSceneProxy"));
-
 	return new FPunyPlungerSceneProxy(this);
 }
 
@@ -61,13 +59,13 @@ FLinearColor UPunyPlungerComponent::GetColor()
 }
 #endif
 
-bool UPunyPlungerComponent::GetIsPushed()
+bool UPunyPlungerComponent::GetIsActive()
 {
 	if (!IsValid(GetWorld()) || !GetWorld()->IsGameWorld())
 	{
 		return false;
 	}
-
+	
 	UPunyEvent* Event = GetEvent();
 	
 	if (!IsValid(Event))
@@ -75,7 +73,7 @@ bool UPunyPlungerComponent::GetIsPushed()
 		return false;
 	}
 	
-	return Event->GetIsPlungerPushed();
+	return Event->GetIsActive();
 }
 
 void UPunyPlungerComponent::OnCvarChange()
@@ -126,15 +124,31 @@ void UPunyPlungerComponent::SendRenderDynamicData_Concurrent()
 	{
 		return;
 	}
+
+	double WorldTime = GetWorld()->GetTimeSeconds();
 	
 	FPunyPlungerDynamicData* DynamicData = new FPunyPlungerDynamicData();
-	DynamicData->Color = GetColor();
-	DynamicData->bPlungerPushed = GetIsPushed();
+
+	bool bInPlay = GetWorld()->IsGameWorld();
+	
+	if (IsValid(GetEventComponent()))
+	{
+		DynamicData->BaseColor = GetEventComponent()->GetDisplayColor();
+		DynamicData->bIsDisabled = GetEventComponent()->GetIsDisabled();
+		DynamicData->bIsFrozen = bInPlay ? GetEventComponent()->GetIsFrozen() : GetEventComponent()->GetStartsFrozen();
+	}
+	
+	if (IsValid(GetEvent()))
+	{
+		DynamicData->ActivationTime = FPlatformTime::Seconds() - (WorldTime - GetEvent()->GetLastActivateTime());
+		DynamicData->DeactivationTime = FPlatformTime::Seconds() - (WorldTime - GetEvent()->GetLastDeactivateTime());
+
+		DynamicData->bIsExpired = GetEvent()->GetIsExpired();
+		DynamicData->bIsActive = GetEvent()->GetIsActive();
+	}
 	
 	FPunyPlungerSceneProxy* PlungerSceneProxy = static_cast<FPunyPlungerSceneProxy*>(SceneProxy);
 
-	UE_LOG(Bango, Display, TEXT("Sending updated dynamic data: %s, %i"), *DynamicData->Color.ToString(), (int32)DynamicData->bPlungerPushed);
-	
 	ENQUEUE_RENDER_COMMAND(FSendPlungerDynamicData)([PlungerSceneProxy, DynamicData](FRHICommandListImmediate& RHICmdList)
 	{
 		PlungerSceneProxy->SetDynamicData_RenderThread(DynamicData);

@@ -24,14 +24,18 @@ TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> UPunyEventComponent::Puny
 UPunyEventComponent::UPunyEventComponent()
 {
 #if WITH_EDITORONLY_DATA
-
 	RETURN_IF(IsTemplate());
 
 	RETURN_IF(!GetOwner());
 
 	RETURN_IF(GetOwner()->IsTemplate())
 
-	UpdatePlungerProxy();
+	PlungerComponent = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("BangoPlunger");
+	PlungerComponent->SetupAttachment(this);
+
+	PlungerComponent->SetCastShadow(false);
+	PlungerComponent->SetHiddenInGame(true);
+	PlungerComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 #endif
 }
 
@@ -43,6 +47,11 @@ bool UPunyEventComponent::GetStartsFrozen() const
 UPunyEvent* UPunyEventComponent::GetEvent() const
 {
 	return Event;
+}
+
+bool UPunyEventComponent::GetIsDisabled() const
+{
+	return bDisable;
 }
 
 bool UPunyEventComponent::GetIsFrozen() const
@@ -82,6 +91,8 @@ void UPunyEventComponent::BeginPlay()
 
 #if WITH_EDITOR
 	Event->OnStateChange.BindUObject(this, &ThisClass::OnEventStateChange);
+
+	UpdateDisplayMesh();
 #endif
 }
 
@@ -218,33 +229,9 @@ FLinearColor UPunyEventComponent::GetDisplayColor() const
 		return BangoColor::DarkGrey;
 	}
 
-	UWorld* World = GetWorld();
-
 	FLinearColor Color = (bUseCustomColor) ? CustomColor : Event->GetDisplayBaseColor();
 
-	Event->ApplyColorEffects(Color);
-	
-	if (World->IsGameWorld())
-	{
-		if (Event->GetIsExpired())
-		{
-			Color = BangoColorOps::DarkDesatColor(Color);
-		}
-		if (GetIsFrozen())
-		{
-			Color = BangoColorOps::LightDesatColor(Color);
-		}
-		
-		return Color;
-	}
-	else if (GetWorld()->IsEditorWorld())
-	{
-		return GetStartsFrozen() ? BangoColorOps::LightDesatColor(Color) : Color;
-	}
-	else
-	{
-		return BangoColor::Error;
-	}
+	return Color;
 }
 
 void UPunyEventComponent::OnRegister()
@@ -273,12 +260,6 @@ void UPunyEventComponent::OnRegister()
 			DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawGame));
 		}
 	}
-
-	UE_LOG(Bango, Display, TEXT("UPunyEventComponent::OnRegister"));
-	
-	//UpdatePlungerProxy();
-	
-	UpdateDisplayMesh();
 #endif
 }
 
@@ -355,49 +336,45 @@ void UPunyEventComponent::UpdatePlungerProxy()
 {
 	if (!IsValid(PlungerComponent))
 	{
-		UE_LOG(Bango, Display, TEXT("UPunyEventComponent::UpdatePlungerProxy - Creating new plunger comp"));
-		//PlungerComponent = NewObject<UPunyPlungerComponent>(this);
-		//PlungerComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
-		//if (GetWorld()) { PlungerComponent->RegisterComponent(); }
-
-		PlungerComponent = CreateDefaultSubobject<UPunyPlungerComponent>("Test");
-		PlungerComponent->SetupAttachment(this);
-
-		PlungerComponent->SetCastShadow(false);
-		PlungerComponent->SetHiddenInGame(true); // TODO suit settings
-		PlungerComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	}
 }
 
 void UPunyEventComponent::UpdateDisplayMesh()
 {
+	UE_LOG(Bango, Display, TEXT("UpdateDisplayMesh"));
+
 	if (!bUseDisplayMesh || !IsValid(DisplayMesh))
 	{
 		if (IsValid(DisplayMeshComponent))
 		{
+			UE_LOG(Bango, Display, TEXT("Destroying old mesh component, no longer needed"));
 			DisplayMeshComponent->DestroyComponent();
 		}
 
-		DisplayMesh = nullptr;
-		
+		DisplayMesh = nullptr; // We null this out to prevent nuisances with unnecessary asset references
 		return;
 	}
-
+	
 	if (!IsValid(DisplayMeshComponent))
 	{
+		UE_LOG(Bango, Display, TEXT("Making new mesh component"));
+
 		DisplayMeshComponent = NewObject<UStaticMeshComponent>(this);
 		DisplayMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
+		
 		DisplayMeshComponent->SetCastShadow(false);
-		DisplayMeshComponent->SetHiddenInGame(true); // TODO should this immediately follow settings?
+		//DisplayMeshComponent->SetHiddenInGame(true);
 		DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		if (GetWorld())
 		{
+			UE_LOG(Bango, Display, TEXT("Registering mesh component"));
+
 			DisplayMeshComponent->RegisterComponent();
-			GetOwner()->AddInstanceComponent(DisplayMeshComponent);
 		}
 	}
+	
+	UE_LOG(Bango, Display, TEXT("Setting up mesh component"));
 	
 	DisplayMeshComponent->SetStaticMesh(DisplayMesh);
 	DisplayMeshComponent->SetVisibility(true);
