@@ -48,7 +48,6 @@ public:
 	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
 	bool bStartFrozen = false;
 
-	/**  */
 	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))
 	bool bDoNotFreezeWhenExpired = false;
 
@@ -205,10 +204,9 @@ public:
 
 	void DebugDrawGame(UCanvas* Canvas, APlayerController* PlayerController) const;
 
-	void OnEventStateChange();
+	void UpdatePlungerProxy();
 	
 protected:
-	void UpdatePlungerProxy();
 	
 	void UpdateDisplayMesh();
 

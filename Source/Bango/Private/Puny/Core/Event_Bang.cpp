@@ -40,7 +40,7 @@ EPunyEventSignalType UPunyEvent_Bang::RespondToTriggerSignal_Impl(UPunyTrigger* 
 		{
 			if (!bRespondToDeactivateTriggers)
 			{
-				UE_LOG(Bango, Warning, TEXT("UPunyEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
+				UE_LOG(Bango, VeryVerbose, TEXT("UPunyEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
 				return EPunyEventSignalType::None;
 			}
 			

@@ -96,7 +96,7 @@ void UPunyEventComponent::BeginPlay()
 	}
 
 #if WITH_EDITOR
-	Event->OnStateChange.BindUObject(this, &ThisClass::OnEventStateChange);
+	Event->OnStateChange.BindUObject(this, &ThisClass::UpdatePlungerProxy);
 
 	UpdateDisplayMesh();
 #endif
@@ -120,33 +120,15 @@ void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Event->UnregisterAction(Action);
 	}
 
+	PlungerComponent->DestroyComponent();
+
+	DisplayMeshComponent->DestroyComponent();
+	
 	Super::EndPlay(EndPlayReason);
-
-#if WITH_EDITORONLY_DATA
-	if (IsValid(PlungerComponent))
-	{
-		PlungerComponent->DestroyComponent();
-	}
-
-	if (IsValid(DisplayMeshComponent))
-	{
-		//DisplayMeshComponent->DestroyComponent();
-	}
-#endif
 }
 
 void UPunyEventComponent::DestroyOnBeginPlay()
-{/*
-	if (PlungerComponent)
-	{
-		PlungerComponent->DestroyComponent();
-	}
-
-	if (DisplayMeshComponent)
-	{
-		DisplayMeshComponent->DestroyComponent();
-	}*/
-	
+{
 	DestroyComponent();
 }
 
@@ -207,13 +189,15 @@ void UPunyEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 			break;
 		}
 	}
+
+	UpdatePlungerProxy();
 }
 
 void UPunyEventComponent::OnEventExpired(UPunyEvent* InEvent)
 {
 	if (bDestroyWhenExpired)
 	{
-		DestroyComponent();
+		DestroyComponent(true);
 	}
 	
 	if (!bDoNotFreezeWhenExpired)
@@ -337,9 +321,7 @@ void UPunyEventComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 
 void UPunyEventComponent::UpdatePlungerProxy()
 {
-	if (!IsValid(PlungerComponent))
-	{
-	}
+	PlungerComponent->MarkRenderDynamicDataDirty();
 }
 
 void UPunyEventComponent::UpdateDisplayMesh()
@@ -458,11 +440,6 @@ void UPunyEventComponent::DebugDrawGame(UCanvas* Canvas, APlayerController* Play
 			Canvas->DrawItem(Text);	
 		}
 	}
-}
-
-void UPunyEventComponent::OnEventStateChange()
-{
-	PlungerComponent->MarkRenderDynamicDataDirty();
 }
 
 bool UPunyEventComponent::GetDebugTextScreenLocation(UCanvas* Canvas, FVector& ScreenLocation, double& DistSqrd) const

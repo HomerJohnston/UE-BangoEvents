@@ -61,7 +61,7 @@ public:
 
 private:
 	/** Whether to use activate limit features or not. */
-	UPROPERTY(Category="Settings", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere, meta=(DisplayPriority=-1))
 	bool bUseTriggerLimits = false;
 
 	/** Number of times this event can be activated. */
