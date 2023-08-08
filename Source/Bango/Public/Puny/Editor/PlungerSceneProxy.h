@@ -78,8 +78,6 @@ private:
 	double ActivationTime = -1;
 	double DeactivationTime = -1;
 
-	bool bIsDisabled = false;
-	
 	bool bIsFrozen = false;
 	bool bIsActive = false;
 	bool bIsExpired = false;

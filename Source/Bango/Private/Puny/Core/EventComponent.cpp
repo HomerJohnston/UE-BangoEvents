@@ -26,16 +26,22 @@ UPunyEventComponent::UPunyEventComponent()
 #if WITH_EDITORONLY_DATA
 	RETURN_IF(IsTemplate());
 
-	RETURN_IF(!GetOwner());
+	//RETURN_IF(!GetOwner());
 
-	RETURN_IF(GetOwner()->IsTemplate())
+	//RETURN_IF(GetOwner()->IsTemplate())
 
-	PlungerComponent = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("BangoPlunger");
+	PlungerComponent = CreateEditorOnlyDefaultSubobject<UPunyPlungerComponent>("BangoPlunger", true);
 	PlungerComponent->SetupAttachment(this);
 
 	PlungerComponent->SetCastShadow(false);
 	PlungerComponent->SetHiddenInGame(true);
 	PlungerComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	DisplayMeshComponent = CreateEditorOnlyDefaultSubobject<UStaticMeshComponent>("DisplayMesh", true);
+	DisplayMeshComponent->SetupAttachment(this);
+	DisplayMeshComponent->SetCastShadow(false);
+	DisplayMeshComponent->SetHiddenInGame(true);
+	DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 #endif
 }
 
@@ -124,13 +130,13 @@ void UPunyEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (IsValid(DisplayMeshComponent))
 	{
-		DisplayMeshComponent->DestroyComponent();
+		//DisplayMeshComponent->DestroyComponent();
 	}
 #endif
 }
 
 void UPunyEventComponent::DestroyOnBeginPlay()
-{
+{/*
 	if (PlungerComponent)
 	{
 		PlungerComponent->DestroyComponent();
@@ -139,7 +145,7 @@ void UPunyEventComponent::DestroyOnBeginPlay()
 	if (DisplayMeshComponent)
 	{
 		DisplayMeshComponent->DestroyComponent();
-	}
+	}*/
 	
 	DestroyComponent();
 }
@@ -166,7 +172,7 @@ void UPunyEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 		return;
 	}
 
-	UE_LOG(Bango, Display, TEXT("UPunyEventComponent SetFrozen: %s"), (bNewFrozen ? TEXT("True") : TEXT("False")));
+	UE_LOG(Bango, VeryVerbose, TEXT("UPunyEventComponent SetFrozen: %s"), (bNewFrozen ? TEXT("True") : TEXT("False")));
 
 	bIsFrozen = bNewFrozen;
 
@@ -260,6 +266,8 @@ void UPunyEventComponent::OnRegister()
 			DebugDrawService_Game = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawGame));
 		}
 	}
+
+	UpdateDisplayMesh();
 #endif
 }
 
@@ -294,11 +302,6 @@ void UPunyEventComponent::OnUnregister()
 
 	DebugDrawService_Editor.Reset();
 	DebugDrawService_Game.Reset();
-
-	if (IsValid(DisplayMeshComponent))
-	{
-		DisplayMeshComponent->DestroyComponent();
-	}
 #endif
 }
 
@@ -341,45 +344,28 @@ void UPunyEventComponent::UpdatePlungerProxy()
 
 void UPunyEventComponent::UpdateDisplayMesh()
 {
-	UE_LOG(Bango, Display, TEXT("UpdateDisplayMesh"));
-
-	if (!bUseDisplayMesh || !IsValid(DisplayMesh))
+	if (!IsValid(DisplayMeshComponent))
 	{
-		if (IsValid(DisplayMeshComponent))
-		{
-			UE_LOG(Bango, Display, TEXT("Destroying old mesh component, no longer needed"));
-			DisplayMeshComponent->DestroyComponent();
-		}
+		return;
+	}
 
-		DisplayMesh = nullptr; // We null this out to prevent nuisances with unnecessary asset references
+	if (bUseDisplayMesh && IsValid(DisplayMesh))
+	{
+		DisplayMeshComponent->SetStaticMesh(DisplayMesh);
+		DisplayMeshComponent->SetVisibility(true);
+		DisplayMeshComponent->SetWorldScale3D(FVector(DisplayMeshScale));
+		DisplayMeshComponent->SetRelativeLocation(FVector(0, 0, DisplayMeshOffsetBase + DisplayMeshOffset));
+		
 		return;
 	}
 	
-	if (!IsValid(DisplayMeshComponent))
+	if (!bUseDisplayMesh)
 	{
-		UE_LOG(Bango, Display, TEXT("Making new mesh component"));
-
-		DisplayMeshComponent = NewObject<UStaticMeshComponent>(this);
-		DisplayMeshComponent->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
-		
-		DisplayMeshComponent->SetCastShadow(false);
-		//DisplayMeshComponent->SetHiddenInGame(true);
-		DisplayMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		if (GetWorld())
-		{
-			UE_LOG(Bango, Display, TEXT("Registering mesh component"));
-
-			DisplayMeshComponent->RegisterComponent();
-		}
+		DisplayMesh = nullptr;
 	}
-	
-	UE_LOG(Bango, Display, TEXT("Setting up mesh component"));
-	
-	DisplayMeshComponent->SetStaticMesh(DisplayMesh);
-	DisplayMeshComponent->SetVisibility(true);
-	DisplayMeshComponent->SetWorldScale3D(FVector(DisplayMeshScale));
-	DisplayMeshComponent->SetRelativeLocation(FVector(0, 0, DisplayMeshOffsetBase + DisplayMeshOffset));
+
+	DisplayMeshComponent->SetStaticMesh(nullptr);
+	DisplayMeshComponent->SetVisibility(false);
 }
 
 void UPunyEventComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController* PlayerController) const

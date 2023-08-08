@@ -76,8 +76,6 @@ void FPunyPlungerSceneProxy::PreparePlungerMesh(const FPlungerMeshConstructionDa
 FLinearColor FPunyPlungerSceneProxy::DetermineColor() const
 {
 	FLinearColor Color = BaseColor;
-
-	//Event->ApplyColorEffects(Color);
 	
 	if (bIsExpired)
 	{
@@ -89,19 +87,20 @@ FLinearColor FPunyPlungerSceneProxy::DetermineColor() const
 	}
 
 	double ElapsedSinceActivation = FPlatformTime::Seconds() - ActivationTime; 
-	double ElapsedSinceDeactivation = FPlatformTime::Seconds() - ActivationTime;
+	double ElapsedSinceDeactivation = FPlatformTime::Seconds() - DeactivationTime;
 
-	double ActivationAlpha = FMath::Clamp(ElapsedSinceActivation / 0.5, 0, 1);
+	double ActivationAlpha = (bIsActive) ? 0.0 : FMath::Clamp(ElapsedSinceActivation / 0.5, 0, 1);
 
-	if (ActivationAlpha > 0)
+	if (ActivationAlpha < 1)
 	{
 		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
 		Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
 	}
+
 	
 	double DeactivationAlpha = FMath::Clamp(ElapsedSinceDeactivation / 0.5, 0, 1);
 
-	if (DeactivationAlpha > 0)
+	if (DeactivationAlpha < 1)
 	{
 		FLinearColor DeactivationColor = BangoColorOps::DarkDesatColor(Color);
 		Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
@@ -168,7 +167,7 @@ void FPunyPlungerSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				}
 			}
 
-			bool bPushState = bIsActive || (FPlatformTime::Seconds() - ActivationTime <= 0.25f) || (FPlatformTime::Seconds() - DeactivationTime <= 0.25f);  
+			bool bPushState = bIsActive || ((DeactivationTime < ActivationTime) && ((FPlatformTime::Seconds() - ActivationTime <= 0.25f) || (FPlatformTime::Seconds() - DeactivationTime <= 0.25f)));  
 			
 			const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>(); 
 			ViewScale *= DevSettings->GetEventDisplaySize();
@@ -254,8 +253,6 @@ void FPunyPlungerSceneProxy::SetDynamicData_RenderThread(FPunyPlungerDynamicData
 	ActivationTime = NewDynamicData->ActivationTime;
 	DeactivationTime = NewDynamicData->DeactivationTime;
 
-	bIsDisabled = NewDynamicData->bIsDisabled;
-	
 	bIsFrozen = NewDynamicData->bIsFrozen;
 	bIsActive = NewDynamicData->bIsActive;
 	bIsExpired = NewDynamicData->bIsExpired;
