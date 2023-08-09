@@ -2,6 +2,7 @@
 #include "Puny/Core/Event.h"
 #include "Puny/Core/EventComponent.h"
 #include "Puny/Core/TriggerSignal.h"
+#include "Puny/Core/InstigatorFilter.h"
 
 void UPunyTrigger::SetEnabled(bool bEnabled)
 {
@@ -40,6 +41,14 @@ void UPunyTrigger::SendSignal(FPunyTriggerSignal Signal)
 	if  (Signal.Type == EPunyTriggerSignalType::None)
 	{
 		return;
+	}
+	
+	if (IsValid(InstigatorFilter))
+	{
+		if (!InstigatorFilter->IsValidInstigator(Signal.Instigator))
+		{
+			return;
+		}
 	}
 	
 	TriggerSignal.Execute(this, Signal);

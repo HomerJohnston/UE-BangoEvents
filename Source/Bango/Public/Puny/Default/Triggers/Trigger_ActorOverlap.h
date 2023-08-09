@@ -32,16 +32,16 @@ private:
 	bool bUseTargetActor = false;
 	
 	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
-	UPROPERTY(DisplayName = "Use Overlap Events From Actor", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(DisplayName = "Use Overlap Events From Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseTargetComponent = false;
 
-	/** Optionally choose a specific component to listen for overlap triggers from. Note: only works on self actor due to a bug in FComponentReference. */
-	UPROPERTY(DisplayName = "Use Overlap Events From Component", Category="Advanced", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
+	/** Optionally choose a specific component to listen for overlap triggers from. Note: only works on self actor, due to a bug in FComponentReference. */
+	UPROPERTY(DisplayName = "Use Overlap Events From Component", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
 	FComponentReference TargetComponent;
-	
+
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------

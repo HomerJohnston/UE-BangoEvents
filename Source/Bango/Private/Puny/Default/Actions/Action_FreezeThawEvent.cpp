@@ -1,6 +1,6 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Puny/Default/Action_FreezeThawEvent.h"
+#include "Puny/Default/Actions/Action_FreezeThawEvent.h"
 
 #include "Bango/Core/BangoSignal.h"
 #include "Bango/Utility/Log.h"

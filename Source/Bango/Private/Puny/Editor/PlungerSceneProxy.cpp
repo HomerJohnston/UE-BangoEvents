@@ -22,10 +22,10 @@ void BuildPunyCylinderVerts(const FVector& Base, const FVector& XAxis, const FVe
 // ------------------------------------------------------------------------------------------------
 FPunyPlungerSceneProxy::FPunyPlungerSceneProxy(UPunyPlungerComponent* OwnerComponent)
 	: FPrimitiveSceneProxy(OwnerComponent),
-	VertexFactory_HandleUp(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy"),
-	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy"),
 	bIsScreenSizeScaled(OwnerComponent->bIsScreenSizeScaled),
-	ScreenSize(OwnerComponent->ScreenSize)
+	ScreenSize(OwnerComponent->ScreenSize),
+	VertexFactory_HandleUp(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy"),
+	VertexFactory_HandleDown(GetScene().GetFeatureLevel(), "FPunyPlungerSceneProxy")
 {
 	bWillEverBeLit = false;
 	bAffectDistanceFieldLighting = false;

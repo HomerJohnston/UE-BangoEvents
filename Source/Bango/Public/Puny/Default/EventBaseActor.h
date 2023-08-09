@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "_EventBaseActor.generated.h"
+#include "EventBaseActor.generated.h"
 
 class UPunyEventComponent;
 UCLASS()

@@ -1,6 +1,6 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Puny/Default/Action_DebugLog.h"
+#include "Puny/Default/Actions/Action_DebugLog.h"
 
 #include "Bango/Utility/Log.h"
 #include "Puny/Core/EventSignal.h"

@@ -9,6 +9,7 @@
 
 class UPunyEvent;
 class UPunyEventComponent;
+class UPunyInstigatorFilter;
 struct FBangoDebugTextEntry;
 
 UDELEGATE()
@@ -27,6 +28,10 @@ class BANGO_API UPunyTrigger : public UObject
 	// SETTINGS
 	// ============================================================================================
 
+	/** Filter for overlap events. */
+	UPROPERTY(EditAnywhere, Instanced, Category = "Settings")
+	UPunyInstigatorFilter* InstigatorFilter;
+	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------

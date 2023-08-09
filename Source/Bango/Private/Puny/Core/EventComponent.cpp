@@ -12,6 +12,7 @@
 #include "Puny/Trigger.h"
 #include "Puny/Action.h"
 #include "Puny/Core/Event.h"
+#include "Puny/Core/Event_Bang.h"
 
 #if WITH_EDITORONLY_DATA
 // TODO FText
@@ -23,6 +24,8 @@ TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> UPunyEventComponent::Puny
 
 UPunyEventComponent::UPunyEventComponent()
 {
+	Event = CreateDefaultSubobject<UPunyEvent_Bang>("Test");
+
 #if WITH_EDITORONLY_DATA
 	RETURN_IF(IsTemplate());
 
