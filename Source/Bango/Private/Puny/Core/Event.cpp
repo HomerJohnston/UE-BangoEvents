@@ -235,8 +235,10 @@ void UPunyEvent::RespondToTriggerSignalDeferred(UPunyTrigger* Trigger, FPunyTrig
 	{
 		ExpiryDelegate.Broadcast(this);
 	}
-	
+
+#if WITH_EDITOR
 	OnStateChange.ExecuteIfBound();
+#endif
 }
 
 EPunyEventSignalType UPunyEvent::RespondToTriggerSignal_Impl(UPunyTrigger* Trigger, FPunyTriggerSignal Signal)

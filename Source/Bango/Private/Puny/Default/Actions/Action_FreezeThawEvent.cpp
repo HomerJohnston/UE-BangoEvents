@@ -85,6 +85,12 @@ void UPunyAction_FreezeThawEvent::HandleComponent(bool Val)
 
 void UPunyAction_FreezeThawEvent::HandleActor(bool Val)
 {
+	if (!IsValid(TargetActor))
+	{
+		UE_LOG(Bango, Warning, TEXT("UPunyAction_FreezeThawEvent::HandleActor - invalid Target Actor!"));
+		return;
+	}
+	
 	for (UActorComponent* Component : TargetActor->GetComponents())
 	{
 		if (!IsValid(Component))
