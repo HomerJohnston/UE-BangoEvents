@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Puny/Core/InstigatorFilter.h"
+#include "Puny/InstigatorFilter.h"
 
 #include "InstigatorFilter_PlayerPawn.generated.h"
 

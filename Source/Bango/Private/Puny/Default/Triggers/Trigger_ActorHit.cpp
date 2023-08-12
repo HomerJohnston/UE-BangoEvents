@@ -1,7 +1,5 @@
 ﻿#include "Puny/Default/Triggers/Trigger_ActorHit.h"
 
-#include "Puny/Core/InstigatorFilter.h"
-
 UPunyTrigger_ActorHit::UPunyTrigger_ActorHit()
 {
 	SignalOnHit = EPunyTriggerSignalType::None;

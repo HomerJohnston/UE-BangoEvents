@@ -2,7 +2,7 @@
 #include "Puny/Core/Event.h"
 #include "Puny/Core/EventComponent.h"
 #include "Puny/Core/TriggerSignal.h"
-#include "Puny/Core/InstigatorFilter.h"
+#include "Puny/InstigatorFilter.h"
 
 void UPunyTrigger::SetEnabled(bool bEnabled)
 {
