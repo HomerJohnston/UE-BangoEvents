@@ -1,6 +1,6 @@
 ﻿#include "Bango/Core/InstigatorRecords.h"
 
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/ActionSignal.h"
 
 TMap<UObject*, FBangoInstigatorRecord> FBangoInstigatorRecordCollection::GetData()
 { return AllInstigatorRecords; }
@@ -25,14 +25,14 @@ int32 FBangoInstigatorRecordCollection::GetNumActiveInstigators()
 	return ActiveInstigators.Num();
 }
 
-void FBangoInstigatorRecordCollection::UpdateInstigatorRecord(UObject* Instigator, EBangoEventSignalType SignalType, double Time)
+void FBangoInstigatorRecordCollection::UpdateInstigatorRecord(UObject* Instigator, EBangoActionSignalType SignalType, double Time)
 {
 	auto& Record = AllInstigatorRecords.FindOrAdd(Instigator);
 	Record.Instigator = Instigator;
 
 	switch (SignalType)
 	{
-		case EBangoEventSignalType::StartAction:
+		case EBangoActionSignalType::StartAction:
 		{
 			Record.StartTime = Time;
 			
@@ -45,7 +45,7 @@ void FBangoInstigatorRecordCollection::UpdateInstigatorRecord(UObject* Instigato
 			
 			break;
 		}
-		case EBangoEventSignalType::StopAction:
+		case EBangoActionSignalType::StopAction:
 		{
 			Record.StopTime = Time;
 			
@@ -65,18 +65,18 @@ void FBangoInstigatorRecordCollection::UpdateInstigatorRecord(UObject* Instigato
 	}
 }
 
-bool FBangoInstigatorRecordCollection::GetInstigationTime(UObject* Instigator, EBangoEventSignalType SignalType, double& OutTime)
+bool FBangoInstigatorRecordCollection::GetInstigationTime(UObject* Instigator, EBangoActionSignalType SignalType, double& OutTime)
 {
 	if (FBangoInstigatorRecord* Record = AllInstigatorRecords.Find(Instigator))
 	{
 		switch (SignalType)
 		{
-			case EBangoEventSignalType::StartAction:
+			case EBangoActionSignalType::StartAction:
 			{
 				OutTime = Record->StartTime;
 				return OutTime >= 0.0;
 			}
-			case EBangoEventSignalType::StopAction:
+			case EBangoActionSignalType::StopAction:
 			{
 				OutTime = Record->StopTime;
 				return OutTime >= 0.0;

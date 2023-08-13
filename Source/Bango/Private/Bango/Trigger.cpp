@@ -1,7 +1,7 @@
 ﻿#include "Bango/Trigger.h"
 #include "Bango/Core/Event.h"
 #include "Bango/Core/EventComponent.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/Core/EventSignal.h"
 #include "Bango/InstigatorFilter.h"
 
 void UBangoTrigger::SetEnabled(bool bEnabled)
@@ -36,9 +36,9 @@ void UBangoTrigger::Disable_Implementation()
 	checkNoEntry();
 }
 
-void UBangoTrigger::SendSignal(FBangoTriggerSignal Signal)
+void UBangoTrigger::SendSignal(FBangoEventSignal Signal)
 {
-	if  (Signal.Type == EBangoTriggerSignalType::None)
+	if  (Signal.Type == EBangoEventSignalType::None)
 	{
 		return;
 	}

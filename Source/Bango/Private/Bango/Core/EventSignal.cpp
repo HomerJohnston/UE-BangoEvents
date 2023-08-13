@@ -1,5 +1,6 @@
 ﻿#include "Bango/Core/EventSignal.h"
 
+
 FBangoEventSignal::FBangoEventSignal() : Type(EBangoEventSignalType::None), Instigator(nullptr)
 {
 }

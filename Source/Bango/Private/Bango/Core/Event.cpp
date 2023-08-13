@@ -4,7 +4,6 @@
 #include "Bango/Action.h"
 #include "Bango/Core/EventComponent.h"
 #include "Bango/Core/EventSignal.h"
-#include "Bango/Core/TriggerSignal.h"
 
 #if WITH_EDITORONLY_DATA
 // TODO FText
@@ -81,7 +80,7 @@ void UBangoEvent::UnregisterAction(UBangoAction* Action)
 	EventSignal.RemoveDynamic(Action, &UBangoAction::HandleSignal);
 }
 
-void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoEventSignal Signal)
 {
 	if (GetIsExpired())
 	{
@@ -97,14 +96,14 @@ void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSi
 	{
 		switch (Signal.Type)
 		{
-			case EBangoTriggerSignalType::ActivateEvent:
+			case EBangoEventSignalType::ActivateEvent:
 			{
 				Delay = ActivateDelay;
 				TimerHandle = &DelayedActivateHandle;
 				OppositeTimerHandle = &DelayedDeactivateHandle;
 				break;
 			}
-			case EBangoTriggerSignalType::DeactivateEvent:
+			case EBangoEventSignalType::DeactivateEvent:
 			{
 				Delay = DeactivateDelay;
 				TimerHandle = &DelayedDeactivateHandle;
@@ -198,16 +197,16 @@ void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSi
 	}
 }
 
-void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoEventSignal Signal)
 {
 	switch (Signal.Type)
 	{
-		case EBangoTriggerSignalType::ActivateEvent:
+		case EBangoEventSignalType::ActivateEvent:
 		{
 			DelayedActivateHandle.Invalidate();
 			break;
 		}
-		case EBangoTriggerSignalType::DeactivateEvent:
+		case EBangoEventSignalType::DeactivateEvent:
 		{
 			DelayedDeactivateHandle.Invalidate();
 			break;
@@ -218,14 +217,14 @@ void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoT
 		}
 	}	
 	
-	EBangoEventSignalType ActionSignal = RespondToTriggerSignal_Impl(Trigger, Signal);
+	EBangoActionSignalType ActionSignal = RespondToTriggerSignal_Impl(Trigger, Signal);
 	
-	if (ActionSignal == EBangoEventSignalType::None)
+	if (ActionSignal == EBangoActionSignalType::None)
 	{
 		return;
 	}
 
-	EventSignal.Broadcast(this, FBangoEventSignal(ActionSignal, Signal.Instigator));
+	EventSignal.Broadcast(this, FBangoActionSignal(ActionSignal, Signal.Instigator));
 
 	AddInstigatorRecord(Signal.Instigator, ActionSignal);
 	
@@ -239,19 +238,19 @@ void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoT
 #endif
 }
 
-EBangoEventSignalType UBangoEvent::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+EBangoActionSignalType UBangoEvent::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoEventSignal Signal)
 {
-	return EBangoEventSignalType::None;
+	return EBangoActionSignalType::None;
 }
 
-void UBangoEvent::AddInstigatorRecord(UObject* Instigator, EBangoEventSignalType SignalType)
+void UBangoEvent::AddInstigatorRecord(UObject* Instigator, EBangoActionSignalType SignalType)
 {	
 	double CurrentTime = GetWorld()->GetTimeSeconds();
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, SignalType, CurrentTime);
 
 	switch (SignalType)
 	{
-		case EBangoEventSignalType::StartAction:
+		case EBangoActionSignalType::StartAction:
 		{
 			LastActivateInstigator = Instigator;
 			LastActivateTime = CurrentTime;
@@ -259,7 +258,7 @@ void UBangoEvent::AddInstigatorRecord(UObject* Instigator, EBangoEventSignalType
 			
 			break;
 		}
-		case EBangoEventSignalType::StopAction:
+		case EBangoActionSignalType::StopAction:
 		{
 			LastDeactivateInstigator = Instigator;
 			LastDeactivateTime = CurrentTime;

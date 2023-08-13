@@ -6,8 +6,8 @@
 
 #include "Action_DebugLog.generated.h"
 
-struct FBangoEventSignal;
-enum class EBangoEventSignalType : uint8;
+struct FBangoActionSignal;
+enum class EBangoActionSignalType : uint8;
 
 UENUM()
 enum class EBangoAction_DebugLog_PrintTo
@@ -87,12 +87,12 @@ protected:
 	// ============================================================================================
 
 public:
-	void HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal) override;
+	void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
 	
 protected:
 	FText GetEventName();
 
-	FString GetDefaultMessage(FBangoEventSignal Signal);
+	FString GetDefaultMessage(FBangoActionSignal Signal);
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

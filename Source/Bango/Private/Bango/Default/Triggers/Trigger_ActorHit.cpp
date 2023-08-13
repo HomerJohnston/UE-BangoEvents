@@ -2,7 +2,7 @@
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {
-	SignalOnHit = EBangoTriggerSignalType::None;
+	SignalOnHit = EBangoEventSignalType::None;
 }
 
 void UBangoTrigger_ActorHit::Enable_Implementation()
@@ -52,6 +52,6 @@ void UBangoTrigger_ActorHit::SetTargetActor(AActor* NewTargetActor)
 
 void UBangoTrigger_ActorHit::OnActorHit(AActor* HitActor, AActor* InstigatorActor, FVector NormalImpulse, const FHitResult& Hit)
 {
-	SendSignal(FBangoTriggerSignal(SignalOnHit, InstigatorActor));
+	SendSignal(FBangoEventSignal(SignalOnHit, InstigatorActor));
 }
 

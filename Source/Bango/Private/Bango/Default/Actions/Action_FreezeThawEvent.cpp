@@ -2,6 +2,7 @@
 
 #include "Bango/Default/Actions/Action_FreezeThawEvent.h"
 
+#include "Bango/Core/ActionSignal.h"
 #include "Bango/Utility/Log.h"
 #include "Bango/Core/EventComponent.h"
 #include "Bango/Editor/DebugUtility.h"
@@ -13,16 +14,16 @@ UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 	OnStop = EBangoFreezeThawEventAction::DoNothing;
 }
 
-void UBangoAction_FreezeThawEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal)
+void UBangoAction_FreezeThawEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
 {
 	switch (Signal.Type)
 	{
-		case EBangoEventSignalType::StartAction:
+		case EBangoActionSignalType::StartAction:
 		{
 			Handle(OnStart);
 			break;
 		}
-		case EBangoEventSignalType::StopAction:
+		case EBangoActionSignalType::StopAction:
 		{
 			Handle(OnStop);
 			break;

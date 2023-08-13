@@ -1,20 +1,19 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/ActionSignal.h"
 #include "Bango/Core/InstigatorRecords.h"
 
 #include "Event.generated.h"
 
-enum class EBangoTriggerSignalType : uint8;
+enum class EBangoEventSignalType : uint8;
 class UBangoEventComponent;
 class UBangoAction;
-struct FBangoTriggerSignal;
 struct FBangoDebugTextEntry;
 
 // TODO do I really need Dynamic
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBangoEventExpiredDelegate, UBangoEvent*, Event);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBangoEventSignalDelegate, UBangoEvent*, Event, FBangoEventSignal, Signal);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBangoEventSignalDelegate, UBangoEvent*, Event, FBangoActionSignal, Signal);
 
 UENUM(BlueprintType)
 enum class EBangoExistingSignalHandling : uint8
@@ -204,18 +203,18 @@ public:
 	
 	/**  */
 	UFUNCTION()
-	void RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	void RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoEventSignal Signal);
 
 	/**  */
-	void RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	void RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoEventSignal Signal);
 
 	/**  */
-	virtual EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	virtual EBangoActionSignalType RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoEventSignal Signal);
 
 protected:
 	/**  */
 	UFUNCTION()
-	void AddInstigatorRecord(UObject* Instigator, EBangoEventSignalType SignalType);
+	void AddInstigatorRecord(UObject* Instigator, EBangoActionSignalType SignalType);
 	
 	/**  */
 	UBangoEventComponent* GetEventComponent();

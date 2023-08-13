@@ -73,7 +73,7 @@ private:
 	// ============================================================================================
 
 public:
-	virtual void HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal) override;
+	virtual void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
 
 private:
 	void Handle(EBangoFreezeThawEventAction Action);

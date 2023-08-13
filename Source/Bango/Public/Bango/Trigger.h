@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/Core/EventSignal.h"
 
 #include "Trigger.generated.h"
 
@@ -13,7 +13,7 @@ class UBangoInstigatorFilter;
 struct FBangoDebugTextEntry;
 
 UDELEGATE()
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FBangoTriggerSignalDelegate, UBangoTrigger*, Trigger, FBangoTriggerSignal, Signal);
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FBangoTriggerSignalDelegate, UBangoTrigger*, Trigger, FBangoEventSignal, Signal);
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoTrigger : public UObject
@@ -72,7 +72,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void Disable();
 
-	void SendSignal(FBangoTriggerSignal Signal);
+	void SendSignal(FBangoEventSignal Signal);
 
 protected:
 	UBangoEventComponent* GetEventComponent();

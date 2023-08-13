@@ -22,11 +22,11 @@ class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger
 private:
 	/** Signal to event upon beginning overlap. */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoTriggerSignalType OnBeginOverlap;
+	EBangoEventSignalType OnBeginOverlap;
 
 	/** Signal to event upon ending overlap. */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoTriggerSignalType OnEndOverlap;
+	EBangoEventSignalType OnEndOverlap;
 
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseTargetActor = false;

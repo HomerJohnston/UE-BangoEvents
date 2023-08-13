@@ -5,7 +5,7 @@
 #include "EventComponent.generated.h"
 
 class UBangoPlungerComponent;
-struct FBangoTriggerSignal;
+struct FBangoEventSignal;
 class UBangoEvent;
 class UBangoTrigger;
 class UBangoAction;

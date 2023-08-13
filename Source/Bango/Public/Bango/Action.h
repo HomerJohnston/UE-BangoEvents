@@ -6,7 +6,7 @@
 #include "Bango/Core/EventSignal.h"
 #include "Action.generated.h"
 
-enum class EBangoEventSignalType : uint8;
+enum class EBangoActionSignalType : uint8;
 class UBangoEventComponent;
 class UBangoTrigger;
 
@@ -44,7 +44,7 @@ class BANGO_API UBangoAction : public UObject
 	// ============================================================================================
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal);
+	void HandleSignal(UBangoEvent* Event, FBangoActionSignal Signal);
 	
 protected:
 	UWorld* GetWorld() const override;

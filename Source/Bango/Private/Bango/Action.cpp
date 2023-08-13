@@ -1,18 +1,23 @@
 ﻿#include "Bango/Action.h"
 
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/ActionSignal.h"
 #include "Bango/Core/EventComponent.h"
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
 
-void UBangoAction::HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal)
+void UBangoAction::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
 {
 	checkNoEntry();
 }
 
 UWorld* UBangoAction::GetWorld() const
 {
-	return UObject::GetWorld();
+	if (IsValid(GetOuter()))
+	{
+		return GetOuter()->GetWorld();
+	}
+	
+	return nullptr;
 }
 
 UBangoEventComponent* UBangoAction::GetEventComponent() const

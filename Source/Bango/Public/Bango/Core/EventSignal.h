@@ -4,12 +4,12 @@
 
 #include "EventSignal.generated.h"
 
-UENUM(BlueprintType)
+UENUM()
 enum class EBangoEventSignalType : uint8
 {
 	None,
-	StartAction,
-	StopAction,
+	ActivateEvent,
+	DeactivateEvent,
 	MAX
 };
 
@@ -26,27 +26,3 @@ struct FBangoEventSignal
 
 	UObject* Instigator;
 };
-
-/*
-namespace BangoUtility
-{
-	namespace Signals
-	{
-		template<typename T>
-		void FillMap(TMap<EBangoSignal, T>& Map, T DefaultValue)
-		{
-			Map =
-			{
-				{ EBangoSignal::Activate, DefaultValue },
-				{ EBangoSignal::Deactivate, DefaultValue }
-			};
-		}
-
-		inline EBangoSignal GetOpposite(EBangoSignal InSignal)
-		{
-			uint8 Val = static_cast<uint8>(InSignal); // Convert {1, 2} to {0, 1}
-
-			return static_cast<EBangoSignal>((Val + 1) % 2); // Flip to {1, 0} and convert to {2, 1}
-		}
-	}
-*/

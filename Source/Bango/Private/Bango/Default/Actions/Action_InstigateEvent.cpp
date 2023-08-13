@@ -1,26 +1,26 @@
 #include "Bango/Default/Actions/Action_InstigateEvent.h"
 
 #include "Bango/Core/Event.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/Core/ActionSignal.h"
 #include "Bango/Utility/Log.h"
 #include "Bango/Core/EventComponent.h"
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {
-	OnStart = EBangoTriggerSignalType::None;
-	OnStop = EBangoTriggerSignalType::None;
+	OnStart = EBangoEventSignalType::None;
+	OnStop = EBangoEventSignalType::None;
 }
 
-void UBangoAction_InstigateEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal)
+void UBangoAction_InstigateEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
 {
 	switch (Signal.Type)
 	{
-		case EBangoEventSignalType::StartAction:
+		case EBangoActionSignalType::StartAction:
 		{
 			Handle(OnStart);
 			break;
 		}
-		case EBangoEventSignalType::StopAction:
+		case EBangoActionSignalType::StopAction:
 		{
 			Handle(OnStop);
 			break;
@@ -32,7 +32,7 @@ void UBangoAction_InstigateEvent::HandleSignal_Implementation(UBangoEvent* Event
 	}
 }
 
-void UBangoAction_InstigateEvent::Handle(EBangoTriggerSignalType Signal)
+void UBangoAction_InstigateEvent::Handle(EBangoEventSignalType Signal)
 {
 	if (bUseTargetComponent)
 	{
@@ -44,7 +44,7 @@ void UBangoAction_InstigateEvent::Handle(EBangoTriggerSignalType Signal)
 	}
 }
 
-void UBangoAction_InstigateEvent::HandleComponent(EBangoTriggerSignalType Signal)
+void UBangoAction_InstigateEvent::HandleComponent(EBangoEventSignalType Signal)
 {
 	UBangoEventComponent* EventComponent = Cast<UBangoEventComponent>(TargetComponent.GetComponent(GetActor()));
 
@@ -62,12 +62,12 @@ void UBangoAction_InstigateEvent::HandleComponent(EBangoTriggerSignalType Signal
 		return;
 	}
 
-	FBangoTriggerSignal Trigger(Signal, this);
+	FBangoEventSignal Trigger(Signal, this);
 
 	Event->RespondToTriggerSignal(nullptr, Trigger);
 }
 
-void UBangoAction_InstigateEvent::HandleActor(EBangoTriggerSignalType Signal)
+void UBangoAction_InstigateEvent::HandleActor(EBangoEventSignalType Signal)
 {
 	if (!IsValid(TargetActor))
 	{
@@ -97,7 +97,7 @@ void UBangoAction_InstigateEvent::HandleActor(EBangoTriggerSignalType Signal)
 			return;
 		}
 
-		FBangoTriggerSignal Trigger(Signal, this);
+		FBangoEventSignal Trigger(Signal, this);
 
 		Event->RespondToTriggerSignal(nullptr, Trigger);
 	}

@@ -3,20 +3,20 @@
 #include "Bango/Default/Actions/Action_DebugLog.h"
 
 #include "Bango/Utility/Log.h"
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/ActionSignal.h"
 #include "Bango/Core/EventComponent.h"
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {
 }
 
-void UBangoAction_DebugLog::HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal)
+void UBangoAction_DebugLog::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
 {
 	FString Message;
 
 	switch(Signal.Type)
 	{
-		case EBangoEventSignalType::StartAction:
+		case EBangoActionSignalType::StartAction:
 		{
 			if (bUseActivateMessage)
 			{
@@ -28,7 +28,7 @@ void UBangoAction_DebugLog::HandleSignal_Implementation(UBangoEvent* Event, FBan
 			}
 			break;
 		}
-		case EBangoEventSignalType::StopAction:
+		case EBangoActionSignalType::StopAction:
 		{
 			if (bUseDeactivateMessage)
 			{
@@ -67,9 +67,9 @@ FText UBangoAction_DebugLog::GetEventName()
 #endif
 }
 
-FString UBangoAction_DebugLog::GetDefaultMessage(FBangoEventSignal Signal)
+FString UBangoAction_DebugLog::GetDefaultMessage(FBangoActionSignal Signal)
 {
-	FString ActionName = StaticEnum<EBangoEventSignalType>()->GetValueAsString(Signal.Type);
+	FString ActionName = StaticEnum<EBangoActionSignalType>()->GetValueAsString(Signal.Type);
 
 	return FString::Format(TEXT("Action <{Name}> called on <{Actor}}> for instigator <{Instigator}>"),
 	{

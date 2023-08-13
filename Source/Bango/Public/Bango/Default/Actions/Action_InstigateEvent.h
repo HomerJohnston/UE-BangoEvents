@@ -6,9 +6,9 @@
 
 class UBangoEvent;
 class APlayerController;
-struct FBangoEventSignal;
+struct FBangoActionSignal;
 class UCanvas;
-enum class EBangoTriggerSignalType : uint8;
+enum class EBangoEventSignalType : uint8;
 
 UCLASS(DisplayName="Activate/Deactivate Event")
 class BANGO_API UBangoAction_InstigateEvent : public UBangoAction
@@ -44,21 +44,21 @@ private:
 private:
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoTriggerSignalType OnStart;
+	EBangoEventSignalType OnStart;
 	
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoTriggerSignalType OnStop;
+	EBangoEventSignalType OnStop;
 	
 public:
-	void HandleSignal_Implementation(UBangoEvent* Event, FBangoEventSignal Signal) override;
+	void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
 
 private:
-	void Handle(EBangoTriggerSignalType Signal);
+	void Handle(EBangoEventSignalType Signal);
 
-	void HandleComponent(EBangoTriggerSignalType Signal);
+	void HandleComponent(EBangoEventSignalType Signal);
 
-	void HandleActor(EBangoTriggerSignalType Signal);
+	void HandleActor(EBangoEventSignalType Signal);
 
 public:
 	virtual bool HasValidSetup() override;

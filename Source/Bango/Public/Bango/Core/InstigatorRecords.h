@@ -7,7 +7,7 @@
 
 #include "InstigatorRecords.generated.h"
 
-enum class EBangoEventSignalType : uint8;
+enum class EBangoActionSignalType : uint8;
 
 USTRUCT()
 struct FBangoInstigatorRecord
@@ -48,9 +48,9 @@ public:
 
 	int32 GetNumActiveInstigators();
 	
-	void UpdateInstigatorRecord(UObject* Instigator, EBangoEventSignalType SignalType, double Time);
+	void UpdateInstigatorRecord(UObject* Instigator, EBangoActionSignalType SignalType, double Time);
 
-	bool GetInstigationTime(UObject* Instigator, EBangoEventSignalType SignalType, double& OutTime);
+	bool GetInstigationTime(UObject* Instigator, EBangoActionSignalType SignalType, double& OutTime);
 
 	UObject* GetFirstInstigator();
 

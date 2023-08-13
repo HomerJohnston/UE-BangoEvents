@@ -89,22 +89,22 @@ void UBangoTrigger_ActorOverlap::Disable_Implementation()
 
 void UBangoTrigger_ActorOverlap::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	SendSignal(FBangoTriggerSignal(OnBeginOverlap, OtherComp));
+	SendSignal(FBangoEventSignal(OnBeginOverlap, OtherComp));
 }
 
 void UBangoTrigger_ActorOverlap::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	SendSignal(FBangoTriggerSignal(OnEndOverlap, OtherComp));
+	SendSignal(FBangoEventSignal(OnEndOverlap, OtherComp));
 }
 
 void UBangoTrigger_ActorOverlap::OnActorBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	SendSignal(FBangoTriggerSignal(OnBeginOverlap, InstigatorActor));
+	SendSignal(FBangoEventSignal(OnBeginOverlap, InstigatorActor));
 }
 
 void UBangoTrigger_ActorOverlap::OnActorEndOverlap(AActor* OverlapActor, AActor* InstigatorActor)
 {
-	SendSignal(FBangoTriggerSignal(OnEndOverlap, InstigatorActor));
+	SendSignal(FBangoEventSignal(OnEndOverlap, InstigatorActor));
 }
 
 void UBangoTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
@@ -136,6 +136,6 @@ void UBangoTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& P
 #if WITH_EDITOR
 bool UBangoTrigger_ActorOverlap::HasValidSetup()
 {
-	return OnBeginOverlap != EBangoTriggerSignalType::None || OnEndOverlap != EBangoTriggerSignalType::None;
+	return OnBeginOverlap != EBangoEventSignalType::None || OnEndOverlap != EBangoEventSignalType::None;
 }
 #endif

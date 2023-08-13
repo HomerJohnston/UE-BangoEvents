@@ -4,7 +4,6 @@
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
 #include "Bango/Core/EventSignal.h"
-#include "Bango/Core/TriggerSignal.h"
 
 bool UBangoEvent_Bang::GetIsExpired()
 {
@@ -23,38 +22,38 @@ bool UBangoEvent_Bang::GetIsExpired()
 	return bExpired;
 }
 
-EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+EBangoActionSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoEventSignal Signal)
 {
 	switch (Signal.Type)
 	{
-		case EBangoTriggerSignalType::ActivateEvent:
+		case EBangoEventSignalType::ActivateEvent:
 		{
 			if (GetUsesActivateLimit() && GetActivateCount() >= GetActivateLimit())
 			{
-				return EBangoEventSignalType::None;
+				return EBangoActionSignalType::None;
 			}
 			
-			return EBangoEventSignalType::StartAction;
+			return EBangoActionSignalType::StartAction;
 		}
-		case EBangoTriggerSignalType::DeactivateEvent:
+		case EBangoEventSignalType::DeactivateEvent:
 		{
 			if (!bRespondToDeactivateTriggers)
 			{
 				UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
-				return EBangoEventSignalType::None;
+				return EBangoActionSignalType::None;
 			}
 			
 			if (GetUsesActivateLimit() && GetDeactivateCount() >= GetDeactivateLimit())
 			{
-				return EBangoEventSignalType::None;
+				return EBangoActionSignalType::None;
 			}
 
-			return EBangoEventSignalType::StopAction;
+			return EBangoActionSignalType::StopAction;
 		}
 		default:
 		{
 			UE_LOG(Bango, Warning, TEXT("UBangoEvent_Bang ignoring Unknown trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
-			return EBangoEventSignalType::None;
+			return EBangoActionSignalType::None;
 		}
 	}
 }
