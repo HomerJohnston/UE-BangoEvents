@@ -12,11 +12,12 @@ void UBangoAction::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionS
 
 UWorld* UBangoAction::GetWorld() const
 {
-	if (IsValid(GetOuter()))
+	if (!HasAnyFlags(RF_ClassDefaultObject) && ensureMsgf(GetOuter(), TEXT("BangoAction: %s has a null OuterPrivate in UBangoAction::GetWorld()"), *GetFullName())
+		&& !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable())
 	{
 		return GetOuter()->GetWorld();
 	}
-	
+
 	return nullptr;
 }
 
