@@ -10,43 +10,40 @@ UBangoAction_DebugLog::UBangoAction_DebugLog()
 {
 }
 
-void UBangoAction_DebugLog::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
+void UBangoAction_DebugLog::OnStart_Implementation(UBangoEvent* Event, UObject* Instigator)
 {
-	FString Message;
+#if UE_BUILD_SHIPPING
 
-	switch(Signal.Type)
+#else
+	Handle(bUseActivateMessage, ActivateMessage, EBangoActionSignalType::StartAction, Instigator);
+#endif
+}
+
+void UBangoAction_DebugLog::OnStop_Implementation(UBangoEvent* Event, UObject* Instigator)
+{
+#if UE_BUILD_SHIPPING
+
+#else
+	Handle(bUseDeactivateMessage, DeactivateMessage, EBangoActionSignalType::StopAction, Instigator);
+#endif
+}
+
+void UBangoAction_DebugLog::Handle(bool& bUseCustomMessage, FString& CustomMessage, EBangoActionSignalType SignalType, UObject* Instigator)
+{
+	if (bUseCustomMessage)
 	{
-		case EBangoActionSignalType::StartAction:
-		{
-			if (bUseActivateMessage)
-			{
-				Message = ActivateMessage;
-			}
-			else
-			{
-				Message = GetDefaultMessage(Signal);
-			}
-			break;
-		}
-		case EBangoActionSignalType::StopAction:
-		{
-			if (bUseDeactivateMessage)
-			{
-				Message = DeactivateMessage;
-			}
-			else
-			{
-				Message = GetDefaultMessage(Signal);
-			}
-			break;
-		}
-		default:
-		{
-			Message = "UBangoAction_DebugLog - ERROR";
-			break;
-		}
+		Print(CustomMessage);
 	}
+	else
+	{
+		FString DefaultMessage = GetDefaultMessage(SignalType, Instigator);
 
+		Print(DefaultMessage);
+	}
+}
+
+void UBangoAction_DebugLog::Print(FString& Message)
+{
 	if (PrintTo != EBangoAction_DebugLog_PrintTo::Screen)
 	{
 		UE_LOG(Bango, Display, TEXT("%s"), *Message);
@@ -54,7 +51,7 @@ void UBangoAction_DebugLog::HandleSignal_Implementation(UBangoEvent* Event, FBan
 
 	if (PrintTo != EBangoAction_DebugLog_PrintTo::Log)
 	{
-		GEngine->AddOnScreenDebugMessage(OnScreenKey, OnScreenDisplayTime, OnScreenColor, Message);
+		GEngine->AddOnScreenDebugMessage(OnScreenKey, OnScreenDisplayTime, OnScreenColor, *Message);
 	}
 }
 
@@ -67,14 +64,14 @@ FText UBangoAction_DebugLog::GetEventName()
 #endif
 }
 
-FString UBangoAction_DebugLog::GetDefaultMessage(FBangoActionSignal Signal)
+FString UBangoAction_DebugLog::GetDefaultMessage(EBangoActionSignalType SignalType, UObject* Instigator)
 {
-	FString ActionName = StaticEnum<EBangoActionSignalType>()->GetValueAsString(Signal.Type);
+	FString ActionName = StaticEnum<EBangoActionSignalType>()->GetValueAsString(SignalType);
 
 	return FString::Format(TEXT("Action <{Name}> called on <{Actor}}> for instigator <{Instigator}>"),
 	{
 		{ TEXT("Name"), ActionName },
 		{ TEXT("Actor"), GetEventName().ToString() },
-		{ TEXT("Instigator"), IsValid(Signal.Instigator) ? Signal.Instigator->GetName() : FString("NULL") }
+		{ TEXT("Instigator"), IsValid(Instigator) ? Instigator->GetName() : FString("NULL") }
 	});
 }

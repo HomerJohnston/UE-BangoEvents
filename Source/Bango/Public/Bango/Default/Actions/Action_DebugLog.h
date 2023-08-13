@@ -87,12 +87,18 @@ protected:
 	// ============================================================================================
 
 public:
-	void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
+	void OnStart_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+
+	void OnStop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+
+	void Handle(bool& bUseCustomMessage, FString& CustomMessage, EBangoActionSignalType SignalType, UObject* Instigator);
+
+	void Print(FString& Message);
 	
 protected:
 	FText GetEventName();
 
-	FString GetDefaultMessage(FBangoActionSignal Signal);
+	FString GetDefaultMessage(EBangoActionSignalType SignalType, UObject* Instigator);
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

@@ -44,15 +44,17 @@ private:
 private:
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoEventSignalType OnStart;
+	EBangoEventSignalType OnStartAction;
 	
 	/**  */
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoEventSignalType OnStop;
+	EBangoEventSignalType OnStopAction;
 	
 public:
-	void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
+	void OnStart_Implementation(UBangoEvent* Event, UObject* Instigator) override;
 
+	void OnStop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	
 private:
 	void Handle(EBangoEventSignalType Signal);
 

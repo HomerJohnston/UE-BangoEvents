@@ -7,29 +7,18 @@
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {
-	OnStart = EBangoEventSignalType::None;
-	OnStop = EBangoEventSignalType::None;
+	OnStartAction = EBangoEventSignalType::None;
+	OnStopAction = EBangoEventSignalType::None;
 }
 
-void UBangoAction_InstigateEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
+void UBangoAction_InstigateEvent::OnStart_Implementation(UBangoEvent* Event, UObject* Instigator)
 {
-	switch (Signal.Type)
-	{
-		case EBangoActionSignalType::StartAction:
-		{
-			Handle(OnStart);
-			break;
-		}
-		case EBangoActionSignalType::StopAction:
-		{
-			Handle(OnStop);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
+	Handle(OnStartAction);
+}
+
+void UBangoAction_InstigateEvent::OnStop_Implementation(UBangoEvent* Event, UObject* Instigator)
+{
+	Handle(OnStopAction);
 }
 
 void UBangoAction_InstigateEvent::Handle(EBangoEventSignalType Signal)

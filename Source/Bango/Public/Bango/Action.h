@@ -3,12 +3,12 @@
 #pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Core/EventSignal.h"
 #include "Action.generated.h"
 
 enum class EBangoActionSignalType : uint8;
 class UBangoEventComponent;
 class UBangoTrigger;
+struct FBangoActionSignal;
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
@@ -43,8 +43,15 @@ class BANGO_API UBangoAction : public UObject
 	// METHODS
 	// ============================================================================================
 public:
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION()
 	void HandleSignal(UBangoEvent* Event, FBangoActionSignal Signal);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnStart(UBangoEvent* Event, UObject* Instigator);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void OnStop(UBangoEvent* Event, UObject* Instigator);
 	
 protected:
 	UWorld* GetWorld() const override;

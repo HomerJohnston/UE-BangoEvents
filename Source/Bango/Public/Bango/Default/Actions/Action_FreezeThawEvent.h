@@ -47,10 +47,10 @@ private:
 	
 private:
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoFreezeThawEventAction OnStart;
+	EBangoFreezeThawEventAction OnStartAction;
 
 	UPROPERTY(Category="Settings", EditAnywhere)
-	EBangoFreezeThawEventAction OnStop;
+	EBangoFreezeThawEventAction OnStopAction;
 	
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
@@ -73,8 +73,10 @@ private:
 	// ============================================================================================
 
 public:
-	virtual void HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal) override;
+	void OnStart_Implementation(UBangoEvent* Event, UObject* Instigator) override;
 
+	void OnStop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	
 private:
 	void Handle(EBangoFreezeThawEventAction Action);
 

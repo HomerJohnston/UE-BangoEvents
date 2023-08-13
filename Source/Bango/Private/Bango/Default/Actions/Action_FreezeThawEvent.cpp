@@ -10,29 +10,18 @@
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
-	OnStart = EBangoFreezeThawEventAction::DoNothing;
-	OnStop = EBangoFreezeThawEventAction::DoNothing;
+	OnStartAction = EBangoFreezeThawEventAction::DoNothing;
+	OnStopAction = EBangoFreezeThawEventAction::DoNothing;
 }
 
-void UBangoAction_FreezeThawEvent::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
+void UBangoAction_FreezeThawEvent::OnStart_Implementation(UBangoEvent* Event, UObject* Instigator)
 {
-	switch (Signal.Type)
-	{
-		case EBangoActionSignalType::StartAction:
-		{
-			Handle(OnStart);
-			break;
-		}
-		case EBangoActionSignalType::StopAction:
-		{
-			Handle(OnStop);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}	
+	Handle(OnStartAction);
+}
+
+void UBangoAction_FreezeThawEvent::OnStop_Implementation(UBangoEvent* Event, UObject* Instigator)
+{
+	Handle(OnStopAction);
 }
 
 void UBangoAction_FreezeThawEvent::Handle(EBangoFreezeThawEventAction Action)
@@ -166,7 +155,7 @@ bool UBangoAction_FreezeThawEvent::HasValidSetup()
 		return false;
 	}
 	
-	return OnStart != EBangoFreezeThawEventAction::DoNothing || OnStop != EBangoFreezeThawEventAction::DoNothing;
+	return OnStartAction != EBangoFreezeThawEventAction::DoNothing || OnStopAction != EBangoFreezeThawEventAction::DoNothing;
 }
 
 void UBangoAction_FreezeThawEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

@@ -4,10 +4,37 @@
 #include "Bango/Core/EventComponent.h"
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
+#include "Bango/Utility/Log.h"
 
-void UBangoAction::HandleSignal_Implementation(UBangoEvent* Event, FBangoActionSignal Signal)
+void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoActionSignal Signal)
 {
-	checkNoEntry();
+	switch (Signal.Type)
+	{
+		case EBangoActionSignalType::StartAction:
+		{
+			OnStart(Event, Signal.Instigator);
+			break;
+		}
+		case EBangoActionSignalType::StopAction:
+		{
+			OnStop(Event, Signal.Instigator);
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+}
+
+void UBangoAction::OnStart_Implementation(UBangoEvent* Event, UObject* Instigator)
+{
+	UE_LOG(Bango, Warning, TEXT("%s::OnStart Not implemented!"), *GetClass()->GetName());
+}
+
+void UBangoAction::OnStop_Implementation(UBangoEvent* Event, UObject* Instigator)
+{
+	UE_LOG(Bango, Warning, TEXT("%s::OnStop Not implemented!"), *GetClass()->GetName());
 }
 
 UWorld* UBangoAction::GetWorld() const

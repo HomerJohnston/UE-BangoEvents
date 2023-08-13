@@ -5,7 +5,7 @@
 #include "EventBaseActor.generated.h"
 
 class UBangoEventComponent;
-UCLASS()
+UCLASS(DisplayName="Bango Event")
 class BANGO_API ABangoEventBaseActor : public AActor
 {
 	GENERATED_BODY()
