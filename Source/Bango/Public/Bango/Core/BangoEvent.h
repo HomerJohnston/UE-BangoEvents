@@ -1,10 +1,10 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
-#include "Bango/Core/EventSignal.h"
-#include "Bango/Core/InstigatorRecords.h"
+#include "Bango/Core/BangoEventSignal.h"
+#include "Bango/Core/BangoInstigatorRecords.h"
 
-#include "Event.generated.h"
+#include "BangoEvent.generated.h"
 
 enum class EBangoTriggerSignalType : uint8;
 class UBangoEventComponent;

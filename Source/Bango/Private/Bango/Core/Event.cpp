@@ -1,9 +1,9 @@
-﻿#include "Bango/Core/Event.h"
+﻿#include "Bango/Core/BangoEvent.h"
 
 #include "Bango/Utility/BangoColor.h"
-#include "Bango/Action.h"
-#include "Bango/Core/EventComponent.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/BangoAction.h"
+#include "Bango/Core/BangoEventComponent.h"
+#include "Bango/Core/BangoTriggerSignal.h"
 
 #if WITH_EDITORONLY_DATA
 // TODO FText

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "Bango/BangoInstigatorFilter.h"
 
-#include "InstigatorFilter_PlayerPawn.generated.h"
+#include "BangoInstigatorFilter_PlayerPawn.generated.h"
 
 UCLASS(DisplayName="Pawn, Player-Controlled")
 class BANGO_API UBangoInstigatorFilter_PlayerPawn : public UBangoInstigatorFilter

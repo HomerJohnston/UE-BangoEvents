@@ -1,6 +1,6 @@
-﻿#include "Bango/Default/EventBaseActor.h"
+﻿#include "Bango/Default/BangoEventBaseActor.h"
 
-#include "Bango/Core/EventComponent.h"
+#include "Bango/Core/BangoEventComponent.h"
 
 ABangoEventBaseActor::ABangoEventBaseActor()
 {

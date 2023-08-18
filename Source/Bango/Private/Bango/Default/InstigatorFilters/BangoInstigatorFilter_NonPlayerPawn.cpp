@@ -1,4 +1,4 @@
-﻿#include "Bango/Default/InstigatorFilters/InstigatorFilter_NonPlayerPawn.h"
+﻿#include "Bango/Default/InstigatorFilters/BangoInstigatorFilter_NonPlayerPawn.h"
 
 bool UBangoInstigatorFilter_NonPlayerPawn::IsValidInstigator_Implementation(UObject* Instigator)
 {

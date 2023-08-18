@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Bango/Action.h"
+#include "Bango/BangoAction.h"
 
-#include "Action_FreezeThawEvent.generated.h"
+#include "BangoAction_FreezeThawEvent.generated.h"
 
 UCLASS(DisplayName="Freeze/Thaw Event")
 class BANGO_API UBangoAction_FreezeThawEvent : public UBangoAction

@@ -4,8 +4,8 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailGroup.h"
-#include "Bango/Core/Event.h"
-#include "Bango/Core/EventComponent.h"
+#include "Bango/Core/BangoEvent.h"
+#include "Bango/Core/BangoEventComponent.h"
 #include "Widgets/Layout/SWrapBox.h"
 
 TSharedRef<IDetailCustomization> FBangoEventComponentDetailsCustomization::MakeInstance()

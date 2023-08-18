@@ -1,8 +1,8 @@
 ﻿#pragma once
 
-#include "Bango/Action.h"
+#include "Bango/BangoAction.h"
 
-#include "Action_InstigateEvent.generated.h"
+#include "BangoAction_InstigateEvent.generated.h"
 
 class UBangoEvent;
 class APlayerController;

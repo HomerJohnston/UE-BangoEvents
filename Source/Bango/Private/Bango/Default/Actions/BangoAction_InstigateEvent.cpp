@@ -1,9 +1,8 @@
-#include "Bango/Default/Actions/Action_InstigateEvent.h"
+#include "Bango/Default/Actions/BangoAction_InstigateEvent.h"
 
-#include "Bango/Core/Event.h"
-#include "Bango/Core/EventSignal.h"
-#include "Bango/Utility/Log.h"
-#include "Bango/Core/EventComponent.h"
+#include "Bango/Core/BangoEvent.h"
+#include "Bango/Utility/BangoLog.h"
+#include "Bango/Core/BangoEventComponent.h"
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {

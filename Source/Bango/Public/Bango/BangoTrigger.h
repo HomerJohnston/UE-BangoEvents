@@ -3,9 +3,9 @@
 #pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/Core/BangoTriggerSignal.h"
 
-#include "Trigger.generated.h"
+#include "BangoTrigger.generated.h"
 
 class UBangoEvent;
 class UBangoEventComponent;

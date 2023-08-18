@@ -1,11 +1,10 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Editor/PlungerComponent.h"
+#include "Bango/Editor/BangoPlungerComponent.h"
 
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/Utility/Log.h"
-#include "Bango/Core/EventComponent.h"
-#include "Bango/Editor/PlungerSceneProxy.h"
+#include "Bango/Core/BangoEventComponent.h"
+#include "Bango/Editor/BangoPlungerSceneProxy.h"
 
 UBangoPlungerComponent::UBangoPlungerComponent()
 {

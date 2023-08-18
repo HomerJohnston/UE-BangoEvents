@@ -1,9 +1,9 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
-#include "Bango/Core/Event.h"
+#include "Bango/Core/BangoEvent.h"
 
-#include "Event_Toggle.generated.h"
+#include "BangoEvent_Toggle.generated.h"
 
 UENUM(BlueprintType)
 enum class EBangoEvent_ToggleState : uint8

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "EventBaseActor.generated.h"
+#include "BangoEventBaseActor.generated.h"
 
 class UBangoEventComponent;
 UCLASS(DisplayName="Bango Event")

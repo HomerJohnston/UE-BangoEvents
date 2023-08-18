@@ -1,9 +1,9 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
-#include "Bango/Core/Event.h"
+#include "Bango/Core/BangoEvent.h"
 
-#include "Event_Bang.generated.h"
+#include "BangoEvent_Bang.generated.h"
 
 UCLASS(DisplayName="Bang")
 class BANGO_API UBangoEvent_Bang : public UBangoEvent

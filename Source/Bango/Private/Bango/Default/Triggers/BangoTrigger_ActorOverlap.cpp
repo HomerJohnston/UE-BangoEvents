@@ -1,6 +1,6 @@
-﻿#include "Bango/Default/Triggers/Trigger_ActorOverlap.h"
+﻿#include "Bango/Default/Triggers/BangoTrigger_ActorOverlap.h"
 
-#include "Bango/Utility/Log.h"
+#include "Bango/Utility/BangoLog.h"
 
 void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {

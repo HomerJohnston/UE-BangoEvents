@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Bango/Trigger.h"
+#include "Bango/BangoTrigger.h"
 
 #include "BangoTrigger_TimeOut.generated.h"
 

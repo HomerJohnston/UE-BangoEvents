@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Bango/Trigger.h"
+#include "Bango/BangoTrigger.h"
 
-#include "Trigger_ActorOverlap.generated.h"
+#include "BangoTrigger_ActorOverlap.generated.h"
 
 UCLASS(DisplayName="Actor Overlap")
 class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger

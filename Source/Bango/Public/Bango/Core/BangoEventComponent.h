@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "EventComponent.generated.h"
+#include "BangoEventComponent.generated.h"
 
 class UBangoPlungerComponent;
 struct FBangoTriggerSignal;

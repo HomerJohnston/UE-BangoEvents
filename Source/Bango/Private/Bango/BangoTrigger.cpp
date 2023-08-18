@@ -1,7 +1,7 @@
-﻿#include "Bango/Trigger.h"
-#include "Bango/Core/Event.h"
-#include "Bango/Core/EventComponent.h"
-#include "Bango/Core/TriggerSignal.h"
+﻿#include "Bango/BangoTrigger.h"
+#include "Bango/Core/BangoEvent.h"
+#include "Bango/Core/BangoEventComponent.h"
+#include "Bango/Core/BangoTriggerSignal.h"
 #include "Bango/BangoInstigatorFilter.h"
 
 void UBangoTrigger::SetEnabled(bool bEnabled)

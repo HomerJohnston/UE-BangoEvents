@@ -1,9 +1,9 @@
-﻿#include "Bango/Core/Event_Bang.h"
+﻿#include "Bango/Core/BangoEvent_Bang.h"
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Bango/Utility/BangoColor.h"
-#include "Bango/Utility/Log.h"
-#include "Bango/Core/TriggerSignal.h"
+#include "Bango/Utility/BangoLog.h"
+#include "Bango/Core/BangoTriggerSignal.h"
 
 bool UBangoEvent_Bang::GetIsExpired()
 {

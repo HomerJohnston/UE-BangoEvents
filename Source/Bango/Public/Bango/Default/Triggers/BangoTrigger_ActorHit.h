@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Bango/Trigger.h"
+#include "Bango/BangoTrigger.h"
 
-#include "Trigger_ActorHit.generated.h"
+#include "BangoTrigger_ActorHit.generated.h"
 
 class UBangoInstigatorFilter;
 

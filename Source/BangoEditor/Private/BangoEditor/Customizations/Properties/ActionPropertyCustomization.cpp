@@ -2,7 +2,7 @@
 
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
-#include "Bango/Action.h"
+#include "Bango/BangoAction.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"

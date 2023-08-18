@@ -1,10 +1,10 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Default/Actions/Action_DebugLog.h"
+#include "Bango/Default/Actions/BangoAction_DebugLog.h"
 
-#include "Bango/Utility/Log.h"
-#include "Bango/Core/EventSignal.h"
-#include "Bango/Core/EventComponent.h"
+#include "Bango/Utility/BangoLog.h"
+#include "Bango/Core/BangoEventSignal.h"
+#include "Bango/Core/BangoEventComponent.h"
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {

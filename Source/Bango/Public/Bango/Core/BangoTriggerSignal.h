@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "TriggerSignal.generated.h"
+#include "BangoTriggerSignal.generated.h"
 
 UENUM()
 enum class EBangoTriggerSignalType : uint8

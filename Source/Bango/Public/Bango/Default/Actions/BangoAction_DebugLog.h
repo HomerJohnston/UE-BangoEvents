@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "Bango/Action.h"
+#include "Bango/BangoAction.h"
 
-#include "Action_DebugLog.generated.h"
+#include "BangoAction_DebugLog.generated.h"
 
 struct FBangoEventSignal;
 enum class EBangoEventSignalType : uint8;

@@ -1,4 +1,4 @@
-﻿#include "Bango/Default/Triggers/Trigger_ActorHit.h"
+﻿#include "Bango/Default/Triggers/BangoTrigger_ActorHit.h"
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {

@@ -1,4 +1,4 @@
-﻿#include "Bango/Core/TriggerSignal.h"
+﻿#include "Bango/Core/BangoTriggerSignal.h"
 
 
 FBangoTriggerSignal::FBangoTriggerSignal() : Type(EBangoTriggerSignalType::None), Instigator(nullptr)

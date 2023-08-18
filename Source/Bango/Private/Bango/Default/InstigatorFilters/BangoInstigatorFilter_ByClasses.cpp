@@ -1,4 +1,4 @@
-﻿#include "Bango/Default/InstigatorFilters/InstigatorFilter_ByClasses.h"
+﻿#include "Bango/Default/InstigatorFilters/BangoInstigatorFilter_ByClasses.h"
 
 bool UBangoInstigatorFilter_ByClasses::IsValidInstigator_Implementation(UObject* Instigator)
 {

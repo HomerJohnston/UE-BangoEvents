@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "Bango/BangoInstigatorFilter.h"
 
-#include "InstigatorFilter_ByClasses.generated.h"
+#include "BangoInstigatorFilter_ByClasses.generated.h"
 
 UCLASS(DisplayName="By Classes")
 class BANGO_API UBangoInstigatorFilter_ByClasses : public UBangoInstigatorFilter

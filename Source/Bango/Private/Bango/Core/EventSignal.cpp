@@ -1,4 +1,4 @@
-﻿#include "Bango/Core/EventSignal.h"
+﻿#include "Bango/Core/BangoEventSignal.h"
 
 FBangoEventSignal::FBangoEventSignal() : Type(EBangoEventSignalType::None), Instigator(nullptr)
 {

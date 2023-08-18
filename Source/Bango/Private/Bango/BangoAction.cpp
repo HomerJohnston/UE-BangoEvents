@@ -1,10 +1,10 @@
-﻿#include "Bango/Action.h"
+﻿#include "Bango/BangoAction.h"
 
-#include "Bango/Core/EventSignal.h"
-#include "Bango/Core/EventComponent.h"
+#include "Bango/Core/BangoEventSignal.h"
+#include "Bango/Core/BangoEventComponent.h"
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Utility/Log.h"
+#include "Bango/Utility/BangoLog.h"
 
 #if DO_CHECK
 // Used to check to see if a derived class actually implemented GetWorld() or not

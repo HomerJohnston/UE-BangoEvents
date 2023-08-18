@@ -1,8 +1,8 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Editor/PlungerSceneProxy.h"
-#include "Bango/Editor/PlungerComponent.h"
-#include "Bango/Core/Event.h"
+#include "Bango/Editor/BangoPlungerSceneProxy.h"
+#include "Bango/Editor/BangoPlungerComponent.h"
+#include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Utility/BangoColor.h"

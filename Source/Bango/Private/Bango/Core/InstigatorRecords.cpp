@@ -1,6 +1,6 @@
-﻿#include "Bango/Core/InstigatorRecords.h"
+﻿#include "Bango/Core/BangoInstigatorRecords.h"
 
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/BangoEventSignal.h"
 
 TMap<UObject*, FBangoInstigatorRecord> FBangoInstigatorRecordCollection::GetData()
 { return AllInstigatorRecords; }

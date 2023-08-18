@@ -3,9 +3,9 @@
 #pragma once
 
 #include "Components/PrimitiveComponent.h"
-#include "Bango/Core/Event.h"
+#include "Bango/Core/BangoEvent.h"
 
-#include "PlungerComponent.generated.h"
+#include "BangoPlungerComponent.generated.h"
 
 struct FBangoPlungerDynamicData
 {

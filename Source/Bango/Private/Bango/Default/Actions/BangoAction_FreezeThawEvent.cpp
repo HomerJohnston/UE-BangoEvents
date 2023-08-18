@@ -1,11 +1,11 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Default/Actions/Action_FreezeThawEvent.h"
+#include "Bango/Default/Actions/BangoAction_FreezeThawEvent.h"
 
-#include "Bango/Core/EventSignal.h"
-#include "Bango/Utility/Log.h"
-#include "Bango/Core/EventComponent.h"
-#include "Bango/Editor/DebugUtility.h"
+#include "Bango/Core/BangoEventSignal.h"
+#include "Bango/Utility/BangoLog.h"
+#include "Bango/Core/BangoEventComponent.h"
+#include "Bango/Editor/BangoDebugUtility.h"
 
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()

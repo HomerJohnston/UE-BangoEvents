@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "EventSignal.generated.h"
+#include "BangoEventSignal.generated.h"
 
 UENUM(BlueprintType)
 enum class EBangoEventSignalType : uint8

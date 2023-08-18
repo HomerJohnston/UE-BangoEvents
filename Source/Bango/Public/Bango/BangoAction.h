@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Action.generated.h"
+#include "BangoAction.generated.h"
 
 enum class EBangoEventSignalType : uint8;
 class UBangoEventComponent;
