@@ -68,16 +68,17 @@ bool UBangoEvent::GetIsExpired()
 void UBangoEvent::Init()
 {
 	ExpiryDelegate.AddDynamic(GetEventComponent(), &UBangoEventComponent::OnEventExpired);
+	EventTriggeredDelegate.AddDynamic(GetEventComponent(), &UBangoEventComponent::OnEventTriggered);
 }
 
 void UBangoEvent::RegisterAction(UBangoAction* Action)
 {
-	EventSignal.AddDynamic(Action, &UBangoAction::HandleSignal);
+	EventTriggeredDelegate.AddDynamic(Action, &UBangoAction::HandleSignal);
 }
 
 void UBangoEvent::UnregisterAction(UBangoAction* Action)
 {
-	EventSignal.RemoveDynamic(Action, &UBangoAction::HandleSignal);
+	EventTriggeredDelegate.RemoveDynamic(Action, &UBangoAction::HandleSignal);
 }
 
 void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
@@ -186,6 +187,11 @@ void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSi
 		return;
 	}
 
+	if (!ShouldRespondToTrigger(Signal.Type))
+	{
+		return;
+	}
+	
 	if (Delay > 0)
 	{
 		FTimerDelegate Delegate = FTimerDelegate::CreateUObject(this, &ThisClass::RespondToTriggerSignalDeferred, Trigger, Signal);
@@ -224,7 +230,7 @@ void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoT
 		return;
 	}
 
-	EventSignal.Broadcast(this, FBangoEventSignal(ActionSignal, Signal.Instigator));
+	EventTriggeredDelegate.Broadcast(this, FBangoEventSignal(ActionSignal, Signal.Instigator));
 
 	AddInstigatorRecord(Signal.Instigator, ActionSignal);
 	
@@ -281,6 +287,11 @@ UBangoEventComponent* UBangoEvent::GetEventComponent()
 AActor* UBangoEvent::GetActor()
 {
 	return GetEventComponent()->GetOwner();
+}
+
+bool UBangoEvent::ShouldRespondToTrigger(EBangoTriggerSignalType TriggerSignalType)
+{
+	return true;
 }
 
 #if WITH_EDITOR

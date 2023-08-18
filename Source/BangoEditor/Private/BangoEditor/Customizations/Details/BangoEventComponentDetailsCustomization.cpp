@@ -129,7 +129,7 @@ FReply FBangoEventComponentDetailsCustomization::HandleClick(EBangoTriggerSignal
 
 	TWeakObjectPtr<UObject> TestInstigator = Test;
 	
-	Event->RespondToTriggerSignal(nullptr, FBangoTriggerSignal(EBangoTriggerSignalType::ActivateEvent, TestInstigator.Get()));
+	Event->RespondToTriggerSignal(nullptr, FBangoTriggerSignal(SignalType, TestInstigator.Get()));
 	
 	return FReply::Handled();
 }

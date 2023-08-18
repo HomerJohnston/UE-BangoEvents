@@ -83,6 +83,8 @@ protected:
 	bool Deactivate(UObject* Instigator);
 
 	bool SetToggleState(EBangoEvent_ToggleState NewState);
+
+	bool ShouldRespondToTrigger(EBangoTriggerSignalType TriggerSignalType) override;
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

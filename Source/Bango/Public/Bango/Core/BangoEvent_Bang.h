@@ -19,7 +19,7 @@ public:
 	// ============================================================================================
 protected:
 	/** If true, deactivate signals from triggers can cause actions to run deactivate code. */
-	UPROPERTY(Category="Settings", DisplayName="CanRunDeactivate", EditAnywhere)
+	UPROPERTY(Category="Settings", EditAnywhere)
 	bool bRespondToDeactivateTriggers = false;
 	
 	// -------------------------------------------------------------------

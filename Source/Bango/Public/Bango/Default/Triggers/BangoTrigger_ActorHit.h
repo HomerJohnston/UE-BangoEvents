@@ -8,7 +8,7 @@
 
 class UBangoInstigatorFilter;
 
-enum class EBangoSignal : uint8;
+enum class EBangoTriggerSignal : uint8;
 
 UCLASS(DisplayName="Actor Hit")
 class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger

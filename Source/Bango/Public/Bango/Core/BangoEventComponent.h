@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "BangoEventSignal.h"
 #include "BangoEventComponent.generated.h"
 
 class UBangoPlungerComponent;
@@ -12,6 +13,8 @@ class UBangoAction;
 struct FBangoSignal;
 class FCanvasTextItem;
 struct FBangoDebugTextEntry;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBangoEventTriggered, UBangoEventComponent*, Eventcomponent, EBangoEventSignalType, Signal, UObject*, Instigator);
 
 UCLASS(meta=(BlueprintSpawnableComponent))
 class BANGO_API UBangoEventComponent : public USceneComponent
@@ -92,7 +95,9 @@ public:
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
-
+public:
+	FOnBangoEventTriggered OnEventTriggeredDelegate;
+	
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
@@ -102,6 +107,9 @@ public:
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override; 
 
 	void DestroyOnBeginPlay();
+
+	UFUNCTION()
+	void OnEventTriggered(UBangoEvent* TriggeredEvent, FBangoEventSignal Signal);
 	
 public:
 	FText GetDisplayName();

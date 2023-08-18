@@ -7,7 +7,7 @@
 UENUM()
 enum class EBangoTriggerSignalType : uint8
 {
-	None,
+	DoNothing,
 	ActivateEvent,
 	DeactivateEvent,
 	MAX

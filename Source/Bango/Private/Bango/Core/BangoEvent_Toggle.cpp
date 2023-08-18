@@ -146,6 +146,21 @@ bool UBangoEvent_Toggle::SetToggleState(EBangoEvent_ToggleState NewState)
 	return true;
 }
 
+bool UBangoEvent_Toggle::ShouldRespondToTrigger(EBangoTriggerSignalType TriggerSignalType)
+{
+	if (ToggleState == EBangoEvent_ToggleState::Activated && TriggerSignalType == EBangoTriggerSignalType::ActivateEvent)
+	{
+		return false;
+	}
+	
+	if (ToggleState == EBangoEvent_ToggleState::Deactivated && TriggerSignalType == EBangoTriggerSignalType::DeactivateEvent)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 FLinearColor UBangoEvent_Toggle::GetDisplayBaseColor()
 {
 	return BangoColor::GreenBase;

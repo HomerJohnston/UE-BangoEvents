@@ -100,7 +100,6 @@ void UBangoEventComponent::BeginPlay()
 
 #if WITH_EDITOR
 	Event->OnStateChange.BindUObject(this, &ThisClass::UpdatePlungerProxy);
-
 	UpdateDisplayMesh();
 #endif
 }
@@ -133,6 +132,11 @@ void UBangoEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UBangoEventComponent::DestroyOnBeginPlay()
 {
 	DestroyComponent();
+}
+
+void UBangoEventComponent::OnEventTriggered(UBangoEvent* TriggeredEvent, FBangoEventSignal Signal)
+{
+	OnEventTriggeredDelegate.Broadcast(this, Signal.Type, Signal.Instigator);
 }
 
 FText UBangoEventComponent::GetDisplayName()

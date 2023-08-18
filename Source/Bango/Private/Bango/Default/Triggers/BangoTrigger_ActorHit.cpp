@@ -2,7 +2,7 @@
 
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {
-	SignalOnHit = EBangoTriggerSignalType::None;
+	SignalOnHit = EBangoTriggerSignalType::DoNothing;
 }
 
 void UBangoTrigger_ActorHit::Enable_Implementation()

@@ -38,7 +38,7 @@ void UBangoTrigger::Disable_Implementation()
 
 void UBangoTrigger::SendSignal(FBangoTriggerSignal Signal)
 {
-	if  (Signal.Type == EBangoTriggerSignalType::None)
+	if  (Signal.Type == EBangoTriggerSignalType::DoNothing)
 	{
 		return;
 	}

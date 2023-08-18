@@ -180,7 +180,7 @@ public:
 private:
 	/**  */
 	UPROPERTY(Transient)
-	FBangoEventSignalDelegate EventSignal;
+	FBangoEventSignalDelegate EventTriggeredDelegate;
 
 	/**  */
 	UPROPERTY(Transient)
@@ -222,6 +222,8 @@ protected:
 	/**  */
 	AActor* GetActor();
 
+	virtual bool ShouldRespondToTrigger(EBangoTriggerSignalType TriggerSignalType);
+	
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================

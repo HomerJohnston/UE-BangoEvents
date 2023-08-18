@@ -136,6 +136,6 @@ void UBangoTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& P
 #if WITH_EDITOR
 bool UBangoTrigger_ActorOverlap::HasValidSetup()
 {
-	return OnBeginOverlap != EBangoTriggerSignalType::None || OnEndOverlap != EBangoTriggerSignalType::None;
+	return OnBeginOverlap != EBangoTriggerSignalType::DoNothing || OnEndOverlap != EBangoTriggerSignalType::DoNothing;
 }
 #endif

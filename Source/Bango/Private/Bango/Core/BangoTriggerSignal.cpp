@@ -1,7 +1,7 @@
 ﻿#include "Bango/Core/BangoTriggerSignal.h"
 
 
-FBangoTriggerSignal::FBangoTriggerSignal() : Type(EBangoTriggerSignalType::None), Instigator(nullptr)
+FBangoTriggerSignal::FBangoTriggerSignal() : Type(EBangoTriggerSignalType::DoNothing), Instigator(nullptr)
 {
 }
 
