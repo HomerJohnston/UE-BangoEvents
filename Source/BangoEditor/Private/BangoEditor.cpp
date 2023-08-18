@@ -2,6 +2,9 @@
 
 #define LOCTEXT_NAMESPACE "FBangoEditorModule"
 
+#include "BangoEditor/Customizations/Details/BangoEventComponentDetailsCustomization.h"
+#include "BangoEditor/Customizations/Properties/ActionPropertyCustomization.h"
+#include "BangoEditor/Customizations/Properties/TriggerPropertyCustomization.h"
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -13,7 +16,9 @@ void FBangoEditorModule::StartupModule()
 	static const FName PropertyEditor("PropertyEditor");
 	
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
-	
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	{
 		// TODO localization
 		TSharedRef<FPropertySection> Section = PropertyEditorModule.FindOrCreateSection("Actor", "Bango", INVTEXT("Bango"));
@@ -34,6 +39,15 @@ void FBangoEditorModule::StartupModule()
 	StyleSet->Set("ClassThumbnail.BangoTrigger", new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("ClassIcons/BangoTrigger.png")), FVector2D(256, 256)));
 	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	PropertyEditorModule.RegisterCustomPropertyTypeLayout("BangoAction", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FBangoActionPropertyCustomization::MakeInstance));
+	PropertyEditorModule.RegisterCustomPropertyTypeLayout("BangoTrigger", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FBangoTriggerPropertyCustomization::MakeInstance));
+
+	PropertyEditorModule.RegisterCustomClassLayout("BangoEventComponent", FOnGetDetailCustomizationInstance::CreateStatic(&FBangoEventComponentDetailsCustomization::MakeInstance));
+	
+	PropertyEditorModule.NotifyCustomizationModuleChanged();
 }
 
 void FBangoEditorModule::ShutdownModule()

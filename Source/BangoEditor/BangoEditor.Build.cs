@@ -22,7 +22,10 @@ public class BangoEditor : ModuleRules
                 "SlateCore",
                 "Bango",
                 "DeveloperSettings",
-                "Projects"
+                "Projects",
+                
+                
+                "InputCore"
             }
         );
     }

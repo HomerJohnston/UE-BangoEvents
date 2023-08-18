@@ -3,7 +3,7 @@
 #include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/Log.h"
-#include "Bango/Core/EventSignal.h"
+#include "Bango/Core/TriggerSignal.h"
 
 UBangoEvent_Toggle::UBangoEvent_Toggle()
 {
@@ -35,24 +35,24 @@ void UBangoEvent_Toggle::Init()
 	}
 }
 
-EBangoActionSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoEventSignal Signal)
+EBangoEventSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
 {	
-	UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoEventSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
+	UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	
 	switch (Signal.Type)
 	{
-		case EBangoEventSignalType::ActivateEvent:
+		case EBangoTriggerSignalType::ActivateEvent:
 		{			
-			return (Activate(Signal.Instigator)) ? EBangoActionSignalType::StartAction : EBangoActionSignalType::None;
+			return (Activate(Signal.Instigator)) ? EBangoEventSignalType::EventActivated : EBangoEventSignalType::None;
 		}
-		case EBangoEventSignalType::DeactivateEvent:
+		case EBangoTriggerSignalType::DeactivateEvent:
 		{
-			return (Deactivate(Signal.Instigator)) ? EBangoActionSignalType::StopAction : EBangoActionSignalType::None;
+			return (Deactivate(Signal.Instigator)) ? EBangoEventSignalType::EventDeactivated : EBangoEventSignalType::None;
 		}
 		default:
 		{
 			UE_LOG(Bango, Error, TEXT("UBangoEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
-			return EBangoActionSignalType::None;
+			return EBangoEventSignalType::None;
 		}
 	}
 }
@@ -128,7 +128,7 @@ bool UBangoEvent_Toggle::Deactivate(UObject* Instigator)
 		}
 	}
 
-	InstigatorRecords.UpdateInstigatorRecord(Instigator, EBangoActionSignalType::StopAction, GetWorld()->GetTimeSeconds());
+	InstigatorRecords.UpdateInstigatorRecord(Instigator, EBangoEventSignalType::EventDeactivated, GetWorld()->GetTimeSeconds());
 
 	UE_LOG(Bango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 	return true;
