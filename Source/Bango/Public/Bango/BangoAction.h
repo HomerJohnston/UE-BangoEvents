@@ -36,11 +36,11 @@ public:
 
 protected:
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Advanced", meta=(DisplayPriority=-1))
+	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
 	EBangoActionRun WhenEventActivates;
 	
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Advanced", meta=(DisplayPriority=-1))
+	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
 	EBangoActionRun WhenEventDeactivates;
 
 #if WITH_EDITORONLY_DATA

@@ -2,7 +2,10 @@
 
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
+#include "IDetailGroup.h"
 #include "Bango/BangoAction.h"
+#include "PropertyEditor/Private/CategoryPropertyNode.h"
+#include "PropertyEditor/Private/PropertyNode.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"
@@ -66,13 +69,19 @@ void FBangoActionPropertyCustomization::CustomizeHeader(TSharedRef<IPropertyHand
 	];
 }
 
+struct FGroupProperties
+{
+	FName GroupName;
+	TArray<TSharedRef<IPropertyHandle>> Properties;
+};
+
 void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	uint32 NumClasses;
 	PropertyHandle->GetNumChildren(NumClasses);
 
 	static TArray<FName> EventTriggerProperties = {"WhenEventActivates", "WhenEventDeactivates"};
-	
+
 	for (uint32 i = 0; i < NumClasses; i++)
 	{
 		TSharedRef<IPropertyHandle> ClassRef = PropertyHandle->GetChildHandle(i).ToSharedRef();
@@ -80,10 +89,25 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 		uint32 NumCategories;
 		ClassRef->GetNumChildren(NumCategories);
 
+		TArray<FGroupProperties> Groups;
+		
 		// Iterate backward through categories because the engine always lists inherited children categories first, and I want them to be listed last (show base class properties first)
-		for (int32 j = NumCategories - 1; j >= 0; j--)
+		//for (uint32 j = NumCategories - 1; j >= 0; j--)
+		for (uint32 j = 0; j < NumCategories; j++)
 		{
 			TSharedRef<IPropertyHandle> CategoryRef = ClassRef->GetChildHandle(j).ToSharedRef();
+
+			FCategoryPropertyNode* CategoryNode = CategoryRef->GetPropertyNode()->AsCategoryNode();
+
+			if (!CategoryNode)
+			{
+				continue;
+			}
+
+			FName CategoryName = CategoryNode->GetCategoryName();
+
+			FGroupProperties GroupProperties;
+			GroupProperties.GroupName = CategoryName;
 
 			uint32 NumProperties;
 			CategoryRef->GetNumChildren(NumProperties);
@@ -100,8 +124,27 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 					DrawActionSelector(PropertyRef, PropertyHandle, ChildBuilder, CustomizationUtils);
 					continue;
 				}
-				
-				IDetailPropertyRow& Row = ChildBuilder.AddProperty(PropertyRef);
+
+				GroupProperties.Properties.Add(PropertyRef);
+				//Group.AddPropertyRow(PropertyRef);
+				//IDetailPropertyRow& Row = ChildBuilder.AddProperty(PropertyRef);
+			}
+
+			Groups.Add(GroupProperties);
+		}
+
+		for (FGroupProperties& GroupProperties : Groups)
+		{
+			if (GroupProperties.Properties.IsEmpty())
+			{
+				continue;
+			}
+			
+			IDetailGroup& Group = ChildBuilder.AddGroup(GroupProperties.GroupName, FText::FromName(GroupProperties.GroupName));
+
+			for (TSharedRef<IPropertyHandle>& PropertyHandleRef : GroupProperties.Properties)
+			{
+				Group.AddPropertyRow(PropertyHandleRef);
 			}
 		}
 	}

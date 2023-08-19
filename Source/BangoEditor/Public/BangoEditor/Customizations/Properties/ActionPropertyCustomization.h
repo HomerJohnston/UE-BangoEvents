@@ -2,6 +2,8 @@
 
 #include "IPropertyTypeCustomization.h"
 
+class IDetailGroup;
+
 class FBangoActionPropertyCustomization : public IPropertyTypeCustomization
 {
 public:
