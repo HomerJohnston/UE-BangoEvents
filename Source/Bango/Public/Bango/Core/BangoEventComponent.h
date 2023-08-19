@@ -41,15 +41,15 @@ protected:
 	// TODO check ShowInnerProperties meta on 5.2
 	/**  */
 	UPROPERTY(Category="Bango", DisplayName="Type", EditAnywhere, meta=(ShowInnerProperties))
-	UBangoEvent* Event;
+	TObjectPtr<UBangoEvent> Event;
 
 	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
-	TArray<UBangoTrigger*> Triggers;
+	TArray<TObjectPtr<UBangoTrigger>> Triggers;
 
 	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
-	TArray<UBangoAction*> Actions;
+	TArray<TObjectPtr<UBangoAction>> Actions;
 
 	/** Intended for debug purposes. If true, the event will never be active or usable in any way during gameplay. */
 	UPROPERTY(Category="Bango|Advanced", EditAnywhere, meta=(DisplayPriority=-1))

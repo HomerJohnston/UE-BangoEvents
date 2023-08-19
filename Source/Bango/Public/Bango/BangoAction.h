@@ -85,7 +85,14 @@ public:
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
+
 public:
+	UFUNCTION(BlueprintNativeEvent)
+	void BeginPlay();
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void EndPlay(const EEndPlayReason::Type EndPlayReason);
+	
 	UFUNCTION()
 	void HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal);
 

@@ -98,6 +98,11 @@ void UBangoEventComponent::BeginPlay()
 		DisplayMeshComponent->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
 	}
 
+	for (UBangoAction* Action : Actions)
+	{
+		Action->BeginPlay();
+	}
+
 #if WITH_EDITOR
 	Event->OnStateChange.BindUObject(this, &ThisClass::UpdatePlungerProxy);
 	UpdateDisplayMesh();
@@ -125,6 +130,11 @@ void UBangoEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	PlungerComponent->DestroyComponent();
 
 	DisplayMeshComponent->DestroyComponent();
+	
+	for (UBangoAction* Action : Actions)
+	{
+		Action->EndPlay(EndPlayReason);
+	}
 	
 	Super::EndPlay(EndPlayReason);
 }

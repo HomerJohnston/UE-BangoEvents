@@ -23,6 +23,14 @@ UBangoAction::UBangoAction()
 	StopDescription = "Execute Stop";
 }
 
+void UBangoAction::BeginPlay_Implementation()
+{
+}
+
+void UBangoAction::EndPlay_Implementation(const EEndPlayReason::Type EndPlayReason)
+{
+}
+
 void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 {
 	switch (Signal.Type)

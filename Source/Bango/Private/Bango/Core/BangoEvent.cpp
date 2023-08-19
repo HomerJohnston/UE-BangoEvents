@@ -4,6 +4,7 @@
 #include "Bango/BangoAction.h"
 #include "Bango/Core/BangoEventComponent.h"
 #include "Bango/Core/BangoTriggerSignal.h"
+#include "Bango/Utility/BangoLog.h"
 
 #if WITH_EDITORONLY_DATA
 // TODO FText
@@ -73,11 +74,23 @@ void UBangoEvent::Init()
 
 void UBangoEvent::RegisterAction(UBangoAction* Action)
 {
+	if (!IsValid(Action))
+	{
+		UE_LOG(Bango, Warning, TEXT("UBangoEvent::RegisterAction was passed a null action, ignoring"));
+		return;
+	}
+	
 	EventTriggeredDelegate.AddDynamic(Action, &UBangoAction::HandleSignal);
 }
 
 void UBangoEvent::UnregisterAction(UBangoAction* Action)
 {
+	if (!IsValid(Action))
+	{
+		UE_LOG(Bango, Warning, TEXT("UBangoEvent::UnregisterAction was passed a null action, ignoring"));
+		return;
+	}
+	
 	EventTriggeredDelegate.RemoveDynamic(Action, &UBangoAction::HandleSignal);
 }
 
