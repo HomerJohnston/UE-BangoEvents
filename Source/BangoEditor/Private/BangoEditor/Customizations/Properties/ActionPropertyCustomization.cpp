@@ -80,7 +80,7 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 	uint32 NumClasses;
 	PropertyHandle->GetNumChildren(NumClasses);
 
-	static TArray<FName> EventTriggerProperties = {"WhenEventActivates", "WhenEventDeactivates"};
+	static TArray<FName> EventTriggerProperties = { GET_MEMBER_NAME_CHECKED(UBangoAction, OnEventActivate), GET_MEMBER_NAME_CHECKED(UBangoAction, OnEventDeactivate) };
 
 	for (uint32 i = 0; i < NumClasses; i++)
 	{

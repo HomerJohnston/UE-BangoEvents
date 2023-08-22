@@ -14,14 +14,14 @@ thread_local bool bStopDescriptionOverridden = false;
 
 UBangoAction::UBangoAction()
 {
-	WhenEventActivates = EBangoActionRun::ExecuteStart;
-	WhenEventDeactivates = EBangoActionRun::ExecuteStop;
+	OnEventActivate = EBangoActionRun::ExecuteStart;
+	OnEventDeactivate = EBangoActionRun::ExecuteStop;
 
 #if WITH_EDITOR
 	// TODO localization
 	DoNothingDescription = "Do Nothing";
-	StartDescription = "Execute Start";
-	StopDescription = "Execute Stop";
+	StartDescription = "Run Start Function";
+	StopDescription = "Run Stop Function";
 #endif
 }
 
@@ -39,12 +39,12 @@ void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 	{
 		case EBangoEventSignalType::EventActivated:
 		{
-			Handle(WhenEventActivates, Event, Signal);
+			Handle(OnEventActivate, Event, Signal);
 			break;
 		}
 		case EBangoEventSignalType::EventDeactivated:
 		{
-			Handle(WhenEventDeactivates, Event, Signal);
+			Handle(OnEventDeactivate, Event, Signal);
 			break;
 		}
 		default:

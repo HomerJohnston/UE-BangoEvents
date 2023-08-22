@@ -22,6 +22,10 @@ UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
 {
 	GENERATED_BODY()
+
+#if WITH_EDITOR
+	friend class FBangoActionPropertyCustomization;
+#endif
 	
 	// ============================================================================================
 	// CONSTRUCTION
@@ -37,11 +41,11 @@ public:
 protected:
 	/**  */
 	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
-	EBangoActionRun WhenEventActivates;
+	EBangoActionRun OnEventActivate;
 	
 	/**  */
 	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
-	EBangoActionRun WhenEventDeactivates;
+	EBangoActionRun OnEventDeactivate;
 
 #if WITH_EDITORONLY_DATA
 protected:
