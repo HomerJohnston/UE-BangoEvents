@@ -68,8 +68,10 @@ public:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
-	
+#if WITH_EDITOR
+public:
 	virtual bool HasValidSetup() override;
 
 	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data) override;
+#endif
 };

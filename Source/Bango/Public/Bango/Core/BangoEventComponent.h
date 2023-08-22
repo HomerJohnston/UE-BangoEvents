@@ -102,6 +102,8 @@ public:
 	// METHODS
 	// ============================================================================================
 public:
+	void SetFrozen(bool bNewFrozen, bool bForceSet = false);
+	
 	void BeginPlay() override;
 
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override; 
@@ -110,11 +112,6 @@ public:
 
 	UFUNCTION()
 	void OnEventTriggered(UBangoEvent* TriggeredEvent, FBangoEventSignal Signal);
-	
-public:
-	FText GetDisplayName();
-
-	void SetFrozen(bool bNewFrozen, bool bForceSet = false);
 
 public:
 	UFUNCTION()
@@ -168,6 +165,7 @@ protected:
 	// -------------------------------------------------------------------
 
 #if WITH_EDITOR
+	FText GetDisplayName();
 #endif
 
 	// ============================================================================================

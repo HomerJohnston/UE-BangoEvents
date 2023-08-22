@@ -64,6 +64,7 @@ AActor* UBangoTrigger::GetActor()
 	return GetEventComponent()->GetOwner();
 }
 
+#if WITH_EDITOR
 FText UBangoTrigger::GetDisplayName() const
 {
 	if (bUseDisplayName && !DisplayName.IsEmpty())
@@ -73,18 +74,25 @@ FText UBangoTrigger::GetDisplayName() const
 
 	return GetClass()->GetDisplayNameText();
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoTrigger::AppendDebugData(TArray<FBangoDebugTextEntry>& Data)
 {
 	
 }
+#endif
 
+#if WITH_EDITOR
 bool UBangoTrigger::HasValidSetup()
 {
 	return true;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoTrigger::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
 {
 	// Child classes may implement custom draw logic here
 }
+#endif

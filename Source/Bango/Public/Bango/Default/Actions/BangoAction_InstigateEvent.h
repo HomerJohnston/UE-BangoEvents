@@ -51,8 +51,10 @@ private:
 
 	void HandleActor(EBangoTriggerSignalType Signal);
 
+#if WITH_EDITOR
 public:
 	virtual bool HasValidSetup() override;
 	
 	virtual void DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont) override;
+#endif
 };

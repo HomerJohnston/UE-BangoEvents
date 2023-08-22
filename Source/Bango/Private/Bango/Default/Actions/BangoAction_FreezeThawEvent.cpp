@@ -10,8 +10,10 @@
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
+#if WITH_EDITOR
 	StartDescription = "Freeze Event";
 	StopDescription = "Thaw Event";
+#endif
 }
 
 void UBangoAction_FreezeThawEvent::Start_Implementation(UBangoEvent* Event, UObject* Instigator)

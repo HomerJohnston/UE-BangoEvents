@@ -161,11 +161,14 @@ bool UBangoEvent_Toggle::ShouldRespondToTrigger(EBangoTriggerSignalType TriggerS
 	return true;
 }
 
+#if WITH_EDITOR
 FLinearColor UBangoEvent_Toggle::GetDisplayBaseColor()
 {
 	return BangoColor::GreenBase;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
 {
 	if (!GetWorld()->IsGameWorld())
@@ -178,12 +181,16 @@ void UBangoEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
 		Color = BangoColorOps::BrightenColor(Color);
 	}
 }
+#endif
 
+#if WITH_EDITOR
 bool UBangoEvent_Toggle::GetIsActive()
 {
 	return ToggleState == EBangoEvent_ToggleState::Activated;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoEvent_Toggle::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
 {
 	Super::AppendDebugDataString_Game(Data);
@@ -200,3 +207,4 @@ void UBangoEvent_Toggle::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>
 		Data.Add(FBangoDebugTextEntry("Instigator:", FString::Printf(TEXT("%s"), *Instigator->GetName())));	
 	}
 }
+#endif

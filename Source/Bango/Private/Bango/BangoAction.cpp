@@ -17,10 +17,12 @@ UBangoAction::UBangoAction()
 	WhenEventActivates = EBangoActionRun::ExecuteStart;
 	WhenEventDeactivates = EBangoActionRun::ExecuteStop;
 
+#if WITH_EDITOR
 	// TODO localization
 	DoNothingDescription = "Do Nothing";
 	StartDescription = "Execute Start";
 	StopDescription = "Execute Stop";
+#endif
 }
 
 void UBangoAction::BeginPlay_Implementation()

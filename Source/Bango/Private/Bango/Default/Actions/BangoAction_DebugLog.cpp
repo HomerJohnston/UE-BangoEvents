@@ -2,14 +2,17 @@
 
 #include "Bango/Default/Actions/BangoAction_DebugLog.h"
 
+#include "Bango/Core/BangoEvent.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Core/BangoEventComponent.h"
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {
+#if WITH_EDITOR
 	StartDescription = "Print Activate Message";
 	StopDescription = "Print Deactivate Message";
+#endif
 }
 
 void UBangoAction_DebugLog::Start_Implementation(UBangoEvent* Event, UObject* Instigator)

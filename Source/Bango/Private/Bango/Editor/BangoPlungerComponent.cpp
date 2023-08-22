@@ -58,6 +58,7 @@ FLinearColor UBangoPlungerComponent::GetColor()
 }
 #endif
 
+#if WITH_EDITOR
 bool UBangoPlungerComponent::GetIsActive()
 {
 	if (!IsValid(GetWorld()) || !GetWorld()->IsGameWorld())
@@ -74,6 +75,7 @@ bool UBangoPlungerComponent::GetIsActive()
 	
 	return Event->GetIsActive();
 }
+#endif
 
 void UBangoPlungerComponent::OnCvarChange()
 {
@@ -111,14 +113,17 @@ UBangoEvent* UBangoPlungerComponent::GetEvent()
 void UBangoPlungerComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
 {
 	Super::CreateRenderState_Concurrent(Context);
-	
+
+#if WITH_EDITOR
 	SendRenderDynamicData_Concurrent();
+#endif
 }
 
 void UBangoPlungerComponent::SendRenderDynamicData_Concurrent()
 {
 	Super::SendRenderDynamicData_Concurrent();
 	
+#if WITH_EDITOR
 	if (!SceneProxy)
 	{
 		return;
@@ -152,4 +157,5 @@ void UBangoPlungerComponent::SendRenderDynamicData_Concurrent()
 	{
 		PlungerSceneProxy->SetDynamicData_RenderThread(DynamicData);
 	});
+#endif
 }

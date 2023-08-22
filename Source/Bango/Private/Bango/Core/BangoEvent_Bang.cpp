@@ -58,11 +58,14 @@ EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigge
 	}
 }
 
+#if WITH_EDITOR
 FLinearColor UBangoEvent_Bang::GetDisplayBaseColor()
 {
 	return BangoColor::RedBase;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 {
 	if (!GetWorld()->IsGameWorld())
@@ -91,11 +94,14 @@ void UBangoEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 		}
 	}
 }
+#endif
 
+#if WITH_EDITOR
 bool UBangoEvent_Bang::GetIsActive()
 {
 	return false;
 }
+#endif
 
 #if WITH_EDITOR
 void UBangoEvent_Bang::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)

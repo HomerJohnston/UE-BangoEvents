@@ -101,18 +101,20 @@ protected:
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
+#if WITH_EDITOR
 public:
 	FLinearColor GetDisplayBaseColor() override;
 
 	void ApplyColorEffects(FLinearColor& Color) override;
 	
 	bool GetIsActive() override;
-
+#endif
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
 
 #if WITH_EDITOR
+public:
 	void AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data) override;
 #endif
 };

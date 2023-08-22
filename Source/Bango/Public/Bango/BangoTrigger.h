@@ -27,7 +27,7 @@ class BANGO_API UBangoTrigger : public UObject
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-
+protected:
 	/** Filter for overlap events. */
 	UPROPERTY(EditAnywhere, Instanced, Category = "Settings")
 	UBangoInstigatorFilter* InstigatorFilter;

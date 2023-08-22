@@ -84,5 +84,8 @@ private:
 	// EDITOR
 	// ============================================================================================
 
+#if WITH_EDITOR
+public:
 	void DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont) override;
+#endif
 };

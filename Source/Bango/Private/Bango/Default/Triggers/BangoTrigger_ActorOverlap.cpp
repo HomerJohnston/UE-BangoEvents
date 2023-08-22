@@ -107,6 +107,7 @@ void UBangoTrigger_ActorOverlap::OnActorEndOverlap(AActor* OverlapActor, AActor*
 	SendSignal(FBangoTriggerSignal(OnEndOverlap, InstigatorActor));
 }
 
+#if WITH_EDITOR
 void UBangoTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -132,6 +133,7 @@ void UBangoTrigger_ActorOverlap::PostEditChangeProperty(FPropertyChangedEvent& P
 		}
 	}
 }
+#endif
 
 #if WITH_EDITOR
 bool UBangoTrigger_ActorOverlap::HasValidSetup()

@@ -61,6 +61,7 @@ public:
 	// -------------------------------------------------------------------
 	// Editor State Getters/Setters
 	// -------------------------------------------------------------------
+#if WITH_EDITOR
 public:
 	FLinearColor GetDisplayBaseColor() override;
 
@@ -71,7 +72,7 @@ public:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
-#if WITH_EDITOR
+
 	void AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data) override;
 #endif
 };

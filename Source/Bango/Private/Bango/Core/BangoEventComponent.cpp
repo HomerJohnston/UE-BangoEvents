@@ -1,7 +1,6 @@
 ﻿#include "Bango/Core/BangoEventComponent.h"
 
 #include "CanvasItem.h"
-#include "Editor.h"
 #include "Bango/Editor/BangoDebugTextEntry.h"
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Utility/BangoColor.h"
@@ -14,8 +13,12 @@
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoEvent_Bang.h"
 
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
+
 #if WITH_EDITORONLY_DATA
-// TODO FText
+// TODO FText / localization
 TCustomShowFlag<EShowFlagShippingValue::ForceDisabled> UBangoEventComponent::BangoEventsShowFlag(TEXT("BangoEventsShowFlag"), true, EShowFlagGroup::SFG_Developer, FText(INVTEXT("Bango Events")));
 #endif
 
@@ -92,12 +95,7 @@ void UBangoEventComponent::BeginPlay()
 	SetFrozen(bStartFrozen, true);
 	
 	const UBangoDevSettings* DevSettings = GetDefault<UBangoDevSettings>();
-
-	if (IsValid(DisplayMeshComponent))
-	{
-		DisplayMeshComponent->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
-	}
-
+	
 	for (UBangoAction* Action : Actions)
 	{
 		Action->BeginPlay();
@@ -105,7 +103,12 @@ void UBangoEventComponent::BeginPlay()
 
 #if WITH_EDITOR
 	Event->OnStateChange.BindUObject(this, &ThisClass::UpdatePlungerProxy);
-	UpdateDisplayMesh();
+
+	if (IsValid(DisplayMeshComponent))
+	{
+		DisplayMeshComponent->SetHiddenInGame(!DevSettings->GetShowEventsInGame());
+		UpdateDisplayMesh();
+	}
 #endif
 }
 
@@ -126,15 +129,17 @@ void UBangoEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		Event->UnregisterAction(Action);
 	}
-
-	PlungerComponent->DestroyComponent();
-
-	DisplayMeshComponent->DestroyComponent();
 	
 	for (UBangoAction* Action : Actions)
 	{
 		Action->EndPlay(EndPlayReason);
 	}
+
+#if WITH_EDITOR
+	PlungerComponent->DestroyComponent();
+
+	DisplayMeshComponent->DestroyComponent();
+#endif
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -149,6 +154,7 @@ void UBangoEventComponent::OnEventTriggered(UBangoEvent* TriggeredEvent, FBangoE
 	OnEventTriggeredDelegate.Broadcast(this, Signal.Type, Signal.Instigator);
 }
 
+#if WITH_EDITOR
 FText UBangoEventComponent::GetDisplayName()
 {
 	if (bUseDisplayName)
@@ -163,6 +169,7 @@ FText UBangoEventComponent::GetDisplayName()
 	
 	return FText::FromString(GetOwner()->GetActorNameOrLabel());
 }
+#endif
 
 void UBangoEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 {
@@ -207,7 +214,9 @@ void UBangoEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 		}
 	}
 
+#if WITH_EDITOR
 	UpdatePlungerProxy();
+#endif
 }
 
 void UBangoEventComponent::OnEventExpired(UBangoEvent* InEvent)

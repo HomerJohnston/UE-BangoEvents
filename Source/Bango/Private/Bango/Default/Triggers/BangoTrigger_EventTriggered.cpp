@@ -150,6 +150,7 @@ void UBangoTrigger_EventTriggered::OnTargetEventSignalled(UBangoEventComponent* 
 	SendSignal(FBangoTriggerSignal(SignalToPerform, SignalInstigator));
 }
 
+#if WITH_EDITOR
 void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)
 {
 	FVector Start = GetEventComponent()->GetComponentLocation();
@@ -184,3 +185,4 @@ void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APl
 		}
 	}
 }
+#endif

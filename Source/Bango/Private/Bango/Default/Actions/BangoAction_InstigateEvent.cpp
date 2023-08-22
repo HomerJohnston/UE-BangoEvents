@@ -6,8 +6,10 @@
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {
+#if WITH_EDITOR
 	StartDescription = "Activate Event";
 	StopDescription = "DeactivateEvent";
+#endif
 }
 
 void UBangoAction_InstigateEvent::Start_Implementation(UBangoEvent* Event, UObject* Instigator)
@@ -93,6 +95,7 @@ void UBangoAction_InstigateEvent::HandleActor(EBangoTriggerSignalType Signal)
 	}
 }
 
+#if WITH_EDITOR
 bool UBangoAction_InstigateEvent::HasValidSetup()
 {
 	return Super::HasValidSetup();
@@ -102,3 +105,4 @@ void UBangoAction_InstigateEvent::DebugDraw_Implementation(UCanvas* Canvas, APla
 {
 	Super::DebugDraw_Implementation(Canvas, Cont);
 }
+#endif
