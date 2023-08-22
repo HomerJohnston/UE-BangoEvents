@@ -165,6 +165,7 @@ protected:
 	// -------------------------------------------------------------------
 
 #if WITH_EDITOR
+public:
 	FText GetDisplayName();
 #endif
 
