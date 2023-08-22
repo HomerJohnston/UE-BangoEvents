@@ -44,12 +44,14 @@ public class Bango : ModuleRules
 				"RHI",
 				"RenderCore",
 
-
-				"UnrealEd"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
 		
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("UnrealEd");
+		}
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
