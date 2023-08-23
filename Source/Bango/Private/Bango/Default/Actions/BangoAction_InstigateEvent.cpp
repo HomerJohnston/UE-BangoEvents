@@ -6,13 +6,11 @@
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {
-#if WITH_EDITOR
-	StartDescription = "Activate Event";
-	StopDescription = "DeactivateEvent";
-#endif
+	ActionFunctions.Add("SendActivateSignal");
+	ActionFunctions.Add("SendDeactivateSignal");
 }
 
-void UBangoAction_InstigateEvent::Start_Implementation(UBangoEvent* Event, UObject* Instigator)
+void UBangoAction_InstigateEvent::SendActivateSignal(UBangoEvent* Event, UObject* Instigator)
 {
 	if (bUseTargetComponent)
 	{
@@ -24,7 +22,7 @@ void UBangoAction_InstigateEvent::Start_Implementation(UBangoEvent* Event, UObje
 	}
 }
 
-void UBangoAction_InstigateEvent::Stop_Implementation(UBangoEvent* Event, UObject* Instigator)
+void UBangoAction_InstigateEvent::SendDeactivateSignal(UBangoEvent* Event, UObject* Instigator)
 {
 	if (bUseTargetComponent)
 	{

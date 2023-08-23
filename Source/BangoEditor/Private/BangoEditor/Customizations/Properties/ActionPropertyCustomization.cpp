@@ -10,6 +10,8 @@
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"
 
+#include "BangoEditor/Widgets/SFunctionSelector.h"
+
 FBangoActionPropertyCustomization::FBangoActionPropertyCustomization()
 {
 }
@@ -82,6 +84,8 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 
 	static TArray<FName> EventTriggerProperties = { GET_MEMBER_NAME_CHECKED(UBangoAction, OnEventActivate), GET_MEMBER_NAME_CHECKED(UBangoAction, OnEventDeactivate) };
 
+	GenerateComboboxEntries(PropertyHandle);
+	
 	for (uint32 i = 0; i < NumClasses; i++)
 	{
 		TSharedRef<IPropertyHandle> ClassRef = PropertyHandle->GetChildHandle(i).ToSharedRef();
@@ -126,8 +130,6 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 				}
 
 				GroupProperties.Properties.Add(PropertyRef);
-				//Group.AddPropertyRow(PropertyRef);
-				//IDetailPropertyRow& Row = ChildBuilder.AddProperty(PropertyRef);
 			}
 
 			Groups.Add(GroupProperties);
@@ -148,17 +150,6 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 			}
 		}
 	}
-
-	/*
-	FDetailWidgetRow& RowTest = ChildBuilder.AddCustomRow(INVTEXT("Test"));
-
-	RowTest.WholeRowContent()
-	[
-		SNew(SSeparator)
-		.Thickness(2)
-		.ColorAndOpacity(FSlateColor(FColor::Red))
-	];
-	*/
 }
 
 void FBangoActionPropertyCustomization::DrawActionSelector(TSharedRef<IPropertyHandle> PropertyRef, TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
@@ -172,24 +163,33 @@ void FBangoActionPropertyCustomization::DrawActionSelector(TSharedRef<IPropertyH
 		return;
 	}
 	
-	ComboItems.Empty();
-	
-	ComboItems.Add(MakeShareable(new FString(InstancedAction->GetDoNothingDescription())));
-	ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStartDescription())));
-	ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStopDescription())));
-	
-	EBangoActionRun ActualSetting;
-	uint8 ActualSettingAsInt;
-	PropertyRef->GetValue(ActualSettingAsInt);
-	ActualSetting = static_cast<EBangoActionRun>(ActualSettingAsInt);
-	FString CurrentAction = InstancedAction->GetDescriptionFor(ActualSetting);
+	FName CurrentFunctionName;
+	FString CurrentAction;
 
+	PropertyRef->GetValue(CurrentFunctionName);
+
+	UFunction* Function = InstancedAction->FindFunction(CurrentFunctionName);
+
+	if (CurrentFunctionName == NAME_None)
+	{
+		CurrentAction = "Do Nothing";
+	}
+	else if (Function && ActionFunctionNames.Contains(CurrentFunctionName))
+	{
+		CurrentAction = FName::NameToDisplayString(CurrentFunctionName.ToString(), false);
+	}
+	else
+	{
+		CurrentAction = FString::Printf(TEXT("ERROR: <%s> NOT FOUND"), *CurrentFunctionName.ToString());
+	}
+	
 	auto Font = FAppStyle::Get().GetFontStyle("SmallFont");
-
+	auto Color = FLinearColor::Red;
+	
 	TSharedPtr<STextBlock>& ComboBoxTitleBlock = ComboBoxTitleBlocks.FindOrAdd(PropertyRef->GetProperty()->GetFName());
 	
 	auto ComboBox = SNew(SComboBox<TSharedPtr<FString> >)
-	.OptionsSource(&ComboItems)
+	.OptionsSource(&ActionFunctionDescriptions)
 	.OnGenerateWidget_Lambda([Font](TSharedPtr<FString> Item) 
 	{ 
 		return SNew(STextBlock)
@@ -206,14 +206,22 @@ void FBangoActionPropertyCustomization::DrawActionSelector(TSharedRef<IPropertyH
 		}
 		
 		(*ComboBoxTitleBlock)->SetText( FText::FromString(*InSelection));
-		
-		EBangoActionRun ActionRunSetting = InstancedAction->LookupSettingForDescription(InSelection);
-		PropertyRef->SetValue(static_cast<uint8>(ActionRunSetting));
-	} )
+
+		int32 Index = ActionFunctionDescriptions.IndexOfByPredicate([&](TSharedPtr<FString> S) -> bool
+		{
+			return (*S).Equals(*InSelection);
+		});
+
+		if (Index != INDEX_NONE)
+		{
+			PropertyRef->SetValue(ActionFunctionNames[Index]);
+		}
+	})
 	[
 		SAssignNew(ComboBoxTitleBlock, STextBlock)
 		.Text(FText::FromString(CurrentAction))
 		.Font(Font)
+		.HighlightColor(Color)
 	];
 	
 	const FText ComboBoxRowName = INVTEXT("Test");
@@ -230,4 +238,45 @@ void FBangoActionPropertyCustomization::DrawActionSelector(TSharedRef<IPropertyH
 			ComboBox
 		];
 	}
+}
+
+void FBangoActionPropertyCustomization::GenerateComboboxEntries(TSharedRef<IPropertyHandle> PropertyHandle)
+{	
+	UObject* InstancedActionObject = nullptr;
+	PropertyHandle->GetValue(InstancedActionObject);
+	UBangoAction* InstancedAction = Cast<UBangoAction>(InstancedActionObject);
+
+	if (!IsValid(InstancedAction))
+	{
+		return;
+	}
+	
+	ActionFunctionNames.Add(NAME_None);
+	ActionFunctionDescriptions.Add(MakeShareable(new FString("Do Nothing")));
+	ActionFunctionNameColors.Add(FLinearColor::White);
+
+	for (FName FunctionName : InstancedAction->ActionFunctions)
+	{
+		// TODO: error handling / invalid name handling. Make entry red so it really stands out?
+		ActionFunctionNames.Add(FunctionName);
+		ActionFunctionDescriptions.Add(MakeShareable(new FString(FName::NameToDisplayString(FunctionName.ToString(), false))));
+		ActionFunctionNameColors.Add(FLinearColor::Green);
+	}
+	
+	/*
+	if (!InstancedAction->bDisableDoNothingAction)
+	{
+		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetDoNothingDescription())));
+	}
+
+	if (!InstancedAction->bDisableStartAction)
+	{
+		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStartDescription())));
+	}
+
+	if (!InstancedAction->bDisableStopAction)
+	{
+		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStopDescription())));
+	}
+	*/
 }

@@ -60,9 +60,9 @@ protected:
 	// ============================================================================================
 
 public:
-	void Start_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	void Freeze(UBangoEvent* Event, UObject* Instigator);
 
-	void Stop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	void Unfreeze(UBangoEvent* Event, UObject* Instigator);
 	
 private:
 	void HandleComponent(bool Val);

@@ -9,27 +9,28 @@
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {
-#if WITH_EDITOR
-	StartDescription = "Print Activate Message";
-	StopDescription = "Print Deactivate Message";
+	ActionFunctions.Add(GET_FUNCTION_NAME_CHECKED(ThisClass, PrintActivationMessage));
+	ActionFunctions.Add(GET_FUNCTION_NAME_CHECKED(ThisClass, PrintDeactivationMessage));
+
+	OnEventActivate = GET_FUNCTION_NAME_CHECKED(ThisClass, PrintActivationMessage);
+	OnEventDeactivate = GET_FUNCTION_NAME_CHECKED(ThisClass, PrintDeactivationMessage);
+}
+
+void UBangoAction_DebugLog::PrintActivationMessage(UBangoEvent* Event, UObject* Instigator)
+{
+#if UE_BUILD_SHIPPING
+	
+#else
+	Handle(bOverrideActivateMessage, ActivateMessage, EBangoEventSignalType::EventActivated, Instigator);
 #endif
 }
 
-void UBangoAction_DebugLog::Start_Implementation(UBangoEvent* Event, UObject* Instigator)
+void UBangoAction_DebugLog::PrintDeactivationMessage(UBangoEvent* Event, UObject* Instigator)
 {
 #if UE_BUILD_SHIPPING
-
+	
 #else
-	Handle(bUseActivateMessage, ActivateMessage, EBangoEventSignalType::EventActivated, Instigator);
-#endif
-}
-
-void UBangoAction_DebugLog::Stop_Implementation(UBangoEvent* Event, UObject* Instigator)
-{
-#if UE_BUILD_SHIPPING
-
-#else
-	Handle(bUseDeactivateMessage, DeactivateMessage, EBangoEventSignalType::EventDeactivated, Instigator);
+	Handle(bOverrideDeactivateMessage, DeactivateMessage, EBangoEventSignalType::EventDeactivated, Instigator);
 #endif
 }
 

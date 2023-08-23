@@ -14,15 +14,8 @@ thread_local bool bStopDescriptionOverridden = false;
 
 UBangoAction::UBangoAction()
 {
-	OnEventActivate = EBangoActionRun::ExecuteStart;
-	OnEventDeactivate = EBangoActionRun::ExecuteStop;
-
-#if WITH_EDITOR
-	// TODO localization
-	DoNothingDescription = "Do Nothing";
-	StartDescription = "Run Start Function";
-	StopDescription = "Run Stop Function";
-#endif
+	OnEventActivate = NAME_None;
+	OnEventDeactivate = NAME_None;
 }
 
 void UBangoAction::BeginPlay_Implementation()
@@ -33,18 +26,33 @@ void UBangoAction::EndPlay_Implementation(const EEndPlayReason::Type EndPlayReas
 {
 }
 
+void UBangoAction::Initialize()
+{
+	if (OnEventActivate != NAME_None)
+	{
+		OnEventActivateDelegate.BindUFunction(this, OnEventActivate);
+	}
+
+	if (OnEventDeactivate != NAME_None)
+	{
+		OnEventDeactivateDelegate.BindUFunction(this, OnEventDeactivate);
+	}
+}
+
 void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 {
 	switch (Signal.Type)
 	{
 		case EBangoEventSignalType::EventActivated:
 		{
-			Handle(OnEventActivate, Event, Signal);
+			OnEventActivateDelegate.Execute(Event, Signal.Instigator);
+			//Handle(OnEventActivate, Event, Signal);
 			break;
 		}
 		case EBangoEventSignalType::EventDeactivated:
 		{
-			Handle(OnEventDeactivate, Event, Signal);
+			OnEventDeactivateDelegate.Execute(Event, Signal.Instigator);
+			//Handle(OnEventDeactivate, Event, Signal);
 			break;
 		}
 		default:
@@ -54,8 +62,10 @@ void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 	}
 }
 
-void UBangoAction::Handle(EBangoActionRun WhatToDo, UBangoEvent* Event, FBangoEventSignal Signal)
+void UBangoAction::Handle(FName ActionFunction, UBangoEvent* Event, FBangoEventSignal Signal)
 {
+	
+	/*
 	switch (WhatToDo)
 	{
 		case EBangoActionRun::ExecuteStart:
@@ -73,16 +83,7 @@ void UBangoAction::Handle(EBangoActionRun WhatToDo, UBangoEvent* Event, FBangoEv
 			break;
 		}
 	}
-}
-
-void UBangoAction::Start_Implementation(UBangoEvent* Event, UObject* Instigator)
-{
-	UE_LOG(Bango, Warning, TEXT("%s::Start called but not implemented!"), *GetClass()->GetName());
-}
-
-void UBangoAction::Stop_Implementation(UBangoEvent* Event, UObject* Instigator)
-{
-	UE_LOG(Bango, Warning, TEXT("%s::Stop called but not implemented!"), *GetClass()->GetName());
+	*/
 }
 
 UWorld* UBangoAction::GetWorld() const
@@ -134,42 +135,6 @@ bool UBangoAction::HasValidSetup()
 void UBangoAction::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);
-}
-
-EBangoActionRun UBangoAction::LookupSettingForDescription(TSharedPtr<FString> Description) const
-{
-	if (Description->Equals(StartDescription))
-	{
-		return EBangoActionRun::ExecuteStart;
-	}
-
-	if (Description->Equals(StopDescription))
-	{
-		return EBangoActionRun::ExecuteStop;
-	}
-
-	return EBangoActionRun::DoNothing;
-}
-
-const FString& UBangoAction::GetDescriptionFor(EBangoActionRun ActionRun) const
-{
-	switch (ActionRun)
-	{
-		case EBangoActionRun::ExecuteStart:
-		{
-			return StartDescription;
-		}
-		case EBangoActionRun::ExecuteStop:
-		{
-			return StopDescription;
-		}
-		case EBangoActionRun::DoNothing:
-		{
-			return DoNothingDescription;
-		}
-	}
-
-	return DoNothingDescription;
 }
 
 void UBangoAction::DebugDraw_Implementation(UCanvas* Canvas, APlayerController* Cont)

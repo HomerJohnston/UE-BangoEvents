@@ -42,9 +42,9 @@ private:
 	FComponentReference TargetComponent;
 
 public:
-	void Start_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	void SendActivateSignal(UBangoEvent* Event, UObject* Instigator);
 
-	void Stop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	void SendDeactivateSignal(UBangoEvent* Event, UObject* Instigator);
 	
 private:
 	void HandleComponent(EBangoTriggerSignalType Signal);

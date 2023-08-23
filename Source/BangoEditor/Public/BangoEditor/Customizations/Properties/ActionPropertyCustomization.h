@@ -18,7 +18,11 @@ public:
 
 	void DrawActionSelector(TSharedRef<IPropertyHandle> PropertyRef, TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils);
 
-	TArray<TSharedPtr<FString>> ComboItems;
+	void GenerateComboboxEntries(TSharedRef<IPropertyHandle> PropertyHandle);
+
+	TArray<FName> ActionFunctionNames;
+	TArray<TSharedPtr<FString>> ActionFunctionDescriptions;
+	TArray<FLinearColor> ActionFunctionNameColors;
 	
     TMap<FName, TSharedPtr<STextBlock>> ComboBoxTitleBlocks;
 };

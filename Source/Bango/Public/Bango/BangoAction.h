@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Bango/Editor/BangoDebugTextEntry.h"
+#include "Core/BangoActionFunctionRecord.h"
 #include "BangoAction.generated.h"
 
 enum class EBangoEventSignalType : uint8;
@@ -10,13 +11,7 @@ class UBangoEventComponent;
 class UBangoTrigger;
 struct FBangoEventSignal;
 
-UENUM(BlueprintType)
-enum class EBangoActionRun : uint8
-{
-	DoNothing,
-	ExecuteStart,
-	ExecuteStop,
-};
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnEventTrigger, UBangoEvent*, Event, UObject*, Instigator);
 
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
 class BANGO_API UBangoAction : public UObject
@@ -41,43 +36,32 @@ public:
 protected:
 	/**  */
 	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
-	EBangoActionRun OnEventActivate;
+	FName OnEventActivate;
 	
 	/**  */
 	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
-	EBangoActionRun OnEventDeactivate;
+	FName OnEventDeactivate;
 
 #if WITH_EDITORONLY_DATA
 protected:
-	/**  */
-	UPROPERTY(EditDefaultsOnly)
-	FString DoNothingDescription;
-	
-	/**  */
-	UPROPERTY(EditDefaultsOnly)
-	FString StartDescription;
-
-	/**  */
-	UPROPERTY(EditDefaultsOnly)
-	FString StopDescription;
+	UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(DisplayPriority=-1))
+	TSet<FName> ActionFunctions;
 #endif
-	
+
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
-
-#if WITH_EDITORONLY_DATA
-public:
-	FString GetDoNothingDescription() { return DoNothingDescription; };
 	
-	FString GetStartDescription() { return StartDescription; };
-
-	FString GetStopDescription() { return StopDescription; };
-#endif
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
 
+	UPROPERTY(Transient)
+	FOnEventTrigger OnEventActivateDelegate;
+
+	UPROPERTY(Transient)
+	FOnEventTrigger OnEventDeactivateDelegate;
+	
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
@@ -91,24 +75,20 @@ public:
 	// ============================================================================================
 
 public:
+	void Initialize();
+	
 	UFUNCTION(BlueprintNativeEvent)
 	void BeginPlay();
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void EndPlay(const EEndPlayReason::Type EndPlayReason);
-	
+
+	/** This function is subscribed to the Event's triggered delegate and is called by the event when it activates or deactivates. */
 	UFUNCTION()
 	void HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal);
 
-	void Handle(EBangoActionRun WhatToDo, UBangoEvent* Event, FBangoEventSignal Signal);
-	
-protected:
-	UFUNCTION(BlueprintNativeEvent)
-	void Start(UBangoEvent* Event, UObject* Instigator);
-	
-	UFUNCTION(BlueprintNativeEvent)
-	void Stop(UBangoEvent* Event, UObject* Instigator);
-	
+	void Handle(FName ActionFunction, UBangoEvent* Event, FBangoEventSignal Signal);
+
 protected:
 	UWorld* GetWorld() const override;
 
@@ -164,9 +144,5 @@ public:
 	virtual bool HasValidSetup();
 
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
-	const FString& GetDescriptionFor(EBangoActionRun ActionRun) const;
-
-	EBangoActionRun LookupSettingForDescription(TSharedPtr<FString> Description) const;
 #endif
 };

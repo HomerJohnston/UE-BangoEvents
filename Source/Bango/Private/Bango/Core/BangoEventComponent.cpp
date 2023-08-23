@@ -98,6 +98,7 @@ void UBangoEventComponent::BeginPlay()
 	
 	for (UBangoAction* Action : Actions)
 	{
+		Action->Initialize();
 		Action->BeginPlay();
 	}
 

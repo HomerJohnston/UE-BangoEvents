@@ -36,18 +36,18 @@ public:
 protected:
 	/**  */
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseActivateMessage = false;
+	bool bOverrideActivateMessage = false;
 
 	/**  */
-	UPROPERTY(Category="Settings", DisplayName="Override Activate Message", EditAnywhere, meta=(EditCondition="bUseActivateMessage"))
+	UPROPERTY(Category="Settings", DisplayName="Override Activate Message", EditAnywhere, meta=(EditCondition="bOverrideActivateMessage"))
 	FString ActivateMessage;
 
 	/**  */
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseDeactivateMessage;
+	bool bOverrideDeactivateMessage;
 	
 	/**  */
-	UPROPERTY(Category="Settings", DisplayName="Override Deactivate Message", EditAnywhere, meta=(EditCondition="bUseDeactivateMessage"))
+	UPROPERTY(Category="Settings", DisplayName="Override Deactivate Message", EditAnywhere, meta=(EditCondition="bOverrideDeactivateMessage"))
 	FString DeactivateMessage;
 
 	/**  */
@@ -87,9 +87,11 @@ protected:
 	// ============================================================================================
 
 public:
-	void Start_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	UFUNCTION()
+	void PrintActivationMessage(UBangoEvent* Event, UObject* Instigator);
 
-	void Stop_Implementation(UBangoEvent* Event, UObject* Instigator) override;
+	UFUNCTION()
+	void PrintDeactivationMessage(UBangoEvent* Event, UObject* Instigator);
 
 	void Handle(bool& bUseCustomMessage, FString& CustomMessage, EBangoEventSignalType SignalType, UObject* Instigator);
 

@@ -10,13 +10,11 @@
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
-#if WITH_EDITOR
-	StartDescription = "Freeze Event";
-	StopDescription = "Thaw Event";
-#endif
+	ActionFunctions.Add("Freeze");
+	ActionFunctions.Add("Unfreeze");
 }
 
-void UBangoAction_FreezeThawEvent::Start_Implementation(UBangoEvent* Event, UObject* Instigator)
+void UBangoAction_FreezeThawEvent::Freeze(UBangoEvent* Event, UObject* Instigator)
 {
 	if (bUseTargetComponent)
 	{
@@ -28,7 +26,7 @@ void UBangoAction_FreezeThawEvent::Start_Implementation(UBangoEvent* Event, UObj
 	}
 }
 
-void UBangoAction_FreezeThawEvent::Stop_Implementation(UBangoEvent* Event, UObject* Instigator)
+void UBangoAction_FreezeThawEvent::Unfreeze(UBangoEvent* Event, UObject* Instigator)
 {
 	if (bUseTargetComponent)
 	{
