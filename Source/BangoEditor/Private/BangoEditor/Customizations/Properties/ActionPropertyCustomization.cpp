@@ -4,13 +4,12 @@
 #include "IDetailChildrenBuilder.h"
 #include "IDetailGroup.h"
 #include "Bango/BangoAction.h"
+#include "Bango/Utility/BangoLog.h"
 #include "PropertyEditor/Private/CategoryPropertyNode.h"
 #include "PropertyEditor/Private/PropertyNode.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"
-
-#include "BangoEditor/Widgets/SFunctionSelector.h"
 
 FBangoActionPropertyCustomization::FBangoActionPropertyCustomization()
 {
@@ -121,15 +120,24 @@ void FBangoActionPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHa
 				TSharedRef<IPropertyHandle> PropertyRef = CategoryRef->GetChildHandle(k).ToSharedRef();
 
 				if (PropertyRef->GetProperty()->HasAnyPropertyFlags(CPF_Transient))
+				{
 					continue;
-
+				}
+				
 				if (EventTriggerProperties.Contains(PropertyRef->GetProperty()->GetFName()))
 				{
 					DrawActionSelector(PropertyRef, PropertyHandle, ChildBuilder, CustomizationUtils);
 					continue;
 				}
 
-				GroupProperties.Properties.Add(PropertyRef);
+				if (CategoryName == "Settings")
+				{
+					ChildBuilder.AddProperty(PropertyRef);
+				}
+				else
+				{
+					GroupProperties.Properties.Add(PropertyRef);
+				}
 			}
 
 			Groups.Add(GroupProperties);
@@ -257,26 +265,21 @@ void FBangoActionPropertyCustomization::GenerateComboboxEntries(TSharedRef<IProp
 
 	for (FName FunctionName : InstancedAction->ActionFunctions)
 	{
-		// TODO: error handling / invalid name handling. Make entry red so it really stands out?
-		ActionFunctionNames.Add(FunctionName);
-		ActionFunctionDescriptions.Add(MakeShareable(new FString(FName::NameToDisplayString(FunctionName.ToString(), false))));
-		ActionFunctionNameColors.Add(FLinearColor::Green);
-	}
-	
-	/*
-	if (!InstancedAction->bDisableDoNothingAction)
-	{
-		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetDoNothingDescription())));
-	}
+		UFunction* Function = InstancedAction->FindFunction(FunctionName);
 
-	if (!InstancedAction->bDisableStartAction)
-	{
-		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStartDescription())));
+		if (FunctionName == NAME_None)
+		{
+			UE_LOG(Bango, Error, TEXT("Invalid action name registered in <%s> - cannot use None as a function name! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString());
+		}
+		else if (Function)
+		{
+			ActionFunctionNames.Add(FunctionName);
+			ActionFunctionDescriptions.Add(MakeShareable(new FString(FName::NameToDisplayString(FunctionName.ToString(), false))));
+			ActionFunctionNameColors.Add(FLinearColor::Green);
+		}
+		else
+		{
+			UE_LOG(Bango, Error, TEXT("Invalid action name registered in <%s> - could not find UFUNCTION() named <%s>! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString(), *FunctionName.ToString());
+		}
 	}
-
-	if (!InstancedAction->bDisableStopAction)
-	{
-		ComboItems.Add(MakeShareable(new FString(InstancedAction->GetStopDescription())));
-	}
-	*/
 }

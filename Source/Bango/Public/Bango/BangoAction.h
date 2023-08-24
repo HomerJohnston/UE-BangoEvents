@@ -76,6 +76,8 @@ protected:
 
 public:
 	void Initialize();
+
+	void BindDelegate(FName FunctionName, FOnEventTrigger& Delegate);
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void BeginPlay();
@@ -86,8 +88,6 @@ public:
 	/** This function is subscribed to the Event's triggered delegate and is called by the event when it activates or deactivates. */
 	UFUNCTION()
 	void HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal);
-
-	void Handle(FName ActionFunction, UBangoEvent* Event, FBangoEventSignal Signal);
 
 protected:
 	UWorld* GetWorld() const override;

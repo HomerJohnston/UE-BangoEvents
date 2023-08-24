@@ -28,14 +28,22 @@ void UBangoAction::EndPlay_Implementation(const EEndPlayReason::Type EndPlayReas
 
 void UBangoAction::Initialize()
 {
-	if (OnEventActivate != NAME_None)
-	{
-		OnEventActivateDelegate.BindUFunction(this, OnEventActivate);
-	}
+	BindDelegate(OnEventActivate, OnEventActivateDelegate);
+	BindDelegate(OnEventDeactivate, OnEventDeactivateDelegate);
+}
 
-	if (OnEventDeactivate != NAME_None)
+void UBangoAction::BindDelegate(FName FunctionName, FOnEventTrigger& Delegate)
+{
+	if (FunctionName != NAME_None)
 	{
-		OnEventDeactivateDelegate.BindUFunction(this, OnEventDeactivate);
+#if !UE_BUILD_SHIPPING
+		if (ensure(FindFunction(FunctionName)))
+		{
+			Delegate.BindUFunction(this, FunctionName);
+		}
+#else
+		Delegate.BindUFunction(this, FunctionName);
+#endif
 	}
 }
 
@@ -45,14 +53,12 @@ void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 	{
 		case EBangoEventSignalType::EventActivated:
 		{
-			OnEventActivateDelegate.Execute(Event, Signal.Instigator);
-			//Handle(OnEventActivate, Event, Signal);
+			OnEventActivateDelegate.ExecuteIfBound(Event, Signal.Instigator);
 			break;
 		}
 		case EBangoEventSignalType::EventDeactivated:
 		{
-			OnEventDeactivateDelegate.Execute(Event, Signal.Instigator);
-			//Handle(OnEventDeactivate, Event, Signal);
+			OnEventDeactivateDelegate.ExecuteIfBound(Event, Signal.Instigator);
 			break;
 		}
 		default:
@@ -60,30 +66,6 @@ void UBangoAction::HandleSignal(UBangoEvent* Event, FBangoEventSignal Signal)
 			break;
 		}
 	}
-}
-
-void UBangoAction::Handle(FName ActionFunction, UBangoEvent* Event, FBangoEventSignal Signal)
-{
-	
-	/*
-	switch (WhatToDo)
-	{
-		case EBangoActionRun::ExecuteStart:
-		{
-			Start(Event, Signal.Instigator);
-			break;
-		}
-		case EBangoActionRun::ExecuteStop:
-		{
-			Stop(Event, Signal.Instigator);
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
-	*/
 }
 
 UWorld* UBangoAction::GetWorld() const

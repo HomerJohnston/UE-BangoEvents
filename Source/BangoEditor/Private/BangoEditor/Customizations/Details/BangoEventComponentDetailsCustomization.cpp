@@ -8,6 +8,8 @@
 #include "Bango/Core/BangoEventComponent.h"
 #include "Widgets/Layout/SWrapBox.h"
 
+#include "Widgets/Colors/SColorBlock.h"
+
 TSharedRef<IDetailCustomization> FBangoEventComponentDetailsCustomization::MakeInstance()
 {
 	return MakeShared<FBangoEventComponentDetailsCustomization>();
@@ -19,10 +21,6 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 	DetailBuilder.GetObjectsBeingCustomized(Objects);
 
 	EventComponent = nullptr;
-
-	DebugInstigatorProperty = DetailBuilder.GetProperty("DebugInstigator");
-
-	DebugInstigatorProperty->MarkHiddenByCustomization();
 	
 	for (TWeakObjectPtr<UObject>& Object : Objects)
 	{
@@ -43,17 +41,61 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 		return;
 	}
 
-	if (!EventComponent->GetWorld()->IsGameWorld())
+	if (EventComponent->GetWorld()->IsGameWorld())
 	{
-		return;
+		DrawRuntimeDetails(DetailBuilder);
 	}
+	else if (EventComponent->GetWorld()->IsEditorWorld())
+	{
+		DrawEditorDetails(DetailBuilder);
+	}
+	
+	/*
+	TSharedRef<IPropertyHandle> ActionsProperty = DetailBuilder.GetProperty("Actions");
 
+	DetailBuilder.AddCustomRowToCategory(ActionsProperty, INVTEXT("Test"), false)
+	.NameContent()
+	[
+		SNew(SOverlay)
+		+ SOverlay::Slot()
+		.HAlign(EHorizontalAlignment::HAlign_Fill)
+		[
+			SNew(SColorBlock)
+			.Color(FLinearColor(0.15, 0.05, 0.04))
+		]
+		+ SOverlay::Slot()
+		[
+			ActionsProperty->CreatePropertyNameWidget()
+		]
+	]
+	.ValueContent()
+	[
+		SNew(SOverlay)
+		+ SOverlay::Slot()
+		[
+			SNew(SColorBlock)
+			.Color(FLinearColor(0.15, 0.05, 0.04))
+		]
+		+ SOverlay::Slot()
+		[
+			ActionsProperty->CreatePropertyValueWidget()
+		]
+	];
+	*/
+}
+
+void FBangoEventComponentDetailsCustomization::DrawRuntimeDetails(IDetailLayoutBuilder& DetailBuilder)
+{
 	UBangoEvent* Event = EventComponent->GetEvent();
 
 	if (!IsValid(Event))
 	{
 		return;
 	}
+	
+	TestInstigatorProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UBangoEventComponent, TestInstigator));
+
+	TestInstigatorProperty->MarkHiddenByCustomization();
 	
 	IDetailCategoryBuilder& BangoCategory = DetailBuilder.EditCategory("Bango");
 
@@ -96,7 +138,31 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 		.OnClicked(FOnClicked::CreateSP(this, &FBangoEventComponentDetailsCustomization::ClickDeactivateEvent))
 	];
 	
-	TestGroup.AddPropertyRow(DebugInstigatorProperty->AsShared());
+	TestGroup.AddPropertyRow(TestInstigatorProperty->AsShared());
+}
+
+void FBangoEventComponentDetailsCustomization::DrawEditorDetails(IDetailLayoutBuilder& DetailBuilder)
+{/*
+	IDetailCategoryBuilder& X = DetailBuilder.EditCategory("Bango");
+
+	FDetailWidgetRow& Y = X.AddCustomRow(INVTEXT("Test"), false);
+
+	auto& ActionsProperty = 
+	
+	Y.ValueContent()
+	[
+		SNew(SOverlay)
+		+ SOverlay::Slot()
+		[
+			SNew(SColorBlock)
+			.Color(FLinearColor(0.15, 0.05, 0.04))
+		]
+		+ SOverlay::Slot()
+		[
+			
+		]
+		SNew()
+	];*/
 }
 
 FReply FBangoEventComponentDetailsCustomization::ClickActivateEvent()
@@ -125,7 +191,7 @@ FReply FBangoEventComponentDetailsCustomization::HandleClick(EBangoTriggerSignal
 	
 	UObject* Test = nullptr;
 	
-	DebugInstigatorProperty->GetValue(Test);
+	TestInstigatorProperty->GetValue(Test);
 
 	TWeakObjectPtr<UObject> TestInstigator = Test;
 	

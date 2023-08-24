@@ -12,6 +12,10 @@ public:
 
 	void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
+	void DrawRuntimeDetails(IDetailLayoutBuilder& DetailBuilder);
+
+	void DrawEditorDetails(IDetailLayoutBuilder& DetailBuilder);
+	
 	FReply ClickActivateEvent();
 	
 	FReply ClickDeactivateEvent();
@@ -20,5 +24,5 @@ public:
 	
 	TWeakObjectPtr<UBangoEventComponent> EventComponent;
 
-	TSharedPtr<IPropertyHandle> DebugInstigatorProperty;
+	TSharedPtr<IPropertyHandle> TestInstigatorProperty;
 };

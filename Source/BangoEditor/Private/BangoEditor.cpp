@@ -58,3 +58,5 @@ void FBangoEditorModule::ShutdownModule()
 #undef LOCTEXT_NAMESPACE
     
 IMPLEMENT_MODULE(FBangoEditorModule, BangoEditor)
+
+DEFINE_LOG_CATEGORY(BangoEditor);

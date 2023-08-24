@@ -30,3 +30,5 @@ public:
 	virtual void ShutdownModule() override;
 
 };
+
+DECLARE_LOG_CATEGORY_EXTERN(BangoEditor, Log, All);

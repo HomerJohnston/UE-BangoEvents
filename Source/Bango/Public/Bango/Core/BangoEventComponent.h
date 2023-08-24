@@ -21,6 +21,10 @@ class BANGO_API UBangoEventComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
+#if WITH_EDITOR
+	friend class FBangoEventComponentDetailsCustomization;
+#endif
+	
 	// ============================================================================================
 	// CONSTRUCTION
 	// ============================================================================================
@@ -34,7 +38,7 @@ public:
 #if WITH_EDITORONLY_DATA
 protected:
 	UPROPERTY(Category="Bango|Testing", EditInstanceOnly, Transient)
-	TSoftObjectPtr<AActor> DebugInstigator;
+	TSoftObjectPtr<AActor> TestInstigator;
 #endif
 
 protected:
