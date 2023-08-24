@@ -261,7 +261,6 @@ void FBangoActionPropertyCustomization::GenerateComboboxEntries(TSharedRef<IProp
 	
 	ActionFunctionNames.Add(NAME_None);
 	ActionFunctionDescriptions.Add(MakeShareable(new FString("Do Nothing")));
-	ActionFunctionNameColors.Add(FLinearColor::White);
 
 	for (FName FunctionName : InstancedAction->ActionFunctions)
 	{
@@ -275,7 +274,6 @@ void FBangoActionPropertyCustomization::GenerateComboboxEntries(TSharedRef<IProp
 		{
 			ActionFunctionNames.Add(FunctionName);
 			ActionFunctionDescriptions.Add(MakeShareable(new FString(FName::NameToDisplayString(FunctionName.ToString(), false))));
-			ActionFunctionNameColors.Add(FLinearColor::Green);
 		}
 		else
 		{

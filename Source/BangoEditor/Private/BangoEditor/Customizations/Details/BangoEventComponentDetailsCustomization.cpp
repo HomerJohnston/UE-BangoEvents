@@ -50,6 +50,7 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 		DrawEditorDetails(DetailBuilder);
 	}
 	
+	
 	/*
 	TSharedRef<IPropertyHandle> ActionsProperty = DetailBuilder.GetProperty("Actions");
 
@@ -82,6 +83,7 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 		]
 	];
 	*/
+	
 }
 
 void FBangoEventComponentDetailsCustomization::DrawRuntimeDetails(IDetailLayoutBuilder& DetailBuilder)

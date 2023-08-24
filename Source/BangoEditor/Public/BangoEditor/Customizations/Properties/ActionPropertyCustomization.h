@@ -22,8 +22,6 @@ public:
 
 	TArray<FName> ActionFunctionNames;
 	TArray<TSharedPtr<FString>> ActionFunctionDescriptions;
-	TArray<FLinearColor> ActionFunctionNameColors;
 	
     TMap<FName, TSharedPtr<STextBlock>> ComboBoxTitleBlocks;
 };
-

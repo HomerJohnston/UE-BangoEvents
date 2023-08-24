@@ -45,7 +45,7 @@ protected:
 #if WITH_EDITORONLY_DATA
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(DisplayPriority=-1))
-	TSet<FName> ActionFunctions;
+	TArray<FName> ActionFunctions;
 #endif
 
 	// -------------------------------------------------------------------
