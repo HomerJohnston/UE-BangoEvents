@@ -1,17 +1,14 @@
 #pragma once
 
+#include "ActionTriggerPropertyCustomizationBase.h"
 #include "IPropertyTypeCustomization.h"
 
-class FBangoTriggerPropertyCustomization : public IPropertyTypeCustomization
+class FBangoTriggerPropertyCustomization : public FBangoActionTriggerPropertyCustomizationBase
 {
 public:
 	FBangoTriggerPropertyCustomization();
 	
 public:
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance();
-
-	void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
-
-	void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 };
 

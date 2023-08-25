@@ -144,27 +144,17 @@ void FBangoEventComponentDetailsCustomization::DrawRuntimeDetails(IDetailLayoutB
 }
 
 void FBangoEventComponentDetailsCustomization::DrawEditorDetails(IDetailLayoutBuilder& DetailBuilder)
-{/*
-	IDetailCategoryBuilder& X = DetailBuilder.EditCategory("Bango");
+{
+	UBangoEvent* Event = EventComponent->GetEvent();
 
-	FDetailWidgetRow& Y = X.AddCustomRow(INVTEXT("Test"), false);
-
-	auto& ActionsProperty = 
+	if (!IsValid(Event))
+	{
+		return;
+	}
 	
-	Y.ValueContent()
-	[
-		SNew(SOverlay)
-		+ SOverlay::Slot()
-		[
-			SNew(SColorBlock)
-			.Color(FLinearColor(0.15, 0.05, 0.04))
-		]
-		+ SOverlay::Slot()
-		[
-			
-		]
-		SNew()
-	];*/
+	TestInstigatorProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UBangoEventComponent, TestInstigator));
+
+	TestInstigatorProperty->MarkHiddenByCustomization();
 }
 
 FReply FBangoEventComponentDetailsCustomization::ClickActivateEvent()

@@ -29,7 +29,7 @@ class BANGO_API UBangoTrigger : public UObject
 	// ============================================================================================
 protected:
 	/** Filter for overlap events. */
-	UPROPERTY(EditAnywhere, Instanced, Category = "Settings")
+	UPROPERTY(Category = "Default", EditAnywhere, Instanced)
 	UBangoInstigatorFilter* InstigatorFilter;
 	
 	// -------------------------------------------------------------------
@@ -86,7 +86,7 @@ protected:
 	#if WITH_EDITORONLY_DATA
 private:
 	/** Set to override the editor display name. */
-	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName", DisplayPriority=-2))
+	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName", DisplayPriority=-1))
 	FText DisplayName;
 
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))

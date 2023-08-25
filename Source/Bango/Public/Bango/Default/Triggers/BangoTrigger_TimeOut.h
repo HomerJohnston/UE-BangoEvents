@@ -4,7 +4,7 @@
 
 #include "BangoTrigger_TimeOut.generated.h"
 
-UCLASS()
+UCLASS(Abstract) // TODO not sure if I want this class
 class BANGO_API UBangoTrigger_TimeOut : public UBangoTrigger
 {
 	GENERATED_BODY()
@@ -21,7 +21,7 @@ public:
 	// ============================================================================================
 	
 protected:
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(Delta = 0.1, ClampMin = 0.0, UIMin = 0.0, UIMax = 60.0))
+	UPROPERTY(EditAnywhere, meta=(Delta = 0.1, ClampMin = 0.0, UIMin = 0.0, UIMax = 60.0))
 	double Time = 0.0;
 	
 	// -------------------------------------------------------------------

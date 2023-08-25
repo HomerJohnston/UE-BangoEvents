@@ -22,7 +22,7 @@ enum class EBangoEventSignalledRequirement : uint8
 	/** Any master event activating will cause this trigger to send an activate signal. All master events must deactivate for this trigger to send a deactivate signal. */
 	AnyActivateAllDeactivate,
 
-	Max
+	Max UMETA(Hidden)
 };
 
 UCLASS(DisplayName="Event Triggered")
@@ -40,26 +40,26 @@ public:
 	// ============================================================================================
 protected:
 	/** Should this trigger fire when any master events activate, or only when all activate? */
-	UPROPERTY(EditAnywhere, Category="Settings")
+	UPROPERTY(EditAnywhere)
 	EBangoEventSignalledRequirement Requirement;
 
 	/** What event(s) to watch? */ // TODO: I should have an FComponentReference property to pick actual events. But FCompRef is bugged and cannot reference non-CDO components. As a weak workaround, pick whole actors and find all components manually.
-	UPROPERTY(EditInstanceOnly, Category="Settings")
+	UPROPERTY(EditInstanceOnly)
 	TArray<TSoftObjectPtr<AActor>> MasterEventSources;
 
-	UPROPERTY(VisibleInstanceOnly, Category="Settings", Transient)
+	UPROPERTY(VisibleInstanceOnly, Transient)
 	TArray<TSoftObjectPtr<UBangoEventComponent>> MasterEvents;
 	
 	/** If true, this event will be activated as if the watched event's instigator had triggered us directly. If false, will use this trigger object as our instigator. */
-	UPROPERTY(EditAnywhere, Category="Settings", DisplayName="Use Master Event's Instigator");
+	UPROPERTY(EditAnywhere, DisplayName="Use Master Event's Instigator");
 	bool bUseInstigatorFromMasterEvent;
 
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(EditCondition="bOverrideSignalMapping", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="bOverrideSignalMapping", EditConditionHides))
 	EBangoTriggerSignalType OnTargetEventActivated;
 
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(EditCondition="bOverrideSignalMapping", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="bOverrideSignalMapping", EditConditionHides))
 	EBangoTriggerSignalType OnTargetEventDeactivated;
 	
 	// ============================================================================================

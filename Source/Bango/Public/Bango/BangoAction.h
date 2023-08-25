@@ -20,6 +20,7 @@ class BANGO_API UBangoAction : public UObject
 
 #if WITH_EDITOR
 	friend class FBangoActionPropertyCustomization;
+	friend class FBangoActionPropertyCustomization_ActionSelectorDrawer;
 #endif
 	
 	// ============================================================================================
@@ -35,16 +36,16 @@ public:
 
 protected:
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
+	UPROPERTY(EditAnywhere, Category="Default", meta=(DisplayPriority=-1))
 	FName OnEventActivate;
 	
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(DisplayPriority=-1))
+	UPROPERTY(EditAnywhere, Category="Default", meta=(DisplayPriority=-1))
 	FName OnEventDeactivate;
 
 #if WITH_EDITORONLY_DATA
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Settings", meta=(DisplayPriority=-1))
+	UPROPERTY(EditDefaultsOnly, Category="Action Setup", meta=(DisplayPriority=-1))
 	TArray<FName> ActionFunctions;
 #endif
 

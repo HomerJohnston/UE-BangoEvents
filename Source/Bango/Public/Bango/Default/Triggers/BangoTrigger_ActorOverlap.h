@@ -21,26 +21,26 @@ class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger
 
 private:
 	/** Signal to event upon beginning overlap. */
-	UPROPERTY(Category="Settings", EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	EBangoTriggerSignalType OnBeginOverlap;
 
 	/** Signal to event upon ending overlap. */
-	UPROPERTY(Category="Settings", EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	EBangoTriggerSignalType OnEndOverlap;
-
-	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseTargetActor = false;
-	
-	/** By default the event will use itself as the source of overlap triggers. Pick another actor to listen for overlap triggers from that actor instead. */
-	UPROPERTY(DisplayName = "Use Overlap Events From Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
-	AActor* TargetActor;
 
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseTargetComponent = false;
 
-	/** Optionally choose a specific component to listen for overlap triggers from. Note: only works on self actor, due to a bug in FComponentReference. */
-	UPROPERTY(DisplayName = "Use Overlap Events From Component", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
+	/** By default the event will listen for overlap events from all overlapping components on its actor. Use this to only listen for overlap events from a specific component. */ // TODO Note: only works on self actor, due to a bug in FComponentReference.
+	UPROPERTY(DisplayName = "Use Overlaps From Component", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
 	FComponentReference TargetComponent;
+	
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseTargetActor = false;
+	
+	/** By default the event will use itself as the source of overlap triggers. Use this to listen for overlap events from another actor instead. */
+	UPROPERTY(DisplayName = "Use Other Actor", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	AActor* TargetActor;
 
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters

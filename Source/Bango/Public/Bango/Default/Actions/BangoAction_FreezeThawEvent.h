@@ -27,14 +27,14 @@ private:
 	bool bUseTargetActor = true;
 
 	/** Freeze/thaw all events on a specified actor. TODO: need a way to limit to a single component. */
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition="bUseTargetActor"))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="bUseTargetActor"))
 	AActor* TargetActor;
 	
 	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
 	bool bUseTargetComponent = false;
 	
 	/** Freeze/thaw the specified event. Note: only works on self actor due to a bug in FComponentReference. */
-	UPROPERTY(Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
+	UPROPERTY(EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
 	FComponentReference TargetComponent;
 	
 	// -------------------------------------------------------------------

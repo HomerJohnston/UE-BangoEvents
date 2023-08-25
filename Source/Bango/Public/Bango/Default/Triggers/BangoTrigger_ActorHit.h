@@ -25,14 +25,14 @@ public:
 	// ============================================================================================
 protected:
 	/** By default the event will use itself as the source of hit triggers. Pick another actor to listen for hit triggers from that actor instead. */
-	UPROPERTY(Category="Settings", DisplayName = "Hit Source Actor", Category="Settings", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
+	UPROPERTY(DisplayName = "Hit Source Actor", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
 	AActor* TargetActor;
 
 	UPROPERTY()
 	bool bUseTargetActor;
 	
 	/** How to trigger the event when a hit occurs. */
-	UPROPERTY(Category="Settings", DisplayName="On Hit", EditAnywhere)
+	UPROPERTY(DisplayName="On Hit", EditAnywhere)
 	EBangoTriggerSignalType SignalOnHit;
 	
 	// ============================================================================================
@@ -51,7 +51,7 @@ public:
 	void Disable_Implementation() override;
 
 public:
-	/***/
+	/** Sets the target actor. */
 	void SetTargetActor(AActor* NewTargetActor);
 
 protected:

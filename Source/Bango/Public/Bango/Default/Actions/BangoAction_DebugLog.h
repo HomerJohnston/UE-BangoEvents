@@ -39,7 +39,7 @@ protected:
 	bool bOverrideActivateMessage = false;
 
 	/**  */
-	UPROPERTY(Category="Settings", DisplayName="Override Activate Message", EditAnywhere, meta=(EditCondition="bOverrideActivateMessage"))
+	UPROPERTY(DisplayName="Override Activate Message", EditAnywhere, meta=(EditCondition="bOverrideActivateMessage"))
 	FString ActivateMessage;
 
 	/**  */
@@ -47,23 +47,23 @@ protected:
 	bool bOverrideDeactivateMessage;
 	
 	/**  */
-	UPROPERTY(Category="Settings", DisplayName="Override Deactivate Message", EditAnywhere, meta=(EditCondition="bOverrideDeactivateMessage"))
+	UPROPERTY(DisplayName="Override Deactivate Message", EditAnywhere, meta=(EditCondition="bOverrideDeactivateMessage"))
 	FString DeactivateMessage;
 
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings")
+	UPROPERTY(EditAnywhere, Category="Advanced")
 	EBangoAction_DebugLog_PrintTo PrintTo = EBangoAction_DebugLog_PrintTo::Log;
 
 	/**  */	
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
 	int32 OnScreenKey = -1;
 	
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
 	float OnScreenDisplayTime = 1.0f;
 
 	/**  */
-	UPROPERTY(EditAnywhere, Category="Settings", meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
+	UPROPERTY(EditAnywhere, meta=(EditCondition="PrintTo != EBangoAction_DebugLog_PrintTo::Log", EditConditionHides))
 	FColor OnScreenColor = FColor::White;
 
 	// -------------------------------------------------------------------

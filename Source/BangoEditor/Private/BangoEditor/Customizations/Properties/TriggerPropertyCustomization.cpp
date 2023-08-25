@@ -2,10 +2,14 @@
 
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
+#include "IDetailGroup.h"
+#include "Bango/BangoTrigger.h"
 #include "Widgets/Colors/SColorBlock.h"
+#include "PropertyEditor/Private/CategoryPropertyNode.h"
 
 FBangoTriggerPropertyCustomization::FBangoTriggerPropertyCustomization()
 {
+	HeaderColor = FLinearColor(0.05, 0.04, 0.15);
 }
 
 TSharedRef<IPropertyTypeCustomization> FBangoTriggerPropertyCustomization::MakeInstance()
@@ -13,6 +17,7 @@ TSharedRef<IPropertyTypeCustomization> FBangoTriggerPropertyCustomization::MakeI
 	return MakeShareable(new FBangoTriggerPropertyCustomization());
 }
 
+/*
 void FBangoTriggerPropertyCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	TSharedRef<SWidget> PropertyValueWidget = PropertyHandle->CreatePropertyValueWidget();
@@ -32,12 +37,30 @@ void FBangoTriggerPropertyCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	];
 }
 
+
 void FBangoTriggerPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	struct FGroupProperties
+	{
+		FName GroupName;
+		TArray<TSharedRef<IPropertyHandle>> Properties;
+	};
+	
 	uint32 NumClasses;
 	PropertyHandle->GetNumChildren(NumClasses);
 
+	TArray<FGroupProperties> Groups;
+	
 	static TArray<FName> EventTriggerProperties = {"WhenEventActivates", "WhenEventDeactivates"};
+	
+	UObject* InstancedActionObject = nullptr;
+	PropertyHandle->GetValue(InstancedActionObject);
+	UBangoTrigger* InstancedTrigger = Cast<UBangoTrigger>(InstancedActionObject);
+
+	if (!IsValid(InstancedTrigger))
+	{
+		return;
+	}
 	
 	for (uint32 i = 0; i < NumClasses; i++)
 	{
@@ -51,6 +74,18 @@ void FBangoTriggerPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyH
 		{
 			TSharedRef<IPropertyHandle> CategoryRef = ClassRef->GetChildHandle(j).ToSharedRef();
 
+			FCategoryPropertyNode* CategoryNode = CategoryRef->GetPropertyNode()->AsCategoryNode();
+
+			if (!CategoryNode)
+			{
+				continue;
+			}
+			
+			FName CategoryName = CategoryNode->GetCategoryName();
+			
+			FGroupProperties GroupProperties;
+			GroupProperties.GroupName = CategoryName;
+			
 			uint32 NumProperties;
 			CategoryRef->GetNumChildren(NumProperties);
 
@@ -59,10 +94,37 @@ void FBangoTriggerPropertyCustomization::CustomizeChildren(TSharedRef<IPropertyH
 				TSharedRef<IPropertyHandle> PropertyRef = CategoryRef->GetChildHandle(k).ToSharedRef();
 
 				if (PropertyRef->GetProperty()->HasAnyPropertyFlags(CPF_Transient))
+				{
 					continue;
+				}
 				
-				ChildBuilder.AddProperty(PropertyRef);
+				if (CategoryName == InstancedTrigger->GetClass()->GetFName() || CategoryName == "Default")
+				{
+					ChildBuilder.AddProperty(PropertyRef);
+				}
+				else
+				{
+					GroupProperties.Properties.Add(PropertyRef);
+				}
+			}
+
+			Groups.Add(GroupProperties);
+		}
+
+		for (FGroupProperties& GroupProperties : Groups)
+		{
+			if (GroupProperties.Properties.IsEmpty())
+			{
+				continue;
+			}
+			
+			IDetailGroup& Group = ChildBuilder.AddGroup(GroupProperties.GroupName, FText::FromName(GroupProperties.GroupName));
+
+			for (TSharedRef<IPropertyHandle>& PropertyHandleRef : GroupProperties.Properties)
+			{
+				Group.AddPropertyRow(PropertyHandleRef);
 			}
 		}
 	}
 }
+*/
