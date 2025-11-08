@@ -9,9 +9,11 @@
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {
+#if WITH_EDITORONLY_DATA
 	ActionFunctions.Add(GET_FUNCTION_NAME_CHECKED(ThisClass, PrintActivationMessage));
 	ActionFunctions.Add(GET_FUNCTION_NAME_CHECKED(ThisClass, PrintDeactivationMessage));
-
+#endif
+	
 	OnEventActivate = GET_FUNCTION_NAME_CHECKED(ThisClass, PrintActivationMessage);
 	OnEventDeactivate = GET_FUNCTION_NAME_CHECKED(ThisClass, PrintDeactivationMessage);
 }

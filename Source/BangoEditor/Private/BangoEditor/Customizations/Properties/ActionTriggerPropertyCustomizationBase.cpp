@@ -5,8 +5,6 @@
 #include "IDetailGroup.h"
 #include "Bango/BangoAction.h"
 #include "Bango/Utility/BangoLog.h"
-#include "PropertyEditor/Private/CategoryPropertyNode.h"
-#include "PropertyEditor/Private/PropertyNode.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"
@@ -51,7 +49,17 @@ void FBangoActionTriggerPropertyCustomizationBase::CustomizeHeader(TSharedRef<IP
 
 
 void FBangoActionTriggerPropertyCustomizationBase::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
-{	
+{
+
+	// TODO WHAT IS THIS!??!?!?!
+	// FPropertyEditorModule& PropertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	// PropertyEditor.CreateFloatingDetailsView()
+
+
+	
+	
+	
+	
 	UObject* InstancedActionObject = nullptr;
 	PropertyHandle->GetValue(InstancedActionObject);
 
@@ -60,46 +68,29 @@ void FBangoActionTriggerPropertyCustomizationBase::CustomizeChildren(TSharedRef<
 		return;
 	}
 
+	TMap<FName, FGroupProperties> PropertyGroups;
+
 	uint32 NumClasses;
 	PropertyHandle->GetNumChildren(NumClasses);
 
 	for (uint32 i = 0; i < NumClasses; i++)
 	{
-		TSharedRef<IPropertyHandle> ClassRef = PropertyHandle->GetChildHandle(i).ToSharedRef();
+		TSharedPtr<IPropertyHandle> ClassRef = PropertyHandle->GetChildHandle(i);
 
 		uint32 NumCategories;
 		ClassRef->GetNumChildren(NumCategories);
-
-		TArray<FGroupProperties> Groups;
-
-		FGroupProperties ActionGroup;
-		
-		FGroupProperties DefaultGroup("Default");
-
-		FGroupProperties AdvancedGroup("Advanced");
 		
 		for (uint32 j = 0; j < NumCategories; j++)
 		{
-			TSharedRef<IPropertyHandle> CategoryRef = ClassRef->GetChildHandle(j).ToSharedRef();
-
-			FCategoryPropertyNode* CategoryNode = CategoryRef->GetPropertyNode()->AsCategoryNode();
-
-			if (!CategoryNode)
-			{
-				continue;
-			}
-
-			FName CategoryName = CategoryNode->GetCategoryName();
-
-			FGroupProperties GroupProperties;
-			GroupProperties.GroupName = CategoryName;
+			TSharedPtr<IPropertyHandle> CategoryPtr = ClassRef->GetChildHandle(j);
 
 			uint32 NumProperties;
-			CategoryRef->GetNumChildren(NumProperties);
 
+			CategoryPtr->GetNumChildren(NumProperties);
+			
 			for (uint32 k = 0; k < NumProperties; k++)
 			{
-				TSharedRef<IPropertyHandle> PropertyRef = CategoryRef->GetChildHandle(k).ToSharedRef();
+				TSharedRef<IPropertyHandle> PropertyRef = CategoryPtr->GetChildHandle(k).ToSharedRef();
 
 				if (PropertyRef->GetProperty()->HasAnyPropertyFlags(CPF_Transient))
 				{
@@ -114,37 +105,20 @@ void FBangoActionTriggerPropertyCustomizationBase::CustomizeChildren(TSharedRef<
 					continue;
 				}
 				
-				if (CategoryName == InstancedActionObject->GetClass()->GetFName())
-				{
-					ActionGroup.Properties.Add(PropertyRef);
-				}
-				else if (CategoryName == "Default")
-				{
-					DefaultGroup.Properties.Add(PropertyRef);
-				}
-				else if (CategoryName == "Advanced")
-				{
-					AdvancedGroup.Properties.Add(PropertyRef);
-				}
-				else
-				{
-					GroupProperties.Properties.Add(PropertyRef);
-				}
+				FName CategoryName = FName(PropertyRef->GetMetaData("Category"));
+
+				FGroupProperties& PropertyGroup = PropertyGroups.FindOrAdd(CategoryName, FGroupProperties());
+
+				PropertyGroup.GroupName = CategoryName;
+				
+				PropertyGroup.Properties.Add(PropertyRef);
 			}
-
-			Groups.Add(GroupProperties);
 		}
-
-		DrawGroup(DefaultGroup, ChildBuilder, false);
-
-		DrawGroup(ActionGroup, ChildBuilder, false);
 		
-		for (FGroupProperties& GroupProperties : Groups)
+		for (auto& [CategoryName, PropertyGroup] : PropertyGroups)
 		{
-			DrawGroup(GroupProperties, ChildBuilder, true);
+			DrawGroup(PropertyGroup, ChildBuilder, true);
 		}
-
-		DrawGroup(AdvancedGroup, ChildBuilder, true);
 	}
 }
 

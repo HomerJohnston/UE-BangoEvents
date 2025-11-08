@@ -6,6 +6,7 @@
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Utility/BangoColor.h"
+#include "Materials/MaterialRenderProxy.h"
 
 // Forward declarations
 //=================================================================================================
@@ -228,7 +229,7 @@ FPrimitiveViewRelevance FBangoPlungerSceneProxy::GetViewRelevance(const FSceneVi
 #endif
 }
 
-void FBangoPlungerSceneProxy::OnTransformChanged()
+void FBangoPlungerSceneProxy::OnTransformChanged(FRHICommandListBase& RHICmdList)
 {
 	Origin = GetLocalToWorld().GetOrigin();
 }

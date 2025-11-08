@@ -14,5 +14,5 @@ struct FBangoActionFunctionRecord
 	FName FunctionName;
 
 	UPROPERTY(EditAnywhere)
-	UFunction* Function;
+	TObjectPtr<UFunction> Function;
 };

@@ -10,8 +10,10 @@
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()
 {
+#if WITH_EDITORONLY_DATA
 	ActionFunctions.Add("Freeze");
 	ActionFunctions.Add("Unfreeze");
+#endif
 }
 
 void UBangoAction_FreezeThawEvent::Freeze(UBangoEvent* Event, UObject* Instigator)

@@ -5,8 +5,6 @@
 #include "IDetailGroup.h"
 #include "Bango/BangoAction.h"
 #include "Bango/Utility/BangoLog.h"
-#include "PropertyEditor/Private/CategoryPropertyNode.h"
-#include "PropertyEditor/Private/PropertyNode.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"

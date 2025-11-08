@@ -464,7 +464,7 @@ void UBangoEventComponent::DebugDrawGame(UCanvas* Canvas, APlayerController* Pla
 
 		for (FCanvasTextItem& Text : DataText)
 		{
-			Canvas->DrawItem(Text);	
+			Canvas->DrawItem(Text);
 		}
 	}
 }
@@ -763,3 +763,4 @@ bool UBangoEventComponent::HasInvalidData() const
 	return false;
 }
 #endif
+

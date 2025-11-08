@@ -23,7 +23,10 @@ public class BangoEditor : ModuleRules
                 "Bango",
                 "DeveloperSettings",
                 "Projects",
-                "InputCore"
+                "InputCore",
+                "UnrealEd",
+                "BlueprintGraph",
+                "GraphEditor"
             }
         );
     }

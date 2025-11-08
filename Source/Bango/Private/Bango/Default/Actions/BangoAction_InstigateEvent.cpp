@@ -6,8 +6,10 @@
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {
+#if WITH_EDITORONLY_DATA
 	ActionFunctions.Add("SendActivateSignal");
 	ActionFunctions.Add("SendDeactivateSignal");
+#endif
 }
 
 void UBangoAction_InstigateEvent::SendActivateSignal(UBangoEvent* Event, UObject* Instigator)

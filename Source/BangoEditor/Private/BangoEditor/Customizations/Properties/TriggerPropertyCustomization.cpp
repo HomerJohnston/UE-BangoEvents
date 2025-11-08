@@ -5,7 +5,6 @@
 #include "IDetailGroup.h"
 #include "Bango/BangoTrigger.h"
 #include "Widgets/Colors/SColorBlock.h"
-#include "PropertyEditor/Private/CategoryPropertyNode.h"
 
 FBangoTriggerPropertyCustomization::FBangoTriggerPropertyCustomization()
 {

@@ -50,7 +50,13 @@ public class Bango : ModuleRules
 		
 		if (Target.bBuildEditor)
 		{
-			PrivateDependencyModuleNames.Add("UnrealEd");
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"UnrealEd",
+					"BlueprintGraph"
+				}
+				);
 		}
 		
 		DynamicallyLoadedModuleNames.AddRange(

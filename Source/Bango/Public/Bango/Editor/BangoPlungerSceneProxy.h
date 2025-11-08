@@ -96,7 +96,7 @@ public:
 
 	FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override;
 	
-	void OnTransformChanged() override;
+	void OnTransformChanged(FRHICommandListBase& RHICmdList) override;
 
 	uint32 GetMemoryFootprint() const override;
 

@@ -11,6 +11,7 @@ UBangoPlungerComponent::UBangoPlungerComponent()
 	bIsEditorOnly = true;
 	bHiddenInGame = true;
 	bUseEditorCompositing = true;
+	
 	SetGenerateOverlapEvents(false);
 
 	UPrimitiveComponent::SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
