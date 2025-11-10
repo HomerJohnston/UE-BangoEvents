@@ -5,12 +5,13 @@
 #include "BangoBlueprintFunctionLibrary.generated.h"
 
 class UBangoScriptObject;
+struct FBangoScriptHandle;
 
 UCLASS()
 class UBangoBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 
-    //UFUNCTION(BlueprintCallable)
-    //void RunScript(TSubclassOf<UBangoScriptObject> Script);
+    UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContext"))
+    static void AbortScript(UObject* WorldContext, UPARAM(Ref) FBangoScriptHandle& Handle);
 };

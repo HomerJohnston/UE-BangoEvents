@@ -43,38 +43,13 @@ void SGraphNode_BangoSleep::CreatePinWidgets()
     }
 }
 
-TOptional<float> SGraphNode_BangoSleep::ProgressBar_Percent() const
+TOptional<float> SGraphNode_BangoSleep::GetProgressBarPercent() const
 {
-	FBangoKismetNodeInfoContext K2Context(GetNodeObj()->GetGraph());
-	
-	// Display any pending latent actions
-	if (UObject* ActiveObject = K2Context.ActiveObjectBeingDebugged)
+	FBangoSleepAction* SleepAction = GetSleepAction();
+
+	if (SleepAction && SleepAction->Duration > KINDA_SMALL_NUMBER)
 	{
-		TArray<FBangoKismetNodeInfoContext::FObjectUUIDPair>* Pairs = K2Context.NodesWithActiveLatentActions.Find(GraphNode);
-		if (Pairs != NULL)
-		{
-			for (int32 Index = 0; Index < Pairs->Num(); ++Index)
-			{
-				FBangoKismetNodeInfoContext::FObjectUUIDPair Action = (*Pairs)[Index];
-
-				if (Action.Object == ActiveObject)
-				{
-					if (UWorld* World = GEngine->GetWorldFromContextObject(Action.Object, EGetWorldErrorMode::ReturnNull))
-					{
-						FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-
-						UEdGraphNode* NodeObj = GetNodeObj();
-						
-						FBangoDelayAction* DelayAction = LatentActionManager.FindExistingAction<FBangoDelayAction>(GetNodeObj()->GetOuter(), Action.UUID);
-
-						const FString LatentDesc = LatentActionManager.GetDescription(Action.Object, Action.UUID);
-						const FString& ActorLabel = Action.GetDisplayName();
-
-						return 1.0f - FCString::Atof(*LatentDesc);
-					}
-				}
-			}
-		}
+		return SleepAction->TimeRemaining / SleepAction->Duration;
 	}
 
 	return 0.0f;
@@ -292,18 +267,17 @@ void SGraphNode_BangoSleep::UpdateGraphNode()
 	InnerVerticalBox->AddSlot()
 	[
 		SNew(SBox)
-		.HeightOverride(2)
+		.HeightOverride(4)
 		[
 			SNew(SProgressBar)
+			.Visibility(this, &SGraphNode_BangoSleep::Visibility_ProgressBar)
 			.BarFillStyle(EProgressBarFillStyle::Mask)
-			.BarFillType(EProgressBarFillType::LeftToRight)
-			.Percent(this, &SGraphNode_BangoSleep::ProgressBar_Percent)
+			.BarFillType(EProgressBarFillType::FillFromCenterHorizontal)
+			.Percent(this, &SGraphNode_BangoSleep::GetProgressBarPercent)
 		]
 	];
 	
 	CreatePinWidgets();
-
-	
 	CreateBelowPinControls(InnerVerticalBox);
 	CreateAdvancedViewArrow(InnerVerticalBox);
 }
@@ -314,11 +288,11 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 	
 	const FSlateBrush* ImageBrush = FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass);
 
-	// Icons.TimingView
 	FOverlayWidgetInfo Info;
 	Info.OverlayOffset = FVector2f((WidgetSize.X / 2) - (ImageBrush->ImageSize.X * 0.5f), 8);
 	Info.Widget = SNew(SImage)
-		.Image(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass));
+		.Image(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass))
+		.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Hourglass);
 
 	Widgets.Add(Info);
 
@@ -384,6 +358,28 @@ void SGraphNode_BangoSleep::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<
 	// Display any pending latent actions
 	if (UObject* ActiveObject = K2Context->ActiveObjectBeingDebugged)
 	{
+		TArray<FKismetNodeInfoContext::FObjectUUIDPair>* Pairs = K2Context->NodesWithActiveLatentActions.Find(GraphNode);
+		if (Pairs != NULL)
+		{
+			for (int32 Index = 0; Index < Pairs->Num(); ++Index)
+			{
+				FKismetNodeInfoContext::FObjectUUIDPair Action = (*Pairs)[Index];
+
+				if (Action.Object == ActiveObject)
+				{
+					if (UWorld* World = GEngine->GetWorldFromContextObject(Action.Object, EGetWorldErrorMode::ReturnNull))
+					{
+						FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
+
+						const FString LatentDesc = LatentActionManager.GetDescription(Action.Object, Action.UUID);
+						const FString& ActorLabel = Action.GetDisplayName();
+
+						new (Popups) FGraphInformationPopupInfo(NULL, LatentBubbleColor, LatentDesc);
+					}
+				}
+			}
+		}
+		
 		// Display pinned watches
 		if (K2Context->WatchedNodeSet.Contains(GraphNode))
 		{
@@ -502,9 +498,120 @@ void SGraphNode_BangoSleep::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<
 	}
 }
 
+EVisibility SGraphNode_BangoSleep::Visibility_ProgressBar() const
+{
+	if (GEditor && GEditor->IsPlaySessionInProgress())
+	{
+		return EVisibility::Visible;
+	}
+
+	return EVisibility::Hidden;
+}
+
+FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Hourglass() const
+{
+	if (!GEditor)
+	{
+		return FLinearColor::Black;
+	}
+	
+	if (GEditor && !GEditor->IsPlaySessionInProgress())
+	{
+		return 0.8f * FLinearColor::White;
+	}
+	
+	FBangoSleepAction* SleepAction = GetSleepAction();
+	
+	if (SleepAction)
+	{
+		return (0.8f + 0.1f * FMath::Sin(10.0f * SleepAction->TimeRemaining)) * FLinearColor::White;
+	}
+
+	UWorld* World = GEditor->GetCurrentPlayWorld(GEditor->PlayWorld);
+
+	const FLinearColor IdleColor = 0.2f * FLinearColor::White;
+	
+	if (World && AbortTime > 0.0f)
+	{
+		float AbortTimeElapsed = World->GetTimeSeconds() - AbortTime;
+		const float FadeDuration = 2.0f;
+
+		if (AbortTimeElapsed <= FadeDuration)
+		{
+			float Lerp = FMath::Clamp(FMath::Pow(FMath::Lerp(0.0f, 1.0f, AbortTimeElapsed / FadeDuration), 4.0f), 0.0f, 1.0f);
+			//float Lerp = FMath::Clamp(FMath::Lerp(1.0f, 0.0f, AbortTimeElapsed / FadeDuration), 0.0f, 1.0f);
+
+			return FMath::Lerp(FLinearColor::Red, IdleColor, Lerp);
+			//return FLinearColor::LerpUsingHSV(FLinearColor::Red, IdleColor, Lerp);	
+		}
+	}
+
+	return IdleColor;
+}
+
+FBangoSleepAction* SGraphNode_BangoSleep::GetSleepAction() const
+{
+	FBangoKismetNodeInfoContext K2Context(GetNodeObj()->GetGraph());
+	
+	if (UObject* ActiveObject = K2Context.ActiveObjectBeingDebugged)
+	{
+		TArray<FBangoKismetNodeInfoContext::FObjectUUIDPair>* Pairs = K2Context.NodesWithActiveLatentActions.Find(GraphNode);
+		
+		if (Pairs != NULL)
+		{
+			for (int32 Index = 0; Index < Pairs->Num(); ++Index)
+			{
+				FBangoKismetNodeInfoContext::FObjectUUIDPair Action = (*Pairs)[Index];
+
+				if (Action.Object == ActiveObject)
+				{
+					if (UWorld* World = GEngine->GetWorldFromContextObject(Action.Object, EGetWorldErrorMode::ReturnNull))
+					{
+						FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
+
+						UEdGraphNode* NodeObj = GetNodeObj();
+						
+						return LatentActionManager.FindExistingAction<FBangoSleepAction>(Action.Object, Action.UUID);
+					}
+				}
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 void SGraphNode_BangoSleep::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
-	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+	SGraphNodeK2Base::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	FBangoSleepAction* SleepAction = GetSleepAction();
+	
+	if (SleepAction)
+	{
+		if (CurrentSleepAction != SleepAction)
+		{
+			AbortTime = -1.0f;
+
+			CurrentSleepAction = SleepAction;
+			CurrentSleepAction->OnAborted.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
+		}
+	}
+
+	//UE_LOG(LogTemp, Display, TEXT("%f"), AbortTime);
+}
+
+void SGraphNode_BangoSleep::OnAborted()
+{
+	if (GEditor)
+	{
+		UWorld* World = GEditor->GetCurrentPlayWorld();
+
+		if (World)
+		{
+			AbortTime = GEditor->GetCurrentPlayWorld()->GetTimeSeconds();
+		}
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

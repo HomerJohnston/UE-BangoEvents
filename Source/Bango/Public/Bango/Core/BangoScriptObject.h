@@ -1,29 +1,43 @@
 // Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
+#include "BangoScriptHandle.h"
 
 #include "BangoScriptObject.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FWaitUntilDelegate);
-DECLARE_DYNAMIC_DELEGATE(FOnFinishDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFinishDelegate);
 
+#define LOCTEXT_NAMESPACE "Bango"
+
+/**
+ * 
+ */
 UCLASS(Abstract, Blueprintable)
 class UBangoScriptObject : public UObject
 {
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable) // TODO this should not be BP callable in the end
-    void Execute();
+    /** This is called by Bango. */ 
+    UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
+    FBangoScriptHandle Execute_Internal();
+    
+    /** This is implemented by designers. */
+    UFUNCTION(BlueprintImplementableEvent)
+    void Start();
 
-    void Execute_Implementation() {};
+    /** This is supposed to be called at the end of the Execute function */
+    UFUNCTION(BlueprintCallable, meta = (WorldContext = "Script", BlueprintProtected))
+    static void Finish(UBangoScriptObject* Script);
 
     bool ImplementsGetWorld() const override { return true; }
 
-    UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-    void Finish(UObject* WorldContextObject);
+    UPROPERTY(BlueprintAssignable)
+    FOnFinishDelegate OnFinishDelegate;
 
-    TMulticastDelegate<void()> OnFinishDelegate;
+    UPROPERTY()
+    FBangoScriptHandle Handle;
     
     /** 
      * Perform a latent action with a delay (specified in seconds).  Calling again while it is counting down will be ignored.
@@ -34,7 +48,7 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
     static void Sleep(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo );
-
+    
     UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
     static void WaitUntil(bool bCondition) {};
 
@@ -42,7 +56,7 @@ public:
     static UPARAM(DisplayName="Val") float Rand(float Hi, float Lo);
 };
 
-class FBangoDelayAction : public FPendingLatentAction
+class FBangoSleepAction : public FPendingLatentAction
 {
 public:
     float Duration;
@@ -51,7 +65,9 @@ public:
     int32 OutputLink;
     FWeakObjectPtr CallbackTarget;
 
-    FBangoDelayAction(float InDuration, const FLatentActionInfo& LatentInfo)
+    TMulticastDelegate<void()> OnAborted;
+
+    FBangoSleepAction(float InDuration, const FLatentActionInfo& LatentInfo)
         : Duration(InDuration)
         , TimeRemaining(InDuration)
         , ExecutionFunction(LatentInfo.ExecutionFunction)
@@ -66,14 +82,23 @@ public:
         Response.FinishAndTriggerIf(TimeRemaining <= 0.0f, ExecutionFunction, OutputLink, CallbackTarget);
     }
 
+    virtual void NotifyActionAborted()
+    {
+        OnAborted.Broadcast();
+    }
+    
 #if WITH_EDITOR
     // Returns a human readable description of the latent operation's current state
     virtual FString GetDescription() const override
     {
-        static const FNumberFormattingOptions DelayTimeFormatOptions = FNumberFormattingOptions()
-            .SetMinimumFractionalDigits(3)
-            .SetMaximumFractionalDigits(3);
-        return FText::Format(NSLOCTEXT("DelayAction", "DelayActionTimeFmt", "{0}"), FText::AsNumber(TimeRemaining / Duration, &DelayTimeFormatOptions)).ToString();
+        static const FNumberFormattingOptions SleepTimeFormatOptions = FNumberFormattingOptions()
+            .SetMinimumFractionalDigits(2)
+            .SetMaximumFractionalDigits(2);
+        return FText::Format(LOCTEXT("SleepActionTimeFmt", "{0} / {1}"),
+            FText::AsNumber(Duration - TimeRemaining, &SleepTimeFormatOptions),
+            FText::AsNumber(Duration, &SleepTimeFormatOptions)).ToString();
     }
 #endif
 };
+
+#undef LOCTEXT_NAMESPACE

@@ -7,6 +7,7 @@ TSharedPtr<class SGraphNode> FGraphPanelNodeFactory_Bango::CreateNode(class UEdG
 {
     auto* FunctionNode = Cast<UK2Node_CallFunction>(Node);
 
+    // TODO I need to make sure this ONLY applies to the BangoScriptObject func! 
     if (FunctionNode && FunctionNode->FunctionReference.GetMemberName() == FName("Sleep"))
     {
         return SNew(SGraphNode_BangoSleep, FunctionNode);

@@ -2,9 +2,11 @@
 
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 
-/*
-void UBangoBlueprintFunctionLibrary::RunScript(TSubclassOf<UBangoScriptObject> Script)
+#include "Bango/Subsystem/BangoScriptSubsystem.h"
+
+void UBangoBlueprintFunctionLibrary::AbortScript(UObject* WorldContext, FBangoScriptHandle& Handle)
 {
-	
+	UBangoScriptSubsystem::AbortScript(WorldContext, Handle);
+
+	Handle.Invalidate();
 }
-*/

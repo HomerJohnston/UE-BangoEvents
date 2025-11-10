@@ -6,12 +6,14 @@
 
 void UBangoRunScript::Activate()
 {
-    Super::Activate();
+    UE_LOG(LogTemp, Display, TEXT("HEllo WOrld "));
 }
 
 void UBangoRunScript::Cancel()
 {
     Super::Cancel();
+
+    UE_LOG(LogTemp, Display, TEXT("HEllo WOrld Cancel"));
 }
 
 void UBangoRunScript::SetReadyToDestroy()
