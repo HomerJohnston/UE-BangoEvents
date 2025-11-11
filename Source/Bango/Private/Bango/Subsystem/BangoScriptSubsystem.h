@@ -17,6 +17,8 @@ protected:
 protected:
 	UPROPERTY()
 	TMap<FBangoScriptHandle, TObjectPtr<UBangoScriptObject>> RunningScripts;
+
+	bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 	
 public:
 	static FBangoScriptHandle RegisterScript(UBangoScriptObject* BangoScriptObject);

@@ -24,11 +24,12 @@ protected:
 	// API
 	// ============================================================================================
 public:
-	
 	virtual void StartupModule() override;
 
 	virtual void ShutdownModule() override;
 
+	void RegisterMenus() const;
+	
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(BangoEditor, Log, All);

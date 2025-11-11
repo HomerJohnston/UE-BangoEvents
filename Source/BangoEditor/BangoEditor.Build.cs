@@ -26,7 +26,9 @@ public class BangoEditor : ModuleRules
                 "InputCore",
                 "UnrealEd",
                 "BlueprintGraph",
-                "GraphEditor"
+                "GraphEditor",
+                "ToolMenus",
+                //"ContentBrowser"
             }
         );
     }

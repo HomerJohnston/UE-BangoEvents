@@ -13,6 +13,11 @@ UBangoScriptSubsystem* UBangoScriptSubsystem::Get(UObject* WorldContext)
 	return nullptr;
 }
 
+bool UBangoScriptSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
+{
+	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
+}
+
 FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScriptObject* BangoScriptObject)
 {
 	UBangoScriptSubsystem* Subsystem = Get(BangoScriptObject);

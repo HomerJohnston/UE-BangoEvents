@@ -1,5 +1,10 @@
 ﻿#include "BangoEditor.h"
 
+#include "LevelEditor.h"
+#include "LevelEditorModesActions.h"
+#include "SEditorViewport.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoEditor/Customizations/BangoGraphPanelNodeFactory.h"
@@ -10,8 +15,10 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Subsystems/EditorActorSubsystem.h"
+#include "Widgets/Input/STextEntryPopup.h"
 
-#define LOCTEXT_NAMESPACE "FBangoEditorModule"
+#define LOCTEXT_NAMESPACE "BangoEditor"
 
 TSharedPtr<FSlateStyleSet> FBangoEditorModule::StyleSet = nullptr;
 
@@ -57,15 +64,155 @@ void FBangoEditorModule::StartupModule()
 
 	IModuleInterface::StartupModule();
 
+	/////////////////
 	auto NodeFactory = MakeShareable(new FGraphPanelNodeFactory_Bango());
 	FEdGraphUtilities::RegisterVisualNodeFactory(NodeFactory);
-	
+
+	/////////////////
 	FBangoEditorStyle::Initialize();
+
+	////////////////
+
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FBangoEditorModule::RegisterMenus));
 }
 
 void FBangoEditorModule::ShutdownModule()
 {
     
+}
+
+void FBangoEditorModule::RegisterMenus() const
+{
+	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.ActorContextMenu");
+	//FToolMenuSection& Section = Menu->FindOrAddSection("ActorTypeTools");
+	FToolMenuSection& Section = Menu->FindOrAddSection("ActorOptions");
+	
+	FToolMenuEntry& Entry = Section.AddDynamicEntry("BangoSetActorName", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
+	{
+		UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+		TArray<AActor*> SelectedActors;
+		
+		if (EditorActorSubsystem)
+		{
+			SelectedActors = EditorActorSubsystem->GetSelectedLevelActors();
+			
+			if (SelectedActors.Num() != 1)
+			{
+				return;
+			}
+		}
+		else
+		{
+			return;
+		}
+
+		AActor* Actor = SelectedActors[0];
+
+		if (!IsValid(Actor))
+		{
+			return;
+		}
+
+		FViewport* Viewport = GEditor->GetActiveViewport();
+		
+
+		//FSceneViewFamilyContext ViewFamilyContext(FSceneViewFamily::ConstructionValues(Viewport, GEditor->EditorWorld->Scene, FEngineShowFlags(ESFIM_Editor)));
+
+		FViewportClient* ViewportClient = Viewport->GetClient();
+
+		FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
+
+		FDeprecateSlateVector2D VPWindowPos = EditorViewportClient->GetEditorViewportWidget().Get()->GetCachedGeometry().GetAbsolutePosition();
+
+		FSceneViewFamilyContext ViewFamilyContext(FSceneViewFamily::ConstructionValues(
+			EditorViewportClient->Viewport,
+			EditorViewportClient->GetWorld()->Scene,
+			EditorViewportClient->EngineShowFlags)
+			.SetRealtimeUpdate(true));
+		
+		FSceneView* SceneView = EditorViewportClient->CalcSceneView(&ViewFamilyContext);
+		
+		FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
+		UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+		
+		if (SceneView)
+		{
+			FVector2D PixelPoint;
+			SceneView->WorldToPixel(Actor->GetActorLocation(), PixelPoint);
+			ScreenPos.X = VPWindowPos.X + PixelPoint.X;
+			ScreenPos.Y = VPWindowPos.Y + PixelPoint.Y;
+			UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+		}
+
+		UBangoActorIDComponent* ExistingIDComponent = Actor->FindComponentByClass<UBangoActorIDComponent>();
+		FName ExistingName = NAME_None;
+		
+		if (IsValid(ExistingIDComponent))
+		{
+			ExistingName = ExistingIDComponent->GetActorID();
+		}
+		
+		FToolUIActionChoice Action(FExecuteAction::CreateLambda([ScreenPos, ExistingName, Actor, ExistingIDComponent]()
+		{
+			TSharedRef<STextEntryPopup> TextEntry = 
+			SNew(STextEntryPopup)
+				.Label(LOCTEXT("SetActorIDContextMenuEntry", "Set Actor ID"))
+				.DefaultText(FText::FromName(ExistingName))
+				.OnTextCommitted_Lambda([Actor, ExistingIDComponent] (const FText& InText, ETextCommit::Type InCommitType)
+				{
+					if (InCommitType != ETextCommit::OnEnter) return;
+					
+					FString NameCandidate = InText.ToString();
+					FName NewID;
+					FText OutErrorText;
+					
+					if (FName::IsValidXName(NameCandidate, INVALID_NAME_CHARACTERS, &OutErrorText))
+					{
+						NewID = FName(NameCandidate);
+					}
+					else
+					{
+						return;
+					}
+					
+					if (ExistingIDComponent)
+					{
+						// TODO Transaction!
+						ExistingIDComponent->SetActorID(FName(NewID));
+					}
+					else
+					{
+						// TODO Transaction!
+						static const FName ComponentName(TEXT("BangoActorID"));
+						FName FinalName = MakeUniqueObjectName(Actor, UBangoActorIDComponent::StaticClass(), ComponentName, EUniqueObjectNameOptions::None);
+						UBangoActorIDComponent* NewIDComponent = NewObject<UBangoActorIDComponent>(Actor, FinalName);
+
+						if (IsValid(NewIDComponent))
+						{
+							Actor->AddInstanceComponent(NewIDComponent);
+
+							FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+							LevelEditor.BroadcastComponentsEdited();
+						}
+
+						NewIDComponent->SetActorID(NewID);
+						NewIDComponent->RegisterComponent();
+					}
+				})
+				.SelectAllTextWhenFocused(true)
+				.ClearKeyboardFocusOnCommit(true);
+
+			FSlateApplication::Get().PushMenu(
+				FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
+				FWidgetPath(),
+				TextEntry,
+				FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
+				FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup)
+				);
+		}));
+
+		InSection.AddEntry(FToolMenuEntry::InitMenuEntry(FName("BangoSetActorID"), INVTEXT("Set Actor ID"), INVTEXT("Description!"), FSlateIcon(FName(""), ""), Action));
+	}));
 }
 
 #undef LOCTEXT_NAMESPACE
