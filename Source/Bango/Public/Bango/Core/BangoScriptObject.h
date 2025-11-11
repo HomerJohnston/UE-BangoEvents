@@ -38,20 +38,17 @@ public:
 
     UPROPERTY()
     FBangoScriptHandle Handle;
-    
-    /** 
-     * Perform a latent action with a delay (specified in seconds).  Calling again while it is counting down will be ignored.
-     * 
-     * @param WorldContext	World context.
-     * @param Duration 		length of delay (in seconds).
-     * @param LatentInfo 	The latent action.
-     */
+
+    /*
     UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
     static void Sleep(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo );
-    
+    */
+
+    /*
     UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
     static void WaitUntil(bool bCondition) {};
-
+    */
+    
     UFUNCTION(BlueprintCallable, Category="Bango|Utilities", BlueprintPure)
     static UPARAM(DisplayName="Val") float Rand(float Hi, float Lo);
 };

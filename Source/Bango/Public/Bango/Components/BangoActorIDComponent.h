@@ -3,7 +3,7 @@
 #include "BangoActorIDComponent.generated.h"
 
 UCLASS(meta = (BlueprintSpawnableComponent))
-class UBangoActorIDComponent : public UActorComponent
+class BANGO_API UBangoActorIDComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -14,14 +14,19 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FName ActorID;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))
+	float LabelHeightAdjustment = 0.0f;
+#endif
+	
 	void BeginPlay() override;
 
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 #if WITH_EDITOR
 public:
-	void SetActorID(FName NewID) { ActorID = NewID; }
-	
+	void SetActorID(FName NewID);
+
 	FDelegateHandle DebugDrawService;
 	
 	void OnRegister() override;

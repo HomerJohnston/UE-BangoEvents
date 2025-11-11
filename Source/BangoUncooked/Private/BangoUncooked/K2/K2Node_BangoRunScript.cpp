@@ -1,4 +1,4 @@
-#include "K2Node_BangoRunScriptNode.h"
+#include "BangoUncooked/K2/K2Node_BangoRunScript.h"
 
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
@@ -37,10 +37,7 @@ class UK2Node_IfThenElse;
 
 UK2Node_BangoRunScript::UK2Node_BangoRunScript()
 {
-    //ProxyFactoryFunctionName = GET_FUNCTION_NAME_CHECKED(UBangoRunScript, RunScript);
-   // ProxyFactoryClass = UBangoRunScript::StaticClass();
-   // ProxyClass = UBangoRunScript::StaticClass();
-   // ProxyActivateFunctionName = GET_FUNCTION_NAME_CHECKED(UBangoRunScript, Activate);
+	bIsLatent = true;
 }
 
 void UK2Node_BangoRunScript::PinDefaultValueChanged(UEdGraphPin* Pin)
@@ -94,12 +91,7 @@ void UK2Node_BangoRunScript::PinConnectionListChanged(UEdGraphPin* Pin)
 	}
 }
 
-FText UK2Node_BangoRunScript::GetMenuCategory() const
-{
-	return LOCTEXT("RunScript_MenuCategory", "Bango|Test");
-}
-
-// Create a node, set up default pins, and get automatic references to its Exec and Then pins.
+// Create a node
 #define MAKE_NODE(NodeName, NodeType)\
 	auto* const NodeName = CompilerContext.SpawnIntermediateNode<NodeType>(this, SourceGraph);\
 
@@ -305,8 +297,6 @@ void UK2Node_BangoRunScript::GetMenuActions(FBlueprintActionDatabaseRegistrar& A
 
 void UK2Node_BangoRunScript::AllocateDefaultPins()
 {
-    Super::AllocateDefaultPins();
-
     CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
 
 	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);

@@ -28,7 +28,7 @@ public class BangoEditor : ModuleRules
                 "BlueprintGraph",
                 "GraphEditor",
                 "ToolMenus",
-                //"ContentBrowser"
+                "BangoUncooked"
             }
         );
     }

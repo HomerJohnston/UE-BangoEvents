@@ -23,8 +23,10 @@ public:
     TOptional<float> GetProgressBarPercent() const;
 
     void UpdateGraphNode() override;
-    
+
     TArray<FOverlayWidgetInfo> GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const override;
+    
+    TOptional<TTransform2<float>> RenderTransform_Hourglass() const;
     
     TSharedPtr<SGraphPin> CreatePinWidget(UEdGraphPin* Pin) const override;
 

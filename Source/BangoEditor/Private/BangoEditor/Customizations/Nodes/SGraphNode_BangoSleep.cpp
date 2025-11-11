@@ -290,19 +290,63 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 
 	FOverlayWidgetInfo Info;
 	Info.OverlayOffset = FVector2f((WidgetSize.X / 2) - (ImageBrush->ImageSize.X * 0.5f), 8);
-	Info.Widget = SNew(SImage)
-		.Image(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass))
-		.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Hourglass);
-
+	Info.Widget = SNew(SBorder)
+		.BorderImage(nullptr)
+		.Padding(0)
+		.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		[
+			SNew(SImage)
+			.Image(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass))
+			.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Hourglass)
+			.RenderTransformPivot(FVector2D(0.5f, 0.5f))
+			.RenderTransform(this, &SGraphNode_BangoSleep::RenderTransform_Hourglass)
+		];
+	
 	Widgets.Add(Info);
 
 	return Widgets;
 }
 
+TOptional<TTransform2<float>> SGraphNode_BangoSleep::RenderTransform_Hourglass() const
+{
+	if (!GEditor)
+	{
+		return NullOpt;
+	}
+	
+	if (!GEditor->IsPlaySessionInProgress())
+	{
+		return NullOpt;
+	}
+	
+	FBangoSleepAction* SleepAction = GetSleepAction();
+	
+	if (SleepAction)
+	{
+		const float X = SleepAction->Duration - SleepAction->TimeRemaining;
+		const float Bounce = 1.5f; // 1.0 is no effect, negative reduces stopping on 180 points, positive adds some bounceback
+		const float Speed = 2.0f; // Period
+		const float Rate = 0.5f; // Amplitude
+		const float Val = Bounce * Rate * FMath::RadiansToDegrees(Speed / Bounce * PI * X + FMath::Sin(Speed * PI * X - PI));
+		return FSlateRenderTransform(FQuat2D(FMath::DegreesToRadians(Val)));
+	}
+
+	return NullOpt;
+}
+
 TSharedPtr<SGraphPin> SGraphNode_BangoSleep::CreatePinWidget(UEdGraphPin* Pin) const
 {
     TSharedPtr<SGraphPin> NewPin = SGraphNode::CreatePinWidget(Pin);
-   	NewPin->SetShowLabel(false);
+
+	FName PinName = Pin->GetFName();
+	static FName DurationPinName(TEXT("Duration"));
+	
+	if (PinName == UEdGraphSchema_K2::PN_Completed || PinName == DurationPinName)
+	{
+   		NewPin->SetShowLabel(false);
+	}
+	
    	return NewPin;
 }
 
@@ -314,23 +358,23 @@ void SGraphNode_BangoSleep::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	TArray<TSharedRef<SGraphPin>>* DestinationPinArray;
 	FMargin PinPadding;
 	
-	if (PinToAdd->GetPinObj()->GetName() == FName("Duration"))
-	{
-		DestinationBox = InnerVerticalBox;
-		DestinationPinArray = &InputPins;
-		PinPadding = Settings->GetInputPinPadding();
-	}
-	else if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	if (PinToAdd->GetPinObj()->GetFName() == UEdGraphSchema_K2::PN_Execute)
 	{
 		DestinationBox = LeftNodeBox;
 		DestinationPinArray = &InputPins;
 		PinPadding = Settings->GetInputPinPadding();
 	}
-	else
+	else if (PinToAdd->GetPinObj()->GetFName() == UEdGraphSchema_K2::PN_Completed)
 	{
 		DestinationBox = RightNodeBox;
 		DestinationPinArray = &OutputPins;
 		PinPadding = Settings->GetOutputPinPadding();
+	}
+	else
+	{
+		DestinationBox = InnerVerticalBox;
+		DestinationPinArray = &InputPins;
+		PinPadding = Settings->GetInputPinPadding();
 	}
 	
 	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
@@ -524,7 +568,7 @@ FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Hourglass() const
 	
 	if (SleepAction)
 	{
-		return (0.8f + 0.1f * FMath::Sin(10.0f * SleepAction->TimeRemaining)) * FLinearColor::White;
+		return FLinearColor::White;
 	}
 
 	UWorld* World = GEditor->GetCurrentPlayWorld(GEditor->PlayWorld);
@@ -539,10 +583,7 @@ FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Hourglass() const
 		if (AbortTimeElapsed <= FadeDuration)
 		{
 			float Lerp = FMath::Clamp(FMath::Pow(FMath::Lerp(0.0f, 1.0f, AbortTimeElapsed / FadeDuration), 4.0f), 0.0f, 1.0f);
-			//float Lerp = FMath::Clamp(FMath::Lerp(1.0f, 0.0f, AbortTimeElapsed / FadeDuration), 0.0f, 1.0f);
-
 			return FMath::Lerp(FLinearColor::Red, IdleColor, Lerp);
-			//return FLinearColor::LerpUsingHSV(FLinearColor::Red, IdleColor, Lerp);	
 		}
 	}
 
@@ -597,8 +638,6 @@ void SGraphNode_BangoSleep::Tick(const FGeometry& AllottedGeometry, const double
 			CurrentSleepAction->OnAborted.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
 		}
 	}
-
-	//UE_LOG(LogTemp, Display, TEXT("%f"), AbortTime);
 }
 
 void SGraphNode_BangoSleep::OnAborted()

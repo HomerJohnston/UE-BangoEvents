@@ -21,6 +21,14 @@ void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 }
 
 #if WITH_EDITOR
+void UBangoActorIDComponent::SetActorID(FName NewID)
+{
+	Modify();
+	ActorID = NewID;
+}
+#endif
+
+#if WITH_EDITOR
 void UBangoActorIDComponent::OnRegister()
 {
 	Super::OnRegister();
@@ -77,8 +85,6 @@ void UBangoActorIDComponent::OnUnregister()
 }
 #endif
 
-
-
 #if WITH_EDITOR
 void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController* ALWAYS_NULL) const
 {
@@ -102,7 +108,7 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 	float DistanceSquared = FVector::DistSquared(WorldCameraPos, Actor->GetActorLocation());
 	if (DistanceSquared > FMath::Square(2500.0f)) return;
 
-	ScreenLocation = Canvas->Project(Actor->GetActorLocation() + FVector(0.f, 0.f, 150.f), false);
+	ScreenLocation = Canvas->Project(Actor->GetActorLocation() + FVector(0.f, 0.f, 150.f + LabelHeightAdjustment), false);
 	if (ScreenLocation.Z < 0.0f) return;
 
 	UTexture* BorderTex = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture")); //WhiteSquareTexture

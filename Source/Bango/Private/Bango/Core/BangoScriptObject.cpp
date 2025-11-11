@@ -29,6 +29,7 @@ void UBangoScriptObject::Finish(UBangoScriptObject* Script)
     Script->Handle.Invalidate();
 }
 
+/*
 void UBangoScriptObject::Sleep(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -40,6 +41,7 @@ void UBangoScriptObject::Sleep(const UObject* WorldContextObject, float Duration
         }
     }
 }
+*/
 
 float UBangoScriptObject::Rand(float Hi, float Lo)
 {
