@@ -112,7 +112,6 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	MAKE_NODE(SkipExecTriggered, UK2Node_TemporaryVariable, 0, 1000);
 	Node_SkipExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
 	Node_SkipExecTriggered->AllocateDefaultPins();
-	UEdGraphPin* Node_SkipExecTriggered_Exec = Node_SkipExecTriggered->GetExecPin();
 	UEdGraphPin* Node_SkipExecTriggered_Variable = Node_SkipExecTriggered->GetVariablePin();
 
 	MAKE_NODE(SetSkipExecTriggered, UK2Node_AssignmentStatement, 250, 1000);
@@ -125,7 +124,6 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	MAKE_NODE(CancelExecTriggered, UK2Node_TemporaryVariable, 0, 1250);
 	Node_CancelExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
 	Node_CancelExecTriggered->AllocateDefaultPins();
-	UEdGraphPin* Node_CancelExecTriggered_Exec = Node_CancelExecTriggered->GetExecPin();
 	UEdGraphPin* Node_CancelExecTriggered_Variable = Node_CancelExecTriggered->GetVariablePin();
 
 	MAKE_NODE(SetCancelExecTriggered, UK2Node_AssignmentStatement, 250, 1250);
@@ -266,14 +264,12 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	// OR Cancel conditions inputs
 	if (Node_This_CancelCondition)
 	{
-		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered_Variable, Node_CancelConditionsOR_A);
 		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_CancelCondition, *Node_CancelConditionsOR_B).CanSafeConnect();	
 	}
 
 	// OR Skip conditions inputs
 	if (Node_This_SkipCondition)
 	{
-		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered_Variable, Node_SkipConditionsOR_A);
 		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_SkipCondition, *Node_SkipConditionsOR_B).CanSafeConnect();
 	}
 
@@ -298,12 +294,14 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	
 	// Exec Skip/Cancel inputs
 	if (Node_This_CancelExec)
-	{		
+	{
+		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered_Variable, Node_CancelConditionsOR_A);
 		bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_CancelExec, *Node_SetCancelExecTriggered_Exec).CanSafeConnect();
 		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered_Variable, Node_SetCancelExecTriggered_Variable);
 	}
 	if (Node_This_SkipExec)
 	{
+		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered_Variable, Node_SkipConditionsOR_A);
 		bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_SkipExec, *Node_SetSkipExecTriggered_Exec).CanSafeConnect();
 		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered_Variable, Node_SetSkipExecTriggered_Variable);
 	}

@@ -47,16 +47,13 @@ void SGraphNode_BangoSleep::CreatePinWidgets()
 
 TOptional<float> SGraphNode_BangoSleep::GetProgressBarPercent() const
 {
-	UK2Node_BangoSleep* SleepNode = Cast<UK2Node_BangoSleep>(GetNodeObj());
-
-	/*
 	FBangoSleepAction* SleepAction = GetSleepAction();
 
 	if (SleepAction && SleepAction->Duration > KINDA_SMALL_NUMBER)
 	{
 		return SleepAction->TimeRemaining / SleepAction->Duration;
 	}
-*/
+
 	return 0.0f;
 }
 
