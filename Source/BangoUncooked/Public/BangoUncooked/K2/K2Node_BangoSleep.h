@@ -3,6 +3,8 @@
 
 #include "K2Node_BangoSleep.generated.h"
 
+class UK2Node_TemporaryVariable;
+
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 UCLASS(MinimalAPI, DisplayName = "Sleep")
@@ -29,6 +31,17 @@ protected:
 	UPROPERTY(EditAnywhere, DisplayName = "Conditional Cancel")
 	bool bEnableCancelConditionPin;
 
+protected:
+	
+	UPROPERTY()
+	bool bSkipExecTriggered;
+
+	UPROPERTY()
+	bool bCancelExecTriggered;
+	
+	UPROPERTY()
+	double FinishTime;
+	
 public:
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	

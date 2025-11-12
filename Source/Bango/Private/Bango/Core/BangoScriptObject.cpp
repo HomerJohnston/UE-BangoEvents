@@ -29,19 +29,68 @@ void UBangoScriptObject::Finish(UBangoScriptObject* Script)
     Script->Handle.Invalidate();
 }
 
-/*
-void UBangoScriptObject::Sleep(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo)
+int32 UBangoScriptObject::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)
+{
+    int32 UUID = LatentInfo.UUID;
+    
+    if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+    {
+        FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
+        if (!LatentActionManager.FindExistingAction<FBangoSleepAction>(LatentInfo.CallbackTarget, UUID))
+        {
+            FBangoSleepAction* SleepAction = new FBangoSleepAction(Duration, LatentInfo);
+            LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, UUID, SleepAction);
+
+            FOnLatentActionTick TickDelegate;
+            TickDelegate = BPDelayTickEvent;
+            
+            SleepAction->OnTick.AddLambda([TickDelegate]()
+            {
+                TickDelegate.ExecuteIfBound();
+            });
+
+            FOnLatentActionCompleted CompleteDelegate;
+            CompleteDelegate = BPDelayCompleteEvent;
+            
+            SleepAction->OnComplete.AddLambda([CompleteDelegate]()
+            {
+                CompleteDelegate.ExecuteIfBound();
+            });
+
+            return UUID;
+        }
+    }
+
+    return 0;
+}
+
+void UBangoScriptObject::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
     {
         FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-        if (LatentActionManager.FindExistingAction<FBangoSleepAction>(LatentInfo.CallbackTarget, LatentInfo.UUID) == NULL)
+        FBangoSleepAction* Action = LatentActionManager.FindExistingAction<FBangoSleepAction>(WorldContextObject, ActionUUID);
+
+        if (Action)
         {
-            LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID, new FBangoSleepAction(Duration, LatentInfo));
+            Action->Cancel();
         }
     }
 }
-*/
+
+void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
+{
+    if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+    {
+        FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
+        FBangoSleepAction* Action = LatentActionManager.FindExistingAction<FBangoSleepAction>(WorldContextObject, ActionUUID);
+
+        if (Action)
+        {
+            Action->Skip();
+        }
+    }    
+}
 
 float UBangoScriptObject::Rand(float Hi, float Lo)
 {

@@ -91,40 +91,25 @@ void UK2Node_BangoRunScript::PinConnectionListChanged(UEdGraphPin* Pin)
 	}
 }
 
-// Create a node
-#define MAKE_NODE(NodeName, NodeType)\
-	auto* const NodeName = CompilerContext.SpawnIntermediateNode<NodeType>(this, SourceGraph);\
-
-#define MAKE_NODE_FUNC(NodeName, Class, Function)\
-	auto* const NodeName = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);\
-	NodeName->SetFromFunction(Class::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(Class, Function)));\
-
-#define MAKE_DELEGATE_NODE(NodeName)\
-	auto* const NodeName = CompilerContext.SpawnIntermediateNode<UK2Node_AddDelegate>(this, SourceGraph);\
-	NodeName->SetFromProperty()
-
-#define GET_PIN(NodeName, PinName)\
-	UEdGraphPin* const NodeName##_##PinName = NodeName->FindPin(TEXT("PinName")));\
-	
 void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
 {
-	ExpandSplitPins(CompilerContext, SourceGraph);
+	Super::ExpandNode(CompilerContext, SourceGraph);
 
 	const UEdGraphSchema_K2* Schema = CompilerContext.GetSchema();
 	check(SourceGraph && Schema);
 	bool bIsErrorFree = true;
 
-	UEdGraphPin* This_Script = FindPin(TEXT("Script"));
+	FVector2f GraphAnchor(0, 0);
 
 	// Make nodes
-	MAKE_NODE(Node_ConstructObject, UK2Node_GenericCreateObject);
-	MAKE_NODE(Node_IfThenElse, UK2Node_IfThenElse);
-	MAKE_NODE(Node_CustomEvent, UK2Node_CustomEvent);
-	MAKE_NODE(Node_AddDelegate, UK2Node_AddDelegate);
-	MAKE_NODE(Node_CreateDelegate, UK2Node_CreateDelegate);
-	MAKE_NODE(Node_Self, UK2Node_Self)
-	MAKE_NODE_FUNC(Node_ExecuteScript, UBangoScriptObject, Execute_Internal);
-	MAKE_NODE_FUNC(Node_IsValid, UKismetSystemLibrary, IsValid);
+	MAKE_NODE(ConstructObject, UK2Node_GenericCreateObject, 0, 0);
+	MAKE_NODE(IfThenElse, UK2Node_IfThenElse, 0, 0);
+	MAKE_NODE(CustomEvent, UK2Node_CustomEvent, 0, 0);
+	MAKE_NODE(AddDelegate, UK2Node_AddDelegate, 0, 0);
+	MAKE_NODE(CreateDelegate, UK2Node_CreateDelegate, 0, 0);
+	MAKE_NODE(Self, UK2Node_Self, 0, 0);
+	MAKE_NODE_FUNC(ExecuteScript, UBangoScriptObject, Execute_Internal, 0, 0);
+	MAKE_NODE_FUNC(IsValid, UKismetSystemLibrary, IsValid, 0, 0);
 
 	// For non-dynamic nodes, generate pins and get pins
 	Node_ConstructObject->AllocateDefaultPins();
@@ -144,8 +129,6 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 	UEdGraphPin* Pin_IfThenElse_Then = Node_IfThenElse->GetThenPin();
 	UEdGraphPin* Pin_IfThenElse_Else = Node_IfThenElse->GetElsePin();
 
-	//UEdGraphPin* Pin_CustomEvent_OutputDelegate = Node_CustomEvent->FindPinChecked(TEXT("OutputDelegate"));
-	
 	UEdGraphPin* Pin_ExecuteScript_Exec = Node_ExecuteScript->GetExecPin();
 	UEdGraphPin* Pin_ExecuteScript_Then = Node_ExecuteScript->GetThenPin();
 	UEdGraphPin* Pin_ExecuteScript_Target = Node_ExecuteScript->FindPin(UEdGraphSchema_K2::PN_Self);
@@ -164,6 +147,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 	UEdGraphPin* Pin_ThisNode_Then = GetThenPin();
 	UEdGraphPin* Pin_ThisNode_Finish = FindPinChecked(UEdGraphSchema_K2::PN_Completed);
 	UEdGraphPin* Pin_ThisNode_Handle = FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue);
+	UEdGraphPin* ThisNode_Script = FindPin(TEXT("Script"));
 
 	CompilerContext.MovePinLinksToIntermediate(*Pin_ThisNode_Handle, *Pin_ExecuteScript_Result);
 
@@ -171,7 +155,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 	// TODO is there a different way I can just find ExposeOnSpawn pins?
 	auto DefaultPins = TSet<UEdGraphPin*>(Node_ConstructObject->GetAllPins());
 
-	Pin_ConstructObject_Class->DefaultObject = This_Script->DefaultObject;
+	Pin_ConstructObject_Class->DefaultObject = ThisNode_Script->DefaultObject;
 	Node_ConstructObject->PinDefaultValueChanged(Pin_ConstructObject_Class);
 	 
 	auto ConstructScriptAllPins = TSet<UEdGraphPin*>(Node_ConstructObject->GetAllPins()); 

@@ -3,11 +3,13 @@
 #include "BangoKismetNodeInfoContext.h"
 #include "BlueprintEditorSettings.h"
 #include "GraphEditorSettings.h"
+#include "K2Node_TemporaryVariable.h"
 #include "SCommentBubble.h"
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "BangoEditor/BangoEditorStyle.h"
+#include "BangoUncooked/K2/K2Node_BangoSleep.h"
 #include "KismetNodes/KismetNodeInfoContext.h"
 #include "Widgets/Notifications/SProgressBar.h"
 
@@ -45,13 +47,16 @@ void SGraphNode_BangoSleep::CreatePinWidgets()
 
 TOptional<float> SGraphNode_BangoSleep::GetProgressBarPercent() const
 {
+	UK2Node_BangoSleep* SleepNode = Cast<UK2Node_BangoSleep>(GetNodeObj());
+
+	/*
 	FBangoSleepAction* SleepAction = GetSleepAction();
 
 	if (SleepAction && SleepAction->Duration > KINDA_SMALL_NUMBER)
 	{
 		return SleepAction->TimeRemaining / SleepAction->Duration;
 	}
-
+*/
 	return 0.0f;
 }
 
@@ -324,7 +329,7 @@ TOptional<TTransform2<float>> SGraphNode_BangoSleep::RenderTransform_Hourglass()
 	
 	if (SleepAction)
 	{
-		const float X = SleepAction->Duration - SleepAction->TimeRemaining;
+		const float X = SleepAction->Duration - SleepAction->TimeRemaining; // Time elapsed
 		const float Bounce = 1.5f; // 1.0 is no effect, negative reduces stopping on 180 points, positive adds some bounceback
 		const float Speed = 2.0f; // Period
 		const float Rate = 0.5f; // Amplitude
@@ -635,7 +640,7 @@ void SGraphNode_BangoSleep::Tick(const FGeometry& AllottedGeometry, const double
 			AbortTime = -1.0f;
 
 			CurrentSleepAction = SleepAction;
-			CurrentSleepAction->OnAborted.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
+			//CurrentSleepAction->OnAborted.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
 		}
 	}
 }

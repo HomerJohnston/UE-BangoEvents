@@ -8,6 +8,10 @@
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FWaitUntilDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFinishDelegate);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLatentActionDelegate);
+DECLARE_DYNAMIC_DELEGATE(FOnLatentActionTick);
+DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
+
 #define LOCTEXT_NAMESPACE "Bango"
 
 /**
@@ -36,16 +40,24 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnFinishDelegate OnFinishDelegate;
 
-    UPROPERTY()
+    UPROPERTY(Transient)
     FBangoScriptHandle Handle;
 
-    /*
-    UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
-    static void Sleep(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo );
-    */
+    UPROPERTY(Transient)
+    TMap<int32, FOnLatentActionTick> SleepTickDelegates;
+    TMap<int32, FOnLatentActionCompleted> SleepCancelDelegates;
+
+    UFUNCTION(BlueprintCallable, Category="Bango|Delay", meta = (WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="1.23", Keywords="sleep"))
+    UPARAM(DisplayName = "UUID") int32 LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick TickDelegate, FOnLatentActionCompleted CompleteDelegate);
+
+    UFUNCTION(BlueprintCallable, Category="Bango|Delay", meta = (WorldContext="WorldContextObject", Keywords="sleep"))
+    static void CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID);
+
+    UFUNCTION(BlueprintCallable, Category="Bango|Delay", meta = (WorldContext="WorldContextObject", Keywords="sleep"))
+    static void SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID);
 
     /*
-    UFUNCTION(BlueprintCallable, Category="Utilities|FlowControl", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
+    UFUNCTION(BlueprintCallable, Category="Bango|Logic", meta=(Latent, WorldContext="WorldContextObject", LatentInfo="LatentInfo", Duration="0.2", Keywords="sleep"))
     static void WaitUntil(bool bCondition) {};
     */
     
@@ -62,8 +74,12 @@ public:
     int32 OutputLink;
     FWeakObjectPtr CallbackTarget;
 
-    TMulticastDelegate<void()> OnAborted;
+    TMulticastDelegate<void()> OnComplete;
+    TMulticastDelegate<void()> OnTick;
 
+    bool bCancelled = false;
+    bool bSkipped = false;
+    
     FBangoSleepAction(float InDuration, const FLatentActionInfo& LatentInfo)
         : Duration(InDuration)
         , TimeRemaining(InDuration)
@@ -73,17 +89,42 @@ public:
     {
     }
 
-    virtual void UpdateOperation(FLatentResponse& Response) override
+    void UpdateOperation(FLatentResponse& Response) override
     {
         TimeRemaining -= Response.ElapsedTime();
-        Response.FinishAndTriggerIf(TimeRemaining <= 0.0f, ExecutionFunction, OutputLink, CallbackTarget);
+
+        bool TimeFinished = TimeRemaining <= 0.0f || bSkipped;
+
+        Response.FinishAndTriggerIf(TimeFinished || bCancelled, ExecutionFunction, OutputLink, CallbackTarget);
+
+        if (TimeFinished)
+        {
+            if (!bCancelled)
+            {
+                OnComplete.Broadcast();
+            }
+        }
+        else
+        {
+            OnTick.Broadcast();
+        }
     }
 
-    virtual void NotifyActionAborted()
+    void NotifyActionAborted() override
     {
-        OnAborted.Broadcast();
+        bCancelled = true;
     }
-    
+
+    void Cancel()
+    {
+        bCancelled = true;
+    }
+
+    void Skip()
+    {
+        bSkipped = true;
+    }
+
 #if WITH_EDITOR
     // Returns a human readable description of the latent operation's current state
     virtual FString GetDescription() const override
@@ -91,7 +132,7 @@ public:
         static const FNumberFormattingOptions SleepTimeFormatOptions = FNumberFormattingOptions()
             .SetMinimumFractionalDigits(2)
             .SetMaximumFractionalDigits(2);
-        return FText::Format(LOCTEXT("SleepActionTimeFmt", "{0} / {1}"),
+        return FText::Format(LOCTEXT("SleepActionTimeFmt", "{0} / {1}    "),
             FText::AsNumber(Duration - TimeRemaining, &SleepTimeFormatOptions),
             FText::AsNumber(Duration, &SleepTimeFormatOptions)).ToString();
     }
