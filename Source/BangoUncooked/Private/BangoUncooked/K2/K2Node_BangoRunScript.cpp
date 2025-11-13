@@ -99,26 +99,19 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 	check(SourceGraph && Schema);
 	bool bIsErrorFree = true;
 
-	FVector2f GraphAnchor(0, 0);
-
+	MAKE_NODE_ANCHOR(0, 0);
+	
 	// Make nodes
-	MAKE_NODE(ConstructObject, UK2Node_GenericCreateObject, 0, 0);
-	MAKE_NODE(IfThenElse, UK2Node_IfThenElse, 0, 0);
-	MAKE_NODE(CustomEvent, UK2Node_CustomEvent, 0, 0);
-	MAKE_NODE(AddDelegate, UK2Node_AddDelegate, 0, 0);
-	MAKE_NODE(CreateDelegate, UK2Node_CreateDelegate, 0, 0);
-	MAKE_NODE(Self, UK2Node_Self, 0, 0);
-	MAKE_NODE_FUNC(ExecuteScript, UBangoScriptObject, Execute_Internal, 0, 0);
-	MAKE_NODE_FUNC(IsValid, UKismetSystemLibrary, IsValid, 0, 0);
+	MAKE_BASIC_NODE_OLD(ConstructObject, UK2Node_GenericCreateObject, 0, 0);
+	MAKE_BASIC_NODE_OLD(IfThenElse, UK2Node_IfThenElse, 0, 0);
+	MAKE_BASIC_NODE_OLD(CustomEvent, UK2Node_CustomEvent, 0, 0);
+	MAKE_BASIC_NODE_OLD(AddDelegate, UK2Node_AddDelegate, 0, 0);
+	MAKE_BASIC_NODE_OLD(CreateDelegate, UK2Node_CreateDelegate, 0, 0);
+	MAKE_BASIC_NODE_OLD(Self, UK2Node_Self, 0, 0);
+	MAKE_FUNCNODE_OLD(ExecuteScript, UBangoScriptObject, Execute_Internal, 0, 0);
+	MAKE_FUNCNODE_OLD(IsValid, UKismetSystemLibrary, IsValid, 0, 0);
 
 	// For non-dynamic nodes, generate pins and get pins
-	Node_ConstructObject->AllocateDefaultPins();
-	Node_IfThenElse->AllocateDefaultPins();
-	Node_ExecuteScript->AllocateDefaultPins();
-	Node_IsValid->AllocateDefaultPins();
-	Node_CreateDelegate->AllocateDefaultPins();
-	Node_Self->AllocateDefaultPins();
-	
 	UEdGraphPin* Pin_ConstructObject_Exec = Node_ConstructObject->GetExecPin();
 	UEdGraphPin* Pin_ConstructObject_Then = Node_ConstructObject->GetThenPin();
 	UEdGraphPin* Pin_ConstructObject_Result = Node_ConstructObject->GetResultPin();
@@ -169,8 +162,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 
 	if (ObjectClass)
 	{
-		FMulticastDelegateProperty* ScriptOnFinishDelegateProperty = CastField<FMulticastDelegateProperty>(ObjectClass->FindPropertyByName("OnFinishDelegate"));
-		Node_AddDelegate->SetFromProperty(ScriptOnFinishDelegateProperty, false, ObjectClass);
+		Node_AddDelegate->SetFromProperty(ObjectClass->FindPropertyByName("OnFinishDelegate"), false, ObjectClass);
 	}
 	
 	Node_AddDelegate->AllocateDefaultPins();
@@ -227,7 +219,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerCo
 	BreakAllNodeLinks();
 }
 
-#undef MAKE_NODE
+#undef MAKE_BASIC_NODE_OLD
 
 UEdGraphPin* UK2Node_BangoRunScript::GetScriptPin(const TArray<UEdGraphPin*>* PinsToSearch) const
 {

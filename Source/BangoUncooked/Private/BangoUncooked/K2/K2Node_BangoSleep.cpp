@@ -16,6 +16,7 @@
 #include "K2Node_VariableSet.h"
 #include "KismetCompiler.h"
 #include "Bango/Core/BangoScriptObject.h"
+#include "BangoUncooked/BangoNodeBuilder.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -94,6 +95,8 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	bool bIsErrorFree = true;
 	UBlueprint* Blueprint = GetBlueprint();
 
+	BangoK2NodeBuilder::Setup(CompilerContext, SourceGraph, this);
+	
 	// Get input pins prepared for use
 	UK2Node_BangoSleep* Node_This = this;
 	UEdGraphPin* Node_This_Exec = Node_This->GetExecPin();
@@ -109,132 +112,65 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	FVector2f GraphAnchor(5000, 0);
 
 	// Internal properties (flags for triggering Skip / Cancel)
-	MAKE_NODE(SkipExecTriggered, UK2Node_TemporaryVariable, 0, 1000);
+	MAKE_NODE(TemporaryVariable, SkipExecTriggered, 0, 1000, Deferred);
 	Node_SkipExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
-	Node_SkipExecTriggered->AllocateDefaultPins();
-	UEdGraphPin* Node_SkipExecTriggered_Variable = Node_SkipExecTriggered->GetVariablePin();
+	Node_SkipExecTriggered.FinishDeferredConstruction();
 
-	MAKE_NODE(SetSkipExecTriggered, UK2Node_AssignmentStatement, 250, 1000);
-	Node_SetSkipExecTriggered->AllocateDefaultPins();
+	MAKE_BASIC_NODE_OLD(SetSkipExecTriggered, UK2Node_AssignmentStatement, 250, 1000);
 	UEdGraphPin* Node_SetSkipExecTriggered_Exec = Node_SetSkipExecTriggered->GetExecPin();
 	UEdGraphPin* Node_SetSkipExecTriggered_Then = Node_SetSkipExecTriggered->GetThenPin();
 	UEdGraphPin* Node_SetSkipExecTriggered_Variable = Node_SetSkipExecTriggered->GetVariablePin();
 	UEdGraphPin* Node_SetSkipExecTriggered_Value = Node_SetSkipExecTriggered->GetValuePin();
 	
-	MAKE_NODE(CancelExecTriggered, UK2Node_TemporaryVariable, 0, 1250);
+	MAKE_NODE(TemporaryVariable, CancelExecTriggered, 0, 1250, Deferred);
 	Node_CancelExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
-	Node_CancelExecTriggered->AllocateDefaultPins();
-	UEdGraphPin* Node_CancelExecTriggered_Variable = Node_CancelExecTriggered->GetVariablePin();
+	Node_CancelExecTriggered.FinishDeferredConstruction();
 
-	MAKE_NODE(SetCancelExecTriggered, UK2Node_AssignmentStatement, 250, 1250);
-	Node_SetCancelExecTriggered->AllocateDefaultPins();
+	MAKE_BASIC_NODE_OLD(SetCancelExecTriggered, UK2Node_AssignmentStatement, 250, 1250);
 	UEdGraphPin* Node_SetCancelExecTriggered_Exec = Node_SetCancelExecTriggered->GetExecPin();
 	UEdGraphPin* Node_SetCancelExecTriggered_Then = Node_SetCancelExecTriggered->GetThenPin();
 	UEdGraphPin* Node_SetCancelExecTriggered_Variable = Node_SetCancelExecTriggered->GetVariablePin();
 	UEdGraphPin* Node_SetCancelExecTriggered_Value = Node_SetCancelExecTriggered->GetValuePin();
 
-	/*
-	MAKE_NODE(FinishTime, UK2Node_TemporaryVariable, 0, 250);
-	Node_FinishTime->VariableType.PinCategory = UEdGraphSchema_K2::PC_Real;
-	Node_FinishTime->VariableType.PinSubCategory = UEdGraphSchema_K2::PC_Double;
-	Node_FinishTime->AllocateDefaultPins();
-	UEdGraphPin* Node_FinishTime_Variable = Node_FinishTime->GetVariablePin();
-	
-	MAKE_NODE(SetFinishTime, UK2Node_AssignmentStatement, 250, 250);
-	Node_SetFinishTime->AllocateDefaultPins();
-	UEdGraphPin* Node_SetFinishTime_Exec = Node_SetFinishTime->GetExecPin();
-	UEdGraphPin* Node_SetFinishTime_Then = Node_SetFinishTime->GetThenPin();
-	UEdGraphPin* Node_SetFinishTime_Variable = Node_SetFinishTime->GetVariablePin();
-	UEdGraphPin* Node_SetFinishTime_Value = Node_SetFinishTime->GetValuePin();
-	*/
-	
-	MAKE_NODE_FUNC(LaunchSleep, UBangoScriptObject, LaunchSleep_Internal, 1000, 500);
-	Node_LaunchSleep->AllocateDefaultPins();
-	UEdGraphPin* Node_LaunchSleep_Exec = Node_LaunchSleep->GetExecPin();
-	UEdGraphPin* Node_LaunchSleep_Then = Node_LaunchSleep->GetThenPin();
-	UEdGraphPin* Node_LaunchSleep_Duration = Node_LaunchSleep->FindPin(TEXT("Duration"));
-	UEdGraphPin* Node_LaunchSleep_TickDelegate = Node_LaunchSleep->FindPin(TEXT("TickDelegate"));
-	UEdGraphPin* Node_LaunchSleep_CompleteDelegate = Node_LaunchSleep->FindPin(TEXT("CompleteDelegate"));
-	UEdGraphPin* Node_LaunchSleep_UUID = Node_LaunchSleep->GetReturnValuePin();
-	
-	MAKE_NODE(ActionUUID, UK2Node_TemporaryVariable, 0, 250);
+	//MAKE_NODE(BangoLaunchSleep_Internal, LaunchSleep, 1000, 500);
+
+	BangoK2NodeBuilder::BangoLaunchSleep_Internal Node_LaunchSleep(1000, 500);
+	Node_LaunchSleep.Construct();
+
+	MAKE_NODE(TemporaryVariable, ActionUUID, 0, 250, Deferred);
 	Node_ActionUUID->VariableType.PinCategory = UEdGraphSchema_K2::PC_Int;
-	Node_ActionUUID->AllocateDefaultPins();
-	UEdGraphPin* Node_ActionUUID_Variable = Node_ActionUUID->GetVariablePin();
+	Node_ActionUUID.FinishDeferredConstruction();
 	
-	MAKE_NODE(SetUUID, UK2Node_AssignmentStatement, 1250, 500);
-	Node_SetUUID->AllocateDefaultPins();
+	MAKE_BASIC_NODE_OLD(SetUUID, UK2Node_AssignmentStatement, 1250, 500);
 	UEdGraphPin* Node_SetUUID_Exec = Node_SetUUID->GetExecPin();
 	UEdGraphPin* Node_SetUUID_Then = Node_SetUUID->GetThenPin();
 	UEdGraphPin* Node_SetUUID_Variable = Node_SetUUID->GetVariablePin();
 	UEdGraphPin* Node_SetUUID_Value = Node_SetUUID->GetValuePin();
 
-	/*
-	MAKE_NODE_FUNC(GetGameTime, UKismetSystemLibrary, GetGameTimeInSeconds, -250, 750);
-	Node_GetGameTime->AllocateDefaultPins();
-	UEdGraphPin* Node_GetGameTime_ReturnValue = Node_GetGameTime->FindPin(UEdGraphSchema_K2::PN_ReturnValue);
-	*/
-	
-	/*
-	MAKE_NODE_FUNC(Add, UKismetMathLibrary, Add_DoubleDouble, 0, 500);
-	Node_Add->AllocateDefaultPins();
-	UEdGraphPin* Node_Add_A = Node_Add->FindPin(TEXT("A"));
-	UEdGraphPin* Node_Add_B = Node_Add->FindPin(TEXT("B"));
-	UEdGraphPin* Node_Add_ReturnValue = Node_Add->GetReturnValuePin();
-	*/
-
-	// FBlueprintEditorUtils::FindUniqueCustomEventName does not work
+	// FBlueprintEditorUtils::FindUniqueCustomEventName does not work. Generate my own unique ID.
 	FGuid UniqueID = FGuid::NewGuid();
 	
-	MAKE_NODE(TickEvent, UK2Node_CustomEvent, 500, 2000);
+	MAKE_NODE(CustomEvent, TickEvent, 500, 2000, Deferred);
 	Node_TickEvent->CustomFunctionName = FName(UniqueID.ToString(), 0);
-	Node_TickEvent->AllocateDefaultPins();
+	Node_TickEvent.FinishDeferredConstruction();
 	UEdGraphPin* Node_TickEvent_Then = Node_TickEvent->GetThenPin();
 	UEdGraphPin* Node_TickEvent_Delegate = Node_TickEvent->GetDelegatePin();
-	
-	MAKE_NODE(CompleteEvent, UK2Node_CustomEvent, 2500, 1000);
+
+	MAKE_NODE(CustomEvent, CompleteEvent, 2500, 1000, Deferred);
 	Node_CompleteEvent->CustomFunctionName = FName(UniqueID.ToString(), 1);
-	Node_CompleteEvent->AllocateDefaultPins();
-	UEdGraphPin* Node_CompleteEvent_Then = Node_CompleteEvent->GetThenPin();
-	UEdGraphPin* Node_CompleteEvent_Delegate = Node_CompleteEvent->GetDelegatePin();
-
-	MAKE_NODE(CancelBranch, UK2Node_IfThenElse, 1000, 500);
-	Node_CancelBranch->AllocateDefaultPins();
-	UEdGraphPin* Node_CancelBranch_Exec = Node_CancelBranch->GetExecPin();
-	UEdGraphPin* Node_CancelBranch_Condition = Node_CancelBranch->GetConditionPin();
-	UEdGraphPin* Node_CancelBranch_Then = Node_CancelBranch->GetThenPin();
-	UEdGraphPin* Node_CancelBranch_Else = Node_CancelBranch->GetElsePin();
-
-	MAKE_NODE(SkipBranch, UK2Node_IfThenElse, 1000, 1000);
-	Node_SkipBranch->AllocateDefaultPins();
-	UEdGraphPin* Node_SkipBranch_Exec = Node_SkipBranch->GetExecPin();
-	UEdGraphPin* Node_SkipBranch_Condition = Node_SkipBranch->GetConditionPin();
-	UEdGraphPin* Node_SkipBranch_Then = Node_SkipBranch->GetThenPin();
-	UEdGraphPin* Node_SkipBranch_Else = Node_SkipBranch->GetElsePin();
-
-	MAKE_NODE_FUNC(CancelConditionsOR, UKismetMathLibrary, BooleanOR, 750, 500);
-	Node_CancelConditionsOR->AllocateDefaultPins();
-	UEdGraphPin* Node_CancelConditionsOR_A = Node_CancelConditionsOR->FindPin(TEXT("A"));
-	UEdGraphPin* Node_CancelConditionsOR_B = Node_CancelConditionsOR->FindPin(TEXT("B"));
-	UEdGraphPin* Node_CancelConditionsOR_Value = Node_CancelConditionsOR->GetReturnValuePin();
+	Node_CompleteEvent.FinishDeferredConstruction();
 	
-	MAKE_NODE_FUNC(SkipConditionsOR, UKismetMathLibrary, BooleanOR, 750, 1000);
-	Node_SkipConditionsOR->AllocateDefaultPins();
-	UEdGraphPin* Node_SkipConditionsOR_A = Node_SkipConditionsOR->FindPin(TEXT("A"));
-	UEdGraphPin* Node_SkipConditionsOR_B = Node_SkipConditionsOR->FindPin(TEXT("B"));
-	UEdGraphPin* Node_SkipConditionsOR_Value = Node_SkipConditionsOR->GetReturnValuePin();
-
-	MAKE_NODE_FUNC(CancelSleep, UBangoScriptObject, CancelSleep_Internal, 1500, 500);
-	Node_CancelSleep->AllocateDefaultPins();
-	UEdGraphPin* Node_CancelSleep_Exec = Node_CancelSleep->GetExecPin();
-	UEdGraphPin* Node_CancelSleep_Then = Node_CancelSleep->GetThenPin();
-	UEdGraphPin* Node_CancelSleep_ActionUUID = Node_CancelSleep->FindPin(TEXT("ActionUUID"));
+	MAKE_NODE(Branch, CancelBranch, 1000, 500);
 	
-	MAKE_NODE_FUNC(SkipSleep, UBangoScriptObject, SkipSleep_Internal, 1500, 1000);
-	Node_SkipSleep->AllocateDefaultPins();
-	UEdGraphPin* Node_SkipSleep_Exec = Node_SkipSleep->GetExecPin();
-	UEdGraphPin* Node_SkipSleep_Then = Node_SkipSleep->GetThenPin();
-	UEdGraphPin* Node_SkipSleep_ActionUUID = Node_SkipSleep->FindPin(TEXT("ActionUUID"));
+	MAKE_NODE(Branch, SkipBranch, 1000, 1000);
+	
+	MAKE_NODE(BooleanOR, CancelConditionsOR, 750, 500);
+	
+	MAKE_NODE(BooleanOR, SkipConditionsOR, 750, 1000);
+	
+	MAKE_NODE(BangoCancelSleep_Internal, CancelSleep, 1500, 500);
+	
+	MAKE_NODE(BangoSkipSleep_Internal, SkipSleep, 1500, 1000);
 	
 	// Set up default pin values
 	Node_SetCancelExecTriggered_Value->DefaultValue = "True";
@@ -243,69 +179,68 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& CompilerContex
 	// Wire up nodes
 
 	// Launch Sleep inputs
-	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_Exec, *Node_LaunchSleep_Exec).CanSafeConnect();
-	bIsErrorFree &= Schema->TryCreateConnection(Node_TickEvent_Delegate, Node_LaunchSleep_TickDelegate);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_CompleteEvent_Delegate, Node_LaunchSleep_CompleteDelegate);
+	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_Exec, *Node_LaunchSleep.Exec).CanSafeConnect();
+	bIsErrorFree &= Schema->TryCreateConnection(Node_TickEvent_Delegate, Node_LaunchSleep.TickDelegate);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_CompleteEvent.Delegate, Node_LaunchSleep.CompleteDelegate);
 
 	if (Node_This_Duration->HasAnyConnections())
 	{
-		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_Duration, *Node_LaunchSleep_Duration).CanSafeConnect();
+		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_Duration, *Node_LaunchSleep.Duration).CanSafeConnect();
 	}
 	else
 	{
-		Node_LaunchSleep_Duration->DefaultValue = Node_This_Duration->DefaultValue;
+		Node_LaunchSleep.Duration->DefaultValue = Node_This_Duration->DefaultValue;
 	}
 	
 	// Set UUID inputs
-	bIsErrorFree &= Schema->TryCreateConnection(Node_LaunchSleep_Then, Node_SetUUID_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID_Variable, Node_SetUUID_Variable);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_LaunchSleep_UUID, Node_SetUUID_Value);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_LaunchSleep.Then, Node_SetUUID_Exec);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID.Variable, Node_SetUUID_Variable);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_LaunchSleep.ReturnValue, Node_SetUUID_Value);
 
 	// OR Cancel conditions inputs
 	if (Node_This_CancelCondition)
 	{
-		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_CancelCondition, *Node_CancelConditionsOR_B).CanSafeConnect();	
+		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_CancelCondition, *Node_CancelConditionsOR.B).CanSafeConnect();	
 	}
 
 	// OR Skip conditions inputs
 	if (Node_This_SkipCondition)
 	{
-		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_SkipCondition, *Node_SkipConditionsOR_B).CanSafeConnect();
+		bIsErrorFree &= CompilerContext.CopyPinLinksToIntermediate(*Node_This_SkipCondition, *Node_SkipConditionsOR.B).CanSafeConnect();
 	}
 
 	// Branch Cancel inputs
-	bIsErrorFree &= Schema->TryCreateConnection(Node_TickEvent_Then, Node_CancelBranch_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelConditionsOR_Value, Node_CancelBranch_Condition);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_TickEvent_Then, Node_CancelBranch.Exec);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelConditionsOR.Result, Node_CancelBranch.Condition);
 
 	// Branch Skip inputs
-	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelBranch_Else, Node_SkipBranch_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_SkipConditionsOR_Value, Node_SkipBranch_Condition);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelBranch.Else, Node_SkipBranch.Exec);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_SkipConditionsOR.Result, Node_SkipBranch.Condition);
 
 	// Cancel Sleep function inputs
-	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelBranch_Then, Node_CancelSleep_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID_Variable, Node_CancelSleep_ActionUUID);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_CancelBranch.Then, Node_CancelSleep.Exec);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID.Variable, Node_CancelSleep.ActionUUID);
 
 	// Skip Sleep function inputs
-	bIsErrorFree &= Schema->TryCreateConnection(Node_SkipBranch_Then, Node_SkipSleep_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID_Variable, Node_SkipSleep_ActionUUID);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_SkipBranch.Then, Node_SkipSleep.Exec);
+	bIsErrorFree &= Schema->TryCreateConnection(Node_ActionUUID.Variable, Node_SkipSleep.ActionUUID);
 		
 	// Final output
-	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_Completed, *Node_CompleteEvent_Then).CanSafeConnect();
+	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_Completed, *Node_CompleteEvent.Then).CanSafeConnect();
 	
 	// Exec Skip/Cancel inputs
 	if (Node_This_CancelExec)
 	{
-		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered_Variable, Node_CancelConditionsOR_A);
+		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered.Variable, Node_CancelConditionsOR.A);
 		bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_CancelExec, *Node_SetCancelExecTriggered_Exec).CanSafeConnect();
-		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered_Variable, Node_SetCancelExecTriggered_Variable);
+		bIsErrorFree &= Schema->TryCreateConnection(Node_CancelExecTriggered.Variable, Node_SetCancelExecTriggered_Variable);
 	}
 	if (Node_This_SkipExec)
 	{
-		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered_Variable, Node_SkipConditionsOR_A);
+		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered.Variable, Node_SkipConditionsOR.A);
 		bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Node_This_SkipExec, *Node_SetSkipExecTriggered_Exec).CanSafeConnect();
-		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered_Variable, Node_SetSkipExecTriggered_Variable);
+		bIsErrorFree &= Schema->TryCreateConnection(Node_SkipExecTriggered.Variable, Node_SetSkipExecTriggered_Variable);
 	}
-
 
 	// Done!
 	if (!bIsErrorFree)
