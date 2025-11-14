@@ -32,8 +32,6 @@ public:
 
 #undef LOCTEXT_NAMESPACE
 
-#define GRAPH_ANCHOR GraphAnchor
-
 #define MAKE_NODE_ANCHOR(PosX, PosY)\
 	FVector2f GRAPH_ANCHOR(PosX, PosY)
 

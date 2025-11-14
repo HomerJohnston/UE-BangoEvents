@@ -47,7 +47,7 @@ public:
 	
 	void AllocateDefaultPins() override;
 
-	void ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;	
+	void ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph) override;	
 	
 public:
 	bool IsLatentForMacros() const override

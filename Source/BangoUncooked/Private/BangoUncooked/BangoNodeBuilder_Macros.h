@@ -1,19 +1,11 @@
 ﻿#pragma once
 
-#define DECLARE_BASE(NodeName, NodeType)\
-private:\
-/*NodeName();*/\
-public:\
-/*NodeName(float X, float Y);*/\
-NodeType* Node\
-
-
 // ==============================================
 
 #define MAKE_NODE_TYPE(NodeType, Name, ...)\
-	struct NodeType : public NodeBase<Name>\
+	struct NodeType : public NodeWrapper<Name>\
 	{\
-		using NodeBase::NodeBase;\
+		using NodeWrapper::NodeWrapper;\
 		/*Default pins*/\
 		UEdGraphPin __VA_ARGS__;\
 		\
@@ -22,37 +14,70 @@ NodeType* Node\
 	
 // ==============================================
 
-#define MAKE_NODE(Type, Name, X, Y, ...)\
-	BangoK2NodeBuilder::Type Node_##Name(X, Y, ##__VA_ARGS__);\
+#define MAKE_NODE(Name, Type, X, Y, ...)\
+	Bango_BuildNode::Type Node_##Name(X, Y, ##__VA_ARGS__);\
 	Node_##Name.Construct_Internal()
 
 // ==============================================
 
-#define NODE_BUILDER_BOILERPLATE\
-	static class FKismetCompilerContext* Context;\
-	static class UEdGraph* ParentGraph;\
-	static class UK2Node* SourceNode;\
-	\
-	static void Setup(class FKismetCompilerContext& InContext, class UEdGraph* InParentGraph, class UK2Node* InSourceNode)\
-	{\
-		Context = &InContext;\
-		ParentGraph = InParentGraph;\
-		SourceNode = InSourceNode;\
-	}\
+#define EXTERNAL_CONNECTION_MOVE(FromPin, ToPin)\
+bIsErrorFree &= Compiler.MovePinLinksToIntermediate(*FromPin, *ToPin).CanSafeConnect()
+	
+#define EXTERNAL_CONNECTION_COPY(FromPin, ToPin)\
+bIsErrorFree &= Compiler.CopyPinLinksToIntermediate(*FromPin, *ToPin).CanSafeConnect()
+
+#define CREATE_CONNECTION(FromPin, ToPin)\
+bIsErrorFree &= Schema->TryCreateConnection(FromPin, ToPin);
+
+// ==============================================
 
 enum class EBangoDeferConstruction : uint8
 {
 	Normal = 0,
-	Deferred = 1,
+	DeferredConstruction = 1,
 	Finished = 2
 };
 
-namespace BangoK2NodeBuilder
+namespace Bango_BuildNode
 {
-	NODE_BUILDER_BOILERPLATE
+	static class FKismetCompilerContext* _Compiler;
+	static class UEdGraph* _ParentGraph;
+	static class UK2Node* _SourceNode;
+	static FVector2f _GraphAnchor(0, 0);
+
+	static const UEdGraphSchema* _Schema;
+	static bool* _bErrorBool;
+	
+	static void Setup(class FKismetCompilerContext& InContext, class UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
+	{
+		_Compiler = &InContext; _ParentGraph = InParentGraph; _SourceNode = InSourceNode;
+		_Schema = InSchema;
+		_bErrorBool = InErrorBool;
+		_GraphAnchor.X = Anchor.X; _GraphAnchor.Y = Anchor.Y;
+	}
+
+	static void MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+	{
+		*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
+	}
+	
+	static void CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+	{
+		*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
+	}
+
+	static void CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
+	{
+		*_bErrorBool &= _Schema->TryCreateConnection(From, To);
+	}
+
+	static void SetDefaultValue(UEdGraphPin* Pin, FString& Value)
+	{
+		_Schema->TrySetDefaultValue(*Pin, Value);
+	}
 	
 	template<typename T>
-	struct NodeBase
+	struct NodeWrapper
 	{
 	protected:
 		T* Node;
@@ -65,17 +90,22 @@ namespace BangoK2NodeBuilder
 		}
 
 	private:
-		NodeBase()
+		NodeWrapper()
 		{
-			Node = Context->SpawnIntermediateNode<T>(SourceNode, ParentGraph);
+			Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
 		}
 
 	public:
-		NodeBase(float X, float Y, EBangoDeferConstruction InDeferredConstruction = EBangoDeferConstruction::Normal) : NodeBase()
+		NodeWrapper(float X, float Y, EBangoDeferConstruction InDeferredConstruction = EBangoDeferConstruction::Normal) : NodeWrapper()
 		{
-			Node->SetNodePosX(X);
-			Node->SetNodePosY(Y);
+			Node->SetNodePosX(_GraphAnchor.X + X);
+			Node->SetNodePosY(_GraphAnchor.Y + Y);
 			DeferredConstruction = InDeferredConstruction;
+		}
+		
+		NodeWrapper(T* InNode)
+		{
+			Node = InNode;
 		}
 
 		virtual void Construct_Internal()
@@ -88,7 +118,7 @@ namespace BangoK2NodeBuilder
 		
 		virtual void Construct() = 0;
 			
-		void FinishDeferredConstruction()
+		void FinishConstruction()
 		{
 			Construct();
 		}
@@ -100,4 +130,20 @@ namespace BangoK2NodeBuilder
 			return Pin;
 		}
 	};
+
+	template<typename T>
+	T MakeNode(float X, float Y, EBangoDeferConstruction DeferConstruction = EBangoDeferConstruction::Normal)
+	{
+		NodeWrapper<T> NewNodeWrapper(X, Y, DeferConstruction);
+		NewNodeWrapper.Construct_Internal();
+		return NewNodeWrapper;
+	}
+
+	template<typename T, typename Y>
+	T MakeExistingNode(Y* InNode)
+	{
+		NodeWrapper<T> NewNodeWrapper(InNode);
+		NewNodeWrapper.Construct_Internal();
+		return NewNodeWrapper;
+	}
 }

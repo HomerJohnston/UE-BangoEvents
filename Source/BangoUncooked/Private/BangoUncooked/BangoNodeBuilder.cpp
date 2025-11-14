@@ -1,5 +1,6 @@
 ﻿#include "BangoUncooked/BangoNodeBuilder.h"
 
+#include "K2Node_AssignmentStatement.h"
 #include "K2Node_CallFunction.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_IfThenElse.h"
@@ -8,7 +9,7 @@
 #include "Bango/Core/BangoScriptObject.h"
 #include "Kismet/KismetMathLibrary.h"
 
-using namespace BangoK2NodeBuilder;
+using namespace Bango_BuildNode;
 
 // ----------------------------------------------
 // ----------------------------------------------
@@ -46,6 +47,18 @@ void BooleanOR::Construct()
 	A = Node->FindPin(TEXT("A"));
 	B = Node->FindPin(TEXT("B"));
 	Result = Node->GetReturnValuePin();
+}
+
+// ----------------------------------------------
+
+void AssignmentStatement::Construct()
+{
+	Node->AllocateDefaultPins();
+
+	Exec = Node->GetExecPin();
+	Then = Node->GetThenPin();
+	Variable = Node->GetVariablePin();
+	Value = Node->GetValuePin();
 }
 
 // ----------------------------------------------

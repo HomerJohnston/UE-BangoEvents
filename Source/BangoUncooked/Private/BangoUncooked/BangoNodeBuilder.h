@@ -5,6 +5,8 @@
 
 #include "BangoNodeBuilder_Macros.h"
 
+class UK2Node_BangoSleep;
+class UK2Node_AssignmentStatement;
 class UK2Node_TemporaryVariable;
 class UK2Node_CustomEvent;
 class UK2Node_IfThenElse;
@@ -12,7 +14,7 @@ class UK2Node_CallFunction;
 
 using enum EBangoDeferConstruction;
 
-namespace BangoK2NodeBuilder
+namespace Bango_BuildNode
 {
 	// ------------------------------------------
 	// Special engine nodes
@@ -31,10 +33,16 @@ namespace BangoK2NodeBuilder
 	
 	MAKE_NODE_TYPE(BooleanOR, UK2Node_CallFunction,
 		*A, *B, *Result);
+
+	MAKE_NODE_TYPE(AssignmentStatement, UK2Node_AssignmentStatement,
+		*Exec, *Then, *Variable, *Value);
 	
 	// ------------------------------------------
 	// Bango nodes
 
+	MAKE_NODE_TYPE(BangoSleep, UK2Node_BangoSleep,
+		*Exec, *Duration, *SkipExec, *CancelExec, *SkipCondition, *CancelCondition, *Completed);
+	
 	MAKE_NODE_TYPE(BangoLaunchSleep_Internal, UK2Node_CallFunction,
 		*Exec, *Then, *ReturnValue, *Duration, *TickDelegate, *CompleteDelegate);
 	
