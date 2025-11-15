@@ -2,6 +2,7 @@
 
 #include "DelayAction.h"
 #include "Bango/Core/BangoScriptHandle.h"
+#include "Bango/LatentActions/BangoSleepAction.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 
 FBangoScriptHandle UBangoScriptObject::Execute_Internal()
@@ -88,6 +89,20 @@ void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 A
         if (Action)
         {
             Action->Skip();
+        }
+    }    
+}
+
+void UBangoScriptObject::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
+{
+    if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+    {
+        FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
+        FBangoSleepAction* Action = LatentActionManager.FindExistingAction<FBangoSleepAction>(WorldContextObject, ActionUUID);
+
+        if (Action)
+        {
+            Action->SetPaused(bPaused);
         }
     }    
 }

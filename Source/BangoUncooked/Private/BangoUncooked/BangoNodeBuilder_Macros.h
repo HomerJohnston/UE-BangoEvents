@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "EdGraph/EdGraph.h"
+
 // ==============================================
 
 #define NORMAL_CONSTRUCTION 0
@@ -37,7 +39,7 @@
 		\
 		virtual ~NodeType() {};\
 		\
-		CONCAT(IF_DEFERRED_, USE_DEFERRED)(bool DeferredConstruction() override { return true; })\
+		CONCAT(IF_DEFERRED_, USE_DEFERRED)(bool UseDeferredConstruction() override { return true; })\
 		\
 		/*Declare pins*/\
 		FOR_EACH(DECL_PIN, __VA_ARGS__)\
@@ -58,30 +60,34 @@ struct NodeWrapper_Base
 {
 	bool bFinishedSpawning = false;
 	
-	virtual bool DeferredConstruction()
+	virtual bool UseDeferredConstruction()
 	{
 		return false;
 	}
 		
-	virtual void Construct_Internal()
+	virtual void NormalConstruction()
 	{
-		if (!DeferredConstruction() && !bFinishedSpawning)
+		if (UseDeferredConstruction() || bFinishedSpawning)
 		{
-			Construct();
-			bFinishedSpawning = true;
+			return;
 		}
+
+		Construct();
+		bFinishedSpawning = true;
 	}
 		
-	virtual void Construct() {};
-			
-	void FinishConstruction()
+	void DeferredConstruction()
 	{
-		if (DeferredConstruction() && !bFinishedSpawning)
+		if (!UseDeferredConstruction() || bFinishedSpawning)
 		{
-			Construct();
-			bFinishedSpawning = true;
+			return;
 		}
-	}
+		
+		Construct();
+		bFinishedSpawning = true;
+	}	
+
+	virtual void Construct() {};
 
 	virtual UEdGraphNode* GetNode() { return nullptr; }
 };
@@ -101,7 +107,7 @@ namespace Bango_NodeBuilder
 	static TArray<NodeWrapper_Base*> SpawnedNodes;
 	bool bAwaitingSpawnFinish = false;
 	
-	static void Setup(class FKismetCompilerContext& InContext, class UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
+	static void Setup(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
 	{
 		checkf(!bAwaitingSpawnFinish, TEXT("Did you forget to call FinishSpawningAllNodes somewhere else?"));
 
@@ -123,7 +129,7 @@ namespace Bango_NodeBuilder
 		
 		for (NodeWrapper_Base* Node : SpawnedNodes)
 		{
-			Node->FinishConstruction();
+			Node->DeferredConstruction();
 
 			if (bLogUnconnectedPins)
 			{
@@ -137,6 +143,13 @@ namespace Bango_NodeBuilder
 			}
 		}
 
+		_Compiler = nullptr;
+		_ParentGraph = nullptr;
+		_SourceNode = nullptr;
+		_Schema = nullptr;
+		_bErrorBool = nullptr;
+		_GraphAnchor.X = 0; _GraphAnchor.Y = 0;
+		
 		bAwaitingSpawnFinish = false;
 	}
 
@@ -189,7 +202,14 @@ namespace Bango_NodeBuilder
 	public:
 		NodeWrapper(float X, float Y)
 		{
+			check(_SourceNode);
+			check(_ParentGraph);
+			check(_Compiler);
+
 			Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
+
+			check(Node);
+			
 			Node->SetNodePosX(_GraphAnchorScale *(_GraphAnchor.X + X));
 			Node->SetNodePosY(_GraphAnchorScale * (_GraphAnchor.Y + Y));
 		}
@@ -201,7 +221,7 @@ namespace Bango_NodeBuilder
 		}
 
 
-		void AllocatePins()
+		void AllocateDefaultPins()
 		{
 			if (!bFromExisting)
 			{
@@ -227,8 +247,12 @@ namespace Bango_NodeBuilder
 	template<typename TT>
 	TT MakeNode(float X, float Y)
 	{
+		check(_SourceNode);
+		check(_ParentGraph);
+		check(_Compiler);
+		
 		TT NewNodeWrapper(X, Y);
-		NewNodeWrapper.Construct_Internal();
+		NewNodeWrapper.NormalConstruction();
 		
 		SpawnedNodes.Add(&NewNodeWrapper);
 		
@@ -238,8 +262,12 @@ namespace Bango_NodeBuilder
 	template<typename TT, typename T>
 	TT WrapExistingNode(T* InNode)
 	{
+		check(_SourceNode);
+		check(_ParentGraph);
+		check(_Compiler);
+		
 		TT NewNodeWrapper(InNode);
-		NewNodeWrapper.Construct_Internal();
+		NewNodeWrapper.NormalConstruction();
 
 		SpawnedNodes.Add(&NewNodeWrapper);
 		

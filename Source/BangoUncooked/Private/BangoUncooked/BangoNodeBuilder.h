@@ -69,7 +69,7 @@ namespace Bango_NodeBuilder
 		Then, Delegate);
 			
 	MAKE_NODE_TYPE(TemporaryVariable, UK2Node_TemporaryVariable, DEFERRED_CONSTRUCTION,
-		Variable);	
+		Variable);
 	
 	MAKE_NODE_TYPE(AssignmentStatement, UK2Node_AssignmentStatement, NORMAL_CONSTRUCTION,
 		Exec, Then, Variable, Value);

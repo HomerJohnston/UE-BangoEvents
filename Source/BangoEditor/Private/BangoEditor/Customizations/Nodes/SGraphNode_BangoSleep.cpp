@@ -8,6 +8,7 @@
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Private/Bango/LatentActions/BangoSleepAction.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2/K2Node_BangoSleep.h"
 #include "KismetNodes/KismetNodeInfoContext.h"

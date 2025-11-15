@@ -16,6 +16,7 @@ public:
 	UK2Node_BangoSleep();
 
 protected:
+	
 	UPROPERTY()
 	float Duration = 1.0f;
 	
@@ -31,6 +32,9 @@ protected:
 	UPROPERTY(EditAnywhere, DisplayName = "Conditional Cancel")
 	bool bEnableCancelConditionPin;
 
+	UPROPERTY(EditAnywhere, DisplayName = "Conditional Pause")
+	bool bEnablePausePin;
+	
 protected:
 	
 	UPROPERTY()

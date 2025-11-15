@@ -102,10 +102,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	check(SourceGraph && Schema);
 	bool bIsErrorFree = true;
 
-	UK2Node* Test0 = this;
-	UK2Node* Test1 = Bango_NodeBuilder::_SourceNode;
 	Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
-	UK2Node* Test2 = Bango_NodeBuilder::_SourceNode;
 	
 	// -----------------
 	// Make nodes
