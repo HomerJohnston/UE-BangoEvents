@@ -89,135 +89,140 @@ struct NodeWrapper_Base
 
 	virtual void Construct() {};
 
-	virtual UEdGraphNode* GetNode() { return nullptr; }
+	virtual UEdGraphNode* BaseNode() { return nullptr; }
 };
 
 namespace Bango_NodeBuilder
 {
-	static class FKismetCompilerContext* _Compiler;
-	static class UEdGraph* _ParentGraph;
-	static class UK2Node* _SourceNode;
-	static FVector2f _GraphAnchor(0, 0);
-
-	static const float _GraphAnchorScale = 300.0f; // Each major cell in hte grid is roughly 125 units; this lets me increment positions in units of '1' to space out my nodes
-
-	static const UEdGraphSchema* _Schema;
-	static bool* _bErrorBool;
-
-	static TArray<NodeWrapper_Base*> SpawnedNodes;
-	bool bAwaitingSpawnFinish = false;
-	
-	static void Setup(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
+	struct Builder
 	{
-		checkf(!bAwaitingSpawnFinish, TEXT("Did you forget to call FinishSpawningAllNodes somewhere else?"));
+		class FKismetCompilerContext* _Compiler;
+		class UEdGraph* _ParentGraph;
+		class UK2Node* _SourceNode;
+		FVector2f _GraphAnchor;
 
-		_Compiler = &InContext;
-		_ParentGraph = InParentGraph;
-		_SourceNode = InSourceNode;
-		_Schema = InSchema;
-		_bErrorBool = InErrorBool;
-		_GraphAnchor.X = Anchor.X; _GraphAnchor.Y = Anchor.Y;
+		const float _GraphAnchorScale = 300.0f; // Each major cell in hte grid is roughly 125 units; this lets me increment positions in units of '1' to space out my nodes
 
-		SpawnedNodes.Empty();
+		const UEdGraphSchema* _Schema;
+		bool* _bErrorBool;
+
+		TArray<TSharedPtr<NodeWrapper_Base>> SpawnedNodes;
+		bool bAwaitingSpawnFinish = false;
 		
-		bAwaitingSpawnFinish = true;
-	}
-
-	static void FinishSpawningAllNodes(bool bLogUnconnectedPins = false)
-	{
-		checkf(bAwaitingSpawnFinish, TEXT("Did you forget to call Setup?"));
-		
-		for (NodeWrapper_Base* Node : SpawnedNodes)
+		Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
 		{
-			Node->DeferredConstruction();
+			checkf(!bAwaitingSpawnFinish, TEXT("Did you forget to call FinishSpawningAllNodes somewhere else?"));
 
-			if (bLogUnconnectedPins)
+			_Compiler = &InContext;
+			_ParentGraph = InParentGraph;
+			_SourceNode = InSourceNode;
+			_Schema = InSchema;
+			_bErrorBool = InErrorBool;
+			_GraphAnchor.X = Anchor.X; _GraphAnchor.Y = Anchor.Y;
+
+			SpawnedNodes.Empty();
+			
+			bAwaitingSpawnFinish = true;
+		}
+
+		void FinishSpawningAllNodes(bool bLogUnconnectedPins = false)
+		{
+			checkf(bAwaitingSpawnFinish, TEXT("Did you forget to call Setup?"));
+			
+			for (TSharedPtr<NodeWrapper_Base> Node : SpawnedNodes)
 			{
-				for (UEdGraphPin* Pin : Node->GetNode()->GetAllPins())
+				Node->DeferredConstruction();
+
+				if (bLogUnconnectedPins)
 				{
-					if (!Pin->HasAnyConnections())
+					for (UEdGraphPin* Pin : Node->BaseNode()->GetAllPins())
 					{
-						UE_LOG(LogBango, Warning, TEXT("Unconnected pin --> Node: {%s} --> Pin: {%s}"), *Node->GetNode()->GetDescriptiveCompiledName(), *Pin->GetName());
+						if (!Pin->HasAnyConnections())
+						{
+							UE_LOG(LogBango, Warning, TEXT("Unconnected pin --> Node: {%s} --> Pin: {%s}"), *Node->BaseNode()->GetDescriptiveCompiledName(), *Pin->GetName());
+						}
 					}
 				}
 			}
+
+			bAwaitingSpawnFinish = false;
 		}
 
-		_Compiler = nullptr;
-		_ParentGraph = nullptr;
-		_SourceNode = nullptr;
-		_Schema = nullptr;
-		_bErrorBool = nullptr;
-		_GraphAnchor.X = 0; _GraphAnchor.Y = 0;
+		void MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+		{
+			*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
+		}
 		
-		bAwaitingSpawnFinish = false;
-	}
+		void CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+		{
+			*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
+		}
 
-	static void MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
-	{
-		*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
-	}
-	
-	static void CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
-	{
-		*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
-	}
+		void CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
+		{
+			*_bErrorBool &= _Schema->TryCreateConnection(From, To);
+		}
 
-	static void CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
-	{
-		*_bErrorBool &= _Schema->TryCreateConnection(From, To);
-	}
+		void SetDefaultValue(UEdGraphPin* Pin, FString& Value)
+		{
+			_Schema->TrySetDefaultValue(*Pin, Value);
+		}
+		
+		void SetDefaultObject(UEdGraphPin* Pin, UObject* Value)
+		{
+			_Schema->TrySetDefaultObject(*Pin, Value);
+		}
 
-	static void SetDefaultValue(UEdGraphPin* Pin, FString& Value)
-	{
-		_Schema->TrySetDefaultValue(*Pin, Value);
-	}
-	
-	static void SetDefaultObject(UEdGraphPin* Pin, UObject* Value)
-	{
-		_Schema->TrySetDefaultObject(*Pin, Value);
-	}
-	
+		template<typename TT>
+		TSharedPtr<TT> MakeNode(float X, float Y)
+		{
+			TSharedPtr<TT> NewNodeWrapper = MakeShared<TT>(X, Y, _Compiler, _SourceNode, _ParentGraph);
+			NewNodeWrapper->NormalConstruction();
+			
+			SpawnedNodes.Add(NewNodeWrapper);
+			
+			return NewNodeWrapper;
+		}
+		
+		template<typename TT, typename T>
+		TSharedPtr<TT> WrapExistingNode(T* InNode)
+		{
+			TSharedPtr<TT> NewNodeWrapper = MakeShared<TT>(InNode);
+			NewNodeWrapper->NormalConstruction();
+
+			SpawnedNodes.Add(NewNodeWrapper);
+			
+			return NewNodeWrapper;
+		}
+	};
+		
 	template<typename T>
 	struct NodeWrapper : public NodeWrapper_Base
 	{
 	protected:
-		T* Node;
+		T* _Node;
 
 		bool bFromExisting = false;
-
-	public:
-		T* operator->()
-		{
-			return Node;
-		}
 
 	private:
 		NodeWrapper()
 		{
 			checkNoEntry();
-			//Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
 		}
 
 	public:
-		NodeWrapper(float X, float Y)
+		NodeWrapper(float X, float Y, FKismetCompilerContext* _Compiler, UK2Node* _SourceNode, UEdGraph* _ParentGraph)
 		{
-			check(_SourceNode);
-			check(_ParentGraph);
-			check(_Compiler);
-
-			Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
-
-			check(Node);
-			
-			Node->SetNodePosX(_GraphAnchorScale *(_GraphAnchor.X + X));
-			Node->SetNodePosY(_GraphAnchorScale * (_GraphAnchor.Y + Y));
+			_Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
+				
+			//Node->SetNodePosX(_GraphAnchorScale *(_GraphAnchor.X + X));
+			//Node->SetNodePosY(_GraphAnchorScale * (_GraphAnchor.Y + Y));
 		}
-		
+			
 		NodeWrapper(T* InNode)
 		{
 			bFromExisting = true;
-			Node = InNode;
+			_Node = InNode;
 		}
 
 
@@ -225,52 +230,29 @@ namespace Bango_NodeBuilder
 		{
 			if (!bFromExisting)
 			{
-				Node->AllocateDefaultPins();
+				_Node->AllocateDefaultPins();
 			}
 		}
-	
+		
 		UEdGraphPin* FindPin(const char* PinName, EBangoPinRequired PinRequired = EBangoPinRequired::Required)
 		{
-			UEdGraphPin* Pin = Node->FindPin(FName(PinName));
+			return FindPin(FName(PinName));
+		}
+		
+		UEdGraphPin* FindPin(FName PinName, EBangoPinRequired PinRequired = EBangoPinRequired::Required)
+		{
+			UEdGraphPin* Pin = _Node->FindPin(PinName);
 
 			if (PinRequired == EBangoPinRequired::Required)
 			{
 				check(Pin);
 			}
-			
+				
 			return Pin;
 		}
 
-		UEdGraphNode* GetNode() override { return reinterpret_cast<UEdGraphNode*>(Node); }
-	};
-	
-	template<typename TT>
-	TT MakeNode(float X, float Y)
-	{
-		check(_SourceNode);
-		check(_ParentGraph);
-		check(_Compiler);
-		
-		TT NewNodeWrapper(X, Y);
-		NewNodeWrapper.NormalConstruction();
-		
-		SpawnedNodes.Add(&NewNodeWrapper);
-		
-		return NewNodeWrapper;
-	}
-	
-	template<typename TT, typename T>
-	TT WrapExistingNode(T* InNode)
-	{
-		check(_SourceNode);
-		check(_ParentGraph);
-		check(_Compiler);
-		
-		TT NewNodeWrapper(InNode);
-		NewNodeWrapper.NormalConstruction();
+		virtual UEdGraphNode* BaseNode() { return reinterpret_cast<UEdGraphNode*>(_Node); }
 
-		SpawnedNodes.Add(&NewNodeWrapper);
-		
-		return NewNodeWrapper;
-	}
+		T* Node() { return _Node; }
+	};
 }

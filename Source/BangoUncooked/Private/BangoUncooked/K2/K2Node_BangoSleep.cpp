@@ -103,37 +103,38 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 
 	// FBlueprintEditorUtils::FindUniqueCustomEventName does not work. Generate my own unique ID.
 	FString UniqueID = *Compiler.GetGuid(this);
-	
+
 	check(this);
 	check(SourceGraph);
-	Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5000, 5000));
+	//Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5000, 5000));
+	Bango_NodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5000, 5000));
 	
 	// -----------------
 	// Make nodes
 	
 	using namespace Bango_NodeBuilder;
-	//auto Node_SkipExecTriggered =		MakeNode<TemporaryVariable>(0, 1);
-	//auto Node_CancelExecTriggered =		MakeNode<TemporaryVariable>(0, 10);
-	//auto Node_ActionUUID =				MakeNode<TemporaryVariable>(0, 2);
-	//auto Node_SetSkipExecTriggered =	MakeNode<AssignmentStatement>(0, 1);
-	//auto Node_SetCancelExecTriggered =	MakeNode<AssignmentStatement>(2, 1);
-	//auto Node_SetUUID =					MakeNode<AssignmentStatement>(1, 1);
-	//auto Node_LaunchSleep = 			MakeNode<BangoLaunchSleep_Internal>(2, 1);
-	auto Node_TickEvent = 				MakeNode<CustomEvent>(2, 4); 
-	auto Node_CompleteEvent = 			MakeNode<CustomEvent>(5, 2);
-	auto Node_CancelBranch = 			MakeNode<Branch>(4, 1);
-	auto Node_SkipBranch = 				MakeNode<Branch>(4, 4);
-	auto Node_CancelConditionsOR = 		MakeNode<BooleanOR>(750, 500);
-	auto Node_SkipConditionsOR = 		MakeNode<BooleanOR>(750, 1000);
-	auto Node_CancelSleep = 			MakeNode<BangoCancelSleep_Internal>(1500, 500);
-	auto Node_SkipSleep = 				MakeNode<BangoSkipSleep_Internal>(1500, 1000);
-	auto Node_This =					WrapExistingNode<BangoSleep>(this);
+	auto Node_SkipExecTriggered =		Builder.MakeNode<TemporaryVariable>(0, 1);
+	auto Node_CancelExecTriggered =		Builder.MakeNode<TemporaryVariable>(0, 10);
+	auto Node_ActionUUID =				Builder.MakeNode<TemporaryVariable>(0, 2);
+	auto Node_SetSkipExecTriggered =	Builder.MakeNode<AssignmentStatement>(0, 1);
+	auto Node_SetCancelExecTriggered =	Builder.MakeNode<AssignmentStatement>(2, 1);
+	auto Node_SetUUID =					Builder.MakeNode<AssignmentStatement>(1, 1);
+	auto Node_LaunchSleep = 			Builder.MakeNode<BangoLaunchSleep_Internal>(2, 1);
+	auto Node_TickEvent = 				Builder.MakeNode<CustomEvent>(2, 4); 
+	auto Node_CompleteEvent = 			Builder.MakeNode<CustomEvent>(5, 2);
+	auto Node_CancelBranch = 			Builder.MakeNode<Branch>(4, 1);
+	auto Node_SkipBranch = 				Builder.MakeNode<Branch>(4, 4);
+	auto Node_CancelConditionsOR = 		Builder.MakeNode<BooleanOR>(750, 500);
+	auto Node_SkipConditionsOR = 		Builder.MakeNode<BooleanOR>(750, 1000);
+	auto Node_CancelSleep = 			Builder.MakeNode<BangoCancelSleep_Internal>(1500, 500);
+	auto Node_SkipSleep = 				Builder.MakeNode<BangoSkipSleep_Internal>(1500, 1000);
+	auto Node_This =					Builder.WrapExistingNode<BangoSleep>(this);
 	UE_LOG(LogBango, Display, TEXT("Test"));
-	/*
 
 	// -----------------
 	// Post-setup
 	
+#if 0
 	Node_SkipExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
 	Node_CancelExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
 	Node_ActionUUID->VariableType.PinCategory = UEdGraphSchema_K2::PC_Int;
@@ -217,6 +218,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	*/
 
 	Bango_NodeBuilder::FinishSpawningAllNodes();
+#endif
 	
 	// Done!
 	if (!bIsErrorFree)
