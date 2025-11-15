@@ -76,7 +76,7 @@ void UBangoEvent::RegisterAction(UBangoAction* Action)
 {
 	if (!IsValid(Action))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoEvent::RegisterAction was passed a null action, ignoring"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoEvent::RegisterAction was passed a null action, ignoring"));
 		return;
 	}
 	
@@ -87,7 +87,7 @@ void UBangoEvent::UnregisterAction(UBangoAction* Action)
 {
 	if (!IsValid(Action))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoEvent::UnregisterAction was passed a null action, ignoring"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoEvent::UnregisterAction was passed a null action, ignoring"));
 		return;
 	}
 	

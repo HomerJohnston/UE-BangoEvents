@@ -6,7 +6,7 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 {
 	if (bUseTargetComponent && bUseTargetActor)
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use both a component and a target actor, can only be one or the other!"));
+		UE_LOG(LogBango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use both a component and a target actor, can only be one or the other!"));
 		return;
 	}
 
@@ -14,13 +14,13 @@ void UBangoTrigger_ActorOverlap::Enable_Implementation()
 	
 	if (bUseTargetComponent && !IsValid(SpecificComponent))
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use a component but no component was set!"));
+		UE_LOG(LogBango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use a component but no component was set!"));
 		return;
 	}
 	
 	if (bUseTargetActor && !IsValid(TargetActor))
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use target actor but no target actor was set!"));
+		UE_LOG(LogBango, Error, TEXT("UBangoTrigger_ActorOverlap is set to use target actor but no target actor was set!"));
 		return;
 	}
 

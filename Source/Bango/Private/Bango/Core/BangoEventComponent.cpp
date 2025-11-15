@@ -77,7 +77,7 @@ void UBangoEventComponent::BeginPlay()
 
 	if (bDisable)
 	{
-		UE_LOG(Bango, Warning, TEXT("Event on %s is set to be disabled during play and will be destroyed."), *GetOwner()->GetName());
+		UE_LOG(LogBango, Warning, TEXT("Event on %s is set to be disabled during play and will be destroyed."), *GetOwner()->GetName());
 
 		GetWorld()->OnWorldBeginPlay.AddUObject(this, &ThisClass::DestroyOnBeginPlay);
 		
@@ -86,7 +86,7 @@ void UBangoEventComponent::BeginPlay()
 	
 	if (!IsValid(Event))
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoEventComponent of <%s> has no event handler set!"), *GetOwner()->GetName());
+		UE_LOG(LogBango, Error, TEXT("UBangoEventComponent of <%s> has no event handler set!"), *GetOwner()->GetName());
 		return;
 	}
 
@@ -179,7 +179,7 @@ void UBangoEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 		return;
 	}
 
-	UE_LOG(Bango, VeryVerbose, TEXT("UBangoEventComponent SetFrozen: %s"), (bNewFrozen ? TEXT("True") : TEXT("False")));
+	UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEventComponent SetFrozen: %s"), (bNewFrozen ? TEXT("True") : TEXT("False")));
 
 	bIsFrozen = bNewFrozen;
 

@@ -121,7 +121,7 @@ void FBangoActionPropertyCustomization_ActionSelectorDrawer::GenerateComboboxEnt
 
 		if (FunctionName == NAME_None)
 		{
-			UE_LOG(Bango, Error, TEXT("Invalid action name registered in <%s> - cannot use None as a function name! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString());
+			UE_LOG(LogBango, Error, TEXT("Invalid action name registered in <%s> - cannot use None as a function name! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString());
 		}
 		else if (Function)
 		{
@@ -130,7 +130,7 @@ void FBangoActionPropertyCustomization_ActionSelectorDrawer::GenerateComboboxEnt
 		}
 		else
 		{
-			UE_LOG(Bango, Error, TEXT("Invalid action name registered in <%s> - could not find UFUNCTION() named <%s>! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString(), *FunctionName.ToString());
+			UE_LOG(LogBango, Error, TEXT("Invalid action name registered in <%s> - could not find UFUNCTION() named <%s>! Ignoring."), *InstancedAction->GetClass()->GetFName().ToString(), *FunctionName.ToString());
 		}
 	}
 }

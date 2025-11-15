@@ -54,7 +54,7 @@ void UBangoAction_DebugLog::Print(FString& Message)
 {
 	if (PrintTo != EBangoAction_DebugLog_PrintTo::Screen)
 	{
-		UE_LOG(Bango, Display, TEXT("%s"), *Message);
+		UE_LOG(LogBango, Display, TEXT("%s"), *Message);
 	}
 
 	if (PrintTo != EBangoAction_DebugLog_PrintTo::Log)

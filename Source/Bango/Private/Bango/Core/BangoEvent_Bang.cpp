@@ -39,7 +39,7 @@ EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigge
 		{
 			if (!bRespondToDeactivateTriggers)
 			{
-				UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
+				UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Bang ignoring Deactivate trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
 				return EBangoEventSignalType::None;
 			}
 			
@@ -52,7 +52,7 @@ EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigge
 		}
 		default:
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoEvent_Bang ignoring Unknown trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
+			UE_LOG(LogBango, Warning, TEXT("UBangoEvent_Bang ignoring Unknown trigger from <%s> (Bang events only respond to Activate trigger signals!"), *Signal.Instigator->GetName());
 			return EBangoEventSignalType::None;
 		}
 	}

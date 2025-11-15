@@ -23,8 +23,6 @@
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-using namespace Bango_BuildNode;
-
 class UK2Node_AssignmentStatement;
 
 namespace K2Node_BangoSleepPins
@@ -95,59 +93,53 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	Bango_BuildNode::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5000, 5000));
+	UK2Node* Test0 = this;
+	UK2Node* Test1 = Bango_NodeBuilder::_SourceNode;
+	Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5000, 5000));
+	UK2Node* Test2 = Bango_NodeBuilder::_SourceNode;
 	
 	// FBlueprintEditorUtils::FindUniqueCustomEventName does not work. Generate my own unique ID.
 	FGuid UniqueID = FGuid::NewGuid();
 	
+	// -----------------
 	// Make nodes
-	auto Node_This = MakeExistingNode<BangoSleep>(this);
+	
+	using namespace Bango_NodeBuilder;
+	auto Node_This =					WrapExistingNode<BangoSleep>(this);
+	auto Node_SkipExecTriggered =		MakeNode<TemporaryVariable>(0, 100);
+	auto Node_CancelExecTriggered =		MakeNode<TemporaryVariable>(0, 1250);
+	auto Node_ActionUUID =				MakeNode<TemporaryVariable>(0, 250);
+	auto Node_SetSkipExecTriggered =	MakeNode<AssignmentStatement>(250, 1000);
+	auto Node_SetCancelExecTriggered =	MakeNode<AssignmentStatement>(250, 1250);
+	auto Node_SetUUID =					MakeNode<AssignmentStatement>(1250, 500);
+	auto Node_LaunchSleep = 			MakeNode<BangoLaunchSleep_Internal>(1000, 500);
+	auto Node_TickEvent = 				MakeNode<CustomEvent>(500, 2000);
+	auto Node_CompleteEvent = 			MakeNode<CustomEvent>(2500, 1000);
+	auto Node_CancelBranch = 			MakeNode<Branch>(1000, 500);
+	auto Node_SkipBranch = 				MakeNode<Branch>(1000, 1000);
+	auto Node_CancelConditionsOR = 		MakeNode<BooleanOR>(750, 500);
+	auto Node_SkipConditionsOR = 		MakeNode<BooleanOR>(750, 1000);
+	auto Node_CancelSleep = 			MakeNode<BangoCancelSleep_Internal>(1500, 500);
+	auto Node_SkipSleep = 				MakeNode<BangoSkipSleep_Internal>(1500, 1000);
 
-	auto Node_SkipExecTriggered = MakeNode<TemporaryVariable>(0, 100, DeferredConstruction);
+	// -----------------
+	// Post-setup
+	
 	Node_SkipExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
-	Node_SkipExecTriggered.FinishConstruction();
-
-	auto Node_CancelExecTriggered = MakeNode<TemporaryVariable>(0, 1250, DeferredConstruction);
 	Node_CancelExecTriggered->VariableType.PinCategory = UEdGraphSchema_K2::PC_Boolean;
-	Node_CancelExecTriggered.FinishConstruction();
-
-	auto Node_ActionUUID = MakeNode<TemporaryVariable>(0, 250, DeferredConstruction);
 	Node_ActionUUID->VariableType.PinCategory = UEdGraphSchema_K2::PC_Int;
-	Node_ActionUUID.FinishConstruction();
 
-	auto Node_SetSkipExecTriggered = MakeNode<AssignmentStatement>(250, 1000);
 	Node_SetSkipExecTriggered.Value->DefaultValue = "True";
-
-	auto Node_SetCancelExecTriggered = MakeNode<AssignmentStatement>(250, 1250);
 	Node_SetCancelExecTriggered.Value->DefaultValue = "True";
-
-	auto Node_SetUUID = MakeNode<AssignmentStatement>(1250, 500);
 	
-	auto Node_LaunchSleep = MakeNode<BangoLaunchSleep_Internal>(1000, 500);
-
-	auto Node_TickEvent = MakeNode<CustomEvent>(500, 2000, DeferredConstruction);
 	Node_TickEvent->CustomFunctionName = FName(UniqueID.ToString(), 0);
-	Node_TickEvent.FinishConstruction();
-
-	auto Node_CompleteEvent = MakeNode<CustomEvent>(2500, 1000, DeferredConstruction);
-	Node_CompleteEvent->CustomFunctionName = FName(UniqueID.ToString(), 1);
-	Node_CompleteEvent.FinishConstruction();
+	Node_CompleteEvent->CustomFunctionName = FName(UniqueID.ToString(), 1); 
 	
-	auto Node_CancelBranch = MakeNode<Branch>(1000, 500);
+	Bango_NodeBuilder::FinishSpawningAllNodes();
 	
-	auto Node_SkipBranch = MakeNode<Branch>(1000, 1000);
+	// -----------------
+	// Make connections
 	
-	auto Node_CancelConditionsOR = MakeNode<BooleanOR>(750, 500);
-	
-	auto Node_SkipConditionsOR = MakeNode<BooleanOR>(750, 1000);
-
-	auto Node_CancelSleep = MakeNode<BangoCancelSleep_Internal>(1500, 500);
-	
-	auto Node_SkipSleep = MakeNode<BangoSkipSleep_Internal>(1500, 1000);
-	
-	
-	// Wire up nodes
-
 	// Launch Sleep inputs
 	MoveExternalConnection(Node_This.Exec, Node_LaunchSleep.Exec);
 	CreateConnection(Node_TickEvent.Delegate, Node_LaunchSleep.TickDelegate);
@@ -170,7 +162,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	// OR Cancel conditions inputs
 	if (Node_This.CancelCondition)
 	{
-		CopyExternalConnection(Node_This.CancelCondition, Node_CancelConditionsOR.B);	
+		CopyExternalConnection(Node_This.CancelCondition, Node_CancelConditionsOR.B);
 	}
 
 	// OR Skip conditions inputs
@@ -211,7 +203,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 		MoveExternalConnection(Node_This.SkipExec, Node_SetSkipExecTriggered.Exec);
 		CreateConnection(Node_SkipExecTriggered.Variable, Node_SetSkipExecTriggered.Variable);
 	}
-
+	
 	// Done!
 	if (!bIsErrorFree)
 	{

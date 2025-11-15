@@ -22,13 +22,13 @@ void UBangoTrigger_EventTriggered::Enable_Implementation()
 	{
 		if (Actor.IsPending())
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on unloaded actor!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on unloaded actor!"));
 			return;
 		}
 
 		if (!Actor.IsValid())
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on invalid actor!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on invalid actor!"));
 			return;
 		}
 
@@ -44,13 +44,13 @@ void UBangoTrigger_EventTriggered::Enable_Implementation()
 	{
 		if (MasterEvent.IsPending())
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on unloaded event component!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on unloaded event component!"));
 			return;
 		}
 	
 		if (!MasterEvent.IsValid())
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on invalid event component!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoAction_EventTriggered cannot listen to events on invalid event component!"));
 			return;
 		}
 
@@ -66,7 +66,7 @@ void UBangoTrigger_EventTriggered::Disable_Implementation()
 	{
 		if (!MasterEvent.IsValid())
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoTrigger_EventTriggered::Disable_Implementation tried to work on a null event!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoTrigger_EventTriggered::Disable_Implementation tried to work on a null event!"));
 			continue;
 		}
 		
@@ -82,7 +82,7 @@ void UBangoTrigger_EventTriggered::OnTargetEventSignalled(UBangoEventComponent* 
 
 	if (Index == INDEX_NONE)
 	{
-		UE_LOG(Bango, Error, TEXT("UBangoTrigger_ByEventSignal::OnTargetEventSignalled was called with an event that was not set in its list!"));
+		UE_LOG(LogBango, Error, TEXT("UBangoTrigger_ByEventSignal::OnTargetEventSignalled was called with an event that was not set in its list!"));
 		return;
 	}
 

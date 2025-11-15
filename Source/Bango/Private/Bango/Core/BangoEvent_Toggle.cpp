@@ -37,7 +37,7 @@ void UBangoEvent_Toggle::Init()
 
 EBangoEventSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
 {	
-	UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
+	UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	
 	switch (Signal.Type)
 	{
@@ -51,7 +51,7 @@ EBangoEventSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrig
 		}
 		default:
 		{
-			UE_LOG(Bango, Error, TEXT("UBangoEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
+			UE_LOG(LogBango, Error, TEXT("UBangoEvent_Toggle ignoring Unknown trigger from <%s>"), *Signal.Instigator->GetName());
 			return EBangoEventSignalType::None;
 		}
 	}
@@ -70,15 +70,15 @@ bool UBangoEvent_Toggle::Activate(UObject* Instigator)
 	{
 		if (SetToggleState(EBangoEvent_ToggleState::Activated))
 		{
-			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
+			UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Activated"), *GetName());
 		}
 		else
 		{
-			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
+			UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to activate!"), *GetName());
 		}	
 	}
 	
-	UE_LOG(Bango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	UE_LOG(LogBango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 	return true;
 }
 
@@ -110,7 +110,7 @@ bool UBangoEvent_Toggle::Deactivate(UObject* Instigator)
 		}
 		default:
 		{
-			UE_LOG(Bango, Error, TEXT("UBangoEvent_Toggle has invalid deactivate condition!"));
+			UE_LOG(LogBango, Error, TEXT("UBangoEvent_Toggle has invalid deactivate condition!"));
 			bSetToggleState = false;
 		}
 	}
@@ -119,18 +119,18 @@ bool UBangoEvent_Toggle::Deactivate(UObject* Instigator)
 	{
 		if (SetToggleState(EBangoEvent_ToggleState::Deactivated))
 		{
-			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
+			UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Deactivated"), *GetName());
 			InstigatorRecords.ClearActiveInstigators();
 		}
 		else
 		{
-			UE_LOG(Bango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
+			UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle <%s>: Failed to deactivate!"), *GetName());
 		}
 	}
 
 	InstigatorRecords.UpdateInstigatorRecord(Instigator, EBangoEventSignalType::EventDeactivated, GetWorld()->GetTimeSeconds());
 
-	UE_LOG(Bango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
+	UE_LOG(LogBango, VeryVerbose, TEXT("Event now has %i active instigators"), InstigatorRecords.GetNumActiveInstigators());
 	return true;
 }
 

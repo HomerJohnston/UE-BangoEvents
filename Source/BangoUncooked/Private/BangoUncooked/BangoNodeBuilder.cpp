@@ -4,56 +4,116 @@
 #include "K2Node_CallFunction.h"
 #include "K2Node_CustomEvent.h"
 #include "K2Node_IfThenElse.h"
+#include "K2Node_AddDelegate.h"
+#include "K2Node_CreateDelegate.h"
+#include "K2Node_GenericCreateObject.h"
+#include "K2Node_Self.h"
 #include "K2Node_TemporaryVariable.h"
 #include "KismetCompiler.h"
 #include "Bango/Core/BangoScriptObject.h"
+#include "BangoUncooked/K2/K2Node_BangoRunScript.h"
+#include "BangoUncooked/K2/K2Node_BangoSleep.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
-using namespace Bango_BuildNode;
+using namespace Bango_NodeBuilder;
 
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-// ----------------------------------------------
-void TemporaryVariable::Construct()
+using enum EBangoPinRequired;
+
+// ==============================================
+// New/Unsorted
+// ==============================================
+
+void SelfReference::Construct()
 {
-	// I need a way to inject logic before this step from the ExpandNode side
-	Node->AllocateDefaultPins();
-	
-	Variable = Node->GetVariablePin();
+	AllocatePins();
+
+	Self = FindPin("Self");
 }
 
-// ----------------------------------------------
-
-void CustomEvent::Construct()
+void IsValidPure::Construct()
 {
-	Node->AllocateDefaultPins();
-	
-	Then = Node->GetThenPin();
-	Delegate = Node->GetDelegatePin();
-}
+	Node->SetFromFunction(UKismetSystemLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, IsValid)));
+	AllocatePins();
 
-// ----------------------------------------------
-
-void BooleanOR::Construct()
-{
-	Node->SetFromFunction(UKismetMathLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetMathLibrary, BooleanOR)));
-	Node->AllocateDefaultPins();
-	
-	A = Node->FindPin(TEXT("A"));
-	B = Node->FindPin(TEXT("B"));
+	Target = FindPin("Self");
+	Object = FindPin("Object");
 	Result = Node->GetReturnValuePin();
 }
 
-// ----------------------------------------------
+void AddDelegate::Construct()
+{
+	AllocatePins();
+
+	Exec = Node->GetExecPin();
+	Then = Node->GetThenPin();
+	Target = FindPin("Self");
+	Delegate = Node->GetDelegatePin();
+}
+
+void CreateDelegate::Construct()
+{
+	AllocatePins();
+
+	ObjectIn = Node->GetObjectInPin();
+	DelegateOut = Node->GetDelegateOutPin();
+}
+
+void CreateObject::Construct()
+{
+	AllocatePins();
+
+	Exec = Node->GetExecPin();
+	Then = Node->GetThenPin();
+	CreatedObject = Node->GetResultPin();
+	ObjectClass = Node->GetClassPin();
+}
+
+void BangoRunScript::Construct()
+{
+	AllocatePins();
+
+	Exec = Node->GetExecPin();
+	Then = Node->GetThenPin();
+	Completed = FindPin("Completed");
+	Script = Node->GetScriptPin();
+	Handle = FindPin("ReturnValue");
+}
+
+void BangoExecuteScript_Internal::Construct()
+{
+	Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, Execute_Internal)));
+	AllocatePins();
+
+	Exec = Node->GetExecPin();
+	Then = Node->GetThenPin();
+	Target = FindPin("Self");
+	Result = Node->GetReturnValuePin();
+}
+
+// ==============================================
+// Math nodes
+// ==============================================
+
+// ==============================================
+// Boolean logic nodes
+// ==============================================
+
+// ==============================================
+// Engine nodes
+// ==============================================
+
+// ==============================================
+// Variable operations
+// ==============================================
+
+// ==============================================
+// Bango nodes
+// ==============================================
 
 void AssignmentStatement::Construct()
 {
-	Node->AllocateDefaultPins();
+	AllocatePins();
 
 	Exec = Node->GetExecPin();
 	Then = Node->GetThenPin();
@@ -63,9 +123,21 @@ void AssignmentStatement::Construct()
 
 // ----------------------------------------------
 
+void BooleanOR::Construct()
+{
+	Node->SetFromFunction(UKismetMathLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetMathLibrary, BooleanOR)));
+	AllocatePins();
+	
+	A = FindPin("A");
+	B = FindPin("B");
+	Result = Node->GetReturnValuePin();
+}
+
+// ----------------------------------------------
+
 void Branch::Construct()
 {
-	Node->AllocateDefaultPins();
+	AllocatePins();
 	
 	Exec = Node->GetExecPin();
 	Then = Node->GetThenPin();
@@ -75,10 +147,29 @@ void Branch::Construct()
 
 // ----------------------------------------------
 
+void CustomEvent::Construct()
+{
+	AllocatePins();
+	
+	Then = Node->GetThenPin();
+	Delegate = Node->GetDelegatePin();
+}
+
+// ----------------------------------------------
+
+void TemporaryVariable::Construct()
+{
+	AllocatePins();
+	
+	Variable = Node->GetVariablePin();
+}
+
+// ----------------------------------------------
+
 void BangoCancelSleep_Internal::Construct()
 {
 	Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, CancelSleep_Internal)));
-	Node->AllocateDefaultPins();
+	AllocatePins();
 
 	Exec = Node->GetExecPin();
 	Then = Node->GetThenPin();
@@ -90,7 +181,7 @@ void BangoCancelSleep_Internal::Construct()
 void BangoLaunchSleep_Internal::Construct()
 {
 	Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, LaunchSleep_Internal)));
-	Node->AllocateDefaultPins();
+	AllocatePins();
 
 	Exec = Node->GetExecPin();
 	Then = Node->GetThenPin();
@@ -100,13 +191,29 @@ void BangoLaunchSleep_Internal::Construct()
 	ReturnValue = Node->GetReturnValuePin();
 }
 
+// ----------------------------------------------
 
 void BangoSkipSleep_Internal::Construct()
 {
 	Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, SkipSleep_Internal)));
-	Node->AllocateDefaultPins();
+	AllocatePins();
 
 	Exec = Node->GetExecPin();
 	Then = Node->GetThenPin();
 	ActionUUID = FindPin("ActionUUID");
+}
+
+// ----------------------------------------------
+
+void BangoSleep::Construct()
+{
+	AllocatePins();
+	
+	Exec = Node->GetExecPin();
+	Duration = FindPin("Duration");
+	SkipExec = FindPin("SkipExec", Optional);
+	CancelExec = FindPin("CancelExec", Optional);
+	SkipCondition = FindPin("SkipCondition", Optional);
+	CancelCondition = FindPin("CancelCondition", Optional);
+	Completed = FindPin("Completed");
 }

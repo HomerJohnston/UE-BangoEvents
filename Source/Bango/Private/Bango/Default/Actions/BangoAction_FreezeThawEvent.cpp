@@ -46,7 +46,7 @@ void UBangoAction_FreezeThawEvent::HandleComponent(bool Val)
 
 	if (!IsValid(EventComponent))
 	{
-		UE_LOG(Bango, Error, TEXT("Attempted to unfreeze other event but no target event was set!"));
+		UE_LOG(LogBango, Error, TEXT("Attempted to unfreeze other event but no target event was set!"));
 		return;
 	}
 
@@ -57,7 +57,7 @@ void UBangoAction_FreezeThawEvent::HandleActor(bool Val)
 {
 	if (!IsValid(TargetActor))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoAction_FreezeThawEvent::HandleActor - invalid Target Actor!"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoAction_FreezeThawEvent::HandleActor - invalid Target Actor!"));
 		return;
 	}
 	

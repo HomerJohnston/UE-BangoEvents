@@ -2,4 +2,4 @@
 
 #pragma once
 
-BANGO_API DECLARE_LOG_CATEGORY_EXTERN(Bango, Log, All);
+BANGO_API DECLARE_LOG_CATEGORY_EXTERN(LogBango, Log, All);

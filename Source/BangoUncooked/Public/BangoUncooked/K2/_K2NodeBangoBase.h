@@ -32,9 +32,6 @@ public:
 
 #undef LOCTEXT_NAMESPACE
 
-#define MAKE_NODE_ANCHOR(PosX, PosY)\
-	FVector2f GRAPH_ANCHOR(PosX, PosY)
-
 // Create a node
 #define __INTERNAL__MAKE_NODE_BASE(NodeName, NodeType, PosX, PosY)\
 	auto* Node_##NodeName = CompilerContext.SpawnIntermediateNode<NodeType>(this, SourceGraph);\

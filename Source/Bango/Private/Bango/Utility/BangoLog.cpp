@@ -2,4 +2,4 @@
 
 #include "Bango/Utility/BangoLog.h"
 
-DEFINE_LOG_CATEGORY(Bango);
+DEFINE_LOG_CATEGORY(LogBango);

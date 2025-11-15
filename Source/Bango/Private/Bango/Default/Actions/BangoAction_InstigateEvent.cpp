@@ -42,7 +42,7 @@ void UBangoAction_InstigateEvent::HandleComponent(EBangoTriggerSignalType Signal
 
 	if (!IsValid(EventComponent))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component!"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component!"));
 		return;
 	}
 
@@ -50,7 +50,7 @@ void UBangoAction_InstigateEvent::HandleComponent(EBangoTriggerSignalType Signal
 	
 	if (!IsValid(Event))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component Event!"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component Event!"));
 		return;
 	}
 
@@ -63,7 +63,7 @@ void UBangoAction_InstigateEvent::HandleActor(EBangoTriggerSignalType Signal)
 {
 	if (!IsValid(TargetActor))
 	{
-		UE_LOG(Bango, Warning, TEXT("UBangoAction_InstigateEvent::HandleActor - invalid Target Actor!"));
+		UE_LOG(LogBango, Warning, TEXT("UBangoAction_InstigateEvent::HandleActor - invalid Target Actor!"));
 		return;
 	}
 	
@@ -85,7 +85,7 @@ void UBangoAction_InstigateEvent::HandleActor(EBangoTriggerSignalType Signal)
 	
 		if (!IsValid(Event))
 		{
-			UE_LOG(Bango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component Event!"));
+			UE_LOG(LogBango, Warning, TEXT("UBangoAction_InstigateEvent::HandleComponent - invalid Target Component Event!"));
 			return;
 		}
 

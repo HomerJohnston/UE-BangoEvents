@@ -22,11 +22,11 @@ void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, FName ID
 	{
 		if (ExistingActor->Get() != Actor)
 		{
-			UE_LOG(Bango, Error, TEXT("Attempted to register ActorID %s but it was already registered with another actor!"), *ID.ToString());
+			UE_LOG(LogBango, Error, TEXT("Attempted to register ActorID %s but it was already registered with another actor!"), *ID.ToString());
 		}
 		else
 		{
-			UE_LOG(Bango, Warning, TEXT("Attempted to register ActorID %s but it was already registered!"), *ID.ToString());
+			UE_LOG(LogBango, Warning, TEXT("Attempted to register ActorID %s but it was already registered!"), *ID.ToString());
 		}
 	}
 	else

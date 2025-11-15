@@ -46,7 +46,7 @@ void UBangoDevSettings::OnCvarChange()
 
 	if (bShowEventsInGame != ShowInGameCVar->GetBool())
 	{
-		UE_LOG(Bango, Display, TEXT("Updating CVar Bango.ShowEventsInGame; if you would like your setting to persist between editor startups, change it in Editor Preferences."))
+		UE_LOG(LogBango, Display, TEXT("Updating CVar Bango.ShowEventsInGame; if you would like your setting to persist between editor startups, change it in Editor Preferences."))
 		bShowEventsInGame = ShowInGameCVar->GetBool();
 	}
 }

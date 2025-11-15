@@ -15,7 +15,10 @@
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "Bango/K2/BangoRunScriptNode.h"
+#include "BangoUncooked/BangoNodeBuilder.h"
+#include "BangoUncooked/BangoNodeBuilder_Macros.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "UObject/PropertyIterator.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -91,131 +94,122 @@ void UK2Node_BangoRunScript::PinConnectionListChanged(UEdGraphPin* Pin)
 	}
 }
 
-void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph)
+void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
 {
-	Super::ExpandNode(CompilerContext, SourceGraph);
+	Super::ExpandNode(Compiler, SourceGraph);
 
-	const UEdGraphSchema_K2* Schema = CompilerContext.GetSchema();
+	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	check(SourceGraph && Schema);
 	bool bIsErrorFree = true;
 
-	MAKE_NODE_ANCHOR(0, 0);
+	UK2Node* Test0 = this;
+	UK2Node* Test1 = Bango_NodeBuilder::_SourceNode;
+	Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
+	UK2Node* Test2 = Bango_NodeBuilder::_SourceNode;
 	
+	// -----------------
 	// Make nodes
-	MAKE_BASIC_NODE_OLD(ConstructObject, UK2Node_GenericCreateObject, 0, 0);
-	MAKE_BASIC_NODE_OLD(IfThenElse, UK2Node_IfThenElse, 0, 0);
-	MAKE_BASIC_NODE_OLD(CustomEvent, UK2Node_CustomEvent, 0, 0);
-	MAKE_BASIC_NODE_OLD(AddDelegate, UK2Node_AddDelegate, 0, 0);
-	MAKE_BASIC_NODE_OLD(CreateDelegate, UK2Node_CreateDelegate, 0, 0);
-	MAKE_BASIC_NODE_OLD(Self, UK2Node_Self, 0, 0);
-	MAKE_FUNCNODE_OLD(ExecuteScript, UBangoScriptObject, Execute_Internal, 0, 0);
-	MAKE_FUNCNODE_OLD(IsValid, UKismetSystemLibrary, IsValid, 0, 0);
-
-	// For non-dynamic nodes, generate pins and get pins
-	UEdGraphPin* Pin_ConstructObject_Exec = Node_ConstructObject->GetExecPin();
-	UEdGraphPin* Pin_ConstructObject_Then = Node_ConstructObject->GetThenPin();
-	UEdGraphPin* Pin_ConstructObject_Result = Node_ConstructObject->GetResultPin();
-	UEdGraphPin* Pin_ConstructObject_Class = Node_ConstructObject->FindPin(TEXT("Class"));
 	
-	UEdGraphPin* Pin_IfThenElse_Exec = Node_IfThenElse->GetExecPin();
-	UEdGraphPin* Pin_IfThenElse_Condition = Node_IfThenElse->GetConditionPin();
-	UEdGraphPin* Pin_IfThenElse_Then = Node_IfThenElse->GetThenPin();
-	UEdGraphPin* Pin_IfThenElse_Else = Node_IfThenElse->GetElsePin();
+	using namespace Bango_NodeBuilder;
+	auto Node_This =					WrapExistingNode<BangoRunScript>(this);
+	auto Node_Self =					MakeNode<SelfReference>(0, 2);
+	auto Node_CreateScriptObject =		MakeNode<CreateObject>(1, 1);
+	auto Node_IsScriptValid =			MakeNode<IsValidPure>(2, 0);
+	auto Node_IsValidBranch =			MakeNode<Branch>(3, 0);
+	auto Node_AddDelegate =				MakeNode<AddDelegate>(4, 0);
+	auto Node_ExecuteScript =			MakeNode<BangoExecuteScript_Internal>(5, 1);
+	auto Node_ScriptCompletedEvent =	MakeNode<CustomEvent>(6, 1);
+	auto Node_CreateDelegate =			MakeNode<CreateDelegate>(4, 1);
 
-	UEdGraphPin* Pin_ExecuteScript_Exec = Node_ExecuteScript->GetExecPin();
-	UEdGraphPin* Pin_ExecuteScript_Then = Node_ExecuteScript->GetThenPin();
-	UEdGraphPin* Pin_ExecuteScript_Target = Node_ExecuteScript->FindPin(UEdGraphSchema_K2::PN_Self);
-	UEdGraphPin* Pin_ExecuteScript_Result = Node_ExecuteScript->FindPin(UEdGraphSchema_K2::PN_ReturnValue);
-	
-	UEdGraphPin* Pin_IsValid_Object = Node_IsValid->FindPinChecked(TEXT("Object"));
-	UEdGraphPin* Pin_IsValid_Result = Node_IsValid->GetReturnValuePin();
-
-	UEdGraphPin* Pin_CreateDelegate_DelegateOut = Node_CreateDelegate->GetDelegateOutPin();
-	UEdGraphPin* Pin_CreateDelegate_ObjectIn = Node_CreateDelegate->GetObjectInPin();
-
-	UEdGraphPin* Pin_Self_Self = Node_Self->FindPinChecked(UEdGraphSchema_K2::PN_Self);
-	
-	// Get pins of our Run Script node
-	UEdGraphPin* Pin_ThisNode_Exec = GetExecPin();
-	UEdGraphPin* Pin_ThisNode_Then = GetThenPin();
-	UEdGraphPin* Pin_ThisNode_Finish = FindPinChecked(UEdGraphSchema_K2::PN_Completed);
-	UEdGraphPin* Pin_ThisNode_Handle = FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue);
-	UEdGraphPin* ThisNode_Script = FindPin(TEXT("Script"));
-
-	CompilerContext.MovePinLinksToIntermediate(*Pin_ThisNode_Handle, *Pin_ExecuteScript_Result);
+	// -----------------
+	// Post-setup
 
 	// Update the ConstructObject class pin; we need to generate pin collections before and after assigning the class so we can get the extra pins
-	// TODO is there a different way I can just find ExposeOnSpawn pins?
-	auto DefaultPins = TSet<UEdGraphPin*>(Node_ConstructObject->GetAllPins());
-
-	Pin_ConstructObject_Class->DefaultObject = ThisNode_Script->DefaultObject;
-	Node_ConstructObject->PinDefaultValueChanged(Pin_ConstructObject_Class);
-	 
-	auto ConstructScriptAllPins = TSet<UEdGraphPin*>(Node_ConstructObject->GetAllPins()); 
-	
-	TArray<UEdGraphPin*> Pins_ThisNode_ExposeOnSpawn;
-	
-	UClass* ObjectClass = Cast<UClass>(Pin_ConstructObject_Class->DefaultObject);
-	
-	// Build an array of all ExposeOnSpawn pins
-	Pins_ThisNode_ExposeOnSpawn = ConstructScriptAllPins.Difference(DefaultPins).Array();
-
-	if (ObjectClass)
+	if (UClass* ScriptClass = Cast<UClass>(Node_This.Script->DefaultObject))
 	{
-		Node_AddDelegate->SetFromProperty(ObjectClass->FindPropertyByName("OnFinishDelegate"), false, ObjectClass);
-	}
-	
-	Node_AddDelegate->AllocateDefaultPins();
-	UEdGraphPin* Pin_AddDelegate_Exec = Node_AddDelegate->GetExecPin();
-	UEdGraphPin* Pin_AddDelegate_Then = Node_AddDelegate->GetThenPin();
-	UEdGraphPin* Pin_AddDelegate_Target = Node_AddDelegate->FindPin(UEdGraphSchema_K2::PN_Self);
-	UEdGraphPin* Pin_AddDelegate_Delegate = Node_AddDelegate->GetDelegatePin();
+		// There is a script set, we need to generate dynamic pins. Set the script, this will cause the intermediate script object creator to generate pins.
+		SetDefaultObject(Node_CreateScriptObject.ObjectClass, Node_This.Script->DefaultObject);
 
-	Node_CustomEvent->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *CompilerContext.GetGuid(this));
-	Node_CustomEvent->AllocateDefaultPins();
-	UEdGraphPin* Pin_CustomEvent_Then = Node_CustomEvent->GetThenPin();
-	
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_AddDelegate_Delegate, Pin_CreateDelegate_DelegateOut);
-	//bIsErrorFree &= Schema->TryCreateConnection(Pin_AddDelegate_Delegate, Pin_CustomEvent_OutputDelegate);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_Self_Self, Pin_CreateDelegate_ObjectIn);
-	Node_CreateDelegate->SetFunction(Node_CustomEvent->CustomFunctionName);
-	//bIsErrorFree &= Schema->TryCreateConnection(Pin_CustomEvent_Then, Pin_ThisNode_Finish);
-	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Pin_ThisNode_Finish, *Pin_CustomEvent_Then).CanSafeConnect();
-	
-	// Hook up exec pins
-	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Pin_ThisNode_Exec, *Pin_ConstructObject_Exec).CanSafeConnect();
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_ConstructObject_Then, Pin_IfThenElse_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_IfThenElse_Then, Pin_AddDelegate_Exec);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_AddDelegate_Then, Pin_ExecuteScript_Exec);
-	bIsErrorFree &= CompilerContext.MovePinLinksToIntermediate(*Pin_ThisNode_Then, *Pin_ExecuteScript_Then).CanSafeConnect();
-
-	// Hook up data pins
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_ConstructObject_Result, Pin_IsValid_Object);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_IsValid_Result, Pin_IfThenElse_Condition);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_ConstructObject_Result, Pin_ExecuteScript_Target);
-	bIsErrorFree &= Schema->TryCreateConnection(Pin_ConstructObject_Result, Pin_AddDelegate_Target);
-	
-	for (UEdGraphPin* Pin : Pins_ThisNode_ExposeOnSpawn)
-	{
-		// Dynamic ExposeOnSpawn pin
-		UEdGraphPin* NewScriptExposeOnSpawnPin = Pin;
-		UEdGraphPin* ThisExposeOnSpawnPin = FindPin(Pin->GetFName());
-
-		if (ThisExposeOnSpawnPin)
+		// We'll try to guess what pins we have by finding ExposeOnSpawn properties. This should be accurate? TODO investigate this more?
+		TArray<FName> ExposeOnSpawnProperties;
+		
+		for (TFieldIterator<FProperty> It(ScriptClass); It; ++It)
 		{
-			if (!ThisExposeOnSpawnPin->DoesDefaultValueMatchAutogenerated())
+			FProperty* Property = *It;
+
+			if (Property->HasAllPropertyFlags(CPF_ExposeOnSpawn))
 			{
-				NewScriptExposeOnSpawnPin->DefaultValue = ThisExposeOnSpawnPin->DefaultValue;
-				Node_ConstructObject->PinDefaultValueChanged(NewScriptExposeOnSpawnPin);
+				ExposeOnSpawnProperties.Add(Property->GetFName());
 			}
-			else if (ThisExposeOnSpawnPin->HasAnyConnections())
+		}
+		
+		for (FName PropertyName : ExposeOnSpawnProperties)
+		{
+			UEdGraphPin* ThisExposeOnSpawnPin = FindPin(PropertyName);
+			UEdGraphPin* ConstructScriptExposeOnSpawnPin = Node_CreateScriptObject->FindPin(PropertyName);
+
+			if (ThisExposeOnSpawnPin && ConstructScriptExposeOnSpawnPin)
 			{
-				CompilerContext.MovePinLinksToIntermediate(*ThisExposeOnSpawnPin, *NewScriptExposeOnSpawnPin);
-				Node_ConstructObject->PinConnectionListChanged(NewScriptExposeOnSpawnPin);
-			}	
+				// If the dynamic pin has a hardcoded value set directly on it...
+				if (!ThisExposeOnSpawnPin->DoesDefaultValueMatchAutogenerated())
+				{
+					SetDefaultValue(ConstructScriptExposeOnSpawnPin, ThisExposeOnSpawnPin->DefaultValue);
+				}
+				// If the dynamic pin has a connection...
+				else if (ThisExposeOnSpawnPin->HasAnyConnections())
+				{
+					MoveExternalConnection(ThisExposeOnSpawnPin, ConstructScriptExposeOnSpawnPin);
+					//Node_ConstructScript->PinConnectionListChanged(ConstructScriptExposeOnSpawnPin); // TODO do I need this?
+				}
+			}
 		}
 	}
 
+	UClass* ObjectClass = Cast<UClass>(Node_CreateScriptObject.ObjectClass->DefaultObject);
+	
+	if (ObjectClass)
+	{
+		Node_AddDelegate->SetFromProperty(ObjectClass->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate)), false, ObjectClass);
+	}
+	
+	Node_ScriptCompletedEvent->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *Compiler.GetGuid(this));
+
+	Bango_NodeBuilder::FinishSpawningAllNodes(true);
+
+	// -----------------
+	// Make connections
+
+	if (ObjectClass)
+	{
+		CreateConnection(Node_AddDelegate.Delegate, Node_CreateDelegate.DelegateOut);
+	}
+	
+	CreateConnection(Node_Self.Self, Node_CreateDelegate.ObjectIn);
+	Node_CreateDelegate->SetFunction(Node_ScriptCompletedEvent->CustomFunctionName);
+	MoveExternalConnection(Node_This.Completed, Node_ScriptCompletedEvent.Then);
+	
+	// Hook up exec pins
+	MoveExternalConnection(Node_This.Exec, Node_CreateScriptObject.Exec);
+	CreateConnection(Node_CreateScriptObject.Then, Node_IsValidBranch.Exec);
+	CreateConnection(Node_IsValidBranch.Then, Node_AddDelegate.Exec);
+	CreateConnection(Node_AddDelegate.Then, Node_ExecuteScript.Exec);
+	MoveExternalConnection(Node_This.Then, Node_ExecuteScript.Then);
+
+	// Hook up data pins
+	CreateConnection(Node_CreateScriptObject.CreatedObject, Node_IsScriptValid.Object);
+	CreateConnection(Node_IsScriptValid.Result, Node_IsValidBranch.Condition);
+	CreateConnection(Node_CreateScriptObject.CreatedObject, Node_ExecuteScript.Target);
+	CreateConnection(Node_CreateScriptObject.CreatedObject, Node_AddDelegate.Target);
+
+	// Final output
+	MoveExternalConnection(Node_This.Handle, Node_ExecuteScript.Result);
+
+	if (!bIsErrorFree)
+	{
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "K2Node_LoadAsset: Internal connection error. @@").ToString(), this);
+	}
+	
+	// All done!
 	BreakAllNodeLinks();
 }
 
@@ -283,10 +277,6 @@ void UK2Node_BangoRunScript::AllocateDefaultPins()
 	UEdGraphPin* ScriptCompletePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Completed);
 	ScriptCompletePin->PinFriendlyName = INVTEXT("Finish");
 	
-	
-    // TODO soft class???
-    // TODO static pin name??? See FFormatTextNodeHelper
-    
     CachedScriptPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Class, UBangoScriptObject::StaticClass(), FName("Script"));
 }
 
