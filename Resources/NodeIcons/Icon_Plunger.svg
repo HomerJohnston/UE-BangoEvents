@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="200mm"
+   height="200mm"
+   viewBox="0 0 200 200"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="Icon_Plunger.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.84363777"
+     inkscape:cx="98.976128"
+     inkscape:cy="487.17591"
+     inkscape:window-width="5120"
+     inkscape:window-height="2089"
+     inkscape:window-x="1192"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient9"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop9" />
+      <stop
+         style="stop-color:#bebebe;stop-opacity:1;"
+         offset="1"
+         id="stop10" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient7"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop7" />
+      <stop
+         style="stop-color:#747474;stop-opacity:1;"
+         offset="1"
+         id="stop8" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient7"
+       id="linearGradient8"
+       x1="100"
+       y1="-36.351181"
+       x2="100"
+       y2="67.994125"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.79084966,-0.06356049,3.309067)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient9"
+       id="linearGradient10"
+       x1="100.00011"
+       y1="91.633453"
+       x2="100.00011"
+       y2="195.97849"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient8);stroke-width:3.42446;stroke-opacity:0.495627;paint-order:stroke markers fill"
+       id="rect1-8"
+       width="104.3453"
+       height="18.974127"
+       x="47.76379"
+       y="6.3344088"
+       ry="3.6830254" />
+    <path
+       id="path4"
+       style="fill:url(#linearGradient10);fill-opacity:1;stroke-width:11.0086;stroke-opacity:0.495627;paint-order:stroke markers fill"
+       d="M 72.221431 88.082479 C 58.707122 88.082479 47.827572 98.962028 47.827572 112.47634 L 47.827572 143.80621 L 47.827572 175.13556 L 47.827572 199.52942 L 72.221431 199.52942 L 127.77876 199.52942 L 152.17262 199.52942 L 152.17262 175.13556 L 152.17262 143.80621 L 152.17262 112.47634 C 152.17262 98.962028 141.29307 88.082479 127.77876 88.082479 L 72.221431 88.082479 z M 49.738566 184.64868 C 50.046346 185.37878 50.38865 186.09048 50.76331 186.78188 C 51.13797 187.47328 51.544842 188.14393 51.982357 188.79261 C 52.419872 189.44129 52.887995 190.06757 53.384338 190.6695 C 53.880682 191.27142 54.405705 191.849 54.956852 192.40014 C 55.507999 192.95129 56.085572 193.47631 56.687496 193.97266 C 57.28942 194.469 57.915708 194.93712 58.564384 195.37464 C 59.21306 195.81215 59.883712 196.21902 60.575114 196.59368 C 61.266516 196.96835 61.978215 197.31065 62.708317 197.61843 C 61.978215 197.31065 61.266516 196.96835 60.575114 196.59368 C 59.883712 196.21902 59.21306 195.81215 58.564384 195.37464 C 57.915708 194.93712 57.28942 194.469 56.687496 193.97266 C 56.085572 193.47631 55.507999 192.95129 54.956852 192.40014 C 54.405705 191.849 53.880682 191.27142 53.384338 190.6695 C 52.887995 190.06757 52.419872 189.44129 51.982357 188.79261 C 51.544842 188.14393 51.13797 187.47328 50.76331 186.78188 C 50.38865 186.09048 50.046346 185.37878 49.738566 184.64868 z M 150.26163 184.64868 C 149.95385 185.37878 149.61155 186.09048 149.23689 186.78188 C 148.86223 187.47328 148.45535 188.14393 148.01784 188.79261 C 147.58032 189.44129 147.1122 190.06757 146.61586 190.6695 C 146.11951 191.27142 145.59449 191.849 145.04334 192.40014 C 144.4922 192.95129 143.91462 193.47631 143.3127 193.97266 C 142.71077 194.469 142.08449 194.93712 141.43581 195.37464 C 140.78714 195.81215 140.11648 196.21902 139.42508 196.59368 C 138.73368 196.96835 138.02198 197.31065 137.29188 197.61843 C 138.02198 197.31065 138.73368 196.96835 139.42508 196.59368 C 140.11648 196.21902 140.78714 195.81215 141.43581 195.37464 C 142.08449 194.93712 142.71077 194.469 143.3127 193.97266 C 143.91462 193.47631 144.4922 192.95129 145.04334 192.40014 C 145.59449 191.849 146.11951 191.27142 146.61586 190.6695 C 147.1122 190.06757 147.58032 189.44129 148.01784 188.79261 C 148.45535 188.14393 148.86223 187.47328 149.23689 186.78188 C 149.61155 186.09048 149.95385 185.37878 150.26163 184.64868 z " />
+    <rect
+       style="fill:#808080;fill-opacity:1;stroke-width:4;stroke-opacity:0.495627;paint-order:stroke markers fill"
+       id="rect3"
+       width="13.495955"
+       height="56.439419"
+       x="93.188461"
+       y="31.642944" />
+    <rect
+       style="fill:#808080;fill-opacity:1;stroke-width:2.4098;stroke-opacity:0.495627;paint-order:stroke markers fill"
+       id="rect1-5"
+       width="30.983717"
+       height="31.642944"
+       x="84.44458"
+       y="-0.00011587133"
+       ry="3.8254328" />
+    <rect
+       style="fill:#808080;fill-opacity:1;stroke-width:3.1853;stroke-opacity:0.495627;paint-order:stroke markers fill"
+       id="rect7"
+       width="83.092583"
+       height="88.748016"
+       x="58.453804"
+       y="102.35436"
+       ry="16.188787" />
+  </g>
+</svg>
