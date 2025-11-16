@@ -80,68 +80,129 @@ void FBangoEditorMenus::RegisterMenus()
 			ExistingName = ExistingIDComponent->GetActorID();
 		}
 		
-		FToolUIActionChoice Action(FExecuteAction::CreateLambda([ScreenPos, ExistingName, Actor, ExistingIDComponent]()
+		TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent = ExistingIDComponent;
+		TWeakObjectPtr<AActor> WeakActor = Actor;
+		
+		FToolUIActionChoice Action(FExecuteAction::CreateLambda([ScreenPos, ExistingName, WeakActor, WeakExistingIDComponent]()
 		{
-			TSharedRef<STextEntryPopup> TextEntry = 
-			SNew(STextEntryPopup)
-				.Label(LOCTEXT("SetActorIDContextMenuEntry", "Set Actor ID"))
-				.DefaultText(FText::FromName(ExistingName))
-				.OnTextCommitted_Lambda([Actor, ExistingIDComponent] (const FText& InText, ETextCommit::Type InCommitType)
-				{
-					if (InCommitType != ETextCommit::OnEnter) return;
-					
-					FString NameCandidate = InText.ToString();
-					FName NewID;
-					FText OutErrorText;
-					
-					if (FName::IsValidXName(NameCandidate, INVALID_NAME_CHARACTERS, &OutErrorText))
-					{
-						NewID = FName(NameCandidate);
-					}
-					else
-					{
-						return;
-					}
-					
-					if (ExistingIDComponent)
-					{
-						FScopedTransaction T(LOCTEXT("EditActorID", "Edit Actor ID")); // lol this doesn't work
-						ExistingIDComponent->SetActorID(FName(NewID));
-					}
-					else
-					{
-						FScopedTransaction T(LOCTEXT("SetNewActorID", "Set New Actor ID")); // lol this doesn't work
-						
-						static const FName ComponentName(TEXT("BangoActorID"));
-						FName FinalName = MakeUniqueObjectName(Actor, UBangoActorIDComponent::StaticClass(), ComponentName, EUniqueObjectNameOptions::None);
-						UBangoActorIDComponent* NewIDComponent = NewObject<UBangoActorIDComponent>(Actor, FinalName);
-						
-						if (IsValid(NewIDComponent))
+			TSharedRef<SBorder> TextEntry = SNew(SBorder)
+			.Padding(8)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.MinDesiredWidth(200)
+					.ToolTipText(LOCTEXT("SetActorID", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"))
+					[
+						SNew(SEditableTextBox)
+						.HintText(INVTEXT("Enter ID..."))
+						.Text_Lambda([WeakExistingIDComponent] ()
 						{
-							NewIDComponent->SetActorID(NewID);
+							if (!WeakExistingIDComponent.IsValid())
+							{
+								return FText::GetEmpty();
+							}
 							
-							Actor->Modify();
-							Actor->AddInstanceComponent(NewIDComponent);
-							NewIDComponent->RegisterComponent();
+							return FText::FromName(WeakExistingIDComponent->GetActorID());
+						})
+						.SelectAllTextWhenFocused(true)
+						.ClearKeyboardFocusOnCommit(true)
+						.OnTextCommitted_Lambda([WeakActor, WeakExistingIDComponent] (const FText& InText, ETextCommit::Type InCommitType)
+						{
+							TStrongObjectPtr<AActor> Actor = WeakActor.Pin();
+							TStrongObjectPtr<UBangoActorIDComponent> ExistingIDComponent = WeakExistingIDComponent.Pin();
+							
+							if (InCommitType != ETextCommit::OnEnter) return;
+				
+							FString NameCandidate = InText.ToString();
+							FName NewID;
+							FText OutErrorText;
+				
+							if (FName::IsValidXName(NameCandidate, INVALID_NAME_CHARACTERS, &OutErrorText))
+							{
+								NewID = FName(NameCandidate);
+							}
+							else
+							{
+								return;
+							}
+				
+							if (ExistingIDComponent.IsValid())
+							{
+								FScopedTransaction T(LOCTEXT("EditActorID", "Edit Bango Actor ID")); // lol this doesn't work
+								ExistingIDComponent->SetActorID(FName(NewID));
+							}
+							else
+							{
+								FScopedTransaction T(LOCTEXT("SetNewActorID", "Set New Bango Actor ID")); // lol this doesn't work
+					
+								static const FName ComponentName(TEXT("BangoActorID"));
+								FName FinalName = MakeUniqueObjectName(Actor.Get(), UBangoActorIDComponent::StaticClass(), ComponentName, EUniqueObjectNameOptions::None);
+								UBangoActorIDComponent* NewIDComponent = NewObject<UBangoActorIDComponent>(Actor.Get(), FinalName);
+					
+								if (IsValid(NewIDComponent))
+								{
+									NewIDComponent->SetActorID(NewID);
+						
+									Actor->Modify();
+									Actor->AddInstanceComponent(NewIDComponent);
+									NewIDComponent->RegisterComponent();
 
+									FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+									LevelEditor.BroadcastComponentsEdited();
+								}
+							}
+						})
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(8, 0, 0, 0)
+				[
+					SNew(SButton)
+					.ToolTipText(LOCTEXT("RemoveActorID", "Remove Actor ID"))
+					.OnClicked_Lambda( [WeakActor, WeakExistingIDComponent] ()
+					{
+						TStrongObjectPtr<AActor> Actor = WeakActor.Pin();
+						TStrongObjectPtr<UBangoActorIDComponent> ExistingIDComponent = WeakExistingIDComponent.Pin();
+						
+						if (Actor)
+						{
+							FScopedTransaction T(LOCTEXT("RemoveActorID", "Remove Bango Actor ID"));
+							Actor->Modify();
+							
+							Actor->RemoveInstanceComponent(ExistingIDComponent.Get());
+							ExistingIDComponent->DestroyComponent();
+							
 							FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 							LevelEditor.BroadcastComponentsEdited();
 						}
-					}
-				})
-				.SelectAllTextWhenFocused(true)
-				.ClearKeyboardFocusOnCommit(true);
-
+						
+						FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::Cleared);
+						
+						return FReply::Handled();
+					})
+					[
+						SNew(SImage)
+						.Image(FAppStyle::Get().GetBrush("Icons.X"))
+					]
+				]
+			];
+			
 			FSlateApplication::Get().PushMenu(
 				FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
 				FWidgetPath(),
 				TextEntry,
 				FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
 				FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup)
-				);
+			);
 		}));
-
-		InSection.AddEntry(FToolMenuEntry::InitMenuEntry(FName("BangoSetActorID"), INVTEXT("Set Actor ID"), INVTEXT("Description!"), FSlateIcon(FName(""), ""), Action));
+		
+		// TODO LOCTEXT
+		InSection.AddEntry(FToolMenuEntry::InitMenuEntry(FName("BangoSetActorID"), LOCTEXT("SetEditActorID_MenuEntryText", "Set/Edit Actor ID"), LOCTEXT("SetActorID", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"), FSlateIcon("BangoEditorStyleSet", "Icon.Plunger"), Action));
 	}));
 }
 

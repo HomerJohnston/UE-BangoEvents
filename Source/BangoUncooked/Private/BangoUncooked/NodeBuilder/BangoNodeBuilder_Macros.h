@@ -181,7 +181,6 @@ namespace Bango_NodeBuilder
 			_Node = InNode;
 		}
 
-
 		void AllocateDefaultPins()
 		{
 			if (!bFromExisting)

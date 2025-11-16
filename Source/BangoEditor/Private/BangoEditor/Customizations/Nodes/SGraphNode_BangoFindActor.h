@@ -1,0 +1,28 @@
+﻿#pragma once
+
+#include "SGraphNode.h"
+#include "KismetNodes/SGraphNodeK2Base.h"
+
+class UK2Node_BangoFindActor;
+class FBangoFindActorAction;
+
+class SGraphNode_BangoFindActor : public SGraphNodeK2Base
+{
+public:
+	SLATE_BEGIN_ARGS(SGraphNode_BangoFindActor)
+	{
+	}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs, class UEdGraphNode* InNode);
+
+	void CreatePinWidgets() override;
+
+	TSharedPtr<SGraphPin> CreatePinWidget(UEdGraphPin* Pin) const override;
+
+	void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+	
+	TArray<FOverlayWidgetInfo> GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const override;
+	
+	UK2Node_BangoFindActor* GetBangoFindActorNode() const;
+};

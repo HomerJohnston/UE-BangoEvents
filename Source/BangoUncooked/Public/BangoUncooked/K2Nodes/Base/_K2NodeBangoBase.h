@@ -19,7 +19,6 @@ protected:
 public:
 	void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;
 	
-	
 	FText GetMenuCategory() const override;
 	
 	bool IsLatentForMacros() const override;

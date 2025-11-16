@@ -15,10 +15,12 @@ public:
 	UK2Node_BangoFindActor();
 
 protected:
-		
+	/** Change to the desired class to cast the output automatically. */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> CastTo;
+	
 public:
-		
-protected:
+	TSubclassOf<AActor> GetCastTo() const { return CastTo; }
 	
 public:
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -27,7 +29,9 @@ public:
 	
 	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
-	void ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph) override;	
+	void ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph) override;
+	
+	bool IsNodePure() const override { return true; }
 };
 
 #undef LOCTEXT_NAMESPACE

@@ -1,5 +1,6 @@
 ﻿#include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 
+#include "K2Node_DynamicCast.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
@@ -8,23 +9,40 @@
 
 UK2Node_BangoFindActor::UK2Node_BangoFindActor()
 {
+	bShowShowNodeProperties = true;
 }
 
 void UK2Node_BangoFindActor::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (PropertyChangedEvent.MemberProperty == StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(ThisClass, CastTo)))
+	{
+		ReconstructNode();
+	}
 }
 
 void UK2Node_BangoFindActor::AllocateDefaultPins()
 {
-	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, FName("ActorID"));
-	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Object, FName("FoundActor"));
+	auto* ActorIDPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, FName("ActorID"));
+	auto* FoundActorPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Object, FName("FoundActor"));
 	
+	if (IsValid(CastTo))
+	{
+		FoundActorPin->PinType.PinSubCategoryObject = CastTo;
+	}
+	else
+	{
+		FoundActorPin->PinType.PinSubCategoryObject = AActor::StaticClass();		
+	}
+	
+	ActorIDPin->PinFriendlyName = LOCTEXT("BangoFindActorNode_ActorIDPinLabel", " ");
+	FoundActorPin->PinFriendlyName = LOCTEXT("BangoFindActorNode_FoundActorLabel", " ");
 }
 
 FText UK2Node_BangoFindActor::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return Super::GetNodeTitle(TitleType);
+	return LOCTEXT("BangoFindActorNode_Title", "Find Actor");
 }
 
 void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
@@ -42,6 +60,8 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	
 	auto Node_This =					Builder.WrapExistingNode<NB::BangoFindActor>(this);
 	auto Node_FindActorFunction	=		Builder.MakeNode<NB::CallFunction>(0, 1);
+	auto Node_CastToType =				Builder.MakeNode<NB::DynamicCast_Pure>(1, 1);
+	
 	// -----------------
 	// Post-setup
 
@@ -49,16 +69,31 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	
 	Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, GetActor)));
 	
+	if (IsValid(CastTo))
+	{
+		Node_CastToType->TargetType = CastTo;
+	}
+	
 	Builder.FinishDeferredNodes();
 	
 	// -----------------
 	// Make connections
 
 	// First input
-	Builder.CopyExternalConnection(Node_This.ActorID, Node_FindActorFunction.Exec);
+	Builder.CopyExternalConnection(Node_This.ActorID, Node_FindActorFunction.FindPin("ActorID"));
 
+	if (IsValid(CastTo))
+	{
+		Builder.CreateConnection(Node_FindActorFunction->GetReturnValuePin(), Node_CastToType.ObjectToCast);
+		Builder.CopyExternalConnection(Node_This.FoundActor, Node_CastToType.CastedObject);
+	}
+	else
+	{
+		Builder.CopyExternalConnection(Node_This.FoundActor, Node_FindActorFunction->GetReturnValuePin());
+	}
+	
 	// Final output
-	// Builder.CopyExternalConnection(Node_This.Completed, ???.Then);
+	Builder.CopyExternalConnection(Node_This.FoundActor, Node_CastToType.CastedObject);
 	
 	// Done!
 	if (!bIsErrorFree)

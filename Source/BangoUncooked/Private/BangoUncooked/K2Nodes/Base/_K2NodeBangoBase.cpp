@@ -47,7 +47,7 @@ FSlateIcon UK2NodeBangoBase::GetIconAndTint(FLinearColor& OutColor) const
 {
 	//return Super::GetIconAndTint(OutColor);
 	
-	static const FSlateIcon Icon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icon.Plunger");
+	static const FSlateIcon Icon = FSlateIcon("BangoEditorStyleSet", "Icon.Plunger");
 	return Icon;
 }
 

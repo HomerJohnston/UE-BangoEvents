@@ -5,6 +5,7 @@
 
 #include "BangoNodeBuilder_Macros.h"
 
+class UK2Node_DynamicCast;
 class UK2Node_BangoFindActor;
 class UK2Node_BangoRunScript;
 class UK2Node_AddDelegate;
@@ -16,6 +17,7 @@ class UK2Node_IfThenElse;
 class UK2Node_CallFunction;
 class UK2Node_GenericCreateObject;
 class UK2Node_Self;
+class UK2Node_ClassDynamicCast;
 
 // NODES SHOULD BE SORTED ALPHABETICALLY
 
@@ -53,6 +55,9 @@ namespace Bango_NodeBuilder
 	// ------------------------------------------
 	// Engine nodes
 
+	MAKE_NODE_TYPE(DynamicCast_Pure, UK2Node_DynamicCast, DEFERRED_CONSTRUCTION,
+		ObjectToCast, CastedObject, Success);
+	
 	// Construct Object from Class
 	MAKE_NODE_TYPE(CreateObject, UK2Node_GenericCreateObject, NORMAL_CONSTRUCTION,
 		Exec, Then, CreatedObject, ObjectClass);

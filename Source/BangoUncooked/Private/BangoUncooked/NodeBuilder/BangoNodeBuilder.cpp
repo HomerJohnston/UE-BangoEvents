@@ -5,6 +5,7 @@
 #include "K2Node_CustomEvent.h"
 #include "K2Node_IfThenElse.h"
 #include "K2Node_AddDelegate.h"
+#include "K2Node_DynamicCast.h"
 #include "K2Node_CreateDelegate.h"
 #include "K2Node_GenericCreateObject.h"
 #include "K2Node_Self.h"
@@ -141,6 +142,17 @@ void BooleanOR::Construct()
 	A = FindPin("A");
 	B = FindPin("B");
 	Result = _Node->GetReturnValuePin();
+}
+
+void DynamicCast_Pure::Construct()
+{
+	AllocateDefaultPins();
+	
+	_Node->SetPurity(true);
+	
+	ObjectToCast = _Node->GetCastSourcePin();
+	CastedObject = _Node->GetCastResultPin();
+	Success = _Node->GetBoolSuccessPin();
 }
 
 void Branch::Construct()

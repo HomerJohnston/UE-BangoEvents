@@ -281,7 +281,6 @@ void FBangoEditorStyle::SetupStyles()
 
 	//StyleInstance->Set("RichTextBlock.BoldHighlight", FTextBlockStyle(TextStyle_Normal));
 
-	StyleInstance->Set("Icon.Plunger", const_cast<FSlateVectorImageBrush*>(&Icon_Plunger));
 
 	// ============================================================================================
 	// EDITABLE TEXT BLOCK STYLES
