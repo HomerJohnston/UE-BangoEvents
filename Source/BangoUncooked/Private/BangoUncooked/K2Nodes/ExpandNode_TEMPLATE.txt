@@ -1,0 +1,39 @@
+﻿
+	Super::ExpandNode(Compiler, SourceGraph);
+
+	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
+	bool bIsErrorFree = true;
+
+	namespace NB = Bango_NodeBuilder;
+	NB::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
+	
+	// -----------------
+	// Make nodes
+	
+	using namespace Bango_NodeBuilder;
+	auto Node_This =					Builder.WrapExistingNode<NB::BangoSleep>(this);
+
+	// -----------------
+	// Post-setup
+
+	FString UniqueID = *Compiler.GetGuid(this);
+	
+	Builder.FinishDeferredNodes();
+	
+	// -----------------
+	// Make connections
+
+    // First input
+    Builder.CopyExternalConnection(Node_This.Exec, ???.Exec);
+
+	// Final output
+	// Builder.CopyExternalConnection(Node_This.Completed, ???.Then);
+	
+	// Done!
+	if (!bIsErrorFree)
+	{
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "K2Node_LoadAsset: Internal connection error. @@").ToString(), this);
+	}
+	
+	// Disconnect ThisNode from the graph
+	BreakAllNodeLinks();

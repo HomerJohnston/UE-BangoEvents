@@ -64,7 +64,7 @@ AActor* UBangoActorIDSubsystem::GetActor(UObject* WorldContextObject, FName ID)
 	return ActorPtr->Get(bEvenIfPendingKill);
 }
 
-AActor* UBangoActorIDBlueprintFunctionLibrary::GetActor(UObject* WorldContextObject, FName ID)
+AActor* UBangoActorIDBlueprintFunctionLibrary::GetActor(UObject* WorldContextObject, FName ActorID)
 {
-	return UBangoActorIDSubsystem::GetActor(WorldContextObject, ID);
+	return UBangoActorIDSubsystem::GetActor(WorldContextObject, ActorID);
 }

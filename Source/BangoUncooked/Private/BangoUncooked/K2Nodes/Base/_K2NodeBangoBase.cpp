@@ -1,4 +1,4 @@
-﻿#include "BangoUncooked/K2/_K2NodeBangoBase.h"
+﻿#include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
@@ -41,6 +41,19 @@ FText UK2NodeBangoBase::GetToolTipHeading() const
 bool UK2NodeBangoBase::ShouldShowNodeProperties() const
 {
 	return bShowShowNodeProperties;
+}
+
+FSlateIcon UK2NodeBangoBase::GetIconAndTint(FLinearColor& OutColor) const
+{
+	//return Super::GetIconAndTint(OutColor);
+	
+	static const FSlateIcon Icon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icon.Plunger");
+	return Icon;
+}
+
+FLinearColor UK2NodeBangoBase::GetNodeTitleColor() const
+{
+	return FLinearColor::Black;
 }
 
 #undef LOCTEXT_NAMEPSACE

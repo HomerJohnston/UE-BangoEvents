@@ -1,10 +1,14 @@
 ﻿#pragma once
 
 #include "EdGraph/EdGraph.h"
+#include "Bango/Utility/BangoLog.h"
+#include "KismetCompiler.h"
 
 // ==============================================
 
+// Normal construction means the node can have AllocateDefaultPins called on it right after it is built.
 #define NORMAL_CONSTRUCTION 0
+// Deferred construction means specific code needs to be ran on the node before running AllocateDefaultPins. ADP will be ran on the node when you call Builder.FinishDeferredNodes(). 
 #define DEFERRED_CONSTRUCTION 1
 
 #define IF_DEFERRED_0(code)
@@ -17,7 +21,8 @@
 
 #define DECL_PIN(Name) UEdGraphPin* Name;
 #define ARR_PIN(Name) Name,
-	
+
+// We have support for up to 12 compile-time named pins...
 #define FOR_EACH_1(M, a) M(a)
 #define FOR_EACH_2(M, a, b) M(a) M(b)
 #define FOR_EACH_3(M, a, b, c) M(a) M(b) M(c)
@@ -28,9 +33,11 @@
 #define FOR_EACH_8(M, a, b, c, d, e, f, g, h) M(a) M(b) M(c) M(d) M(e) M(f) M(g) M(h)
 #define FOR_EACH_9(M, a, b, c, d, e, f, g, h, i) M(a) M(b) M(c) M(d) M(e) M(f) M(g) M(h) M(i)
 #define FOR_EACH_10(M, a, b, c, d, e, f, g, h, i, j) M(a) M(b) M(c) M(d) M(e) M(f) M(g) M(h) M(i) M(j)
+#define FOR_EACH_11(M, a, b, c, d, e, f, g, h, i, j, k) M(a) M(b) M(c) M(d) M(e) M(f) M(g) M(h) M(i) M(j) M(k)
+#define FOR_EACH_12(M, a, b, c, d, e, f, g, h, i, j, k, l) M(a) M(b) M(c) M(d) M(e) M(f) M(g) M(h) M(i) M(j) M(k) M(l)
 
-#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, NAME, ...) NAME
-#define FOR_EACH(M, ...) GET_MACRO(__VA_ARGS__, FOR_EACH_10, FOR_EACH_9, FOR_EACH_8, FOR_EACH_7, FOR_EACH_6, FOR_EACH_5, FOR_EACH_4, FOR_EACH_3, FOR_EACH_2, FOR_EACH_1)(M, __VA_ARGS__)
+#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, NAME, ...) NAME
+#define FOR_EACH(M, ...) GET_MACRO(__VA_ARGS__, FOR_EACH_12, FOR_EACH_11, FOR_EACH_10, FOR_EACH_9, FOR_EACH_8, FOR_EACH_7, FOR_EACH_6, FOR_EACH_5, FOR_EACH_4, FOR_EACH_3, FOR_EACH_2, FOR_EACH_1)(M, __VA_ARGS__)
 
 #define MAKE_NODE_TYPE(NodeType, Name, USE_DEFERRED, ...)\
 	struct NodeType : public NodeWrapper<Name>\
@@ -47,7 +54,6 @@
 		void Construct() override;\
 	}\
 	
-#include "Bango/Utility/BangoLog.h"
 // ==============================================
 
 enum class EBangoPinRequired : uint8
@@ -85,7 +91,7 @@ struct NodeWrapper_Base
 		
 		Construct();
 		bFinishedSpawning = true;
-	}	
+	}
 
 	virtual void Construct() {};
 
@@ -106,92 +112,42 @@ namespace Bango_NodeBuilder
 		const UEdGraphSchema* _Schema;
 		bool* _bErrorBool;
 
-		TArray<TSharedPtr<NodeWrapper_Base>> SpawnedNodes;
+		TArray<NodeWrapper_Base*> SpawnedNodes;
 		bool bAwaitingSpawnFinish = false;
 		
-		Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector)
-		{
-			checkf(!bAwaitingSpawnFinish, TEXT("Did you forget to call FinishSpawningAllNodes somewhere else?"));
+		Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor = FVector2f::ZeroVector);
 
-			_Compiler = &InContext;
-			_ParentGraph = InParentGraph;
-			_SourceNode = InSourceNode;
-			_Schema = InSchema;
-			_bErrorBool = InErrorBool;
-			_GraphAnchor.X = Anchor.X; _GraphAnchor.Y = Anchor.Y;
+		void FinishDeferredNodes(bool bLogUnconnectedPins = false);
 
-			SpawnedNodes.Empty();
-			
-			bAwaitingSpawnFinish = true;
-		}
+		void MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To);
 
-		void FinishSpawningAllNodes(bool bLogUnconnectedPins = false)
-		{
-			checkf(bAwaitingSpawnFinish, TEXT("Did you forget to call Setup?"));
-			
-			for (TSharedPtr<NodeWrapper_Base> Node : SpawnedNodes)
-			{
-				Node->DeferredConstruction();
+		void CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To);
 
-				if (bLogUnconnectedPins)
-				{
-					for (UEdGraphPin* Pin : Node->BaseNode()->GetAllPins())
-					{
-						if (!Pin->HasAnyConnections())
-						{
-							UE_LOG(LogBango, Warning, TEXT("Unconnected pin --> Node: {%s} --> Pin: {%s}"), *Node->BaseNode()->GetDescriptiveCompiledName(), *Pin->GetName());
-						}
-					}
-				}
-			}
+		void CreateConnection(UEdGraphPin* From, UEdGraphPin* To);
 
-			bAwaitingSpawnFinish = false;
-		}
+		void SetDefaultValue(UEdGraphPin* Pin, FString& Value);
 
-		void MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
-		{
-			*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
-		}
-		
-		void CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
-		{
-			*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
-		}
-
-		void CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
-		{
-			*_bErrorBool &= _Schema->TryCreateConnection(From, To);
-		}
-
-		void SetDefaultValue(UEdGraphPin* Pin, FString& Value)
-		{
-			_Schema->TrySetDefaultValue(*Pin, Value);
-		}
-		
-		void SetDefaultObject(UEdGraphPin* Pin, UObject* Value)
-		{
-			_Schema->TrySetDefaultObject(*Pin, Value);
-		}
+		void SetDefaultObject(UEdGraphPin* Pin, UObject* Value);
 
 		template<typename TT>
-		TSharedPtr<TT> MakeNode(float X, float Y)
+		TT MakeNode(float X, float Y)
 		{
-			TSharedPtr<TT> NewNodeWrapper = MakeShared<TT>(X, Y, _Compiler, _SourceNode, _ParentGraph);
-			NewNodeWrapper->NormalConstruction();
-			
-			SpawnedNodes.Add(NewNodeWrapper);
-			
+			TT NewNodeWrapper = TT(X, Y, *this);
+			NewNodeWrapper.NormalConstruction();
+		
+			SpawnedNodes.Add(&NewNodeWrapper);
+		
 			return NewNodeWrapper;
 		}
-		
+	
 		template<typename TT, typename T>
-		TSharedPtr<TT> WrapExistingNode(T* InNode)
+		TT WrapExistingNode(T* InNode)
 		{
-			TSharedPtr<TT> NewNodeWrapper = MakeShared<TT>(InNode);
-			NewNodeWrapper->NormalConstruction();
+			TT NewNodeWrapper(InNode);
+			NewNodeWrapper.NormalConstruction();
 
-			SpawnedNodes.Add(NewNodeWrapper);
-			
+			SpawnedNodes.Add(&NewNodeWrapper);
+		
 			return NewNodeWrapper;
 		}
 	};
@@ -211,12 +167,12 @@ namespace Bango_NodeBuilder
 		}
 
 	public:
-		NodeWrapper(float X, float Y, FKismetCompilerContext* _Compiler, UK2Node* _SourceNode, UEdGraph* _ParentGraph)
+		NodeWrapper(float X, float Y, Builder& InBuilder)
 		{
-			_Node = _Compiler->SpawnIntermediateNode<T>(_SourceNode, _ParentGraph);
+			_Node = InBuilder._Compiler->SpawnIntermediateNode<T>(InBuilder._SourceNode, InBuilder._ParentGraph);
 				
-			//Node->SetNodePosX(_GraphAnchorScale *(_GraphAnchor.X + X));
-			//Node->SetNodePosY(_GraphAnchorScale * (_GraphAnchor.Y + Y));
+			_Node->SetNodePosX(InBuilder._GraphAnchorScale *(InBuilder._GraphAnchor.X + X));
+			_Node->SetNodePosY(InBuilder._GraphAnchorScale * (InBuilder._GraphAnchor.Y + Y));
 		}
 			
 		NodeWrapper(T* InNode)
@@ -236,13 +192,13 @@ namespace Bango_NodeBuilder
 		
 		UEdGraphPin* FindPin(const char* PinName, EBangoPinRequired PinRequired = EBangoPinRequired::Required)
 		{
-			return FindPin(FName(PinName));
+			return FindPin(FName(PinName), PinRequired);
 		}
 		
 		UEdGraphPin* FindPin(FName PinName, EBangoPinRequired PinRequired = EBangoPinRequired::Required)
 		{
 			UEdGraphPin* Pin = _Node->FindPin(PinName);
-
+			
 			if (PinRequired == EBangoPinRequired::Required)
 			{
 				check(Pin);
@@ -253,6 +209,6 @@ namespace Bango_NodeBuilder
 
 		virtual UEdGraphNode* BaseNode() { return reinterpret_cast<UEdGraphNode*>(_Node); }
 
-		T* Node() { return _Node; }
+		T* operator->() { return _Node; }
 	};
 }

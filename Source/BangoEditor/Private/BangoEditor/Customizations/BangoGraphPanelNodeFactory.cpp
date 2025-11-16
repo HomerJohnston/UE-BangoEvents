@@ -1,10 +1,10 @@
 #include "BangoGraphPanelNodeFactory.h"
 #include "K2Node_CallFunction.h"
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
-#include "BangoUncooked/K2/K2Node_BangoRunScript.h"
-#include "BangoUncooked/K2/K2Node_BangoSleep.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoRunScript.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoSleep.h"
 #include "Nodes/SGraphNode_BangoSleep.h"
-#include "BangoUncooked/K2/_K2NodeBangoBase.h"
+#include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 
 TSharedPtr<class SGraphNode> FGraphPanelNodeFactory_Bango::CreateNode(class UEdGraphNode* Node) const
 {

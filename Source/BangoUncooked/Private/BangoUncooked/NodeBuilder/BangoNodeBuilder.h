@@ -5,6 +5,7 @@
 
 #include "BangoNodeBuilder_Macros.h"
 
+class UK2Node_BangoFindActor;
 class UK2Node_BangoRunScript;
 class UK2Node_AddDelegate;
 class UK2Node_BangoSleep;
@@ -94,8 +95,12 @@ namespace Bango_NodeBuilder
 	MAKE_NODE_TYPE(BangoSkipSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTION,
 		Exec, Then, ActionUUID);
 	
+	MAKE_NODE_TYPE(BangoPauseSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTION,
+		Exec, Then, Paused, ActionUUID);
+	
 	MAKE_NODE_TYPE(BangoSleep, UK2Node_BangoSleep, NORMAL_CONSTRUCTION,
-		Exec, Duration, SkipExec, CancelExec, SkipCondition, CancelCondition, Completed);
-	
-	
+		Exec, Duration, InfiniteDuration, SkipExec, CancelExec, SkipCondition, CancelCondition, PauseCondition, Completed);
+		
+	MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION,
+		ActorID, FoundActor);
 };

@@ -3,22 +3,27 @@
 #include "BangoKismetNodeInfoContext.h"
 #include "BlueprintEditorSettings.h"
 #include "GraphEditorSettings.h"
+#include "IDocumentation.h"
 #include "K2Node_TemporaryVariable.h"
 #include "SCommentBubble.h"
+#include "SGraphPanel.h"
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "Bango/Private/Bango/LatentActions/BangoSleepAction.h"
 #include "BangoEditor/BangoEditorStyle.h"
-#include "BangoUncooked/K2/K2Node_BangoSleep.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoSleep.h"
+#include "Editor/KismetWidgets/Public/SLevelOfDetailBranchNode.h"
 #include "KismetNodes/KismetNodeInfoContext.h"
 #include "Widgets/Notifications/SProgressBar.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 void SGraphNode_BangoSleep::Construct(const FArguments& InArgs, class UEdGraphNode* InNode)
 {
     GraphNode = InNode;
+	//IconColor = FLinearColor::Red;
 
     UpdateGraphNode();
 }
@@ -164,6 +169,40 @@ void SGraphNode_BangoSleep::UpdateGraphNode()
 
 	SetDefaultTitleAreaWidget(DefaultTitleAreaWidget);
 
+	auto UseLowDetailNodeTitle = [this] () -> bool
+	{
+		if (InlineEditableText.IsValid())
+		{
+			if (const SGraphPanel* MyOwnerPanel = GetOwnerPanel().Get())
+			{
+				return (MyOwnerPanel->GetCurrentLOD() <= EGraphRenderingLOD::LowestDetail) && !InlineEditableText->IsInEditMode();
+			}
+		}
+
+		return false;
+	};
+	
+	TSharedPtr<SLevelOfDetailBranchNode> __TitleLODBranchNode;
+	SAssignNew(__TitleLODBranchNode, SLevelOfDetailBranchNode)
+	.UseLowDetailSlot_Lambda(UseLowDetailNodeTitle)
+	.LowDetail()
+	[
+		SNew(SBorder)
+		.BorderImage( FAppStyle::GetBrush("Graph.Node.ColorSpill") )
+		.Padding( FMargin(75.0f, 22.0f) ) // Saving enough space for a 'typical' title so the transition isn't quite so abrupt
+		.BorderBackgroundColor( this, &SGraphNode::GetNodeTitleColor )
+	]
+	.HighDetail()
+	[
+		DefaultTitleAreaWidget
+	];
+
+	if (!SWidget::GetToolTip().IsValid())
+	{
+		TSharedRef<SToolTip> DefaultToolTip = IDocumentation::Get()->CreateToolTip( TAttribute< FText >( this, &SGraphNode::GetNodeTooltip ), NULL, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName() );
+		SetToolTip(DefaultToolTip);
+	}
+	
 	// Setup a meta tag for this node
 	FGraphNodeMetaData TagMeta(TEXT("Graphnode"));
 	PopulateMetaTag(&TagMeta);
@@ -171,6 +210,14 @@ void SGraphNode_BangoSleep::UpdateGraphNode()
 	this->ContentScale.Bind( this, &SGraphNode::GetContentScale );
 
 	InnerVerticalBox = SNew(SVerticalBox)
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Top)
+		.Padding(Settings->GetNonPinNodeBodyPadding())
+		[
+			__TitleLODBranchNode.ToSharedRef()
+		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.HAlign(HAlign_Fill)
@@ -289,10 +336,12 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 {
 	TArray<FOverlayWidgetInfo> Widgets;
 	
-	const FSlateBrush* ImageBrush = FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass);
-
+	UK2Node_BangoSleep* Node = GetSleepNode();
+	
+	float ImageSize = 32.0f;
+	
 	FOverlayWidgetInfo Info;
-	Info.OverlayOffset = FVector2f((WidgetSize.X / 2) - (ImageBrush->ImageSize.X * 0.5f), 8);
+	Info.OverlayOffset = FVector2f((WidgetSize.X / 2) - (ImageSize * 0.5f), 28);
 	Info.Widget = SNew(SBorder)
 		.BorderImage(nullptr)
 		.Padding(0)
@@ -300,8 +349,9 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 		.HAlign(HAlign_Center)
 		[
 			SNew(SImage)
-			.Image(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass))
+			.Image(this, &SGraphNode_BangoSleep::Image_OverlayWidget)
 			.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Hourglass)
+			.DesiredSizeOverride(FVector2D(ImageSize, ImageSize))
 			.RenderTransformPivot(FVector2D(0.5f, 0.5f))
 			.RenderTransform(this, &SGraphNode_BangoSleep::RenderTransform_Hourglass)
 		];
@@ -309,6 +359,17 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 	Widgets.Add(Info);
 
 	return Widgets;
+}
+
+const FSlateBrush* SGraphNode_BangoSleep::Image_OverlayWidget() const
+{
+	UK2Node_BangoSleep* Node = GetSleepNode();
+	
+	const FSlateBrush* ImageBrush = Node->IsInfiniteDuration() 
+		? FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_PauseHand) 
+		: FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass);
+	
+	return ImageBrush;
 }
 
 TOptional<TTransform2<float>> SGraphNode_BangoSleep::RenderTransform_Hourglass() const
@@ -562,35 +623,59 @@ FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Hourglass() const
 		return FLinearColor::Black;
 	}
 	
+	FLinearColor EditorColor = 0.8f * FLinearColor::White;
+	
 	if (GEditor && !GEditor->IsPlaySessionInProgress())
 	{
-		return 0.8f * FLinearColor::White;
+		return EditorColor;
 	}
 	
 	FBangoSleepAction* SleepAction = GetSleepAction();
 	
 	if (SleepAction)
 	{
+		if (SleepAction->bPaused)
+		{
+			return FColor::Orange;
+		}
+		
 		return FLinearColor::White;
 	}
 
 	UWorld* World = GEditor->GetCurrentPlayWorld(GEditor->PlayWorld);
+	
+	if (!World)
+	{
+		return EditorColor;
+	}
 
 	const FLinearColor IdleColor = 0.2f * FLinearColor::White;
+	FLinearColor FinalColor = IdleColor;
 	
-	if (World && AbortTime > 0.0f)
+	if (AbortTime > 0.0f)
 	{
 		float AbortTimeElapsed = World->GetTimeSeconds() - AbortTime;
-		const float FadeDuration = 2.0f;
+		const float FadeDuration = 5.0f;
 
 		if (AbortTimeElapsed <= FadeDuration)
 		{
 			float Lerp = FMath::Clamp(FMath::Pow(FMath::Lerp(0.0f, 1.0f, AbortTimeElapsed / FadeDuration), 4.0f), 0.0f, 1.0f);
-			return FMath::Lerp(FLinearColor::Red, IdleColor, Lerp);
+			FinalColor = FMath::Lerp(FLinearColor::Red, IdleColor, Lerp);
+		}
+	}
+	else if (SkipTime > 0.0f)
+	{
+		float SkipTimeElapsed = World->GetTimeSeconds() - SkipTime;
+		const float FadeDuration = 5.0f;
+
+		if (SkipTimeElapsed <= FadeDuration)
+		{
+			float Lerp = FMath::Clamp(FMath::Pow(FMath::Lerp(0.0f, 1.0f, SkipTimeElapsed / FadeDuration), 4.0f), 0.0f, 1.0f);
+			FinalColor = FMath::Lerp(FLinearColor::Green, IdleColor, Lerp);
 		}
 	}
 
-	return IdleColor;
+	return FinalColor;
 }
 
 FBangoSleepAction* SGraphNode_BangoSleep::GetSleepAction() const
@@ -612,8 +697,6 @@ FBangoSleepAction* SGraphNode_BangoSleep::GetSleepAction() const
 					if (UWorld* World = GEngine->GetWorldFromContextObject(Action.Object, EGetWorldErrorMode::ReturnNull))
 					{
 						FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-
-						UEdGraphNode* NodeObj = GetNodeObj();
 						
 						return LatentActionManager.FindExistingAction<FBangoSleepAction>(Action.Object, Action.UUID);
 					}
@@ -623,6 +706,11 @@ FBangoSleepAction* SGraphNode_BangoSleep::GetSleepAction() const
 	}
 
 	return nullptr;
+}
+
+UK2Node_BangoSleep* SGraphNode_BangoSleep::GetSleepNode() const
+{
+	return Cast<UK2Node_BangoSleep>(GetNodeObj());
 }
 
 void SGraphNode_BangoSleep::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -636,9 +724,11 @@ void SGraphNode_BangoSleep::Tick(const FGeometry& AllottedGeometry, const double
 		if (CurrentSleepAction != SleepAction)
 		{
 			AbortTime = -1.0f;
+			SkipTime = -1.0f;
 
 			CurrentSleepAction = SleepAction;
-			//CurrentSleepAction->OnAborted.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
+			CurrentSleepAction->OnCancel.AddRaw(this, &SGraphNode_BangoSleep::OnAborted);
+			CurrentSleepAction->OnSkip.AddRaw(this, &SGraphNode_BangoSleep::OnSkip);
 		}
 	}
 }
@@ -652,6 +742,19 @@ void SGraphNode_BangoSleep::OnAborted()
 		if (World)
 		{
 			AbortTime = GEditor->GetCurrentPlayWorld()->GetTimeSeconds();
+		}
+	}
+}
+
+void SGraphNode_BangoSleep::OnSkip()
+{
+	if (GEditor)
+	{
+		UWorld* World = GEditor->GetCurrentPlayWorld();
+
+		if (World)
+		{
+			SkipTime = GEditor->GetCurrentPlayWorld()->GetTimeSeconds();
 		}
 	}
 }

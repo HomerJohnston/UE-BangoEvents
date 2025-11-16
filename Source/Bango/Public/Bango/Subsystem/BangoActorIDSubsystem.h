@@ -33,6 +33,7 @@ class UBangoActorIDBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
+public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Bango", DisplayName = "Get Actor by ID", meta = (WorldContext = "WorldContextObject"))
-	static AActor* GetActor(UObject* WorldContextObject, FName ID);
+	static AActor* GetActor(UObject* WorldContextObject, FName ActorID);
 };

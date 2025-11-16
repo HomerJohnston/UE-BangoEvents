@@ -14,6 +14,8 @@ public:
 	FWeakObjectPtr CallbackTarget;
 
 	TMulticastDelegate<void()> OnComplete;
+	TMulticastDelegate<void()> OnCancel;
+	TMulticastDelegate<void()> OnSkip;
 	TMulticastDelegate<void()> OnTick;
 
 	bool bCancelled = false;
@@ -31,26 +33,14 @@ public:
 
 	void UpdateOperation(FLatentResponse& Response) override;
 
-	void NotifyActionAborted() override
-	{
-		bCancelled = true;
-	}
+	void NotifyActionAborted() override;
 
-	void Cancel()
-	{
-		bCancelled = true;
-	}
+	void Cancel();
 
-	void Skip()
-	{
-		bSkipped = true;
-	}
+	void Skip();
 
-	void SetPaused(bool bInPaused)
-	{
-		bPaused = bInPaused;
-	}
-	
+	void SetPaused(bool bInPaused);
+
 #if WITH_EDITOR
 	// Returns a human readable description of the latent operation's current state
 	FString GetDescription() const override;

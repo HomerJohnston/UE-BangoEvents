@@ -2,6 +2,7 @@
 
 #include "Bango/Core/BangoScriptHandle.h"
 #include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Utility/BangoLog.h"
 
 UBangoScriptSubsystem* UBangoScriptSubsystem::Get(UObject* WorldContext)
 {
@@ -18,14 +19,23 @@ bool UBangoScriptSubsystem::DoesSupportWorldType(const EWorldType::Type WorldTyp
 	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
 }
 
-FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScriptObject* BangoScriptObject)
+void UBangoScriptSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	UBangoScriptSubsystem* Subsystem = Get(BangoScriptObject);
+	Super::Initialize(Collection);
+	
+	TickFunction.RegisterTickFunction(GetWorld()->PersistentLevel);
+}
+
+FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScriptObject* ScriptObject)
+{
+	UBangoScriptSubsystem* Subsystem = Get(ScriptObject);
 
 	FBangoScriptHandle NewHandle = FBangoScriptHandle();
 	
-	Subsystem->RunningScripts.Add(NewHandle, BangoScriptObject);
+	Subsystem->RunningScripts.Add(NewHandle, ScriptObject);
 
+	UE_LOG(LogBango, Display, TEXT("Script running: {%s}"), *ScriptObject->GetName());
+	
 	return NewHandle;
 }
 
@@ -42,6 +52,7 @@ void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScript
 	
 	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
 	{
+		UE_LOG(LogBango, Display, TEXT("Script halting: {%s}"), *Script->GetName());
 		UBangoScriptObject::Finish(Script);
 	}
 
@@ -58,4 +69,34 @@ void UBangoScriptSubsystem::AbortScript(UObject* WorldContext, FBangoScriptHandl
 	UnregisterScript(WorldContext, Handle);
 
 	Handle.Invalidate();
+}
+
+void UBangoScriptSubsystem::Tick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+	
+	FLatentActionManager& Manager = World->GetLatentActionManager();
+
+	TArray<FBangoScriptHandle> DeadScriptHandles;
+	
+	for (auto [Handle, Script] : RunningScripts)
+	{
+		TSet<int32> UUIDSet;
+		Manager.GetActiveUUIDs(Script, /*out*/ UUIDSet);
+		
+		if (UUIDSet.Num() == 0)
+		{
+			UE_LOG(LogBango, Display, TEXT("Idle script being automatically destroyed: {%s}"), *Script->GetName());
+			DeadScriptHandles.Add(Handle);
+		}
+	}
+	
+	for (FBangoScriptHandle& Handle : DeadScriptHandles)
+	{
+		UnregisterScript(this, Handle);
+	}
 }

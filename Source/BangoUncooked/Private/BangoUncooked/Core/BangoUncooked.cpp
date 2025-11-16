@@ -1,4 +1,4 @@
-﻿#include "BangoUncooked.h"
+﻿#include "BangoUncooked/Core/BangoUncooked.h"
 
 #define LOCTEXT_NAMESPACE "FBangoUncookedModule"
 

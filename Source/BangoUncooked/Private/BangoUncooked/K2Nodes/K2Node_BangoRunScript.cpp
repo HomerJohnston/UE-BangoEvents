@@ -1,4 +1,4 @@
-#include "BangoUncooked/K2/K2Node_BangoRunScript.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoRunScript.h"
 
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
@@ -15,9 +15,8 @@
 #include "KismetCompiler.h"
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "Bango/Core/BangoScriptObject.h"
-#include "Bango/K2/BangoRunScriptNode.h"
-#include "BangoUncooked/BangoNodeBuilder.h"
-#include "BangoUncooked/BangoNodeBuilder_Macros.h"
+#include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
+#include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UObject/PropertyIterator.h"
 
@@ -99,30 +98,9 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 {
 	Super::ExpandNode(Compiler, SourceGraph);
 
-
-
-
-	{
-		UClass* ObjectClass = UBangoScriptObject::StaticClass();// Cast<UClass>(Node_CreateScriptObject->ObjectClass->DefaultObject);
-	
-		if (ObjectClass)
-		{
-			FProperty* OnFinishDelegate = ObjectClass->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate));
-			FMulticastDelegateProperty* ScriptOnFinishDelegateProperty = CastField<FMulticastDelegateProperty>(ObjectClass->FindPropertyByName("OnFinishDelegate"));
-		
-			UK2Node_AddDelegate* Node_AddDelegate = Compiler.SpawnIntermediateNode<UK2Node_AssignDelegate>(this, SourceGraph);
-			Node_AddDelegate->AllocateDefaultPins();
-			Node_AddDelegate->SetFromProperty(ScriptOnFinishDelegateProperty, false, ObjectClass);
-			Node_AddDelegate->AllocateDefaultPins();
-		}
-	}
-
-
-	
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	//Bango_NodeBuilder::Setup(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
 	Bango_NodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
 	
 	// -----------------
@@ -143,10 +121,10 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// Post-setup
 
 	// Update the ConstructObject class pin; we need to generate pin collections before and after assigning the class so we can get the extra pins
-	if (UClass* ScriptClass = Cast<UClass>(Node_This->Script->DefaultObject))
+	if (UClass* ScriptClass = Cast<UClass>(Node_This.Script->DefaultObject))
 	{
 		// There is a script set, we need to generate dynamic pins. Set the script, this will cause the intermediate script object creator to generate pins.
-		Builder.SetDefaultObject(Node_CreateScriptObject->ObjectClass, Node_This->Script->DefaultObject);
+		Builder.SetDefaultObject(Node_CreateScriptObject.ObjectClass, Node_This.Script->DefaultObject);
 
 		// We'll try to guess what pins we have by finding ExposeOnSpawn properties. This should be accurate? TODO investigate this more?
 		TArray<FName> ExposeOnSpawnProperties;
@@ -177,51 +155,50 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 				else if (ThisExposeOnSpawnPin->HasAnyConnections())
 				{
 					Builder.MoveExternalConnection(ThisExposeOnSpawnPin, ConstructScriptExposeOnSpawnPin);
-					//Node_ConstructScript->PinConnectionListChanged(ConstructScriptExposeOnSpawnPin); // TODO do I need this?
 				}
 			}
 		}
 	}
 
-	UClass* ObjectClass = Cast<UClass>(Node_CreateScriptObject->ObjectClass->DefaultObject);
+	UClass* ObjectClass = Cast<UClass>(Node_CreateScriptObject.ObjectClass->DefaultObject);
 	
 	if (ObjectClass)
 	{
 		FProperty* OnFinishDelegate = ObjectClass->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate));
-		Node_AddDelegate->Node()->SetFromProperty(OnFinishDelegate, false, ObjectClass);
+		Node_AddDelegate->SetFromProperty(OnFinishDelegate, false, ObjectClass);
 	}
 	
-	Node_ScriptCompletedEvent->Node()->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *Compiler.GetGuid(this));
+	Node_ScriptCompletedEvent->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *Compiler.GetGuid(this));
 
-	Builder.FinishSpawningAllNodes(true);
+	Builder.FinishDeferredNodes(true);
 
 	// -----------------
 	// Make connections
 
 	if (ObjectClass)
 	{
-		Builder.CreateConnection(Node_AddDelegate->Delegate, Node_CreateDelegate->DelegateOut);
+		Builder.CreateConnection(Node_AddDelegate.Delegate, Node_CreateDelegate.DelegateOut);
 	}
 	
-	Builder.CreateConnection(Node_Self->Self, Node_CreateDelegate->ObjectIn);
-	Node_CreateDelegate->Node()->SetFunction(Node_ScriptCompletedEvent->Node()->CustomFunctionName);
-	Builder.MoveExternalConnection(Node_This->Completed, Node_ScriptCompletedEvent->Then);
+	Builder.CreateConnection(Node_Self.Self, Node_CreateDelegate.ObjectIn);
+	Node_CreateDelegate->SetFunction(Node_ScriptCompletedEvent->CustomFunctionName);
+	Builder.MoveExternalConnection(Node_This.Completed, Node_ScriptCompletedEvent.Then);
 	
 	// Hook up exec pins
-	Builder.MoveExternalConnection(Node_This->Exec, Node_CreateScriptObject->Exec);
-	Builder.CreateConnection(Node_CreateScriptObject->Then, Node_IsValidBranch->Exec);
-	Builder.CreateConnection(Node_IsValidBranch->Then, Node_AddDelegate->Exec);
-	Builder.CreateConnection(Node_AddDelegate->Then, Node_ExecuteScript->Exec);
-	Builder.MoveExternalConnection(Node_This->Then, Node_ExecuteScript->Then);
+	Builder.MoveExternalConnection(Node_This.Exec, Node_CreateScriptObject.Exec);
+	Builder.CreateConnection(Node_CreateScriptObject.Then, Node_IsValidBranch.Exec);
+	Builder.CreateConnection(Node_IsValidBranch.Then, Node_AddDelegate.Exec);
+	Builder.CreateConnection(Node_AddDelegate.Then, Node_ExecuteScript.Exec);
+	Builder.MoveExternalConnection(Node_This.Then, Node_ExecuteScript.Then);
 
 	// Hook up data pins
-	Builder.CreateConnection(Node_CreateScriptObject->CreatedObject, Node_IsScriptValid->Object);
-	Builder.CreateConnection(Node_IsScriptValid->Result, Node_IsValidBranch->Condition);
-	Builder.CreateConnection(Node_CreateScriptObject->CreatedObject, Node_ExecuteScript->Target);
-	Builder.CreateConnection(Node_CreateScriptObject->CreatedObject, Node_AddDelegate->Target);
+	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_IsScriptValid.Object);
+	Builder.CreateConnection(Node_IsScriptValid.Result, Node_IsValidBranch.Condition);
+	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_ExecuteScript.Target);
+	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_AddDelegate.Target);
 
 	// Final output
-	Builder.MoveExternalConnection(Node_This->Handle, Node_ExecuteScript->Result);
+	Builder.MoveExternalConnection(Node_This.Handle, Node_ExecuteScript.Result);
 
 	if (!bIsErrorFree)
 	{

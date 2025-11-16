@@ -1,6 +1,6 @@
 #pragma once
 #include "K2Node_BaseAsyncTask.h"
-#include "BangoUncooked/K2/_K2NodeBangoBase.h"
+#include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 #include "Engine/CancellableAsyncAction.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 

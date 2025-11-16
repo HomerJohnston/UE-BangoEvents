@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Bango/Core/BangoScriptHandle.h"
+#include "Bango/Utility/ObjectTicker.h"
 
 #include "BangoScriptSubsystem.generated.h"
 
@@ -7,7 +8,7 @@ struct FBangoScriptHandle;
 class UBangoScriptObject;
 
 UCLASS()
-class UBangoScriptSubsystem : public UWorldSubsystem
+class UBangoScriptSubsystem : public UWorldSubsystem, public TObjectTicker<UBangoScriptSubsystem>
 {
 	GENERATED_BODY()
 
@@ -21,9 +22,13 @@ protected:
 	bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 	
 public:
-	static FBangoScriptHandle RegisterScript(UBangoScriptObject* BangoScriptObject);
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	
+	static FBangoScriptHandle RegisterScript(UBangoScriptObject* ScriptObject);
 	
 	static void UnregisterScript(UObject* WorldContext, FBangoScriptHandle& Handle);
 
 	static void AbortScript(UObject* WorldContext, FBangoScriptHandle& Handle);
+	
+	void Tick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent) override;
 };

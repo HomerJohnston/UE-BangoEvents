@@ -94,7 +94,7 @@ void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 A
 }
 
 void UBangoScriptObject::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
-{
+    {
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
     {
         FLatentActionManager& LatentActionManager = World->GetLatentActionManager();

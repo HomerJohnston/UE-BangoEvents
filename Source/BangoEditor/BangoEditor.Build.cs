@@ -28,7 +28,8 @@ public class BangoEditor : ModuleRules
                 "BlueprintGraph",
                 "GraphEditor",
                 "ToolMenus",
-                "BangoUncooked"
+                "BangoUncooked",
+                "KismetWidgets"
             }
         );
     }

@@ -22,6 +22,14 @@ class UBangoScriptObject : public UObject
 {
     GENERATED_BODY()
 
+protected:
+    // TODO: is this a bad decision? How else can I do this? Can I register things to keep scripts alive? Can I discover delegate subs in blueprints?
+    /** By default, Bango will destroy script objects once they stop running any latent actions. You need to turn this on if a script needs to wait for external events, such as subscribing to a delegate of another Actor. */
+    UPROPERTY(EditAnywhere)
+    bool bDoNotDestroyWhenIdle = false;
+    
+    bool GetDoNotDestroyWhenIdle() const { return bDoNotDestroyWhenIdle; }
+    
 public:
     /** This is called by Bango. */ 
     UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))

@@ -17,6 +17,8 @@ struct FBangoBrushes
     FName None;
 
     FName Icon_Hourglass;
+	FName Icon_PauseHand;
+	FName Icon_Plunger;
 };
 
 extern FBangoBrushes BangoEditorBrushes;

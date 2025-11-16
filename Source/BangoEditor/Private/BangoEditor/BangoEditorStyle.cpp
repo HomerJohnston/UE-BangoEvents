@@ -190,6 +190,8 @@ void FBangoEditorStyle::SetupStyles()
 	// ============================================================================================
 	//	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Chevron_Right,				"Icon_Chevron_Right", ".svg",			FVector2f(16, 16), BangoColor::White);
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Hourglass,						"NodeIcons/Icon_Hourglass", ".svg",				FVector2f(20, 20), BangoColor::White);
+	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_PauseHand,						"NodeIcons/Icon_PauseHand", ".svg",				FVector2f(20, 20), BangoColor::White);
+	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Plunger,						"NodeIcons/Icon_Plunger", ".svg",				FVector2f(20, 20), BangoColor::White);
 	
 	// ============================================================================================
 	// SLIDER STYLES
@@ -279,6 +281,7 @@ void FBangoEditorStyle::SetupStyles()
 
 	//StyleInstance->Set("RichTextBlock.BoldHighlight", FTextBlockStyle(TextStyle_Normal));
 
+	StyleInstance->Set("Icon.Plunger", const_cast<FSlateVectorImageBrush*>(&Icon_Plunger));
 
 	// ============================================================================================
 	// EDITABLE TEXT BLOCK STYLES

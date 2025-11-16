@@ -37,6 +37,28 @@ void FBangoSleepAction::UpdateOperation(FLatentResponse& Response)
 	}
 }
 
+void FBangoSleepAction::NotifyActionAborted()
+{
+	bCancelled = true;
+}
+
+void FBangoSleepAction::Cancel()
+{
+	bCancelled = true;
+	OnCancel.Broadcast();
+}
+
+void FBangoSleepAction::Skip()
+{
+	bSkipped = true;
+	OnSkip.Broadcast();
+}
+
+void FBangoSleepAction::SetPaused(bool bInPaused)
+{
+	bPaused = bInPaused;
+}
+
 FString FBangoSleepAction::GetDescription() const
 {
 	static const FNumberFormattingOptions SleepTimeFormatOptions = FNumberFormattingOptions()
