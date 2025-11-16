@@ -1,6 +1,28 @@
 ﻿#pragma once
 
+class UBangoActorIDComponent;
+
 struct FBangoEditorMenus
 {
-	static void RegisterMenus();
+	FBangoEditorMenus();
+	
+	static void BindCommands();
+	
+	static void BuildMenus();
+	
+	static void SetEditActorID();
+	
+	static bool Can_SetEditActorID();
+	
+	static TSharedRef<SWidget> GetIDEditingWidget(TSharedPtr<SEditableTextBox> InputBox);
+	
+	static TSharedRef<SWidget> GetTitleWidget();
+	
+	static UBangoActorIDComponent* CreateIDComponent(TWeakObjectPtr<AActor> WeakActor);
+	
+	static void DestroyIDComponent(TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent);
+	
+	static void OnTextCommitted_IDField(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakIDComponent);
+	
+	static TSharedPtr<SEditableTextBox> CreateInputBox(TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakIDComponent);
 };

@@ -44,7 +44,7 @@ public:
     
     EVisibility Visibility_ProgressBar() const;
     
-    FSlateColor ColorAndOpacity_Hourglass() const;
+    FSlateColor ColorAndOpacity_Overlay() const;
 
     FBangoSleepAction* GetSleepAction() const;
 

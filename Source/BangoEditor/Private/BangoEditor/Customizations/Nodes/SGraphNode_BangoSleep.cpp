@@ -350,7 +350,7 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoSleep::GetOverlayWidgets(bool bSelect
 		[
 			SNew(SImage)
 			.Image(this, &SGraphNode_BangoSleep::Image_OverlayWidget)
-			.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Hourglass)
+			.ColorAndOpacity(this, &SGraphNode_BangoSleep::ColorAndOpacity_Overlay)
 			.DesiredSizeOverride(FVector2D(ImageSize, ImageSize))
 			.RenderTransformPivot(FVector2D(0.5f, 0.5f))
 			.RenderTransform(this, &SGraphNode_BangoSleep::RenderTransform_Hourglass)
@@ -616,14 +616,14 @@ EVisibility SGraphNode_BangoSleep::Visibility_ProgressBar() const
 	return EVisibility::Hidden;
 }
 
-FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Hourglass() const
+FSlateColor SGraphNode_BangoSleep::ColorAndOpacity_Overlay() const
 {
 	if (!GEditor)
 	{
 		return FLinearColor::Black;
 	}
 	
-	FLinearColor EditorColor = 0.8f * FLinearColor::White;
+	const FLinearColor EditorColor(0.8f, 0.8f, 0.8f, 0.5f);
 	
 	if (GEditor && !GEditor->IsPlaySessionInProgress())
 	{

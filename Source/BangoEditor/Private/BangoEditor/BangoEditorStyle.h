@@ -31,7 +31,7 @@ public:
     FBangoEditorStyle();
 	
     virtual ~FBangoEditorStyle();
-
+	
 public:
     static ISlateStyle& Get();
 

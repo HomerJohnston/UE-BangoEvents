@@ -7,6 +7,7 @@
 #include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "BangoEditor/BangoEditorStyle.h"
+#include "BangoEditor/Commands/BangoEditorActions.h"
 #include "BangoEditor/Customizations/BangoGraphPanelNodeFactory.h"
 #include "BangoEditor/Customizations/Details/BangoEventComponentDetailsCustomization.h"
 #include "BangoEditor/Customizations/Properties/ActionPropertyCustomization.h"
@@ -17,6 +18,7 @@
 #include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Subsystems/EditorActorSubsystem.h"
+#include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Widgets/Input/STextEntryPopup.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
@@ -75,10 +77,11 @@ void FBangoEditorModule::StartupModule()
 	
 	FBangoEditorStyle::Initialize();
 	
-	////////////////
+	FBangoEditorCommands::Register();
+
+	FBangoEditorMenus::BindCommands();
 	
-	//UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FBangoEditorModule::RegisterMenus));
-	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateStatic(&FBangoEditorMenus::RegisterMenus));
+	FBangoEditorMenus::BuildMenus();
 }
 
 void FBangoEditorModule::ShutdownModule()

@@ -3,207 +3,325 @@
 #include "LevelEditor.h"
 #include "SEditorViewport.h"
 #include "Bango/Components/BangoActorIDComponent.h"
+#include "BangoEditor/Commands/BangoEditorActions.h"
 #include "Subsystems/EditorActorSubsystem.h"
 #include "Widgets/Input/STextEntryPopup.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-void FBangoEditorMenus::RegisterMenus()
+FBangoEditorMenus::FBangoEditorMenus()
 {
-	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.ActorContextMenu");
+}
 
-	bool BB = Menu->ContainsSection("ActorUETools");
-	bool CC = Menu->ContainsSection("ActorTypeTools");
+void FBangoEditorMenus::BindCommands()
+{
+	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		
+	TSharedPtr<FUICommandList> GlobalCommands = LevelEditorModule.GetGlobalLevelEditorActions();
 	
-	//FToolMenuSection& Section = Menu->FindOrAddSection("ActorUETools"); // ActorTypeTools doesn't work it's the Preview category???????? Neither does ActorUETools????????
-	FToolMenuSection& Section = Menu->FindOrAddSection("ActorOptions");
-	
-	FToolMenuEntry& Entry = Section.AddDynamicEntry("BangoSetActorName", FNewToolMenuSectionDelegate::CreateLambda([](FToolMenuSection& InSection)
+	GlobalCommands->MapAction(FBangoEditorCommands::Get().SetEditActorID, 
+		FExecuteAction::CreateStatic(&FBangoEditorMenus::SetEditActorID),
+		FCanExecuteAction::CreateStatic(&FBangoEditorMenus::Can_SetEditActorID));
+}
+
+void FBangoEditorMenus::BuildMenus()
+{
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateLambda([] ()
 	{
-		UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
-		TArray<AActor*> SelectedActors;
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.ActorContextMenu");
 		
-		if (EditorActorSubsystem)
+		Menu->AddDynamicSection("Bango", FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
 		{
-			SelectedActors = EditorActorSubsystem->GetSelectedLevelActors();
+			FToolMenuSection& Section = InMenu->AddSection("Bango", INVTEXT("Bango"));
 			
-			if (SelectedActors.Num() != 1)
-			{
-				return;
-			}
-		}
-		else
-		{
-			return;
-		}
-
-		AActor* Actor = SelectedActors[0];
-
-		if (!IsValid(Actor))
-		{
-			return;
-		}
-
-		FViewport* Viewport = GEditor->GetActiveViewport();
-		
-		FViewportClient* ViewportClient = Viewport->GetClient();
-
-		FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
-
-		FDeprecateSlateVector2D VPWindowPos = EditorViewportClient->GetEditorViewportWidget().Get()->GetCachedGeometry().GetAbsolutePosition();
-
-		FSceneViewFamilyContext ViewFamilyContext(FSceneViewFamily::ConstructionValues(
-			EditorViewportClient->Viewport,
-			EditorViewportClient->GetWorld()->Scene,
-			EditorViewportClient->EngineShowFlags)
-			.SetRealtimeUpdate(true));
-		
-		FSceneView* SceneView = EditorViewportClient->CalcSceneView(&ViewFamilyContext);
-		
-		FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
-		UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
-		
-		if (SceneView)
-		{
-			FVector2D PixelPoint;
-			SceneView->WorldToPixel(Actor->GetActorLocation(), PixelPoint);
-			ScreenPos.X = VPWindowPos.X + PixelPoint.X;
-			ScreenPos.Y = VPWindowPos.Y + PixelPoint.Y;
-			UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
-		}
-
-		UBangoActorIDComponent* ExistingIDComponent = Actor->FindComponentByClass<UBangoActorIDComponent>();
-		FName ExistingName = NAME_None;
-		
-		if (IsValid(ExistingIDComponent))
-		{
-			ExistingName = ExistingIDComponent->GetActorID();
-		}
-		
-		TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent = ExistingIDComponent;
-		TWeakObjectPtr<AActor> WeakActor = Actor;
-		
-		FToolUIActionChoice Action(FExecuteAction::CreateLambda([ScreenPos, ExistingName, WeakActor, WeakExistingIDComponent]()
-		{
-			TSharedRef<SBorder> TextEntry = SNew(SBorder)
-			.Padding(8)
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SBox)
-					.MinDesiredWidth(200)
-					.ToolTipText(LOCTEXT("SetActorID", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"))
-					[
-						SNew(SEditableTextBox)
-						.HintText(INVTEXT("Enter ID..."))
-						.Text_Lambda([WeakExistingIDComponent] ()
-						{
-							if (!WeakExistingIDComponent.IsValid())
-							{
-								return FText::GetEmpty();
-							}
-							
-							return FText::FromName(WeakExistingIDComponent->GetActorID());
-						})
-						.SelectAllTextWhenFocused(true)
-						.ClearKeyboardFocusOnCommit(true)
-						.OnTextCommitted_Lambda([WeakActor, WeakExistingIDComponent] (const FText& InText, ETextCommit::Type InCommitType)
-						{
-							TStrongObjectPtr<AActor> Actor = WeakActor.Pin();
-							TStrongObjectPtr<UBangoActorIDComponent> ExistingIDComponent = WeakExistingIDComponent.Pin();
-							
-							if (InCommitType != ETextCommit::OnEnter) return;
-				
-							FString NameCandidate = InText.ToString();
-							FName NewID;
-							FText OutErrorText;
-				
-							if (FName::IsValidXName(NameCandidate, INVALID_NAME_CHARACTERS, &OutErrorText))
-							{
-								NewID = FName(NameCandidate);
-							}
-							else
-							{
-								return;
-							}
-				
-							if (ExistingIDComponent.IsValid())
-							{
-								FScopedTransaction T(LOCTEXT("EditActorID", "Edit Bango Actor ID")); // lol this doesn't work
-								ExistingIDComponent->SetActorID(FName(NewID));
-							}
-							else
-							{
-								FScopedTransaction T(LOCTEXT("SetNewActorID", "Set New Bango Actor ID")); // lol this doesn't work
-					
-								static const FName ComponentName(TEXT("BangoActorID"));
-								FName FinalName = MakeUniqueObjectName(Actor.Get(), UBangoActorIDComponent::StaticClass(), ComponentName, EUniqueObjectNameOptions::None);
-								UBangoActorIDComponent* NewIDComponent = NewObject<UBangoActorIDComponent>(Actor.Get(), FinalName);
-					
-								if (IsValid(NewIDComponent))
-								{
-									NewIDComponent->SetActorID(NewID);
-						
-									Actor->Modify();
-									Actor->AddInstanceComponent(NewIDComponent);
-									NewIDComponent->RegisterComponent();
-
-									FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-									LevelEditor.BroadcastComponentsEdited();
-								}
-							}
-						})
-					]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(8, 0, 0, 0)
-				[
-					SNew(SButton)
-					.ToolTipText(LOCTEXT("RemoveActorID", "Remove Actor ID"))
-					.OnClicked_Lambda( [WeakActor, WeakExistingIDComponent] ()
-					{
-						TStrongObjectPtr<AActor> Actor = WeakActor.Pin();
-						TStrongObjectPtr<UBangoActorIDComponent> ExistingIDComponent = WeakExistingIDComponent.Pin();
-						
-						if (Actor)
-						{
-							FScopedTransaction T(LOCTEXT("RemoveActorID", "Remove Bango Actor ID"));
-							Actor->Modify();
-							
-							Actor->RemoveInstanceComponent(ExistingIDComponent.Get());
-							ExistingIDComponent->DestroyComponent();
-							
-							FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-							LevelEditor.BroadcastComponentsEdited();
-						}
-						
-						FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::Cleared);
-						
-						return FReply::Handled();
-					})
-					[
-						SNew(SImage)
-						.Image(FAppStyle::Get().GetBrush("Icons.X"))
-					]
-				]
-			];
-			
-			FSlateApplication::Get().PushMenu(
-				FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
-				FWidgetPath(),
-				TextEntry,
-				FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
-				FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup)
-			);
+			Section.AddMenuEntry(FBangoEditorCommands::Get().SetEditActorID, LOCTEXT("SetEditActorID_MenuEntryText", "Set/Edit Actor ID"), LOCTEXT("SetActorID_Description", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"), FSlateIcon("BangoEditorStyleSet", "Icon.Plunger"));
 		}));
-		
-		// TODO LOCTEXT
-		InSection.AddEntry(FToolMenuEntry::InitMenuEntry(FName("BangoSetActorID"), LOCTEXT("SetEditActorID_MenuEntryText", "Set/Edit Actor ID"), LOCTEXT("SetActorID", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"), FSlateIcon("BangoEditorStyleSet", "Icon.Plunger"), Action));
 	}));
+}
+
+void FBangoEditorMenus::SetEditActorID()
+{
+	UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+	TArray<AActor*> SelectedActors;
+		
+	if (EditorActorSubsystem)
+	{
+		SelectedActors = EditorActorSubsystem->GetSelectedLevelActors();
+			
+		if (SelectedActors.Num() != 1)
+		{
+			return;
+		}
+	}
+	else
+	{
+		return;
+	}
+
+	AActor* Actor = SelectedActors[0];
+
+	if (!IsValid(Actor))
+	{
+		return;
+	}
+
+	FViewport* Viewport = GEditor->GetActiveViewport();
+		
+	FViewportClient* ViewportClient = Viewport->GetClient();
+
+	FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
+
+	FDeprecateSlateVector2D VPWindowPos = EditorViewportClient->GetEditorViewportWidget().Get()->GetCachedGeometry().GetAbsolutePosition();
+
+	FSceneViewFamilyContext ViewFamilyContext(FSceneViewFamily::ConstructionValues(
+		EditorViewportClient->Viewport,
+		EditorViewportClient->GetWorld()->Scene,
+		EditorViewportClient->EngineShowFlags)
+		.SetRealtimeUpdate(true));
+		
+	FSceneView* SceneView = EditorViewportClient->CalcSceneView(&ViewFamilyContext);
+		
+	FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
+	UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+		
+	if (SceneView)
+	{
+		FVector2D PixelPoint;
+		SceneView->WorldToPixel(Actor->GetActorLocation() + 100 * FVector::UpVector, PixelPoint);
+		ScreenPos.X = VPWindowPos.X + PixelPoint.X - 100;
+		ScreenPos.Y = VPWindowPos.Y + PixelPoint.Y - 100;
+		UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+	}
+
+	UBangoActorIDComponent* ExistingIDComponent = Actor->FindComponentByClass<UBangoActorIDComponent>();
+	FName ExistingName = NAME_None;
+		
+	if (IsValid(ExistingIDComponent))
+	{
+		ExistingName = ExistingIDComponent->GetActorID();
+	}
+		
+	TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent = ExistingIDComponent;
+	TWeakObjectPtr<AActor> WeakActor = Actor;
+	
+	TSharedPtr<SEditableTextBox> InputBox = CreateInputBox(WeakActor, WeakExistingIDComponent);
+	TSharedPtr<SWidget> PopupWidget = GetIDEditingWidget(InputBox);
+	PopupWidget->SlatePrepass(1.0);
+	
+	FSlateApplication::Get().PushMenu(
+		FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
+		FWidgetPath(),
+		PopupWidget.ToSharedRef(),
+		FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
+		FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup), 
+		false
+	);
+	
+	FSlateApplication::Get().SetKeyboardFocus(InputBox);
+}
+
+bool FBangoEditorMenus::Can_SetEditActorID()
+{
+	UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
+	TArray<AActor*> SelectedActors;
+		
+	if (EditorActorSubsystem)
+	{
+		SelectedActors = EditorActorSubsystem->GetSelectedLevelActors();
+			
+		if (SelectedActors.Num() != 1)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+TSharedRef<SWidget> FBangoEditorMenus::GetIDEditingWidget(TSharedPtr<SEditableTextBox> InputBox)
+{
+	return SNew(SBorder)
+	.Padding(8)
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			GetTitleWidget()
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			//.AutoWidth()
+			[
+				SNew(SBox)
+				.MinDesiredWidth(200)
+				.ToolTipText(LOCTEXT("SetActorID", "Adds a Bango Actor ID Component onto the actor and sets the specified ID"))
+				[
+					InputBox.ToSharedRef()
+				]
+			]
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(4, 12, 4, 4)
+		[
+			SNew(SBox)
+			.MaxDesiredWidth(200)
+			[
+				SNew(STextBlock)
+				.WrappingPolicy(ETextWrappingPolicy::DefaultWrapping)
+				.AutoWrapText(true)
+				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
+				.Text(LOCTEXT("SetActorIDWidget_FooterDescription", "This will add an ID component to the actor.\n\nSetting it blank will remove an existing component."))
+			]
+		]
+	];
+}
+
+TSharedRef<SWidget> FBangoEditorMenus::GetTitleWidget()
+{
+	return SNew(SHorizontalBox)
+	+ SHorizontalBox::Slot()
+	.Padding(4, 0, 0, 4)
+	.VAlign(VAlign_Bottom)
+	[
+		SNew(STextBlock)
+		.Text(LOCTEXT("EditActorIDWidget_Title", "Set Actor ID:"))
+	]
+	+ SHorizontalBox::Slot()
+	.AutoWidth()
+	.VAlign(VAlign_Top)
+	[
+		SNew(SButton)
+		.ToolTipText(LOCTEXT("EditActorIDWidget_CancelButtonToolTip", "Cancel"))
+		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
+		.ContentPadding(4)
+		.OnClicked_Lambda( [] ()
+		{
+			FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::Cleared);
+			return FReply::Handled();
+		})
+		[
+			SNew(SImage)
+			.DesiredSizeOverride(FVector2D(8, 8))
+			.Image(FAppStyle::Get().GetBrush("Icons.X"))
+		]
+	];
+}
+
+UBangoActorIDComponent* FBangoEditorMenus::CreateIDComponent(TWeakObjectPtr<AActor> WeakActor)
+{
+	if (TStrongObjectPtr<AActor> Actor = WeakActor.Pin())
+	{				
+		static const FName ComponentName(TEXT("BangoActorID"));
+		FName FinalName = MakeUniqueObjectName(Actor.Get(), UBangoActorIDComponent::StaticClass(), ComponentName, EUniqueObjectNameOptions::None);
+		UBangoActorIDComponent* NewIDComponent = NewObject<UBangoActorIDComponent>(Actor.Get(), FinalName);
+				
+		if (IsValid(NewIDComponent))
+		{
+			Actor->Modify();
+			Actor->AddInstanceComponent(NewIDComponent);
+			NewIDComponent->RegisterComponent();
+
+			FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+			LevelEditor.BroadcastComponentsEdited();
+			
+			return NewIDComponent;
+		}
+	}
+	
+	return nullptr;
+}
+
+void FBangoEditorMenus::DestroyIDComponent(TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent)
+{
+	if (TStrongObjectPtr<AActor> Actor = WeakActor.Pin())
+	{
+		if (WeakExistingIDComponent.IsValid())
+		{
+			FScopedTransaction T(LOCTEXT("RemoveActorID", "Remove Bango Actor ID"));
+			
+			Actor->Modify();
+			Actor->RemoveInstanceComponent(WeakExistingIDComponent.Get());
+			WeakExistingIDComponent->DestroyComponent();
+					
+			FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+			LevelEditor.BroadcastComponentsEdited();
+		}
+	}
+				
+}
+
+void FBangoEditorMenus::OnTextCommitted_IDField(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakIDComponent)
+{
+	if (InCommitType != ETextCommit::OnEnter) return;
+					
+	TStrongObjectPtr<AActor> Actor = WeakActor.Pin();
+	TStrongObjectPtr<UBangoActorIDComponent> ExistingIDComponent = WeakIDComponent.Pin();
+					
+	FString NameCandidate = InText.ToString();
+	FName NewID;
+	FText OutErrorText;
+		
+	if (NameCandidate.Len() == 0 && WeakIDComponent.IsValid())
+	{
+		FScopedTransaction T(LOCTEXT("RemoveActorID", "Remove Bango Actor ID"));
+		Actor->Modify();
+				
+		Actor->RemoveInstanceComponent(ExistingIDComponent.Get());
+		ExistingIDComponent->DestroyComponent();
+				
+		FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		LevelEditor.BroadcastComponentsEdited();
+		return;
+	}
+					
+	if (FName::IsValidXName(NameCandidate, INVALID_NAME_CHARACTERS, &OutErrorText))
+	{
+		NewID = FName(NameCandidate);
+	}
+	else
+	{
+		return;
+	}
+		
+	if (ExistingIDComponent.IsValid())
+	{
+		FScopedTransaction T(LOCTEXT("EditActorID", "Edit Bango Actor ID")); // lol this doesn't work
+		ExistingIDComponent->SetActorID(FName(NewID));
+	}
+	else
+	{
+		FScopedTransaction T(LOCTEXT("SetNewActorID", "Set New Bango Actor ID")); // lol this doesn't work
+		UBangoActorIDComponent* NewComponent = CreateIDComponent(WeakActor);
+						
+		if (NewComponent)
+		{
+			NewComponent->SetActorID(NewID);
+		}
+	}
+}
+
+TSharedPtr<SEditableTextBox> FBangoEditorMenus::CreateInputBox(TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakIDComponent)
+{
+	return SNew(SEditableTextBox)
+	.HintText(INVTEXT("Enter ID..."))
+	.ToolTipText(LOCTEXT("EditActorID_ToolTip", "Clear to remove ID"))
+	.Text_Lambda([WeakIDComponent] ()
+	{
+		if (!WeakIDComponent.IsValid())
+		{
+			return FText::GetEmpty();
+		}
+		
+		return FText::FromName(WeakIDComponent->GetActorID());
+	})
+	.SelectAllTextWhenFocused(true)
+	.ClearKeyboardFocusOnCommit(true)
+	.OnTextCommitted_Static(&FBangoEditorMenus::OnTextCommitted_IDField, WeakActor, WeakIDComponent);
 }
 
 #undef LOCTEXT_NAMESPACE
