@@ -2,7 +2,7 @@
 
 #include "KismetCompiler.h"
 
-Bango_NodeBuilder::Builder::Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor)
+BangoNodeBuilder::Builder::Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor)
 {
 	UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::Setup - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
 	
@@ -24,7 +24,7 @@ Bango_NodeBuilder::Builder::Builder(class FKismetCompilerContext& InContext, UEd
 	bAwaitingSpawnFinish = true;
 }
 
-void Bango_NodeBuilder::Builder::FinishDeferredNodes(bool bLogUnconnectedPins)
+void BangoNodeBuilder::Builder::FinishDeferredNodes(bool bLogUnconnectedPins)
 {
 	UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::FinishSpawningAllNodes - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
 	
@@ -53,27 +53,27 @@ void Bango_NodeBuilder::Builder::FinishDeferredNodes(bool bLogUnconnectedPins)
 	bAwaitingSpawnFinish = false;
 }
 
-void Bango_NodeBuilder::Builder::MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+void BangoNodeBuilder::Builder::MoveExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
 {
 	*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
 }
 
-void Bango_NodeBuilder::Builder::CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
+void BangoNodeBuilder::Builder::CopyExternalConnection(UEdGraphPin* From, UEdGraphPin* To)
 {
 	*_bErrorBool &= _Compiler->MovePinLinksToIntermediate(*From, *To).CanSafeConnect();
 }
 
-void Bango_NodeBuilder::Builder::CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
+void BangoNodeBuilder::Builder::CreateConnection(UEdGraphPin* From, UEdGraphPin* To)
 {
 	*_bErrorBool &= _Schema->TryCreateConnection(From, To);
 }
 
-void Bango_NodeBuilder::Builder::SetDefaultValue(UEdGraphPin* Pin, FString& Value)
+void BangoNodeBuilder::Builder::SetDefaultValue(UEdGraphPin* Pin, FString& Value)
 {
 	_Schema->TrySetDefaultValue(*Pin, Value);
 }
 
-void Bango_NodeBuilder::Builder::SetDefaultObject(UEdGraphPin* Pin, UObject* Value)
+void BangoNodeBuilder::Builder::SetDefaultObject(UEdGraphPin* Pin, UObject* Value)
 {
 	_Schema->TrySetDefaultObject(*Pin, Value);
 }

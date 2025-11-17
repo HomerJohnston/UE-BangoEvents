@@ -44,7 +44,7 @@ public class Bango : ModuleRules
 				"RHI",
 				"RenderCore",
 
-				// ... add private dependencies that you statically link with here ...	
+				// ... add private dependencies that you statically link with here ...
 			}
 			);
 		
@@ -54,9 +54,9 @@ public class Bango : ModuleRules
 				new string[]
 				{
 					"UnrealEd",
-					"BlueprintGraph"
+					"EditorSubsystem",
 				}
-				);
+			);
 		}
 		
 		DynamicallyLoadedModuleNames.AddRange(

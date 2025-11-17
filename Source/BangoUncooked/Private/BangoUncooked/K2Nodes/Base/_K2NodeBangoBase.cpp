@@ -5,10 +5,15 @@
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-void UK2NodeBangoBase::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
+UK2Node_BangoBase::UK2Node_BangoBase()
+{
+	MenuSubcategory = FText::GetEmpty();
+}
+
+void UK2Node_BangoBase::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const
 {
 	UClass* Action = GetClass();
-
+	
 	if (ActionRegistrar.IsOpenForRegistration(Action))
 	{
 		UBlueprintNodeSpawner* Spawner = UBlueprintNodeSpawner::Create(Action);
@@ -18,32 +23,32 @@ void UK2NodeBangoBase::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionR
 	}
 }
 
-FText UK2NodeBangoBase::GetMenuCategory() const
+FText UK2Node_BangoBase::GetMenuCategory() const
 {
-	return LOCTEXT("RunScript_MenuCategory", "Bango|Scripting");
+	return FText::Join(INVTEXT("|"), INVTEXT("Bango"), MenuSubcategory);
 }
 
-bool UK2NodeBangoBase::IsLatentForMacros() const
+bool UK2Node_BangoBase::IsLatentForMacros() const
 {
 	return bIsLatent;
 }
 
-FName UK2NodeBangoBase::GetCornerIcon() const
+FName UK2Node_BangoBase::GetCornerIcon() const
 {
 	return (bIsLatent && !bHideLatentIcon) ? FName("Graph.Latent.LatentIcon") : NAME_None;
 }
 
-FText UK2NodeBangoBase::GetToolTipHeading() const
+FText UK2Node_BangoBase::GetToolTipHeading() const
 {
 	return (bIsLatent) ? LOCTEXT("LatentFunc", "Latent") : FText::GetEmpty();
 }
 
-bool UK2NodeBangoBase::ShouldShowNodeProperties() const
+bool UK2Node_BangoBase::ShouldShowNodeProperties() const
 {
-	return bShowShowNodeProperties;
+	return bShowNodeProperties;
 }
 
-FSlateIcon UK2NodeBangoBase::GetIconAndTint(FLinearColor& OutColor) const
+FSlateIcon UK2Node_BangoBase::GetIconAndTint(FLinearColor& OutColor) const
 {
 	//return Super::GetIconAndTint(OutColor);
 	
@@ -51,7 +56,7 @@ FSlateIcon UK2NodeBangoBase::GetIconAndTint(FLinearColor& OutColor) const
 	return Icon;
 }
 
-FLinearColor UK2NodeBangoBase::GetNodeTitleColor() const
+FLinearColor UK2Node_BangoBase::GetNodeTitleColor() const
 {
 	return FLinearColor::Black;
 }

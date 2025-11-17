@@ -101,12 +101,12 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	Bango_NodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
+	BangoNodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
 	
 	// -----------------
 	// Make nodes
 	
-	using namespace Bango_NodeBuilder;
+	using namespace BangoNodeBuilder;
 	auto Node_This =					Builder.WrapExistingNode<BangoRunScript>(this);
 	auto Node_Self =					Builder.MakeNode<SelfReference>(0, 2);
 	auto Node_CreateScriptObject =		Builder.MakeNode<CreateObject>(1, 1);
@@ -202,7 +202,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 
 	if (!bIsErrorFree)
 	{
-		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "K2Node_LoadAsset: Internal connection error. @@").ToString(), this);
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
 	}
 	
 	// All done!

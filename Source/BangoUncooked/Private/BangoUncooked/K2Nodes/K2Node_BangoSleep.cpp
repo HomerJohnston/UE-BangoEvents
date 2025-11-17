@@ -40,7 +40,7 @@ UK2Node_BangoSleep::UK2Node_BangoSleep()
 {
 	bIsLatent = true;
 	bHideLatentIcon = true;
-	bShowShowNodeProperties = true;
+	bShowNodeProperties = true;
 }
 
 void UK2Node_BangoSleep::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -106,12 +106,12 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	Bango_NodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
+	BangoNodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
 	
 	// -----------------
 	// Make nodes
 	
-	using namespace Bango_NodeBuilder;
+	using namespace BangoNodeBuilder;
 	auto Node_This =					Builder.WrapExistingNode<BangoSleep>(this);
 	auto Node_LaunchSleep = 			Builder.MakeNode<BangoLaunchSleep_Internal>(0, 1);
 	auto Node_SetLatentUUID =			Builder.MakeNode<AssignmentStatement>(1, 1);
@@ -263,7 +263,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	// Done!
 	if (!bIsErrorFree)
 	{
-		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "K2Node_LoadAsset: Internal connection error. @@").ToString(), this);
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
 	}
 	
 	// Disconnect ThisNode from the graph

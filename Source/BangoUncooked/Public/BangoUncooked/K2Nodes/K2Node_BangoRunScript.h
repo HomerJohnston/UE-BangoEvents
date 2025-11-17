@@ -13,7 +13,7 @@ class UBangoScriptObject;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDelayOutputPin);
 
 UCLASS(MinimalAPI, DisplayName = "Run Script")
-class UK2Node_BangoRunScript : public UK2NodeBangoBase
+class UK2Node_BangoRunScript : public UK2Node_BangoBase
 {
     GENERATED_BODY()
 	

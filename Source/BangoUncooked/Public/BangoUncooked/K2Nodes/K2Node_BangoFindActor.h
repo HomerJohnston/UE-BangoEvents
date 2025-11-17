@@ -7,7 +7,7 @@
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 UCLASS(MinimalAPI, DisplayName = "FindActor")
-class UK2Node_BangoFindActor : public UK2NodeBangoBase
+class UK2Node_BangoFindActor : public UK2Node_BangoBase
 {
 	GENERATED_BODY()
 

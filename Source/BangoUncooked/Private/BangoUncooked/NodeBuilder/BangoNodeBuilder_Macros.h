@@ -40,6 +40,8 @@
 #define FOR_EACH(M, ...) GET_MACRO(__VA_ARGS__, FOR_EACH_12, FOR_EACH_11, FOR_EACH_10, FOR_EACH_9, FOR_EACH_8, FOR_EACH_7, FOR_EACH_6, FOR_EACH_5, FOR_EACH_4, FOR_EACH_3, FOR_EACH_2, FOR_EACH_1)(M, __VA_ARGS__)
 
 #define MAKE_NODE_TYPE(NodeType, Name, USE_DEFERRED, ...)\
+namespace BangoNodeBuilder\
+{\
 	struct NodeType : public NodeWrapper<Name>\
 	{\
 		using NodeWrapper::NodeWrapper;\
@@ -52,7 +54,8 @@
 		FOR_EACH(DECL_PIN, __VA_ARGS__)\
 		\
 		void Construct() override;\
-	}\
+	};\
+}\
 	
 // ==============================================
 
@@ -98,7 +101,7 @@ struct NodeWrapper_Base
 	virtual UEdGraphNode* BaseNode() { return nullptr; }
 };
 
-namespace Bango_NodeBuilder
+namespace BangoNodeBuilder
 {
 	struct Builder
 	{

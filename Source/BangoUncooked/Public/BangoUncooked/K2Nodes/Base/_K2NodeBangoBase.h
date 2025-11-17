@@ -7,14 +7,20 @@
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 UCLASS(Abstract, MinimalAPI)
-class UK2NodeBangoBase : public UK2Node
+class UK2Node_BangoBase : public UK2Node
 {
 	GENERATED_BODY()
 
+public:
+	UK2Node_BangoBase();
+	
 protected:
 	bool bIsLatent = false;
 	bool bHideLatentIcon = false;
-	bool bShowShowNodeProperties = false;
+	bool bShowNodeProperties = false;
+	
+	// Override this in child nodes to change the subcategory (all custom K2 Nodes will be in Bango|MenuSubcategory)
+	FText MenuSubcategory;
 	
 public:
 	void GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegistrar) const override;

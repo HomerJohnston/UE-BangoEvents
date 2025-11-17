@@ -9,7 +9,7 @@
 
 UK2Node_BangoFindActor::UK2Node_BangoFindActor()
 {
-	bShowShowNodeProperties = true;
+	bShowNodeProperties = true;
 }
 
 void UK2Node_BangoFindActor::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -52,7 +52,7 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	namespace NB = Bango_NodeBuilder;
+	namespace NB = BangoNodeBuilder;
 	NB::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
 	
 	// -----------------
@@ -98,7 +98,7 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// Done!
 	if (!bIsErrorFree)
 	{
-		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "K2Node_LoadAsset: Internal connection error. @@").ToString(), this);
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
 	}
 	
 	// Disconnect ThisNode from the graph

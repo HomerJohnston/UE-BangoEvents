@@ -16,7 +16,7 @@
 
 TSharedPtr<class SGraphNode> FGraphPanelNodeFactory_Bango::CreateNode(class UEdGraphNode* Node) const
 {
-    if (!Node->IsA<UK2NodeBangoBase>())
+    if (!Node->IsA<UK2Node_BangoBase>())
     {
         return nullptr;
     }

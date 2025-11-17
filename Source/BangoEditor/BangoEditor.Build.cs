@@ -9,18 +9,20 @@ public class BangoEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core", "Kismet",
             }
         );
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
+                "Bango",
+                "BangoUncooked",
+
                 "CoreUObject",
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "Bango",
                 "DeveloperSettings",
                 "Projects",
                 "InputCore",
@@ -28,8 +30,9 @@ public class BangoEditor : ModuleRules
                 "BlueprintGraph",
                 "GraphEditor",
                 "ToolMenus",
-                "BangoUncooked",
-                "KismetWidgets"
+                "KismetWidgets",
+                "DataValidation",
+                "EditorSubsystem",
             }
         );
     }
