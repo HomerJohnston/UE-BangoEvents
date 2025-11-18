@@ -12,6 +12,7 @@
 #include "Engine/World.h"
 #include "HAL/PlatformCrt.h"
 #include "K2Node_CallFunction.h"
+#include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetDebugUtilities.h"
 #include "Misc/AssertionMacros.h"
@@ -43,9 +44,18 @@ FBangoKismetNodeInfoContext::FBangoKismetNodeInfoContext(UEdGraph* SourceGraph)
 
 			TSet<UObject*> LatentContextObjects;
 
+			// Find all Bango nodes (sometimes these get expanded into CallFunctions, but sometimes not, it seems random??)
+			TArray<UK2Node_BangoBase*> BangoNodes;
+			SourceGraph->GetNodesOfClass<UK2Node_BangoBase>(BangoNodes);
+			
+			for (UK2Node_BangoBase const* BangoNode : BangoNodes)
+			{
+				LatentContextObjects.Add(ActiveObjectBeingDebugged);
+			}
+
+			// Find all latent CallFunction nodes
 			TArray<UK2Node_CallFunction*> FunctionNodes;
 			SourceGraph->GetNodesOfClass<UK2Node_CallFunction>(FunctionNodes);
-			// collect all the world context objects for all of the graph's latent nodes
 			for (UK2Node_CallFunction const* FunctionNode : FunctionNodes)
 			{
 				UFunction* Function = FunctionNode->GetTargetFunction();
@@ -74,7 +84,8 @@ FBangoKismetNodeInfoContext::FBangoKismetNodeInfoContext(UEdGraph* SourceGraph)
 				
 				LatentContextObjects.Add(NodeWorldContext);
 			}
-
+			
+			// Build useful latent info for querying
 			for (UObject* ContextObject : LatentContextObjects)
 			{
 				if (UWorld* World = GEngine->GetWorldFromContextObject(ContextObject, EGetWorldErrorMode::ReturnNull))

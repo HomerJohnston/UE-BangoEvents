@@ -192,6 +192,7 @@ void FBangoEditorStyle::SetupStyles()
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Hourglass,						"NodeIcons/Icon_Hourglass", ".svg",				FVector2f(20, 20), BangoColor::White);
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_PauseHand,						"NodeIcons/Icon_PauseHand", ".svg",				FVector2f(20, 20), BangoColor::White);
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Plunger,						"NodeIcons/Icon_Plunger", ".svg",				FVector2f(20, 20), BangoColor::White);
+	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_Plunger_Dim,					"NodeIcons/Icon_Plunger", ".svg",				FVector2f(20, 20), BangoColor::White_Trans);
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_PortalIn,						"NodeIcons/Icon_PortalIn", ".svg",				FVector2f(20, 20), BangoColor::White);
 	BANGO_DEFINE_BRUSH(FSlateVectorImageBrush,	Icon_PortalOut,						"NodeIcons/Icon_PortalOut", ".svg",				FVector2f(20, 20), BangoColor::White);
 	

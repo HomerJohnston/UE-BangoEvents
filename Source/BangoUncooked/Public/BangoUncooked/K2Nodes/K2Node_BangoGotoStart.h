@@ -37,8 +37,6 @@ public:
 	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
 	void ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph) override;
-	
-	void ConnectToDestination(UEdGraphPin* Destination);
 };
 
 using namespace BangoNodeBuilder;

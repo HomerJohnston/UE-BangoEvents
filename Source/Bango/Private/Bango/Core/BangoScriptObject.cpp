@@ -5,6 +5,7 @@
 #include "Bango/Editor/BangoScriptValidationHelper.h"
 #include "Bango/LatentActions/BangoSleepAction.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
+#include "Bango/Utility/BangoLog.h"
 #include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
@@ -66,11 +67,18 @@ int32 UBangoScriptObject::LaunchSleep_Internal(const UObject* WorldContextObject
         }
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("Unknown error running LaunchSleep_Internal!"));
     return 0;
 }
 
 void UBangoScriptObject::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
+    if (ActionUUID == 0)
+    {
+        UE_LOG(LogBango, Warning, TEXT("CancelSleep_Internal called with ActionUUID {%i}"), ActionUUID);
+        return;
+    }
+    
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
     {
         FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
@@ -85,6 +93,12 @@ void UBangoScriptObject::CancelSleep_Internal(UObject* WorldContextObject, int32
 
 void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
+    if (ActionUUID == 0)
+    {
+        UE_LOG(LogBango, Warning, TEXT("SkipSleep_Internal called with ActionUUID {%i}"), ActionUUID);
+        return;
+    }
+    
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
     {
         FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
@@ -98,7 +112,13 @@ void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 A
 }
 
 void UBangoScriptObject::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
+{
+    if (ActionUUID == 0)
     {
+        UE_LOG(LogBango, Warning, TEXT("SetSleepPause_Internal called with ActionUUID {%i}"), ActionUUID);
+        return;
+    }
+    
     if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
     {
         FLatentActionManager& LatentActionManager = World->GetLatentActionManager();

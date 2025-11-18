@@ -2,10 +2,12 @@
 
 #include "IDocumentation.h"
 #include "SCommentBubble.h"
+#include "SGraphNode_BangoGotoDestination.h"
 #include "SGraphPanel.h"
 #include "SLevelOfDetailBranchNode.h"
 #include "TutorialMetaData.h"
 #include "BangoEditor/BangoEditorStyle.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 #include "Engine/Font.h"
 #include "Fonts/FontMeasure.h"
@@ -364,6 +366,57 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoGotoStart::GetOverlayWidgets(bool bSe
 UK2Node_BangoGotoStart* SGraphNode_BangoGotoStart::GetGotoStartNode() const
 {
 	return Cast<UK2Node_BangoGotoStart>(GetNodeObj());
+}
+
+int32 SGraphNode_BangoGotoStart::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry,	const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
+{
+	if (IsSelectedExclusively())
+	{
+		//if (!GEditor->IsPlaySessionInProgress())
+		//{
+			const auto& GraphChildren = GetOwnerPanel()->GetChildren();
+						
+			for (int32 i = 0; i < GraphChildren->Num(); ++i)
+			{
+				TSharedRef<SWidget> ChildWidget = GraphChildren->GetChildAt(i);
+				
+				if (ChildWidget->GetTypeAsString() == TEXT("SGraphNode_BangoGotoDestination"))
+				{
+					TSharedPtr<SGraphNode_BangoGotoDestination> Other = StaticCastSharedRef<SGraphNode_BangoGotoDestination>(ChildWidget);
+					
+					if (GetGotoStartNode()->GetRerouteName() == Other->GetGotoDestinationNode()->GetRerouteName())
+					{
+						TArray<FVector2f> Points;
+						
+						FVector2f Start = { AllottedGeometry.GetAbsoluteSize().X * 0.5f, AllottedGeometry.GetAbsoluteSize().Y * 0.5f };
+						FVector2f End = Other->GetPosition2f() - this->GetPosition2f() + FVector2f(Other->GetPaintSpaceGeometry().GetAbsoluteSize().X * 0.5f, Other->GetPaintSpaceGeometry().GetAbsoluteSize().Y * 0.5f);
+						
+						FVector2f Dir = (End - Start).GetSafeNormal(30000.0f);
+						
+						if (Dir.IsZero())
+						{
+							continue;
+						}
+						
+						Start = Start + 80.0f * Dir;
+						End = End - 80.0f * Dir;
+						
+						FSlateDrawElement::MakeLines
+						(
+							OutDrawElements,
+							LayerId++,
+							AllottedGeometry.ToPaintGeometry(),
+							{ Start, End },
+							ESlateDrawEffect::None,
+							FLinearColor::Green * FLinearColor::Gray
+						);
+					}
+				}
+			}	
+		//}
+	}
+	
+	return SGraphNodeK2Base::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
 }
 
 #undef LOCTEXT_NAMESPACE

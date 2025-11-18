@@ -222,7 +222,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 	{
 		ConditionExecFlow.Add(Node_PauseSleep.Exec);
 		Builder.CreateConnection(Node_ActionUUID.Variable, Node_PauseSleep.ActionUUID);
-		
+
 		if (Node_This.PauseCondition)
 		{
 			Builder.CopyExternalConnection(Node_This.PauseCondition, Node_PauseSleep.Paused);
@@ -272,7 +272,7 @@ void UK2Node_BangoSleep::ExpandNode(class FKismetCompilerContext& Compiler, UEdG
 
 FText UK2Node_BangoSleep::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-    return LOCTEXT("Sleep_NodeTitle", "Sleep");
+    return LOCTEXT("Sleep_NodeTitle", "Wait");
 }
 
 FLinearColor UK2Node_BangoSleep::GetNodeTitleColor() const

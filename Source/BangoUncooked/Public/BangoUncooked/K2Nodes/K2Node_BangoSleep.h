@@ -7,7 +7,7 @@ class UK2Node_TemporaryVariable;
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-UCLASS(MinimalAPI, DisplayName = "Sleep")
+UCLASS(MinimalAPI, DisplayName = "Wait")
 class UK2Node_BangoSleep : public UK2Node_BangoBase
 {
 	GENERATED_BODY()

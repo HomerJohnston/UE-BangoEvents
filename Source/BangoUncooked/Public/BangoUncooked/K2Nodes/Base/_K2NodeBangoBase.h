@@ -38,6 +38,8 @@ public:
 	FSlateIcon GetIconAndTint(FLinearColor& OutColor) const override;
 	
 	FLinearColor GetNodeTitleColor() const override;
+	
+	FLinearColor GetNodeTitleTextColor() const override;
 };
 
 #undef LOCTEXT_NAMESPACE

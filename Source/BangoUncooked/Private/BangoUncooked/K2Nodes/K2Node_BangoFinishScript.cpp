@@ -1,8 +1,14 @@
 ﻿#include "BangoUncooked/K2Nodes/K2Node_BangoFinishScript.h"
 
+#include "GraphEditorSettings.h"
 #include "BangoUncooked/K2Nodes/Base/_BangoMenuSubcategories.h"
 
 #define LOCTEXT_NAMESPACE "BangoUncooked"
+
+namespace BangoNodeBuilder
+{
+	struct BangoFinishScript;
+}
 
 UK2Node_BangoFinishScript::UK2Node_BangoFinishScript()
 {
@@ -19,9 +25,48 @@ FText UK2Node_BangoFinishScript::GetNodeTitle(ENodeTitleType::Type TitleType) co
 	return LOCTEXT("K2Node_BangoFinishScript_NodeTitle", "Finish Script");
 }
 
+FLinearColor UK2Node_BangoFinishScript::GetNodeTitleColor() const
+{
+	return 0.5f * GetDefault<UGraphEditorSettings>()->EventNodeTitleColor;
+}
+
 void UK2Node_BangoFinishScript::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
 {
 	Super::ExpandNode(Compiler, SourceGraph);
+
+	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
+	bool bIsErrorFree = true;
+
+	namespace NB = BangoNodeBuilder;
+	NB::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
+	
+	// -----------------
+	// Make nodes
+	
+	auto Node_This =					Builder.WrapExistingNode<NB::BangoFinishScript>(this);
+	auto Node_CallFunction =			Builder.MakeNode<NB::CallFunction>(0, 0);
+	// -----------------
+	// Post-setup
+
+	FString UniqueID = *Compiler.GetGuid(this);
+	
+	Node_CallFunction->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, Finish)));
+	
+	Builder.FinishDeferredNodes();
+	
+	// -----------------
+	// Make connections
+
+	Builder.CopyExternalConnection(Node_This.Exec, Node_CallFunction.Exec);
+	
+	// Done!
+	if (!bIsErrorFree)
+	{
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
+	}
+	
+	// Disconnect ThisNode from the graph
+	BreakAllNodeLinks();
 }
 
 #undef LOCTEXT_NAMESPACE

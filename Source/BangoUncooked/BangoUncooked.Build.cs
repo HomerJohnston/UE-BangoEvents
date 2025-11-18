@@ -27,7 +27,8 @@ public class BangoUncooked : ModuleRules
                 "UnrealEd",
                 "KismetCompiler",
                 "KISMET",
-                "EditorSubsystem"
+                "EditorSubsystem",
+                "GraphEditor"
             }
         );
     }

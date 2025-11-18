@@ -92,10 +92,4 @@ void UK2Node_BangoGotoStart::ExpandNode(class FKismetCompilerContext& Compiler, 
 	BreakAllNodeLinks();
 }
 
-void UK2Node_BangoGotoStart::ConnectToDestination(UEdGraphPin* Destination)
-{
-	// We can't actually make connections from the far side because this node has not been expanded yet. Stash the things we're going to connect to so we can do it in our own expansion.
-	RequestedDestinations.Add(Destination);
-}
-
 #undef LOCTEXT_NAMESPACE

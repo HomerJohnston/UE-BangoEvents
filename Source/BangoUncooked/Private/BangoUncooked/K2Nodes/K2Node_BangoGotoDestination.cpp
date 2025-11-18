@@ -21,7 +21,7 @@ void UK2Node_BangoGotoDestination::AllocateDefaultPins()
 
 FText UK2Node_BangoGotoDestination::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return INVTEXT("Goto");
+	return INVTEXT("From");
 }
 
 void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
@@ -39,7 +39,6 @@ void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Comp
 	
 	//using namespace Bango_NodeBuilder;
 	auto Node_This =					Builder.WrapExistingNode<NB::BangoGotoDestination>(this);
-	//auto Node_Knot =					Builder.MakeNode<NB::Knot>(0, 0);
 	auto Node_Sequence =				Builder.MakeNode<NB::ExecutionSequence>(1, 0);
 	
 	// -----------------
@@ -52,6 +51,8 @@ void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Comp
 	// -----------------
 	// Make connections
 
+	bool bFoundConnection = false;
+	
 	if (!Node_This.Exec->HasAnyConnections())
 	{
 		// We haven't been wired up yet. Let's see if we can do it ourselves?
@@ -62,17 +63,25 @@ void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Comp
 			{
 				if (SourceNode->GetRerouteName() == this->GetRerouteName())
 				{
-					//SourceNode->ConnectToDestination(Node_Sequence.Exec);
-					SourceNode->ConnectToDestination(Node_This.Exec);
+					if (bFoundConnection)
+					{
+						bIsErrorFree = false;
+						Compiler.MessageLog.Error(TEXT("Check your GOTO nodes; there is more than one source node sharing the same name."));
+						break;
+					}
+					
+					bFoundConnection = true;
 				}
 			} 
 		}
 	}
 	
+	// We replace ourselves with a Sequence node because it's easy and I am not going to be alive forever
 	Builder.MoveExternalConnection(Node_This.Exec, Node_Sequence.Exec);
 	Builder.MoveExternalConnection(Node_This.Then, Node_Sequence->GetThenPinGivenIndex(0));
 	
-	ExpandedExecPin = Node_This.Exec; //Node_Knot.InputPin;
+	// This will help tell GotoStart nodes to hook onto the sequence exec pin instead of our node pin
+	ExpandedExecPin = Node_Sequence.Exec; //Node_Knot.InputPin;
 	
 	// Done!
 	if (!bIsErrorFree)

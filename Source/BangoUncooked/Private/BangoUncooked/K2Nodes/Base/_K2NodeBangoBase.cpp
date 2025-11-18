@@ -52,13 +52,20 @@ FSlateIcon UK2Node_BangoBase::GetIconAndTint(FLinearColor& OutColor) const
 {
 	//return Super::GetIconAndTint(OutColor);
 	
-	static const FSlateIcon Icon = FSlateIcon("BangoEditorStyleSet", "Icon.Plunger");
-	return Icon;
+	return FSlateIcon();
+	
+	//static const FSlateIcon Icon = FSlateIcon("BangoEditorStyleSet", "Icon.Plunger_Dim");
+	//return Icon;
 }
 
 FLinearColor UK2Node_BangoBase::GetNodeTitleColor() const
 {
 	return FLinearColor::Black;
+}
+
+FLinearColor UK2Node_BangoBase::GetNodeTitleTextColor() const
+{
+	return FLinearColor::Gray;
 }
 
 #undef LOCTEXT_NAMEPSACE

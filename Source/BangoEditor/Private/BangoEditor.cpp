@@ -6,6 +6,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Core/BangoScriptObject.h"
+#include "BangoEditor/BangoColor.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoEditor/Commands/BangoEditorActions.h"
 #include "BangoEditor/Customizations/BangoGraphPanelNodeFactory.h"
@@ -52,6 +53,7 @@ void FBangoEditorModule::StartupModule()
 	StyleSet->Set("ClassThumbnail.BangoAction", new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("ClassIcons/BangoAction.png")), FVector2D(256, 256)));
 	StyleSet->Set("ClassThumbnail.BangoTrigger", new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("ClassIcons/BangoTrigger.png")), FVector2D(256, 256)));
 	StyleSet->Set("Icon.Plunger", new FSlateVectorImageBrush(StyleSet->RootToContentDir(TEXT("NodeIcons/Icon_Plunger.svg")), FVector2D(16, 16)));
+	StyleSet->Set("Icon.Plunger_Dim", new FSlateVectorImageBrush(StyleSet->RootToContentDir(TEXT("NodeIcons/Icon_Plunger.svg")), FVector2D(16, 16), BangoColor::White_Glass));
 	
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 
