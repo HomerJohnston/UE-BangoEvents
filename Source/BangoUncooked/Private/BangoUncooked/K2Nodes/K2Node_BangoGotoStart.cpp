@@ -1,4 +1,4 @@
-﻿#include "BangoUncooked/K2Nodes/K2Node_BangoGotoSource.h"
+﻿#include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/Subsystems/BangoNamedReroutesHelper.h"
@@ -7,23 +7,27 @@ using namespace BangoNodeBuilder;
 
 #define LOCTEXT_NAMESPACE "BangoUncooked";
 
-UK2Node_BangoGotoSource::UK2Node_BangoGotoSource()
+UK2Node_BangoGotoStart::UK2Node_BangoGotoStart()
 {
 	bShowNodeProperties = true;
 }
 
-void UK2Node_BangoGotoSource::AllocateDefaultPins()
+void UK2Node_BangoGotoStart::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
-	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
+	
+	if (bShowOutExecPin)
+	{
+		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
+	}
 }
 
-FText UK2Node_BangoGotoSource::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UK2Node_BangoGotoStart::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return INVTEXT("Goto (Source)");
+	return INVTEXT("Goto");
 }
 
-void UK2Node_BangoGotoSource::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
+void UK2Node_BangoGotoStart::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
 {
 	Super::ExpandNode(Compiler, SourceGraph);
 
@@ -52,9 +56,12 @@ void UK2Node_BangoGotoSource::ExpandNode(class FKismetCompilerContext& Compiler,
 	// First input
 	Builder.CopyExternalConnection(Node_This.Exec, Node_Sequence.Exec);
 
-	if (Node_This.Then->HasAnyConnections())
+	if (bShowOutExecPin)
 	{
-		Builder.CopyExternalConnection(Node_This.Then, Node_Sequence->GetThenPinGivenIndex(ConnectionsMade++));
+		if (Node_This.Then->HasAnyConnections())
+		{
+			Builder.CopyExternalConnection(Node_This.Then, Node_Sequence->GetThenPinGivenIndex(ConnectionsMade++));
+		}	
 	}
 	
 	for (TObjectPtr<class UEdGraphNode> Node : SourceGraph->Nodes)
@@ -85,18 +92,10 @@ void UK2Node_BangoGotoSource::ExpandNode(class FKismetCompilerContext& Compiler,
 	BreakAllNodeLinks();
 }
 
-void UK2Node_BangoGotoSource::ConnectToDestination(UEdGraphPin* Destination)
+void UK2Node_BangoGotoStart::ConnectToDestination(UEdGraphPin* Destination)
 {
 	// We can't actually make connections from the far side because this node has not been expanded yet. Stash the things we're going to connect to so we can do it in our own expansion.
 	RequestedDestinations.Add(Destination);
-}
-
-// BangoNodeBuilder Wrapper
-void BangoGotoSource::Construct()
-{
-	AllocateDefaultPins();
-	Exec = _Node->GetExecPin();
-	Then = _Node->GetThenPin();
 }
 
 #undef LOCTEXT_NAMESPACE

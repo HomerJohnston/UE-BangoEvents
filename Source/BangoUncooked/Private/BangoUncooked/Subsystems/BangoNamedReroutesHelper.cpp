@@ -1,7 +1,7 @@
 ﻿#include "BangoNamedReroutesHelper.h"
 
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
-#include "BangoUncooked/K2Nodes/K2Node_BangoGotoSource.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 
 TMap<FName, TArray<UEdGraphPin*>> UBangoNamedReroutesHelper::DestinationConnections;
 TMap<FName, UEdGraphPin*> UBangoNamedReroutesHelper::SourceConnections;
@@ -50,7 +50,7 @@ void UBangoNamedReroutesHelper::OnBlueprintPreCompile(UBlueprint* Blueprint)
 	{
 		for (const TObjectPtr<class UEdGraphNode>& Node : Ubergraph->Nodes)
 		{
-			if (auto* GotoSource = Cast<UK2Node_BangoGotoSource>(Node))
+			if (auto* GotoSource = Cast<UK2Node_BangoGotoStart>(Node))
 			{
 				//GotoSources.Add(GotoSource);
 			}

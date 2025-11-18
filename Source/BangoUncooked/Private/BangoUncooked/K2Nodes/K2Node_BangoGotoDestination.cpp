@@ -1,6 +1,6 @@
 ﻿#include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 
-#include "BangoUncooked/K2Nodes/K2Node_BangoGotoSource.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 #include "BangoUncooked/Subsystems/BangoNamedReroutesHelper.h"
 
@@ -21,7 +21,7 @@ void UK2Node_BangoGotoDestination::AllocateDefaultPins()
 
 FText UK2Node_BangoGotoDestination::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return INVTEXT("Goto (Destination)");
+	return INVTEXT("Goto");
 }
 
 void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
@@ -39,7 +39,8 @@ void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Comp
 	
 	//using namespace Bango_NodeBuilder;
 	auto Node_This =					Builder.WrapExistingNode<NB::BangoGotoDestination>(this);
-	auto Node_Knot =					Builder.MakeNode<NB::Knot>(0, 0);
+	//auto Node_Knot =					Builder.MakeNode<NB::Knot>(0, 0);
+	auto Node_Sequence =				Builder.MakeNode<NB::ExecutionSequence>(1, 0);
 	
 	// -----------------
 	// Post-setup
@@ -57,20 +58,21 @@ void UK2Node_BangoGotoDestination::ExpandNode(class FKismetCompilerContext& Comp
 		
 		for (TObjectPtr<class UEdGraphNode> Node : SourceGraph->Nodes)
 		{
-			if (UK2Node_BangoGotoSource* SourceNode = Cast<UK2Node_BangoGotoSource>(Node))
+			if (UK2Node_BangoGotoStart* SourceNode = Cast<UK2Node_BangoGotoStart>(Node))
 			{
 				if (SourceNode->GetRerouteName() == this->GetRerouteName())
 				{
-					SourceNode->ConnectToDestination(Node_Knot.InputPin);
+					//SourceNode->ConnectToDestination(Node_Sequence.Exec);
+					SourceNode->ConnectToDestination(Node_This.Exec);
 				}
 			} 
 		}
 	}
 	
-	Builder.MoveExternalConnection(Node_This.Exec, Node_Knot.InputPin);
-	Builder.MoveExternalConnection(Node_This.Then, Node_Knot.OutputPin);
+	Builder.MoveExternalConnection(Node_This.Exec, Node_Sequence.Exec);
+	Builder.MoveExternalConnection(Node_This.Then, Node_Sequence->GetThenPinGivenIndex(0));
 	
-	ExpandedExecPin = Node_Knot.InputPin;
+	ExpandedExecPin = Node_This.Exec; //Node_Knot.InputPin;
 	
 	// Done!
 	if (!bIsErrorFree)

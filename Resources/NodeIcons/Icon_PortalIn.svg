@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="200mm"
+   height="200mm"
+   viewBox="0 0 200 200"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="Icon_Portal_In.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.193084"
+     inkscape:cx="85.911805"
+     inkscape:cy="552.35004"
+     inkscape:window-width="5120"
+     inkscape:window-height="2089"
+     inkscape:window-x="1192"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch13">
+      <stop
+         style="stop-color:#7e7e7e;stop-opacity:1;"
+         offset="0"
+         id="stop14" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <ellipse
+       style="fill:#7e7e7e;fill-opacity:1;stroke:none;stroke-width:10.0178;stroke-linecap:square;stroke-linejoin:bevel"
+       id="path1"
+       cx="134.99364"
+       cy="100"
+       rx="44.995857"
+       ry="100" />
+    <ellipse
+       style="fill:#7e7e7e;fill-opacity:1;stroke:#ffffff;stroke-width:9.78269;stroke-linecap:square;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="path1-5"
+       cx="135.27895"
+       cy="100"
+       rx="45.113514"
+       ry="95.108658" />
+    <ellipse
+       style="fill:#ffffff;fill-opacity:0.504373;stroke:#ffffff;stroke-width:10;stroke-linecap:square;stroke-linejoin:bevel;stroke-opacity:0"
+       id="path4"
+       cx="134.99364"
+       cy="100"
+       rx="17.71965"
+       ry="53.427135" />
+    <path
+       style="fill:#ffffff;fill-opacity:0;stroke:#ffffff;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       d="M 45.870227,43.818684 C 72.352383,70.779463 124.99377,71.74065 124.99377,71.74065"
+       id="use17"
+       inkscape:tile-x0="33.853243"
+       inkscape:tile-y0="25.978135" />
+    <path
+       style="fill:#ffffff;fill-opacity:0;stroke:#ffffff;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       d="M 45.870227,160.74709 C 72.352383,133.78632 124.99377,132.82513 124.99377,132.82513"
+       id="use18"
+       inkscape:tile-x0="33.853243"
+       inkscape:tile-y0="25.978135" />
+    <path
+       style="fill:#7e7e7e;fill-opacity:1;stroke:#ffffff;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="M 21.305781,100 H 123.23296"
+       id="path20" />
+  </g>
+</svg>

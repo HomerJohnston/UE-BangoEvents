@@ -6,14 +6,12 @@
 
 #include "K2Node_BangoGotoDestination.generated.h"
 
-using namespace BangoNodeBuilder;
-
 UCLASS(MinimalAPI, DisplayName = "Goto (Destination)")
 class UK2Node_BangoGotoDestination : public UK2Node_BangoBase
 {
 	GENERATED_BODY()
 	
-	friend class UK2Node_BangoGotoSource;
+	friend class UK2Node_BangoGotoStart;
 	
 public:
 	UK2Node_BangoGotoDestination();
@@ -40,9 +38,11 @@ public:
 	class FNodeHandlingFunctor* CreateNodeHandler(class FKismetCompilerContext& CompilerContext) const override;
 };
 
+using namespace BangoNodeBuilder;
+
 MAKE_NODE_TYPE(BangoGotoDestination, UK2Node_BangoGotoDestination, NORMAL_CONSTRUCTION, Exec, Then);	
 
-void BangoGotoDestination::Construct()
+inline void BangoGotoDestination::Construct()
 {
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();

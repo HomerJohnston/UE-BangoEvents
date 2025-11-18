@@ -3,7 +3,7 @@
 #include "K2Node.h"
 #include "KismetCompiler.h"
 
-#include "BangoNodeBuilder_Macros.h"
+#include "BangoUncooked/Private/BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 
 #include "K2Node_AssignmentStatement.h"
 #include "K2Node_CallFunction.h"

@@ -4,7 +4,7 @@
 
 #include "BangoNamedReroutesHelper.generated.h"
 
-class UK2Node_BangoGotoSource;
+class UK2Node_BangoGotoStart;
 class UK2Node_BangoGotoDestination;
 
 UCLASS()

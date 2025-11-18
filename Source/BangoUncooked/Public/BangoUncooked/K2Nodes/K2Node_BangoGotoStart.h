@@ -2,24 +2,27 @@
 
 #include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 
-#include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
+#include "BangoUncooked/Private/BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 
-#include "K2Node_BangoGotoSource.generated.h"
+#include "K2Node_BangoGotoStart.generated.h"
 
 
 UCLASS(MinimalAPI, DisplayName = "Goto (Source)")
-class UK2Node_BangoGotoSource : public UK2Node_BangoBase
+class UK2Node_BangoGotoStart : public UK2Node_BangoBase
 {
 	GENERATED_BODY()
 
 	friend class UK2Node_BangoGotoDestination;
 	
 public:
-	UK2Node_BangoGotoSource();
+	UK2Node_BangoGotoStart();
 	
 protected:
 	UPROPERTY(EditAnywhere)
 	FName Name;
+	
+	UPROPERTY(EditAnywhere)
+	bool bShowOutExecPin = false;
 	
 	int32 ConnectionsMade;
 	
@@ -38,4 +41,14 @@ public:
 	void ConnectToDestination(UEdGraphPin* Destination);
 };
 
-MAKE_NODE_TYPE(BangoGotoSource, UK2Node_BangoGotoSource, NORMAL_CONSTRUCTION, Exec, Then);
+using namespace BangoNodeBuilder;
+
+MAKE_NODE_TYPE(BangoGotoSource, UK2Node_BangoGotoStart, NORMAL_CONSTRUCTION, Exec, Then);
+
+// BangoNodeBuilder Wrapper
+inline void BangoGotoSource::Construct()
+{
+	AllocateDefaultPins();
+	Exec = _Node->GetExecPin();
+	Then = _Node->GetThenPin();
+}
