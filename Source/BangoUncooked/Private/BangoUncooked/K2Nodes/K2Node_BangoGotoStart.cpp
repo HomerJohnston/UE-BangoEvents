@@ -3,22 +3,27 @@
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/Subsystems/BangoNamedReroutesHelper.h"
 
-using namespace BangoNodeBuilder;
-
-#define LOCTEXT_NAMESPACE "BangoUncooked";
+#define LOCTEXT_NAMESPACE "BangoUncooked"
 
 UK2Node_BangoGotoStart::UK2Node_BangoGotoStart()
 {
 	bShowNodeProperties = true;
 }
 
+void UK2Node_BangoGotoStart::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+
 void UK2Node_BangoGotoStart::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
+
+	auto* OutExecPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
 	
-	if (bShowOutExecPin)
+	if (!bShowOutExecPin)
 	{
-		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
+		OutExecPin->bHidden = true;
 	}
 }
 
@@ -53,6 +58,8 @@ void UK2Node_BangoGotoStart::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// -----------------
 	// Make connections
 
+	ConnectionsMade = 0;
+	
 	// First input
 	Builder.CopyExternalConnection(Node_This.Exec, Node_Sequence.Exec);
 
@@ -66,7 +73,6 @@ void UK2Node_BangoGotoStart::ExpandNode(class FKismetCompilerContext& Compiler, 
 	
 	for (TObjectPtr<class UEdGraphNode> Node : SourceGraph->Nodes)
 	{
-		
 		if (UK2Node_BangoGotoDestination* DestinationNode = Cast<UK2Node_BangoGotoDestination>(Node))
 		{
 			if (DestinationNode->GetRerouteName() == this->GetRerouteName())
@@ -84,8 +90,7 @@ void UK2Node_BangoGotoStart::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// Done!
 	if (!bIsErrorFree)
 	{
-		// TODO why the fuck won't this compile?
-		//Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
 	}
 	
 	// Disconnect ThisNode from the graph

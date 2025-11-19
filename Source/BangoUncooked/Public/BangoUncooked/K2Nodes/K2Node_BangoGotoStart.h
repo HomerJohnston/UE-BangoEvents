@@ -23,13 +23,16 @@ protected:
 	
 	UPROPERTY(EditAnywhere)
 	bool bShowOutExecPin = false;
-	
+		
 	int32 ConnectionsMade;
 	
 	TArray<UEdGraphPin*> RequestedDestinations;
 	
 public:
 	FName GetRerouteName() const { return Name; }
+
+public:
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	
 public:
 	void AllocateDefaultPins() override;
