@@ -2,13 +2,16 @@
 
 #include "DelayAction.h"
 #include "Bango/Core/BangoScriptHandle.h"
-#include "Bango/Editor/BangoScriptValidationHelper.h"
 #include "Bango/LatentActions/BangoSleepAction.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Misc/DataValidation.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
+
+#if WITH_EDITOR
+DataValidationDelegate UBangoScriptObject::OnScriptRequestValidation;
+#endif
 
 FBangoScriptHandle UBangoScriptObject::Execute_Internal()
 {
@@ -139,11 +142,9 @@ float UBangoScriptObject::Rand(float Hi, float Lo)
 #if WITH_EDITOR
 EDataValidationResult UBangoScriptObject::IsDataValid(class FDataValidationContext& Context) const
 {
-    UBangoScriptValidationHelper* EditorSubsystem = GEditor->GetEditorSubsystem<UBangoScriptValidationHelper>();
-    
-    if (EditorSubsystem && EditorSubsystem->OnScriptRequestValidation.IsBound())
+    if (OnScriptRequestValidation.IsBound())
     {
-        return EditorSubsystem->OnScriptRequestValidation.Execute(Context, this);        
+        return OnScriptRequestValidation.Execute(Context, this);        
     }
     
     return UObject::IsDataValid(Context);

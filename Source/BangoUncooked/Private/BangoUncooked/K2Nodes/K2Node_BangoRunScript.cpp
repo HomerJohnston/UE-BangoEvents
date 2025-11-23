@@ -110,12 +110,12 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	auto Node_This =					Builder.WrapExistingNode<BangoRunScript>(this);
 	auto Node_Self =					Builder.MakeNode<SelfReference>(0, 2);
 	auto Node_CreateScriptObject =		Builder.MakeNode<CreateObject>(1, 1);
-	auto Node_IsScriptValid =			Builder.MakeNode<IsValidPure>(2, 0);
-	auto Node_IsValidBranch =			Builder.MakeNode<Branch>(3, 0);
+	auto Node_CastToBangoScript =		Builder.MakeNode<DynamicCast_Pure>(5, 5);
+	auto Node_Branch =					Builder.MakeNode<Branch>(3, 2);
+	auto Node_CreateDelegate =			Builder.MakeNode<CreateDelegate>(4, 1);
 	auto Node_AddDelegate =				Builder.MakeNode<AddDelegate>(4, 0);
 	auto Node_ExecuteScript =			Builder.MakeNode<BangoExecuteScript_Internal>(5, 1);
 	auto Node_ScriptCompletedEvent =	Builder.MakeNode<CustomEvent>(6, 1);
-	auto Node_CreateDelegate =			Builder.MakeNode<CreateDelegate>(4, 1);
 
 	// -----------------
 	// Post-setup
@@ -160,43 +160,56 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 		}
 	}
 
-	UClass* ObjectClass = Cast<UClass>(Node_CreateScriptObject.ObjectClass->DefaultObject);
+	UClass* ObjectClass = nullptr;
 	
-	if (ObjectClass)
+	if (!Node_This.Script->HasAnyConnections())
 	{
-		FProperty* OnFinishDelegate = ObjectClass->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate));
-		Node_AddDelegate->SetFromProperty(OnFinishDelegate, false, ObjectClass);
+		ObjectClass = Cast<UClass>(Node_CreateScriptObject.ObjectClass->DefaultObject);
 	}
 	
+	FProperty* OnFinishDelegate = UBangoScriptObject::StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate));
+	Node_AddDelegate->SetFromProperty(OnFinishDelegate, false, UBangoScriptObject::StaticClass());
+	
 	Node_ScriptCompletedEvent->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *Compiler.GetGuid(this));
-
+	
+	Node_CastToBangoScript->TargetType = UBangoScriptObject::StaticClass(); 
+	
 	Builder.FinishDeferredNodes(true);
 
 	// -----------------
 	// Make connections
 
-	if (ObjectClass)
+	// Exec paths
+	Builder.MoveExternalConnection(Node_This.Exec, Node_CreateScriptObject.Exec);
+	Builder.CreateConnection(Node_CreateScriptObject.Then, Node_Branch.Exec);
+	Builder.CreateConnection(Node_Branch.Then, Node_AddDelegate.Exec);
+	Builder.CreateConnection(Node_AddDelegate.Then, Node_ExecuteScript.Exec);
+	Builder.MoveExternalConnection(Node_This.Then, Node_ExecuteScript.Then);
+	Builder.MoveExternalConnection(Node_This.Completed, Node_ScriptCompletedEvent.Then);
+	
+	// Data paths
+	
+	Node_CreateDelegate->SetFunction(Node_ScriptCompletedEvent->CustomFunctionName);
+	
+	if (Node_This.Script->HasAnyConnections())
+	{
+		Builder.MoveExternalConnection(Node_This.Script, Node_CreateScriptObject.ObjectClass);
+	}
+	else if (ObjectClass)
 	{
 		Builder.CreateConnection(Node_AddDelegate.Delegate, Node_CreateDelegate.DelegateOut);
 	}
 	
-	Builder.CreateConnection(Node_Self.Self, Node_CreateDelegate.ObjectIn);
-	Node_CreateDelegate->SetFunction(Node_ScriptCompletedEvent->CustomFunctionName);
-	Builder.MoveExternalConnection(Node_This.Completed, Node_ScriptCompletedEvent.Then);
+	Builder.CreateConnection(Node_CastToBangoScript.CastedObject, Node_AddDelegate.Target);
 	
-	// Hook up exec pins
-	Builder.MoveExternalConnection(Node_This.Exec, Node_CreateScriptObject.Exec);
-	Builder.CreateConnection(Node_CreateScriptObject.Then, Node_IsValidBranch.Exec);
-	Builder.CreateConnection(Node_IsValidBranch.Then, Node_AddDelegate.Exec);
-	Builder.CreateConnection(Node_AddDelegate.Then, Node_ExecuteScript.Exec);
-	Builder.MoveExternalConnection(Node_This.Then, Node_ExecuteScript.Then);
 
-	// Hook up data pins
-	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_IsScriptValid.Object);
-	Builder.CreateConnection(Node_IsScriptValid.Result, Node_IsValidBranch.Condition);
-	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_ExecuteScript.Target);
-	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_AddDelegate.Target);
-
+	Builder.CreateConnection(Node_CreateScriptObject.CreatedObject, Node_CastToBangoScript.ObjectToCast);
+	Builder.CreateConnection(Node_CastToBangoScript.Success, Node_Branch.Condition);
+		
+	Builder.CreateConnection(Node_CastToBangoScript.CastedObject, Node_ExecuteScript.Target);
+	//Builder.CreateConnection(Node_CastToBangoScript.CastedObject, Node_AddDelegate.Target);
+	Builder.CreateConnection(Node_ScriptCompletedEvent.Delegate, Node_AddDelegate.Delegate);
+	
 	// Final output
 	Builder.MoveExternalConnection(Node_This.Handle, Node_ExecuteScript.Result);
 

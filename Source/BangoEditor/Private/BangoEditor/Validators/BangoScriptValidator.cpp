@@ -2,7 +2,6 @@
 
 #include "K2Node_Event.h"
 #include "Bango/Core/BangoScriptObject.h"
-#include "Bango/Editor/BangoScriptValidationHelper.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFinishScript.h"
 #include "Misc/DataValidation.h"
 
@@ -10,14 +9,7 @@
 
 void UBangoScriptValidator::Initialize(FSubsystemCollectionBase& Collection)
 {
-	Collection.InitializeDependency(UBangoScriptValidationHelper::StaticClass());
-	
-	auto* ValidationHelper = GEditor->GetEditorSubsystem<UBangoScriptValidationHelper>();
-	
-	if (ValidationHelper)
-	{
-		ValidationHelper->OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
-	}
+	UBangoScriptObject::OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
 }
 
 EDataValidationResult UBangoScriptValidator::IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptObject* ScriptObject)

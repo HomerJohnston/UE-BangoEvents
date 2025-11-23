@@ -59,6 +59,7 @@ void FBangoSleepAction::SetPaused(bool bInPaused)
 	bPaused = bInPaused;
 }
 
+#if WITH_EDITOR
 FString FBangoSleepAction::GetDescription() const
 {
 	static const FNumberFormattingOptions SleepTimeFormatOptions = FNumberFormattingOptions()
@@ -69,5 +70,6 @@ FString FBangoSleepAction::GetDescription() const
         FText::AsNumber(Duration - TimeRemaining, &SleepTimeFormatOptions),
 	    FText::AsNumber(Duration, &SleepTimeFormatOptions)).ToString();
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE

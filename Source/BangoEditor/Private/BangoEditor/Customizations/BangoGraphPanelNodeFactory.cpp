@@ -3,6 +3,7 @@
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoRunScript.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoSleep.h"
 #include "Nodes/SGraphNode_BangoSleep.h"

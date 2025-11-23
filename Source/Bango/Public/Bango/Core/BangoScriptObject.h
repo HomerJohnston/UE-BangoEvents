@@ -14,11 +14,12 @@ DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
 
 #define LOCTEXT_NAMESPACE "Bango"
 
+using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScriptObject* ScriptObject)>;
 /**
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class UBangoScriptObject : public UObject
+class BANGO_API UBangoScriptObject : public UObject
 {
     GENERATED_BODY()
 
@@ -45,8 +46,10 @@ public:
     UFUNCTION(BlueprintCallable, meta = (WorldContext = "Script", BlueprintProtected))
     static void Finish(UBangoScriptObject* Script);
 
+#if WITH_EDITOR
     bool ImplementsGetWorld() const override { return true; }
-
+#endif
+    
     UPROPERTY(BlueprintAssignable)
     FOnFinishDelegate OnFinishDelegate;
 
@@ -73,7 +76,14 @@ public:
     static UPARAM(DisplayName="Val") float Rand(float Hi, float Lo);
     
 #if WITH_EDITOR
+    
+    friend class UBangoScriptValidator;
+
     EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+    
+protected:
+    static DataValidationDelegate OnScriptRequestValidation;
+    
 #endif
 };
 

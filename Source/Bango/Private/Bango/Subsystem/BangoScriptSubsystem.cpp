@@ -85,10 +85,7 @@ void UBangoScriptSubsystem::Tick(float DeltaTime, ELevelTick TickType, ENamedThr
 	
 	for (auto [Handle, Script] : RunningScripts)
 	{
-		TSet<int32> UUIDSet;
-		Manager.GetActiveUUIDs(Script, /*out*/ UUIDSet);
-		
-		if (UUIDSet.Num() == 0)
+		if (Manager.GetNumActionsForObject(Script) == 0)
 		{
 			UE_LOG(LogBango, Display, TEXT("Idle script being automatically destroyed: {%s}"), *Script->GetName());
 			DeadScriptHandles.Add(Handle);
