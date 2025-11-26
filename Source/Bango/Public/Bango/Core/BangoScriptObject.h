@@ -33,6 +33,11 @@ protected:
     
     bool GetKeepAliveWhenIdle() const { return bPreventAutoDestroy; }
     
+    // Ghetto hack for cooking, how can I get rid of this? 
+public:
+    UPROPERTY()
+    FString Owner;
+    
 public:
     /** This is called by Bango. */ 
     UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
@@ -84,6 +89,7 @@ public:
 protected:
     static DataValidationDelegate OnScriptRequestValidation;
     
+    void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif
 };
 

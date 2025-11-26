@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BangoEditor/GPGEditorModuleBase.h"
 #include "Modules/ModuleManager.h"
 
 class FSlateStyleSet;
 
-class FBangoEditorModule : public IModuleInterface
+class FBangoEditorModule : public IModuleInterface, public FGPGEditorModuleBase
 {
 	// ============================================================================================
 	// SETTINGS

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Bango/Facts/BangoFactBase.h"
-#include "Bango/Subsystem/BangoFactsSubsystem.h"
+#include "Bango/Subsystem/BangoFactSubsystem.h"
 
 #include "BangoFact_int32.generated.h"
 
@@ -16,4 +16,4 @@ struct FBangoFact_int32 : public FBangoFactBase
 	int32 Value;
 };
 
-DEFINE_BANGO_FACT(int32);
+DEFINE_BANGO_FACT_GETSET(int32);

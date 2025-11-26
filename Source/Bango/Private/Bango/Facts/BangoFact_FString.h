@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Bango/Facts/BangoFactBase.h"
-#include "Bango/Subsystem/BangoFactsSubsystem.h"
+#include "Bango/Subsystem/BangoFactSubsystem.h"
 
 #include "BangoFact_FString.generated.h"
 
@@ -16,4 +16,4 @@ struct FBangoFact_FString : public FBangoFactBase
 	FString Value;
 };
 
-DEFINE_BANGO_FACT(FString);
+DEFINE_BANGO_FACT_GETSET(FString);

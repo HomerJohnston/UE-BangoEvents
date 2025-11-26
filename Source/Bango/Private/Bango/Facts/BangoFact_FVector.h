@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Bango/Facts/BangoFactBase.h"
-#include "Bango/Subsystem/BangoFactsSubsystem.h"
+#include "Bango/Subsystem/BangoFactSubsystem.h"
 
 #include "BangoFact_FVector.generated.h"
 
@@ -16,4 +16,4 @@ struct FBangoFact_FVector : public FBangoFactBase
 	FVector Value;
 };
 
-DEFINE_BANGO_FACT(FVector);
+DEFINE_BANGO_FACT_GETSET(FVector);

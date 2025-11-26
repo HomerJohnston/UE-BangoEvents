@@ -4,7 +4,7 @@
 #include "StructUtils/PropertyBag.h"
 #include "Bango/Facts/BangoFactBase.h"
 
-#include "BangoFactsSubsystem.generated.h"
+#include "BangoFactSubsystem.generated.h"
 
 UENUM()
 enum class EBangoSetFactResult : uint8
@@ -24,7 +24,7 @@ struct FBangoFactSet
 };
 
 UCLASS()
-class UBangoFactsSubsystem : public UGameInstanceSubsystem
+class UBangoFactSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 	
@@ -36,7 +36,7 @@ class UBangoFactsSubsystem : public UGameInstanceSubsystem
 	TMap<ULevel*, FBangoFactSet> Variables;
 	
 protected:
-	static UBangoFactsSubsystem* GetSubsystem(UObject* WorldContext);
+	static UBangoFactSubsystem* GetSubsystem(UObject* WorldContext);
 	
 public:
 	static TInstancedStruct<FBangoFactBase>* GetFact(FName Name, UObject* WorldContext);

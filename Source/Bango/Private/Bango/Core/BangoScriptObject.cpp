@@ -149,6 +149,15 @@ EDataValidationResult UBangoScriptObject::IsDataValid(class FDataValidationConte
     
     return UObject::IsDataValid(Context);
 }
+
+void UBangoScriptObject::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+{
+    Super::GetAssetRegistryTags(OutTags);
+    
+    FAssetRegistryTag Tag(TEXT("Test"), TEXT("TesT"), FAssetRegistryTag::TT_Alphabetical, FAssetRegistryTag::TD_None);
+    
+    OutTags.Add(Tag);
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE

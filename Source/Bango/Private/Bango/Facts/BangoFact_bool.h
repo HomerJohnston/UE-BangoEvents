@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Bango/Facts/BangoFactBase.h"
-#include "Bango/Subsystem/BangoFactsSubsystem.h"
+#include "Bango/Subsystem/BangoFactSubsystem.h"
 
 #include "BangoFact_bool.generated.h"
 
@@ -16,4 +16,4 @@ struct FBangoFact_bool : public FBangoFactBase
 	bool Value;
 };
 
-DEFINE_BANGO_FACT(bool);
+DEFINE_BANGO_FACT_GETSET(bool);

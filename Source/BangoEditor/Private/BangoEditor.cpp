@@ -12,6 +12,7 @@
 #include "BangoEditor/Customizations/BangoGraphPanelNodeFactory.h"
 #include "BangoEditor/Customizations/Details/BangoEventComponentDetailsCustomization.h"
 #include "BangoEditor/Customizations/Properties/ActionPropertyCustomization.h"
+#include "BangoEditor/Customizations/Properties/BangoScriptHolderCustomization.h"
 #include "BangoEditor/Customizations/Properties/TriggerPropertyCustomization.h"
 #include "BangoEditor/Menus/BangoEditorMenus.h"
 #include "Interfaces/IPluginManager.h"
@@ -22,12 +23,16 @@
 #include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Widgets/Input/STextEntryPopup.h"
 
+#include "Bango/BangoScriptHolder.h"
+#include "BangoEditor/Customizations/Properties/BangoScriptHolderCustomization.h"
+
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 TSharedPtr<FSlateStyleSet> FBangoEditorModule::StyleSet = nullptr;
 
 void FBangoEditorModule::StartupModule()
 {
+	AssetCategory = { "Bango", LOCTEXT("Bango", "Bango") };
 	static const FName PropertyEditor("PropertyEditor");
 	
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
@@ -84,11 +89,16 @@ void FBangoEditorModule::StartupModule()
 	FBangoEditorMenus::BindCommands();
 	
 	FBangoEditorMenus::BuildMenus();
+	
+	//////////////////
+	REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptHolder, FBangoScriptHolderCustomization);
+	
+	StartupModuleBase();
 }
 
 void FBangoEditorModule::ShutdownModule()
 {
-    
+    ShutdownModuleBase();
 }
 
 #undef LOCTEXT_NAMESPACE

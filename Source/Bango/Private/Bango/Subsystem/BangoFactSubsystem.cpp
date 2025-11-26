@@ -1,16 +1,16 @@
-﻿#include "Bango/Subsystem/BangoFactsSubsystem.h"
+﻿#include "Bango/Subsystem/BangoFactSubsystem.h"
 
 #include "Kismet/GameplayStatics.h"
 
 // ----------------------------------------------
 
-UBangoFactsSubsystem* UBangoFactsSubsystem::GetSubsystem(UObject* WorldContext)
+UBangoFactSubsystem* UBangoFactSubsystem::GetSubsystem(UObject* WorldContext)
 {
 	UGameInstance* GameInstance = UGameplayStatics::GetGameInstance(WorldContext);
 	
 	if (GameInstance)
 	{
-		return GameInstance->GetSubsystem<UBangoFactsSubsystem>();
+		return GameInstance->GetSubsystem<UBangoFactSubsystem>();
 	}
 	
 	UE_LOG(LogBango, Error, TEXT("Failed to find BangoFactsSubsystem!"));
@@ -19,7 +19,7 @@ UBangoFactsSubsystem* UBangoFactsSubsystem::GetSubsystem(UObject* WorldContext)
 }
 // ----------------------------------------------
 
-EBangoSetFactResult UBangoFactsSubsystem::SetFact(FName Name, TInstancedStruct<FBangoFactBase> NewValue, UObject* WorldContext)
+EBangoSetFactResult UBangoFactSubsystem::SetFact(FName Name, TInstancedStruct<FBangoFactBase> NewValue, UObject* WorldContext)
 {
 	if (!IsValid(WorldContext))
 	{
@@ -27,7 +27,7 @@ EBangoSetFactResult UBangoFactsSubsystem::SetFact(FName Name, TInstancedStruct<F
 		return EBangoSetFactResult::Failure;
 	}
 	
-	UBangoFactsSubsystem* Subsystem = GetSubsystem(WorldContext);
+	UBangoFactSubsystem* Subsystem = GetSubsystem(WorldContext);
 	
 	if (!Subsystem)
 	{
@@ -46,7 +46,7 @@ EBangoSetFactResult UBangoFactsSubsystem::SetFact(FName Name, TInstancedStruct<F
 
 // ----------------------------------------------
 
-TInstancedStruct<FBangoFactBase>* UBangoFactsSubsystem::GetFact(FName Name, UObject* WorldContext)
+TInstancedStruct<FBangoFactBase>* UBangoFactSubsystem::GetFact(FName Name, UObject* WorldContext)
 {
 	if (!IsValid(WorldContext))
 	{
@@ -54,7 +54,7 @@ TInstancedStruct<FBangoFactBase>* UBangoFactsSubsystem::GetFact(FName Name, UObj
 		return nullptr;
 	}
 	
-	UBangoFactsSubsystem* Subsystem = GetSubsystem(WorldContext);
+	UBangoFactSubsystem* Subsystem = GetSubsystem(WorldContext);
 	
 	if (!Subsystem)
 	{
