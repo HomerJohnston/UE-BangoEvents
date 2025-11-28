@@ -10,20 +10,61 @@ public:
 	
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance();
 	
+	// ------------------------------------------
+	
 protected:
 
+	TSharedPtr<IPropertyHandle> ScriptBlueprintProperty;
 	TSharedPtr<IPropertyHandle> ScriptClassProperty;
+	TWeakObjectPtr<UEdGraph> CurrentGraph;
+
+	TSharedPtr<SWidget> Box;
 	
+	TMulticastDelegate<void()> PostScriptCreated;
+	TMulticastDelegate<void()> PreScriptDeleted;
+	
+	// ------------------------------------------
 	
 	void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
-	
-	void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
+
+	int WidgetIndex_CreateDeleteScriptButtons() const;
 	
 	FReply OnClicked_CreateScript();
 	
+	FReply OnClicked_DeleteScript();
+	
+	// ------------------------------------------
+	
+	void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
+	
+	int WidgetIndex_GraphEditor() const;
+	
 	FReply OnClicked_EditScript();
+	
+	FReply OnClicked_EnlargeGraphView() const;
+	
+	TSharedRef<SWidget> GetPopoutGraphEditor() const;
+	
+	// ------------------------------------------
+
+	void OnPostScriptCreated();
+
+	void OnPreScriptDeleted();	
+
+	void UpdateBox();
+	
+	// ------------------------------------------
+
+	AActor* GetOwner() const;
+	
+	UBlueprint* GetBlueprint() const;
+	
+	UEdGraph* GetPrimaryEventGraph() const;
 	
 	TSubclassOf<UBangoScriptObject> GetScriptClass() const;
 	
 	UPackage* MakeLocalScriptPackage(UObject* Outer, FString& NewBPName);
+	
+	// ------------------------------------------
+	
 };

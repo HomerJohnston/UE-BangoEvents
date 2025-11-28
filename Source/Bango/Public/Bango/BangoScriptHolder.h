@@ -9,6 +9,11 @@ struct FBangoScriptHolder
 {
 	GENERATED_BODY()
 	
-	UPROPERTY()
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBlueprint> ScriptBlueprint;
+#endif
+	
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<UBangoScriptObject> ScriptClass;
 };
