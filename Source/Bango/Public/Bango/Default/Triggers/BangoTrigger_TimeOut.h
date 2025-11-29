@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include "Bango/BangoTrigger.h"
+#include "Bango/BangoTrigger_OLD.h"
 
 #include "BangoTrigger_TimeOut.generated.h"
 
 UCLASS(Abstract) // TODO not sure if I want this class
-class BANGO_API UBangoTrigger_TimeOut : public UBangoTrigger
+class BANGO_API UBangoTrigger_TimeOut : public UBangoTrigger_OLD
 {
 	GENERATED_BODY()
 	

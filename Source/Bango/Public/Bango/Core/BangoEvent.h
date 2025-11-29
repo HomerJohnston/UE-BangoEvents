@@ -203,13 +203,13 @@ public:
 	
 	/**  */
 	UFUNCTION()
-	void RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	void RespondToTriggerSignal(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal);
 
 	/**  */
-	void RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	void RespondToTriggerSignalDeferred(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal);
 
 	/**  */
-	virtual EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal);
+	virtual EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal);
 
 protected:
 	/**  */

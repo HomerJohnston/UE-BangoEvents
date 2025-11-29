@@ -8,7 +8,7 @@
 #include "Bango/Utility/BangoLog.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
-#include "Bango/BangoTrigger.h"
+#include "Bango/BangoTrigger_OLD.h"
 #include "Bango/BangoAction.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoEvent_Bang.h"
@@ -120,7 +120,7 @@ void UBangoEventComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		return;
 	}
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		Trigger->UnregisterEvent(Event);
 		Trigger->SetEnabled(false);
@@ -187,7 +187,7 @@ void UBangoEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 	{
 		case false:
 		{
-			for (UBangoTrigger* Trigger : Triggers)
+			for (UBangoTrigger_OLD* Trigger : Triggers)
 			{
 				Trigger->RegisterEvent(Event);
 				Trigger->SetEnabled(true);
@@ -201,7 +201,7 @@ void UBangoEventComponent::SetFrozen(bool bNewFrozen, bool bForceSet)
 		}
 		case true:
 		{
-			for (UBangoTrigger* Trigger : Triggers)
+			for (UBangoTrigger_OLD* Trigger : Triggers)
 			{
 				Trigger->UnregisterEvent(Event);
 				Trigger->SetEnabled(false);
@@ -390,7 +390,7 @@ void UBangoEventComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController* P
 	RETURN_IF(!GetDebugTextScreenLocation(Canvas, ScreenLocation, DistanceSqrd));
 	RETURN_IF(DistanceSqrd > FMath::Square(DevSettings->GetFarDisplayDistance()));
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		CONTINUE_IF(!IsValid(Trigger));
 		Trigger->DebugDraw(Canvas, PlayerController);
@@ -435,7 +435,7 @@ void UBangoEventComponent::DebugDrawGame(UCanvas* Canvas, APlayerController* Pla
 	RETURN_IF(!GetDebugTextScreenLocation(Canvas, ScreenLocation, DistanceSqrd));
 	RETURN_IF(DistanceSqrd > FMath::Square(DevSettings->GetFarDisplayDistance()));
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		CONTINUE_IF(!IsValid(Trigger));
 		Trigger->DebugDraw(Canvas, PlayerController);
@@ -634,7 +634,7 @@ TArray<FBangoDebugTextEntry> UBangoEventComponent::GetDebugDataString_Editor() c
 		Data.Add(FBangoDebugTextEntry("Triggers:", "NONE", ErrorTextColor));
 	}
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{			
@@ -697,7 +697,7 @@ TArray<FBangoDebugTextEntry> UBangoEventComponent::GetDebugDataString_Game() con
 		Data.Add(FBangoDebugTextEntry("Activations:", FString::Printf(TEXT("(%i/%i)"), ActivateCount, Event->GetActivateLimit())));
 	}
 	
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{			
@@ -739,7 +739,7 @@ bool UBangoEventComponent::HasInvalidData() const
 		return true;
 	}
 
-	for (UBangoTrigger* Trigger : Triggers)
+	for (UBangoTrigger_OLD* Trigger : Triggers)
 	{
 		if (!IsValid(Trigger))
 		{

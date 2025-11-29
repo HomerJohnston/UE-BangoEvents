@@ -8,7 +8,7 @@
 class UBangoPlungerComponent;
 struct FBangoTriggerSignal;
 class UBangoEvent;
-class UBangoTrigger;
+class UBangoTrigger_OLD;
 class UBangoAction;
 struct FBangoSignal;
 class FCanvasTextItem;
@@ -49,7 +49,7 @@ protected:
 
 	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)
-	TArray<TObjectPtr<UBangoTrigger>> Triggers;
+	TArray<TObjectPtr<UBangoTrigger_OLD>> Triggers;
 
 	/**  */
 	UPROPERTY(Category="Bango", EditAnywhere)

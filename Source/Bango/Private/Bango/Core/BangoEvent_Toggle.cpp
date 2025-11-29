@@ -35,7 +35,7 @@ void UBangoEvent_Toggle::Init()
 	}
 }
 
-EBangoEventSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+EBangoEventSignalType UBangoEvent_Toggle::RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal)
 {	
 	UE_LOG(LogBango, VeryVerbose, TEXT("UBangoEvent_Toggle receiving signal: %s from %s"), *StaticEnum<EBangoTriggerSignalType>()->GetValueAsString(Signal.Type), *Signal.Instigator->GetName());
 	

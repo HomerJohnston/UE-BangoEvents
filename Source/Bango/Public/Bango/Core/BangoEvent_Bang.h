@@ -44,7 +44,7 @@ public:
 	// METHODS
 	// ============================================================================================
 public:
-	EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal) override;
+	EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal) override;
 	
 	// ============================================================================================
 	// EDITOR SETTINGS

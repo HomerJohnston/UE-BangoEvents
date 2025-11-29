@@ -22,7 +22,7 @@ bool UBangoEvent_Bang::GetIsExpired()
 	return bExpired;
 }
 
-EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal)
 {
 	switch (Signal.Type)
 	{

@@ -75,7 +75,7 @@ public:
 	void Init() override;
 	
 public:
-	EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal) override;
+	EBangoEventSignalType RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal) override;
 
 protected:
 	bool Activate(UObject* Instigator);

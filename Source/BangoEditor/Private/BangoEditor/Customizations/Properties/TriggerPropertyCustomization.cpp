@@ -3,7 +3,7 @@
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailGroup.h"
-#include "Bango/BangoTrigger.h"
+#include "Bango/BangoTrigger_OLD.h"
 #include "Widgets/Colors/SColorBlock.h"
 
 FBangoTriggerPropertyCustomization::FBangoTriggerPropertyCustomization()

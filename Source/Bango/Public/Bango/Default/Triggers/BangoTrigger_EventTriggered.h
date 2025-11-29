@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Bango/BangoTrigger.h"
+#include "Bango/BangoTrigger_OLD.h"
 
 #include "BangoTrigger_EventTriggered.generated.h"
 
@@ -26,7 +26,7 @@ enum class EBangoEventSignalledRequirement : uint8
 };
 
 UCLASS(DisplayName="Event Triggered")
-class BANGO_API UBangoTrigger_EventTriggered : public UBangoTrigger
+class BANGO_API UBangoTrigger_EventTriggered : public UBangoTrigger_OLD
 {
 	GENERATED_BODY()
 	// ============================================================================================

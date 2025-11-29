@@ -8,7 +8,7 @@
 
 enum class EBangoEventSignalType : uint8;
 class UBangoEventComponent;
-class UBangoTrigger;
+class UBangoTrigger_OLD;
 struct FBangoEventSignal;
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnEventTrigger, UBangoEvent*, Event, UObject*, Instigator);

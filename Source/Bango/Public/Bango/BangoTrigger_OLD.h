@@ -2,12 +2,21 @@
 
 #pragma once
 
-#include "Bango/BangoTrigger_OLD.h"
+#include "Bango/Editor/BangoDebugTextEntry.h"
+#include "Bango/Core/BangoTriggerSignal.h"
 
-#include "BangoTrigger_ActorOverlap.generated.h"
+#include "BangoTrigger_OLD.generated.h"
 
-UCLASS(DisplayName="Actor Overlap")
-class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger_OLD
+class UBangoEvent;
+class UBangoEventComponent;
+class UBangoInstigatorFilter;
+struct FBangoDebugTextEntry;
+
+UDELEGATE()
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FBangoTriggerSignalDelegate, UBangoTrigger_OLD*, Trigger, FBangoTriggerSignal, Signal);
+
+UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
+class BANGO_API UBangoTrigger_OLD : public UObject
 {
 	GENERATED_BODY()
 	
@@ -18,30 +27,11 @@ class BANGO_API UBangoTrigger_ActorOverlap : public UBangoTrigger_OLD
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
-
-private:
-	/** Signal to event upon beginning overlap. */
-	UPROPERTY(EditAnywhere)
-	EBangoTriggerSignalType OnBeginOverlap;
-
-	/** Signal to event upon ending overlap. */
-	UPROPERTY(EditAnywhere)
-	EBangoTriggerSignalType OnEndOverlap;
-
-	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseTargetComponent = false;
-
-	/** By default the event will listen for overlap events from all overlapping components on its actor. Use this to only listen for overlap events from a specific component. */ // TODO Note: only works on self actor, due to a bug in FComponentReference.
-	UPROPERTY(DisplayName = "Use Overlaps From Component", EditAnywhere, meta=(EditCondition = "bUseTargetComponent", UseComponentPicker))
-	FComponentReference TargetComponent;
+protected:
+	/** Filter for overlap events. */
+	UPROPERTY(Category = "Default", EditAnywhere, Instanced)
+	UBangoInstigatorFilter* InstigatorFilter;
 	
-	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
-	bool bUseTargetActor = false;
-	
-	/** By default the event will use itself as the source of overlap triggers. Use this to listen for overlap events from another actor instead. */
-	UPROPERTY(DisplayName = "Use Other Actor", EditAnywhere, meta=(EditCondition = "bUseTargetActor"))
-	AActor* TargetActor;
-
 	// -------------------------------------------------------------------
 	// Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -50,11 +40,6 @@ private:
 	// STATE
 	// ============================================================================================
 
-private:
-	TWeakObjectPtr<UPrimitiveComponent> SubscribedComponent = nullptr;
-	
-	TWeakObjectPtr<AActor> SubscribedActor = nullptr;
-
 	// -------------------------------------------------------------------
 	// State Getters/Setters
 	// -------------------------------------------------------------------
@@ -62,33 +47,51 @@ private:
 	// -------------------------------------------------------------------
 	// Delegates/Events
 	// -------------------------------------------------------------------
-
+private:
+	FBangoTriggerSignalDelegate TriggerSignal;
+	
 	// ============================================================================================
 	// METHODS
 	// ============================================================================================
-
 public:
-	virtual void Disable_Implementation() override;
+	/**  */
+	void SetEnabled(bool bEnabled);
+
+	/**  */
+	void RegisterEvent(UBangoEvent* Event);
+
+	/**  */
+	void UnregisterEvent(UBangoEvent* Event);
 	
-	virtual void Enable_Implementation() override;
+protected:
+	/** Set up logic to enable the trigger here (subscribe to world events, start running timers or ticking logic, etc). */
+	UFUNCTION(BlueprintNativeEvent)
+	void Enable();
+
+	/** Set up logic to disable the trigger here (unsubscribe to world events, stop running timers or ticking logic, etc). */
+	UFUNCTION(BlueprintNativeEvent)
+	void Disable();
+
+	void SendSignal(FBangoTriggerSignal Signal);
 
 protected:
-	UFUNCTION()
-	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
-	UFUNCTION()
-	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-	
-	UFUNCTION()
-	void OnActorBeginOverlap(AActor* OverlapActor, AActor* InstigatorActor);
+	UBangoEventComponent* GetEventComponent();
 
-	UFUNCTION()
-	void OnActorEndOverlap(AActor* OverlapActor, AActor* InstigatorActor);
-	
+	AActor* GetActor();
+
 	// ============================================================================================
 	// EDITOR SETTINGS
 	// ============================================================================================
 
+	#if WITH_EDITORONLY_DATA
+private:
+	/** Set to override the editor display name. */
+	UPROPERTY(Category="Advanced", DisplayName="Display Name Override", EditAnywhere, meta=(EditCondition="bUseDisplayName", DisplayPriority=-1))
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, meta=(InlineEditConditionToggle))
+	bool bUseDisplayName = false;
+#endif
 	// -------------------------------------------------------------------
 	// Editor Settings Getters/Setters
 	// -------------------------------------------------------------------
@@ -104,10 +107,17 @@ protected:
 	// ============================================================================================
 	// EDITOR METHODS
 	// ============================================================================================
-#if WITH_EDITOR
+
+#if WITH_EDITOR	
 public:
-	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	
-	bool HasValidSetup() override;
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugDraw(UCanvas* Canvas, APlayerController* Cont);
+
+	UFUNCTION(BlueprintCallable)
+	FText GetDisplayName() const;
+
+	virtual void AppendDebugData(TArray<FBangoDebugTextEntry>& Data);
+
+	virtual bool HasValidSetup();
 #endif
 };

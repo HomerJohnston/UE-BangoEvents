@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Bango/BangoTrigger.h"
+#include "Bango/BangoTrigger_OLD.h"
 
 #include "BangoTrigger_ActorHit.generated.h"
 
@@ -11,7 +11,7 @@ class UBangoInstigatorFilter;
 enum class EBangoTriggerSignal : uint8;
 
 UCLASS(DisplayName="Actor Hit")
-class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger
+class BANGO_API UBangoTrigger_ActorHit : public UBangoTrigger_OLD
 {
 	GENERATED_BODY()
 	// ============================================================================================

@@ -94,7 +94,7 @@ void UBangoEvent::UnregisterAction(UBangoAction* Action)
 	EventTriggeredDelegate.RemoveDynamic(Action, &UBangoAction::HandleSignal);
 }
 
-void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+void UBangoEvent::RespondToTriggerSignal(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal)
 {
 	if (GetIsExpired())
 	{
@@ -216,7 +216,7 @@ void UBangoEvent::RespondToTriggerSignal(UBangoTrigger* Trigger, FBangoTriggerSi
 	}
 }
 
-void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal)
 {
 	switch (Signal.Type)
 	{
@@ -257,7 +257,7 @@ void UBangoEvent::RespondToTriggerSignalDeferred(UBangoTrigger* Trigger, FBangoT
 #endif
 }
 
-EBangoEventSignalType UBangoEvent::RespondToTriggerSignal_Impl(UBangoTrigger* Trigger, FBangoTriggerSignal Signal)
+EBangoEventSignalType UBangoEvent::RespondToTriggerSignal_Impl(UBangoTrigger_OLD* Trigger, FBangoTriggerSignal Signal)
 {
 	return EBangoEventSignalType::None;
 }
