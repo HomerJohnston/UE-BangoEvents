@@ -8,6 +8,11 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
 
+FString Bango::Editor::GetScriptRootContentFolder()
+{
+	return FPaths::ProjectContentDir() / ScriptRootFolder;
+}
+
 AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
 {
 	TArray<UObject*> OuterObjects;
@@ -93,12 +98,12 @@ UBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FG
 	else
 	{
 		ScriptBlueprint = FKismetEditorUtilities::CreateBlueprint(UBangoScriptInstance::StaticClass(), InPackage, FName(Name), BPTYPE_Normal, UBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass());
-		ScriptBlueprint->SetFlags(RF_Public);	
+		//ScriptBlueprint->SetFlags(RF_Public | RF_Standalone);	
 	}
-	
-	ScriptBlueprint->Modify();
-	InPackage->SetDirtyFlag(true);
-	
+
+	InPackage->GetOutermost()->MarkPackageDirty();
+	FAssetRegistryModule::AssetCreated(ScriptBlueprint);
+
 	FKismetEditorUtilities::CompileBlueprint(ScriptBlueprint);
 	
 	return ScriptBlueprint;
@@ -142,5 +147,49 @@ bool Bango::Editor::SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* Scrip
 		return UPackage::SavePackage(ScriptPackage, ScriptBlueprint, /* *PackagePath2 */ *FinalPackageSavePath, SaveArgs);
 	}
 	
+	return false;
+}
+
+// TODO erase this, replaced by editor subsystem funcs
+bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
+{
+	struct FEmptyFolderVisitor : public IPlatformFile::FDirectoryVisitor
+	{
+		bool bIsEmpty;
+		
+		TSet<FString> EmptyFolders;
+
+		FEmptyFolderVisitor()
+			: bIsEmpty(true)
+		{
+		}
+
+		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
+		{
+			if (!bIsDirectory)
+			{
+				bIsEmpty = false;
+				return false; // abort searching
+			}
+
+			return true; // continue searching
+		}
+	};
+
+	FString PathToDelete = "/Game/" + InPathToDelete;
+	
+	FString PathToDeleteOnDisk;
+	if (FPackageName::TryConvertLongPackageNameToFilename(PathToDelete, PathToDeleteOnDisk))
+	{
+		// Look for files on disk in case the folder contains things not tracked by the asset registry
+		FEmptyFolderVisitor EmptyFolderVisitor;
+		IFileManager::Get().IterateDirectoryRecursively(*PathToDeleteOnDisk, EmptyFolderVisitor);
+
+		if (EmptyFolderVisitor.bIsEmpty)
+		{
+			return IFileManager::Get().DeleteDirectory(*PathToDeleteOnDisk, false, true);
+		}
+	}
+
 	return false;
 }

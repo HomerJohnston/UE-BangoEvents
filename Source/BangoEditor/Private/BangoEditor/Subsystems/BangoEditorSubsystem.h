@@ -3,6 +3,11 @@
 
 #include "BangoEditorSubsystem.generated.h"
 
+// Special thanks to https://github.com/ashe23/ProjectCleaner for lots of helper code used in this class.
+
+/**
+ * 
+ */
 class IContentBrowserHideFolderIfEmptyFilter;
 
 UCLASS()
@@ -41,4 +46,16 @@ public:
 	void OnScriptComponentDestroyed(UBangoScriptComponent* BangoScriptComponent);
 	void SoftDeleteScriptPackage(TSubclassOf<UBangoScriptInstance> ScriptClass);
 	UBlueprint* RetrieveSoftDeletedScript(FGuid Guid);
+
+	static void DeleteEmptyFolders(const FString& RootPath, bool bShowSlowTask = true);
+	
+	static void GetFolders(const FString& RootPath, TArray<FString>& OutFolders, bool bSearchRecursive = true);
+	static void GetEmptyFolders(const FString& RootPath, TArray<FString>& Folders);
+
+	static bool IsFolderEmpty(const FString& InPath);
+	static bool IsFolderEngineGenerated(const FString& InPath);
+
+	static FString PathNormalize(const FString& InPath);
+	static FString PathConvertToAbsolute(const FString& InPath);
+	static FString PathConvertToRelative(const FString& InPath);
 };

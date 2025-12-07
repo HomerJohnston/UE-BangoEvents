@@ -142,8 +142,6 @@ public:
 private:
 	/** Get the external object package instance name. */
 	static BANGOEDITOR_API FString GetLocalScriptPackageInstanceName(const FString& OuterPackageName, const FString& ObjectPackageName);
-	
-	static const TCHAR* GetBangoScriptsFolderName() { return TEXT("__BangoScripts__"); }
 };
 
 template<typename T>

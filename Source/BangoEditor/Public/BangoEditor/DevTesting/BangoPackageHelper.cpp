@@ -10,6 +10,7 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "UObject/MetaData.h"
 #include "GameFramework/Actor.h"
+#include "BangoEditor/Utilities/BangoEditorUtility.h"
 
 FBangoPackageHelper::FOnObjectPackagingModeChanged FBangoPackageHelper::OnObjectPackagingModeChanged;
 
@@ -165,7 +166,7 @@ FString FBangoPackageHelper::GetLocalScriptsPath(const FString& InOuterPackageNa
 				PackagePath.RightChopInline(ExternalActorsPrefix.Len());
 			}
 			
-			OutExternalObjectsPath = FString::Printf(TEXT("%s%s%s%s"), *MountPoint, GetBangoScriptsFolderName(), *PackagePath, InPackageShortName.IsEmpty() ? *ShortName : *InPackageShortName);
+			OutExternalObjectsPath = FString::Printf(TEXT("%s%s%s%s"), *MountPoint, *Bango::Editor::ScriptRootFolder, *PackagePath, InPackageShortName.IsEmpty() ? *ShortName : *InPackageShortName);
 			
 			return true;
 		}
