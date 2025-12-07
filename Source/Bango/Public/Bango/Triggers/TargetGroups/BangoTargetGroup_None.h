@@ -14,9 +14,10 @@ class UBangoTargetGroup_None : public UBangoTargetGroup
 public:
 	UBangoTargetGroup_None()
 	{
+#if WITH_EDITOR
 		DisplayName = LOCTEXT("BangoTargetGroup_None_DisplayName", "None");
-		
 		SortOrder = 10;
+#endif
 	}	
 	
 	bool IsTarget(AActor* Candidate) override

@@ -22,8 +22,11 @@ public:
 	UBangoTargetGroup_Player()
 	{
 		QueryCollisionChannel = ECC_Pawn;
+		
+#if WITH_EDITOR
 		DisplayName = LOCTEXT("BangoTargetGroup_Player_DisplayName", "Player");
 		SortOrder = 30;
+#endif
 	}
 	
 	bool IsTarget(AActor* Candidate) override

@@ -14,9 +14,10 @@ class UBangoTargetGroup_Any : public UBangoTargetGroup
 public:
 	UBangoTargetGroup_Any()
 	{
+#if WITH_EDITOR
 		DisplayName = LOCTEXT("BangoTargetGroup_Any_DisplayName", "Any");
-		
 		SortOrder = 20;
+#endif
 	}	
 	
 	bool IsTarget(AActor* Candidate) override

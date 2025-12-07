@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+/*
 #if WITH_EDITOR
 #include "BangoScriptHelperSubsystem.generated.h"
 #endif
@@ -18,3 +19,4 @@ public:
 	static TMulticastDelegate<void(UBangoScriptComponent*)> OnScriptComponentDestroyed;
 };
 #endif
+*/

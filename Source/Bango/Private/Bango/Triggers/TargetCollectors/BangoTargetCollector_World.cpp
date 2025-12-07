@@ -6,9 +6,10 @@
 
 UBangoTargetCollector_World::UBangoTargetCollector_World()
 {
+#if WITH_EDITOR
 	DisplayName = LOCTEXT("BangoTargetCollector_World_Name", "World");
-	
 	SortOrder = 30;
+#endif
 }
 
 void UBangoTargetCollector_World::Setup()

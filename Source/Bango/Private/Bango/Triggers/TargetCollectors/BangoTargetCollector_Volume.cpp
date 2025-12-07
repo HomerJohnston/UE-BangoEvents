@@ -6,9 +6,10 @@
 
 UBangoTargetCollector_Volume::UBangoTargetCollector_Volume()
 {
+#if WITH_EDITOR
 	DisplayName = LOCTEXT("BangoTargetCollector_Volume_Name", "Volume");
-	
 	SortOrder = 20;
+#endif
 }
 
 void UBangoTargetCollector_Volume::Setup()

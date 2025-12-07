@@ -3,6 +3,12 @@
 #include "Components/ActorComponent.h"
 #include "UObject/Package.h"
 
+#if WITH_EDITOR
+TMulticastDelegate<void(UBangoScriptComponent*)> FBangoEditorDelegates::OnScriptComponentCreated;
+TMulticastDelegate<void(UBangoScriptComponent*)> FBangoEditorDelegates::OnScriptComponentDestroyed;
+#endif
+
+#if WITH_EDITOR
 bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 {
 	if (!GEditor)
@@ -43,3 +49,4 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 		return true;
 	}
 }
+#endif

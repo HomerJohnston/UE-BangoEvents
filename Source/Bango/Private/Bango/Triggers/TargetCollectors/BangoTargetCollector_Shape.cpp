@@ -4,9 +4,10 @@
 
 UBangoTargetCollector_Shape::UBangoTargetCollector_Shape()
 {
+#if WITH_EDITOR
 	DisplayName = LOCTEXT("BangoTargetCollector_Shape_Name", "Shape");
-	
 	SortOrder = 10;
+#endif
 }
 
 void UBangoTargetCollector_Shape::Setup()

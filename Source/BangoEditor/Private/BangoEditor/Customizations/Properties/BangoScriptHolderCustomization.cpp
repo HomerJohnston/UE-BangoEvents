@@ -108,6 +108,8 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	
 }
 
+// ----------------------------------------------
+
 int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() const
 {
 	if (IsValid(GetScriptClass()))
@@ -131,6 +133,8 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 
 	UpdateBox();
 }
+
+// ----------------------------------------------
 
 int FBangoScriptContainerCustomization::WidgetIndex_GraphEditor() const
 {

@@ -2,7 +2,7 @@
 
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "Bango/Core/BangoScriptObject.h"
-#include "Bango/Editor/BangoScriptHelperSubsystem.h"
+//#include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
@@ -42,7 +42,8 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	{
 		if (Script.Guid.IsValid())
 		{
-			GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.Broadcast(this);
+			//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.Broadcast(this);
+			FBangoEditorDelegates::OnScriptComponentDestroyed.Broadcast(this);
 		}
 	}
 	
@@ -58,7 +59,8 @@ void UBangoScriptComponent::TrySetGUID()
 		Modify();
 		Script.Guid = FGuid::NewGuid();
 		
-		GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.Broadcast(this);
+		//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.Broadcast(this);
+		FBangoEditorDelegates::OnScriptComponentCreated.Broadcast(this);
 	}
 }
 #endif

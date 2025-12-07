@@ -65,7 +65,9 @@ public:
     UPROPERTY()
     FString Owner;
     
+#if WITH_EDITOR
 	FGuid GetScriptGuid() const { return ScriptGuid; }
+#endif
 	
 public:
 	static void RunScript(TSubclassOf<UBangoScriptInstance> Script, UObject* Runner, UObject* WorldContext = nullptr);

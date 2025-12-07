@@ -14,8 +14,10 @@ class UBangoTargetGroup_ActorType : public UBangoTargetGroup
 public:
 	UBangoTargetGroup_ActorType()
 	{
+#if WITH_EDITOR
 		DisplayName = LOCTEXT("BangoTargetGroup_ActorTyoe_DisplayName", "Actor Type");
 		SortOrder = 40;
+#endif
 	}
 };
 

@@ -18,7 +18,7 @@ TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> UBangoEditorSubsystem::Filter
 void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Collection.InitializeDependency<UContentBrowserDataSubsystem>();
-	Collection.InitializeDependency<UBangoScriptHelperSubsystem>();
+	//Collection.InitializeDependency<UBangoScriptHelperSubsystem>();
 
 	Filter = MakeShared<FBangoHideScriptFolderFilter>();
 	UContentBrowserDataSubsystem* ContentBrowserData = IContentBrowserDataModule::Get().GetSubsystem();
@@ -41,8 +41,10 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FCoreUObjectDelegates::OnObjectModified.AddUObject(this, &ThisClass::OnObjectModified);
 	*/
 	
-	GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
-	GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
+	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
+	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
+	FBangoEditorDelegates::OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
+	FBangoEditorDelegates::OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 }
 
 FString UBangoEditorSubsystem::GetState(UObject* Object) const
