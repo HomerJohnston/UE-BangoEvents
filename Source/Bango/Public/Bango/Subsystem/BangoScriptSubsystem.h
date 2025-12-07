@@ -5,7 +5,7 @@
 #include "BangoScriptSubsystem.generated.h"
 
 struct FBangoScriptHandle;
-class UBangoScriptObject;
+class UBangoScriptInstance;
 
 UCLASS()
 class UBangoScriptSubsystem : public UWorldSubsystem, public TObjectTicker<UBangoScriptSubsystem>
@@ -17,14 +17,14 @@ protected:
 
 protected:
 	UPROPERTY()
-	TMap<FBangoScriptHandle, TObjectPtr<UBangoScriptObject>> RunningScripts;
+	TMap<FBangoScriptHandle, TObjectPtr<UBangoScriptInstance>> RunningScripts;
 
 	bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 	
 public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	
-	static FBangoScriptHandle RegisterScript(UBangoScriptObject* ScriptObject);
+	static FBangoScriptHandle RegisterScript(UBangoScriptInstance* ScriptObject);
 	
 	static void UnregisterScript(UObject* WorldContext, FBangoScriptHandle& Handle);
 

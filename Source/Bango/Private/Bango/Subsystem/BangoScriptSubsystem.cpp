@@ -26,7 +26,7 @@ void UBangoScriptSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	TickFunction.RegisterTickFunction(GetWorld()->PersistentLevel);
 }
 
-FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScriptObject* ScriptObject)
+FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScriptInstance* ScriptObject)
 {
 	UBangoScriptSubsystem* Subsystem = Get(ScriptObject);
 
@@ -48,12 +48,12 @@ void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScript
 	
 	UBangoScriptSubsystem* Subsystem = Get(WorldContext);
 
-	TObjectPtr<UBangoScriptObject> Script;
+	TObjectPtr<UBangoScriptInstance> Script;
 	
 	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
 	{
 		UE_LOG(LogBango, Display, TEXT("Script halting: {%s}"), *Script->GetName());
-		UBangoScriptObject::Finish(Script);
+		UBangoScriptInstance::Finish(Script);
 	}
 
 	Handle.Invalidate();

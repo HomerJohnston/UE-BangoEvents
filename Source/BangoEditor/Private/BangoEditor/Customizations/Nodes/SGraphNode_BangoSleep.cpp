@@ -365,7 +365,7 @@ const FSlateBrush* SGraphNode_BangoSleep::Image_OverlayWidget() const
 {
 	UK2Node_BangoSleep* Node = GetSleepNode();
 	
-	const FSlateBrush* ImageBrush = Node->IsInfiniteDuration() 
+	const FSlateBrush* ImageBrush = Node->IsInfiniteDuration() /*?*/
 		? FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_PauseHand) 
 		: FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Hourglass);
 	

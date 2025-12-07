@@ -10,19 +10,35 @@
 #define LOCTEXT_NAMESPACE "Bango"
 
 #if WITH_EDITOR
-DataValidationDelegate UBangoScriptObject::OnScriptRequestValidation;
+DataValidationDelegate UBangoScriptInstance::OnScriptRequestValidation;
 #endif
 
-FBangoScriptHandle UBangoScriptObject::Execute_Internal()
+void UBangoScriptInstance::RunScript(TSubclassOf<UBangoScriptInstance> Script, UObject* Runner, UObject* WorldContext)
+{
+	if (WorldContext == nullptr)
+	{
+		WorldContext = Runner;
+	}
+	
+	if (!WorldContext)
+	{
+		UE_LOG(LogBango, Error, TEXT("Tried to launch script but Runner and WorldContext were null!"));
+		return;
+	}
+	
+	// TODO should I bother pooling?
+	UBangoScriptInstance* NewScriptInstance = NewObject<UBangoScriptInstance>(Runner, Script);
+	NewScriptInstance->Execute_Internal();
+}
+
+FBangoScriptHandle UBangoScriptInstance::Execute_Internal()
 {
     Handle = UBangoScriptSubsystem::RegisterScript(this);
-    
     Start();
-
     return Handle;
 }
 
-void UBangoScriptObject::Finish(UBangoScriptObject* Script)
+void UBangoScriptInstance::Finish(UBangoScriptInstance* Script)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObject(Script, EGetWorldErrorMode::LogAndReturnNull))
     {
@@ -38,7 +54,7 @@ void UBangoScriptObject::Finish(UBangoScriptObject* Script)
     Script->Handle.Invalidate();
 }
 
-int32 UBangoScriptObject::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)
+int32 UBangoScriptInstance::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)
 {
     int32 UUID = LatentInfo.UUID;
     
@@ -74,7 +90,7 @@ int32 UBangoScriptObject::LaunchSleep_Internal(const UObject* WorldContextObject
     return 0;
 }
 
-void UBangoScriptObject::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
+void UBangoScriptInstance::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -94,7 +110,7 @@ void UBangoScriptObject::CancelSleep_Internal(UObject* WorldContextObject, int32
     }
 }
 
-void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
+void UBangoScriptInstance::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -114,7 +130,7 @@ void UBangoScriptObject::SkipSleep_Internal(UObject* WorldContextObject, int32 A
     }    
 }
 
-void UBangoScriptObject::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
+void UBangoScriptInstance::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -134,13 +150,13 @@ void UBangoScriptObject::SetSleepPause_Internal(UObject* WorldContextObject, boo
     }    
 }
 
-float UBangoScriptObject::Rand(float Hi, float Lo)
+float UBangoScriptInstance::Rand(float Hi, float Lo)
 {
     return FMath::RandRange(Lo, Hi);
 }
 
 #if WITH_EDITOR
-EDataValidationResult UBangoScriptObject::IsDataValid(class FDataValidationContext& Context) const
+EDataValidationResult UBangoScriptInstance::IsDataValid(class FDataValidationContext& Context) const
 {
     if (OnScriptRequestValidation.IsBound())
     {
@@ -150,8 +166,10 @@ EDataValidationResult UBangoScriptObject::IsDataValid(class FDataValidationConte
     return UObject::IsDataValid(Context);
 }
 
-void UBangoScriptObject::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+void UBangoScriptInstance::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 {
+	// TODO API update
+	// BangoScriptObject.cpp(171,12): Warning C4996 : 'UObject::GetAssetRegistryTags': Implement the version that takes FAssetRegistryTagsContext instead. - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.
     Super::GetAssetRegistryTags(OutTags);
     
     FAssetRegistryTag Tag(TEXT("Test"), TEXT("TesT"), FAssetRegistryTag::TT_Alphabetical, FAssetRegistryTag::TD_None);

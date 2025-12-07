@@ -33,6 +33,7 @@ public class BangoEditor : ModuleRules
                 "KismetWidgets",
                 "DataValidation",
                 "EditorSubsystem",
+				"ContentBrowserData",
             }
         );
     }

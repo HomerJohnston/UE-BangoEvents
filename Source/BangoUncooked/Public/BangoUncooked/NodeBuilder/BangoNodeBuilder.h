@@ -203,7 +203,7 @@ MAKE_NODE_TYPE(BangoExecuteScript_Internal, UK2Node_CallFunction, NORMAL_CONSTRU
 
 inline void BangoExecuteScript_Internal::Construct()
 {
-	_Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, Execute_Internal)));
+	_Node->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, Execute_Internal)));
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();
 	Then = _Node->GetThenPin();
@@ -216,7 +216,7 @@ MAKE_NODE_TYPE(BangoCancelSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCT
 
 inline void BangoCancelSleep_Internal::Construct()
 {
-	_Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, CancelSleep_Internal)));
+	_Node->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, CancelSleep_Internal)));
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();
 	Then = _Node->GetThenPin();
@@ -228,7 +228,7 @@ MAKE_NODE_TYPE(BangoLaunchSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCT
 
 inline void BangoLaunchSleep_Internal::Construct()
 {
-	_Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, LaunchSleep_Internal)));
+	_Node->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, LaunchSleep_Internal)));
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();
 	Then = _Node->GetThenPin();
@@ -243,7 +243,7 @@ MAKE_NODE_TYPE(BangoSkipSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTIO
 
 inline void BangoSkipSleep_Internal::Construct()
 {
-	_Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, SkipSleep_Internal)));
+	_Node->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, SkipSleep_Internal)));
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();
 	ActionUUID = FindPin("ActionUUID");
@@ -255,7 +255,7 @@ MAKE_NODE_TYPE(BangoPauseSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTI
 
 inline void BangoPauseSleep_Internal::Construct()
 {
-	_Node->SetFromFunction(UBangoScriptObject::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptObject, SetSleepPause_Internal)));
+	_Node->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, SetSleepPause_Internal)));
 	AllocateDefaultPins();
 	Exec = _Node->GetExecPin();
 	Then = _Node->GetThenPin();

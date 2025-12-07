@@ -2,6 +2,7 @@
 
 #include "CanvasItem.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
+#include "Bango/Utility/BangoLog.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "Fonts/FontMeasure.h"
@@ -153,5 +154,38 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 		}
 	}
 	*/
+}
+#endif
+
+#if WITH_EDITOR
+void UBangoActorIDComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+	
+	if (IsBeingEditorDeleted())
+	{
+		UE_LOG(LogBango, Warning, TEXT("Bango ID Component OnComponentDestroyed: %s"), *this->GetName());
+	}
+}
+
+bool UBangoActorIDComponent::IsBeingEditorDeleted() const
+{
+	// 1. Must be in editor world
+	if (GIsPlayInEditorWorld || GetWorld() == nullptr || GetWorld()->IsGameWorld())
+		return false;
+
+	// 2. Component must be explicitely removed from its owner
+	if (GetOwner() && !GetOwner()->GetComponents().Contains(this))
+		return true;
+
+	// 3. NOT deleted because PIE ended
+	if (GEditor && GEditor->PlayWorld != nullptr)
+		return false;
+
+	// 4. NOT deleted because a Blueprint reinstance/recompile replaced it
+	if (HasAnyFlags(RF_Transient) && HasAnyFlags(RF_ClassDefaultObject) == false)
+		return false;
+
+	return false;
 }
 #endif

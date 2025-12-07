@@ -6,6 +6,7 @@
 #include "SEditorViewport.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
+#include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
@@ -50,8 +51,9 @@ UEdGraph* FBangoScriptHolderCustomization::GetPrimaryEventGraph() const
 
 void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptHolder, ScriptBlueprint));
-	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptHolder, ScriptClass));
+	ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
+	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
+	GuidProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, Guid));
 	
 	CurrentGraph = GetPrimaryEventGraph();
 	
@@ -59,6 +61,7 @@ void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle
 	[
 		SNew(STextBlock)
 		.Text(LOCTEXT("BangoScriptHolder_ScriptPropertyLabel", "Bango Script"))
+		.Font(FAppStyle::GetFontStyle("PropertyWindow.NormalFont"))
 	];
 	
 	HeaderRow.ValueContent()
@@ -69,6 +72,7 @@ void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle
 		[
 			SNew(SButton)
 			.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
+			.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
 			.OnClicked(this, &FBangoScriptHolderCustomization::OnClicked_CreateScript)
 		]
 		+ SWidgetSwitcher::Slot()
@@ -76,25 +80,9 @@ void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
 			[
-				SNew(STextBlock)
-				.AutoWrapText(false)
-				.OverflowPolicy(ETextOverflowPolicy::Ellipsis)
-				.Text_Lambda( [this] ()
-				{
-					UClass* ScriptClass = GetScriptClass();
-				
-					if (ScriptClass)
-					{
-						return FText::Format(INVTEXT("Script: {0}"), FText::FromString(ScriptClass->GetName()));	
-					}
-				
-					return INVTEXT("Invalid/Unset");
-				})
-			]
-			+ SHorizontalBox::Slot()
-			[
 				SNew(SButton)
 				.Text(LOCTEXT("BangoScriptHolder_DeleteScriptButtonText", "Delete"))
+				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
 				.OnClicked(this, &FBangoScriptHolderCustomization::OnClicked_DeleteScript)
 			]
 		]
@@ -137,70 +125,35 @@ FReply FBangoScriptHolderCustomization::OnClicked_CreateScript()
 	
 	ScriptClassProperty->GetOuterPackages(Packages);
 	
-	const UClass* OuterBaseClass = ScriptClassProperty->GetOuterBaseClass();
-
 	if (Packages.Num() != 1)
 	{
 		return FReply::Handled();
 	}
 
 	FString BPName;
-	UPackage* LocalScriptPackage = MakeLocalScriptPackage(Packages[0], BPName);
+	UPackage* ScriptPackage = Bango::Editor::MakeScriptPackage(ScriptClassProperty, Packages[0], BPName);
 	
-	UBlueprint* Script = FKismetEditorUtilities::CreateBlueprint(UBangoScriptObject::StaticClass(), LocalScriptPackage, FName(BPName), BPTYPE_Normal, UBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass());
-	Script->SetFlags(RF_Public);
-	Script->Modify();
-	Script->MarkPackageDirty();
-	LocalScriptPackage->SetDirtyFlag(true);
-	
-	FKismetEditorUtilities::CompileBlueprint(Script);
-	
-	auto x = ScriptBlueprintProperty->SetValue(Script);
-	auto y = ScriptClassProperty->SetValue(Script->GeneratedClass);
-	
-	AActor* asdf = GetOwner();
-	
-	for (TFieldIterator<FProperty> It(asdf->GetClass()); It; ++It)
+	if (!ScriptPackage)
 	{
-		UE_LOG(LogTemp, Display, TEXT("Prop: %s"), *FString(It->GetName()));
+		return FReply::Handled();
 	}
 	
-	const FString PackageName = LocalScriptPackage->GetName();
-	FString ExistingFilename;
-	const bool bPackageAlreadyExists = FPackageName::DoesPackageExist(PackageName, &ExistingFilename);
-		
-	bool bAttemptSave = true;
-        			
-	if (!bPackageAlreadyExists)
-	{
-		const FString& FileExtension = FPackageName::GetAssetPackageExtension();
-		ExistingFilename = FPackageName::LongPackageNameToFilename(PackageName, FileExtension);
-			
-		// Check if we can use this filename.
-		FText ErrorText;
-		if (!FFileHelper::IsFilenameValidForSaving(ExistingFilename, ErrorText))
-		{
-			// Display the error (already localized) and exit gracefully.
-			FMessageDialog::Open(EAppMsgType::Ok, ErrorText);
-			bAttemptSave = false;
-		}
-	}
-		
-	if (bAttemptSave)
-	{
-		FString BaseFilename, Extension, Directory;
-		FPaths::NormalizeFilename(ExistingFilename);
-		FPaths::Split(ExistingFilename, Directory, BaseFilename, Extension);
-			
-		FString FinalPackageSavePath = ExistingFilename;
-			
-		FString FinalPackageFilename = FString::Printf(TEXT("%s.%s"), *BaseFilename, *Extension);
-			
-		FSavePackageArgs SaveArgs;
-		bool bResult = UPackage::SavePackage(LocalScriptPackage, Script, /* *PackagePath2 */ *FinalPackageSavePath, SaveArgs);
-	}
+	void* GuidPtr;
+	GuidProperty->GetValueData(GuidPtr);
 	
-	PostScriptCreated.Broadcast();
+	FGuid* Guid = reinterpret_cast<FGuid*>(GuidPtr);
+	UBlueprint* Script = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName, *Guid);
+	
+	if (!Script)
+	{
+		return FReply::Handled();
+	}
+
+	if (Bango::Editor::SaveScriptPackage(ScriptPackage, Script))
+	{
+		ScriptClassProperty->SetValue(Script->GeneratedClass);
+		PostScriptCreated.Broadcast();
+	}
 	
 	return FReply::Handled();
 }
@@ -216,7 +169,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_DeleteScript()
 
 // ----------------------------------------------
 
-FReply FBangoScriptHolderCustomization::OnClicked_EditScript()
+FReply FBangoScriptHolderCustomization::OnClicked_EditScript() const
 {
 	UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 
@@ -234,6 +187,8 @@ FReply FBangoScriptHolderCustomization::OnClicked_EditScript()
 
 FReply FBangoScriptHolderCustomization::OnClicked_EnlargeGraphView() const
 {
+	return OnClicked_EditScript();
+	/*
 	FViewport* Viewport = GEditor->GetActiveViewport();
 	FViewportClient* ViewportClient = Viewport->GetClient();
 	FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
@@ -251,7 +206,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_EnlargeGraphView() const
 		FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup),
 		true);
 	
-	return FReply::Handled();
+	return FReply::Handled();*/
 }
 
 // ----------------------------------------------
@@ -398,7 +353,7 @@ UBlueprint* FBangoScriptHolderCustomization::GetBlueprint() const
 
 // ----------------------------------------------
 
-TSubclassOf<UBangoScriptObject> FBangoScriptHolderCustomization::GetScriptClass() const
+TSubclassOf<UBangoScriptInstance> FBangoScriptHolderCustomization::GetScriptClass() const
 {
 	UObject* ClassObject;
 	
@@ -411,28 +366,6 @@ TSubclassOf<UBangoScriptObject> FBangoScriptHolderCustomization::GetScriptClass(
 }
 
 // ----------------------------------------------
-
-UPackage* FBangoScriptHolderCustomization::MakeLocalScriptPackage(UObject* Outer, FString& NewBPName)
-{
-	FGuid UniqueID = FGuid::NewGuid();
-	
-	// Usually an OFP package in __ExternalActors__
-
-	FString FolderShortName = FString("LocalBangoScript") + TEXT("_UID_") + UniqueID.ToString(EGuidFormats::UniqueObjectGuid);
-	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> GloballyUniqueObjectPath;
-	GloballyUniqueObjectPath += GetOwner() ? GetOwner()->GetLevel()->GetPathName() : "";
-	GloballyUniqueObjectPath += TEXT(".");
-	GloballyUniqueObjectPath += FolderShortName;
-	
-	const UPackage* OutermostPackage = Outer->IsA<UPackage>() ? CastChecked<UPackage>(Outer) : Outer->GetOutermostObject()->GetPackage();
-	const FString RootPath = OutermostPackage->GetName();
-	const FString ExternalObjectPackageName = FBangoPackageHelper::GetLocalScriptPackageName(RootPath, FolderShortName);
-
-	FString FinalPath = ExternalObjectPackageName;// + FPackageName::GetAssetPackageExtension();
-	
-	NewBPName = FolderShortName;
-	return CreatePackage(*FinalPath);
-}
 
 // ----------------------------------------------
 

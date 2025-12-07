@@ -16,6 +16,7 @@ protected:
 
 	TSharedPtr<IPropertyHandle> ScriptBlueprintProperty;
 	TSharedPtr<IPropertyHandle> ScriptClassProperty;
+	TSharedPtr<IPropertyHandle> GuidProperty;
 	TWeakObjectPtr<UEdGraph> CurrentGraph;
 
 	TSharedPtr<SWidget> Box;
@@ -39,7 +40,7 @@ protected:
 	
 	int WidgetIndex_GraphEditor() const;
 	
-	FReply OnClicked_EditScript();
+	FReply OnClicked_EditScript() const;
 	
 	FReply OnClicked_EnlargeGraphView() const;
 	
@@ -61,9 +62,7 @@ protected:
 	
 	UEdGraph* GetPrimaryEventGraph() const;
 	
-	TSubclassOf<UBangoScriptObject> GetScriptClass() const;
-	
-	UPackage* MakeLocalScriptPackage(UObject* Outer, FString& NewBPName);
+	TSubclassOf<UBangoScriptInstance> GetScriptClass() const;
 	
 	// ------------------------------------------
 	

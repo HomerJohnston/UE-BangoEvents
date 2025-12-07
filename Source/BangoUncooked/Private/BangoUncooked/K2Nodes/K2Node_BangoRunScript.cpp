@@ -167,12 +167,12 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 		ObjectClass = Cast<UClass>(Node_CreateScriptObject.ObjectClass->DefaultObject);
 	}
 	
-	FProperty* OnFinishDelegate = UBangoScriptObject::StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptObject, OnFinishDelegate));
-	Node_AddDelegate->SetFromProperty(OnFinishDelegate, false, UBangoScriptObject::StaticClass());
+	FProperty* OnFinishDelegate = UBangoScriptInstance::StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptInstance, OnFinishDelegate));
+	Node_AddDelegate->SetFromProperty(OnFinishDelegate, false, UBangoScriptInstance::StaticClass());
 	
 	Node_ScriptCompletedEvent->CustomFunctionName = *FString::Printf(TEXT("%s_%s"), TEXT("OnFinishedDelegate"), *Compiler.GetGuid(this));
 	
-	Node_CastToBangoScript->TargetType = UBangoScriptObject::StaticClass(); 
+	Node_CastToBangoScript->TargetType = UBangoScriptInstance::StaticClass(); 
 	
 	Builder.FinishDeferredNodes(true);
 
@@ -286,7 +286,7 @@ void UK2Node_BangoRunScript::AllocateDefaultPins()
 	UEdGraphPin* ScriptCompletePin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Completed);
 	ScriptCompletePin->PinFriendlyName = INVTEXT("Finish");
 	
-    CachedScriptPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Class, UBangoScriptObject::StaticClass(), FName("Script"));
+    CachedScriptPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Class, UBangoScriptInstance::StaticClass(), FName("Script"));
 }
 
 UEdGraphPin* UK2Node_BangoRunScript::FindPropertyPin(const FName InPinName) const

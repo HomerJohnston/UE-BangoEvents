@@ -6,7 +6,7 @@
 
 #include "K2Node_BangoRunScript.generated.h"
 
-class UBangoScriptObject;
+class UBangoScriptInstance;
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 

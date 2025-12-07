@@ -9,10 +9,10 @@
 
 void UBangoScriptValidator::Initialize(FSubsystemCollectionBase& Collection)
 {
-	UBangoScriptObject::OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
+	UBangoScriptInstance::OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
 }
 
-EDataValidationResult UBangoScriptValidator::IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptObject* ScriptObject)
+EDataValidationResult UBangoScriptValidator::IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptInstance* ScriptObject)
 {
 	UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(ScriptObject->GetClass());
 	

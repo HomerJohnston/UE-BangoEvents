@@ -4,7 +4,7 @@
 
 #include "BangoScriptValidator.generated.h"
 
-class UBangoScriptObject;
+class UBangoScriptInstance;
 
 /** IsDataValid of a UBangoScriptObject will cause this to run. */
 UCLASS()
@@ -16,5 +16,5 @@ public:
 	
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	
-	static EDataValidationResult IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptObject* ScriptObject); 
+	static EDataValidationResult IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptInstance* ScriptObject); 
 };

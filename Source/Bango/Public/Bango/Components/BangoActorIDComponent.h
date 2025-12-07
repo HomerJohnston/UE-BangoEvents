@@ -38,5 +38,9 @@ public:
 	void OnUnregister() override;
 	
 	void DebugDrawEditor(UCanvas* Canvas, APlayerController* PlayerController) const;
+	
+	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 #endif
+	
+	bool IsBeingEditorDeleted() const;
 };

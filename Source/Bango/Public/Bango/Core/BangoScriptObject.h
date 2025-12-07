@@ -5,6 +5,18 @@
 
 #include "BangoScriptObject.generated.h"
 
+class UBangoScriptValidator;
+class UBangoScriptSubsystem;
+
+namespace BangoNodeBuilder
+{
+	struct BangoPauseSleep_Internal;
+	struct BangoSkipSleep_Internal;
+	struct BangoLaunchSleep_Internal;
+	struct BangoCancelSleep_Internal;
+	struct BangoExecuteScript_Internal;
+}
+
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FWaitUntilDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFinishDelegate);
 
@@ -14,16 +26,25 @@ DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
 
 #define LOCTEXT_NAMESPACE "Bango"
 
-using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScriptObject* ScriptObject)>;
+using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScriptInstance* ScriptInstance)>;
+
 /**
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class BANGO_API UBangoScriptObject : public UObject
+class BANGO_API UBangoScriptInstance : public UObject
 {
     GENERATED_BODY()
 
-    friend class UBangoScriptValidator;
+    friend UBangoScriptValidator;
+	friend UBangoScriptSubsystem;
+	friend BangoNodeBuilder::BangoExecuteScript_Internal;
+	friend BangoNodeBuilder::BangoCancelSleep_Internal;
+	friend BangoNodeBuilder::BangoLaunchSleep_Internal;
+	friend BangoNodeBuilder::BangoSkipSleep_Internal;
+	friend BangoNodeBuilder::BangoPauseSleep_Internal;
+	friend class UK2Node_BangoFinishScript;
+	friend class UK2Node_BangoRunScript;
     
 protected:
     // TODO: is this a bad decision? How else can I do this? Can I register things to keep scripts alive? Can I discover delegate subs in blueprints?
@@ -31,6 +52,12 @@ protected:
     UPROPERTY(EditAnywhere)
     bool bPreventAutoDestroy = false;
     
+#if WITH_EDITORONLY_DATA
+	// This will be kept in sync with the FBangoScriptContainer's ScriptGuid and is used for undo/redo purposes and other sync
+	UPROPERTY(VisibleAnywhere)
+	FGuid ScriptGuid;
+#endif
+	
     bool GetKeepAliveWhenIdle() const { return bPreventAutoDestroy; }
     
     // Ghetto hack for cooking, how can I get rid of this? 
@@ -38,18 +65,25 @@ public:
     UPROPERTY()
     FString Owner;
     
+	FGuid GetScriptGuid() const { return ScriptGuid; }
+	
 public:
+	static void RunScript(TSubclassOf<UBangoScriptInstance> Script, UObject* Runner, UObject* WorldContext = nullptr);
+	
+protected:
+	
     /** This is called by Bango. */ 
     UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
     FBangoScriptHandle Execute_Internal();
     
+protected:
     /** This is implemented by designers. */
     UFUNCTION(BlueprintImplementableEvent)
     void Start();
 
     /** This is supposed to be called at the end of the Execute function */
     UFUNCTION(BlueprintCallable, meta = (WorldContext = "Script", BlueprintProtected))
-    static void Finish(UBangoScriptObject* Script);
+    static void Finish(UBangoScriptInstance* Script);
 
 #if WITH_EDITOR
     bool ImplementsGetWorld() const override { return true; }
