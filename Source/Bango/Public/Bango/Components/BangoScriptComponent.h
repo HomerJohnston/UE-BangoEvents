@@ -11,6 +11,8 @@ class BANGO_API UBangoScriptComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	
+	friend class UBangoEditorSubsystem;
+	
 public:
 	UBangoScriptComponent();
 	

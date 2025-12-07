@@ -92,7 +92,7 @@ void FBangoEditorModule::StartupModule()
 	FBangoEditorMenus::BuildMenus();
 	
 	//////////////////
-	REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptContainer, FBangoScriptHolderCustomization);
+	REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptContainer, FBangoScriptContainerCustomization);
 	
 	FContentBrowserModule& CBModule =
 			FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");

@@ -205,6 +205,18 @@ void UBangoEditorSubsystem::OnScriptComponentCreated(UBangoScriptComponent* Bang
 	//{
 		BangoScriptComponent->SetScriptBlueprint(Blueprint);
 	//}
+	UScriptStruct* ScriptContainerType = FBangoScriptContainer::StaticStruct();
+	
+	//FProperty* Prop=
+	
+	FPropertyChangedEvent DummyEvent1(UBangoScriptComponent::StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptComponent, Script)));
+	FPropertyChangedEvent DummyEvent2(ScriptContainerType->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint)));
+	FPropertyChangedEvent DummyEvent3(ScriptContainerType->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass)));
+	BangoScriptComponent->PostEditChangeProperty(DummyEvent1);
+	BangoScriptComponent->PostEditChangeProperty(DummyEvent2);
+	BangoScriptComponent->PostEditChangeProperty(DummyEvent3);
+	
+	OnScriptGenerated.Broadcast();
 }
 
 void UBangoEditorSubsystem::OnScriptComponentDestroyed(UBangoScriptComponent* BangoScriptComponent)

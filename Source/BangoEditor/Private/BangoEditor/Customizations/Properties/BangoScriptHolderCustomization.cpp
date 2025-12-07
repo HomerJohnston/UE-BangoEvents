@@ -6,6 +6,7 @@
 #include "SEditorViewport.h"
 #include "Bango/Core/BangoScriptObject.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
+#include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
@@ -15,22 +16,39 @@
 
 // ----------------------------------------------
 
-FBangoScriptHolderCustomization::FBangoScriptHolderCustomization()
+FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 {
-	PostScriptCreated.AddRaw(this, &FBangoScriptHolderCustomization::OnPostScriptCreated);
-	PreScriptDeleted.AddRaw(this, &FBangoScriptHolderCustomization::OnPreScriptDeleted);
+	PostScriptCreated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreated);
+	PreScriptDeleted.AddRaw(this, &FBangoScriptContainerCustomization::OnPreScriptDeleted);
+	
+	UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
+	
+	if (Subsystem)
+	{
+		Subsystem->OnScriptGenerated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreated);
+	}
+}
+
+FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
+{
+	UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
+	
+	if (Subsystem)
+	{
+		Subsystem->OnScriptGenerated.RemoveAll(this);
+	}
 }
 
 // ----------------------------------------------
 
-TSharedRef<IPropertyTypeCustomization> FBangoScriptHolderCustomization::MakeInstance()
+TSharedRef<IPropertyTypeCustomization> FBangoScriptContainerCustomization::MakeInstance()
 {
-	return MakeShared<FBangoScriptHolderCustomization>();
+	return MakeShared<FBangoScriptContainerCustomization>();
 }
 
 // ----------------------------------------------
 
-UEdGraph* FBangoScriptHolderCustomization::GetPrimaryEventGraph() const
+UEdGraph* FBangoScriptContainerCustomization::GetPrimaryEventGraph() const
 {
 	UBlueprint* Blueprint = GetBlueprint();
 	
@@ -49,7 +67,7 @@ UEdGraph* FBangoScriptHolderCustomization::GetPrimaryEventGraph() const
 
 // ----------------------------------------------
 
-void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
+void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
@@ -67,13 +85,13 @@ void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle
 	HeaderRow.ValueContent()
 	[
 		SNew(SWidgetSwitcher)
-		.WidgetIndex(this, &FBangoScriptHolderCustomization::WidgetIndex_CreateDeleteScriptButtons)
+		.WidgetIndex(this, &FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons)
 		+ SWidgetSwitcher::Slot()
 		[
 			SNew(SButton)
 			.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
 			.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-			.OnClicked(this, &FBangoScriptHolderCustomization::OnClicked_CreateScript)
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
 		]
 		+ SWidgetSwitcher::Slot()
 		[
@@ -83,14 +101,14 @@ void FBangoScriptHolderCustomization::CustomizeHeader(TSharedRef<IPropertyHandle
 				SNew(SButton)
 				.Text(LOCTEXT("BangoScriptHolder_DeleteScriptButtonText", "Delete"))
 				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-				.OnClicked(this, &FBangoScriptHolderCustomization::OnClicked_DeleteScript)
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteScript)
 			]
 		]
 	];
 	
 }
 
-int FBangoScriptHolderCustomization::WidgetIndex_CreateDeleteScriptButtons() const
+int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() const
 {
 	if (IsValid(GetScriptClass()))
 	{
@@ -102,24 +120,26 @@ int FBangoScriptHolderCustomization::WidgetIndex_CreateDeleteScriptButtons() con
 
 // ----------------------------------------------
 
-void FBangoScriptHolderCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
+void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	UpdateBox();
+	Box = SNew(SVerticalBox);
 	
 	ChildBuilder.AddCustomRow(LOCTEXT("BangoScriptHolder_SearchTerm", "Bango"))
 	[
 		Box.ToSharedRef()
 	];
+
+	UpdateBox();
 }
 
-int FBangoScriptHolderCustomization::WidgetIndex_GraphEditor() const
+int FBangoScriptContainerCustomization::WidgetIndex_GraphEditor() const
 {
 	return 0;
 }
 
 // ----------------------------------------------
 
-FReply FBangoScriptHolderCustomization::OnClicked_CreateScript()
+FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 {
 	TArray<UPackage*> Packages;
 	
@@ -160,7 +180,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_CreateScript()
 
 // ----------------------------------------------
 
-FReply FBangoScriptHolderCustomization::OnClicked_DeleteScript()
+FReply FBangoScriptContainerCustomization::OnClicked_DeleteScript()
 {
 	PreScriptDeleted.Broadcast();
 	
@@ -169,7 +189,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_DeleteScript()
 
 // ----------------------------------------------
 
-FReply FBangoScriptHolderCustomization::OnClicked_EditScript() const
+FReply FBangoScriptContainerCustomization::OnClicked_EditScript() const
 {
 	UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 
@@ -185,7 +205,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_EditScript() const
 
 // ----------------------------------------------
 
-FReply FBangoScriptHolderCustomization::OnClicked_EnlargeGraphView() const
+FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 {
 	return OnClicked_EditScript();
 	/*
@@ -211,7 +231,7 @@ FReply FBangoScriptHolderCustomization::OnClicked_EnlargeGraphView() const
 
 // ----------------------------------------------
 
-TSharedRef<SWidget> FBangoScriptHolderCustomization::GetPopoutGraphEditor() const
+TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() const
 {
 	SGraphEditor::FGraphEditorEvents Events;
 	
@@ -259,27 +279,29 @@ TSharedRef<SWidget> FBangoScriptHolderCustomization::GetPopoutGraphEditor() cons
 		];
 }
 
-void FBangoScriptHolderCustomization::OnPostScriptCreated()
+void FBangoScriptContainerCustomization::OnPostScriptCreated()
 {
 	CurrentGraph = GetPrimaryEventGraph();
 	
 	UpdateBox();	
 }
 
-void FBangoScriptHolderCustomization::OnPreScriptDeleted()
+void FBangoScriptContainerCustomization::OnPreScriptDeleted()
 {
 	CurrentGraph = nullptr;
 	
 	UpdateBox();
 }
 
-void FBangoScriptHolderCustomization::UpdateBox()
+void FBangoScriptContainerCustomization::UpdateBox()
 {
 	SGraphEditor::FGraphEditorEvents Events;
 	
+	Box->ClearChildren();
+	
 	if (CurrentGraph.IsValid())
 	{
-		Box = SNew(SBox)
+		Box->AddSlot()
 		[
 			SNew(SOverlay)
 			+ SOverlay::Slot()
@@ -300,7 +322,7 @@ void FBangoScriptHolderCustomization::UpdateBox()
 			.Padding(8)
 			[
 				SNew(SButton)
-				.OnClicked(this, &FBangoScriptHolderCustomization::OnClicked_EnlargeGraphView)
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView)
 				[
 					SNew(SImage)
 					.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
@@ -310,14 +332,17 @@ void FBangoScriptHolderCustomization::UpdateBox()
 	}
 	else
 	{
-		Box = SNew(STextBlock)
-			.Text(LOCTEXT("BangoScriptHolder_NoScriptGraphLabel", "No script"));
+		Box->AddSlot()
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("BangoScriptHolder_NoScriptGraphLabel", "No script"))
+		];
 	}
 }
 
 // ----------------------------------------------
 
-AActor* FBangoScriptHolderCustomization::GetOwner() const
+AActor* FBangoScriptContainerCustomization::GetOwner() const
 {
 	TArray<UObject*> OuterObjects;
 	ScriptClassProperty->GetOuterObjects(OuterObjects);
@@ -339,7 +364,7 @@ AActor* FBangoScriptHolderCustomization::GetOwner() const
 
 // ----------------------------------------------
 
-UBlueprint* FBangoScriptHolderCustomization::GetBlueprint() const
+UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 {
 	UObject* BlueprintObject;
 	
@@ -353,7 +378,7 @@ UBlueprint* FBangoScriptHolderCustomization::GetBlueprint() const
 
 // ----------------------------------------------
 
-TSubclassOf<UBangoScriptInstance> FBangoScriptHolderCustomization::GetScriptClass() const
+TSubclassOf<UBangoScriptInstance> FBangoScriptContainerCustomization::GetScriptClass() const
 {
 	UObject* ClassObject;
 	

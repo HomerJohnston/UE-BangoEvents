@@ -20,6 +20,10 @@ class UBangoEditorSubsystem : public UEditorSubsystem
 	TArray<TPair<FGuid, TStrongObjectPtr<UBlueprint>>> SoftDeletedScripts;
 	
 public:
+	// Simple solution to force any active FBangoScriptContainerCustomization instances to redraw
+	TMulticastDelegate<void()> OnScriptGenerated;
+	
+public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	
 	FString GetState(UObject* Object) const;

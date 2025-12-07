@@ -3,10 +3,12 @@
 #include "Bango/BangoScriptHolder.h"
 #include "IPropertyTypeCustomization.h"
 
-class FBangoScriptHolderCustomization : public IPropertyTypeCustomization
+class FBangoScriptContainerCustomization : public IPropertyTypeCustomization
 {
 public:
-	FBangoScriptHolderCustomization();
+	FBangoScriptContainerCustomization();
+	
+	~FBangoScriptContainerCustomization();
 	
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance();
 	
@@ -19,7 +21,7 @@ protected:
 	TSharedPtr<IPropertyHandle> GuidProperty;
 	TWeakObjectPtr<UEdGraph> CurrentGraph;
 
-	TSharedPtr<SWidget> Box;
+	TSharedPtr<SVerticalBox> Box;
 	
 	TMulticastDelegate<void()> PostScriptCreated;
 	TMulticastDelegate<void()> PreScriptDeleted;
