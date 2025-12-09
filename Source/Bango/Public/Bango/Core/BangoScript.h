@@ -3,7 +3,7 @@
 #pragma once
 #include "BangoScriptHandle.h"
 
-#include "BangoScriptObject.generated.h"
+#include "BangoScript.generated.h"
 
 class UBangoScriptValidator;
 class UBangoScriptSubsystem;
@@ -26,13 +26,13 @@ DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
 
 #define LOCTEXT_NAMESPACE "Bango"
 
-using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScriptInstance* ScriptInstance)>;
+using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScript* ScriptInstance)>;
 
 /**
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class BANGO_API UBangoScriptInstance : public UObject
+class BANGO_API UBangoScript : public UObject
 {
     GENERATED_BODY()
 
@@ -70,7 +70,7 @@ public:
 #endif
 	
 public:
-	static void RunScript(TSubclassOf<UBangoScriptInstance> Script, UObject* Runner, UObject* WorldContext = nullptr);
+	static void RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext = nullptr);
 	
 protected:
 	
@@ -85,7 +85,7 @@ protected:
 
     /** This is supposed to be called at the end of the Execute function */
     UFUNCTION(BlueprintCallable, meta = (WorldContext = "Script", BlueprintProtected))
-    static void Finish(UBangoScriptInstance* Script);
+    static void Finish(UBangoScript* Script);
 
 #if WITH_EDITOR
     bool ImplementsGetWorld() const override { return true; }

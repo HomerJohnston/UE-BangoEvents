@@ -15,7 +15,7 @@
 #include "K2Node_VariableGet.h"
 #include "K2Node_VariableSet.h"
 #include "KismetCompiler.h"
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScript.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 #include "Kismet/KismetMathLibrary.h"

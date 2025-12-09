@@ -1,10 +1,10 @@
 ﻿#pragma once
-#include "Bango/BangoScriptHolder.h"
+#include "Bango/Core/BangoScriptContainer.h"
 
 #include "BangoScriptComponent.generated.h"
 
 class UBlueprint;
-class UBangoScriptInstance;
+class UBangoScript;
 
 UCLASS(meta = (BlueprintSpawnableComponent), HideCategories = ("Navigation","Activation"))
 class BANGO_API UBangoScriptComponent : public UActorComponent
@@ -23,6 +23,8 @@ public:
 	void OnComponentCreated() override;
 
 	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	
+	void PreSave(FObjectPreSaveContext SaveContext) override;
 	
 	void TrySetGUID();
 	
@@ -43,8 +45,10 @@ public:
 	
 	FGuid GetScriptGuid() const;
 	
-	UBlueprint* GetScriptBlueprint() const;
+	UBangoScriptBlueprint* GetScriptBlueprint() const;
 	
-	void SetScriptBlueprint(UBlueprint* Blueprint); 
+	void SetScriptBlueprint(UBangoScriptBlueprint* Blueprint); 
+	
+	void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
 #endif
 };

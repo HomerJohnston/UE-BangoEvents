@@ -2,13 +2,19 @@
 
 #include "ObjectTools.h"
 #include "Bango/Components/BangoScriptComponent.h"
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
+#include "Bango/Core/BangoScript.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
 
-FString Bango::Editor::GetScriptRootContentFolder()
+FString Bango::Editor::GetGameScriptRootFolder()
+{
+	return "/Game" / ScriptRootFolder;
+}
+
+FString Bango::Editor::GetAbsoluteScriptRootFolder()
 {
 	return FPaths::ProjectContentDir() / ScriptRootFolder;
 }
@@ -74,10 +80,14 @@ UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Oute
 	FString FinalPath = ExternalObjectPackageName;// + FPackageName::GetAssetPackageExtension();
 	
 	NewBPName = FolderShortName;
-	return CreatePackage(*FinalPath);
+	UPackage* NewPackage = CreatePackage(*FinalPath);
+	NewPackage->SetFlags(RF_Public);
+	NewPackage->SetPackageFlags(PKG_NewlyCreated);
+	
+	return NewPackage;
 }
 
-UBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FGuid Guid)
+UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FGuid Guid)
 {
 	if (!InPackage)
 	{
@@ -89,7 +99,7 @@ UBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FG
 		return nullptr;
 	}
 	
-	UBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveSoftDeletedScript(Guid);
+	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveSoftDeletedScript(Guid);
 	
 	if (ScriptBlueprint)
 	{
@@ -97,14 +107,21 @@ UBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FG
 	}
 	else
 	{
-		ScriptBlueprint = FKismetEditorUtilities::CreateBlueprint(UBangoScriptInstance::StaticClass(), InPackage, FName(Name), BPTYPE_Normal, UBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass());
-		//ScriptBlueprint->SetFlags(RF_Public | RF_Standalone);	
+		ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(Name), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
 	}
-
+	
 	InPackage->GetOutermost()->MarkPackageDirty();
 	FAssetRegistryModule::AssetCreated(ScriptBlueprint);
 
 	FKismetEditorUtilities::CompileBlueprint(ScriptBlueprint);
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([ScriptBlueprint]()
+	{
+		ScriptBlueprint->Modify();
+		ScriptBlueprint->MarkPackageDirty();
+		ScriptBlueprint->GeneratedClass->Modify();
+		ScriptBlueprint->GeneratedClass->MarkPackageDirty();
+	}));
 	
 	return ScriptBlueprint;
 }

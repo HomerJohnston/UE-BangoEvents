@@ -49,41 +49,6 @@ void FBangoEventComponentDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 	{
 		DrawEditorDetails(DetailBuilder);
 	}
-	
-	
-	/*
-	TSharedRef<IPropertyHandle> ActionsProperty = DetailBuilder.GetProperty("Actions");
-
-	DetailBuilder.AddCustomRowToCategory(ActionsProperty, INVTEXT("Test"), false)
-	.NameContent()
-	[
-		SNew(SOverlay)
-		+ SOverlay::Slot()
-		.HAlign(EHorizontalAlignment::HAlign_Fill)
-		[
-			SNew(SColorBlock)
-			.Color(FLinearColor(0.15, 0.05, 0.04))
-		]
-		+ SOverlay::Slot()
-		[
-			ActionsProperty->CreatePropertyNameWidget()
-		]
-	]
-	.ValueContent()
-	[
-		SNew(SOverlay)
-		+ SOverlay::Slot()
-		[
-			SNew(SColorBlock)
-			.Color(FLinearColor(0.15, 0.05, 0.04))
-		]
-		+ SOverlay::Slot()
-		[
-			ActionsProperty->CreatePropertyValueWidget()
-		]
-	];
-	*/
-	
 }
 
 void FBangoEventComponentDetailsCustomization::DrawRuntimeDetails(IDetailLayoutBuilder& DetailBuilder)

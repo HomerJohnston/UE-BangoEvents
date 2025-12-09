@@ -4,7 +4,7 @@
 #include "BangoActorIDSubsystem.generated.h"
 
 struct FBangoScriptHandle;
-class UBangoScriptInstance;
+class UBangoScript;
 
 UCLASS()
 class UBangoActorIDSubsystem : public UWorldSubsystem

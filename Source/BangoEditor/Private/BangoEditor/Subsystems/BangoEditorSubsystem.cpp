@@ -4,13 +4,17 @@
 #include "IContentBrowserDataModule.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
+#include "Bango/Core/BangoScript.h"
+#include "Bango/Core/BangoScriptContainer.h"
+#include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "Helpers/BangoHideScriptFolderFilter.h"
+#include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
 
 TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> UBangoEditorSubsystem::Filter;
@@ -22,7 +26,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	Filter = MakeShared<FBangoHideScriptFolderFilter>();
 	UContentBrowserDataSubsystem* ContentBrowserData = IContentBrowserDataModule::Get().GetSubsystem();
-	ContentBrowserData->RegisterCreateHideFolderIfEmptyFilter(FContentBrowserCreateHideFolderIfEmptyFilter::CreateLambda([this] () { return Filter; }));
+	//ContentBrowserData->RegisterCreateHideFolderIfEmptyFilter(FContentBrowserCreateHideFolderIfEmptyFilter::CreateLambda([this] () { return Filter; }));
 
 	GEngine->OnLevelActorAdded().AddUObject(this, &ThisClass::OnLevelActorAdded);
 	GEngine->OnLevelActorDeleted().AddUObject(this, &ThisClass::OnLevelActorDeleted);
@@ -182,10 +186,14 @@ void CheckComponentOrigin(UActorComponent* Component)
 	}
 }
 
-void UBangoEditorSubsystem::OnScriptComponentCreated(UBangoScriptComponent* BangoScriptComponent) const
+void UBangoEditorSubsystem::OnScriptComponentCreated(UBangoScriptComponent* BangoScriptComponent, UBangoScriptBlueprint* ExistingBlueprint) const
 {
 	UPackage* ActorPackage = BangoScriptComponent->GetPackage();
 
+	/**/
+	//Bango::Editor::CreateBlueprint("/Game/TESTTESTTEST", UBangoScript::StaticClass());
+	/**/
+	
 	FString BPName;
 	UPackage* ScriptPackage = Bango::Editor::MakeScriptPackage(BangoScriptComponent, ActorPackage, BPName);
 	
@@ -196,36 +204,42 @@ void UBangoEditorSubsystem::OnScriptComponentCreated(UBangoScriptComponent* Bang
 	
 	FGuid Guid = BangoScriptComponent->GetScriptGuid();
 
-	UBlueprint* Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName, Guid);
+	UBangoScriptBlueprint* Blueprint = ExistingBlueprint;
 	
-	if (!Blueprint)
+	if (Blueprint)
 	{
-		return;
+		Blueprint->Rename(nullptr, ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+	}
+	else
+	{
+		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName, Guid);
 	}
 
-	//if (Bango::Editor::SaveScriptPackage(ScriptPackage, Blueprint))
-	//{
-		BangoScriptComponent->SetScriptBlueprint(Blueprint);
-	//}
+	BangoScriptComponent->SetScriptBlueprint(Blueprint);
+	Blueprint->Modify();
+	Blueprint->GeneratedClass->Modify();
+	ScriptPackage->SetAssetAccessSpecifier(EAssetAccessSpecifier::Public);
+	FKismetEditorUtilities::CompileBlueprint(Blueprint);
+	
+	FAssetRegistryModule::AssetCreated(Blueprint);
+	ScriptPackage->MarkPackageDirty();
+	Blueprint->SetGuid(BangoScriptComponent->GetScriptGuid());
+
+	
 	UScriptStruct* ScriptContainerType = FBangoScriptContainer::StaticStruct();
-	
-	//FProperty* Prop=
-	
+
 	FPropertyChangedEvent DummyEvent1(UBangoScriptComponent::StaticClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(UBangoScriptComponent, Script)));
-	FPropertyChangedEvent DummyEvent2(ScriptContainerType->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint)));
 	FPropertyChangedEvent DummyEvent3(ScriptContainerType->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass)));
 	BangoScriptComponent->PostEditChangeProperty(DummyEvent1);
-	BangoScriptComponent->PostEditChangeProperty(DummyEvent2);
 	BangoScriptComponent->PostEditChangeProperty(DummyEvent3);
-	
 	OnScriptGenerated.Broadcast();
 }
 
 void UBangoEditorSubsystem::OnScriptComponentDestroyed(UBangoScriptComponent* BangoScriptComponent)
 {
-	UBlueprint* Blueprint = BangoScriptComponent->GetScriptBlueprint();
+	TWeakObjectPtr<UBangoScriptBlueprint> Blueprint = BangoScriptComponent->GetScriptBlueprint();
 	
-	if (!Blueprint)
+	if (!Blueprint.IsValid())
 	{
 		return;
 	}
@@ -237,18 +251,22 @@ void UBangoEditorSubsystem::OnScriptComponentDestroyed(UBangoScriptComponent* Ba
 		return;
 	}
 	
-	TPair<FGuid, TStrongObjectPtr<UBlueprint>> SoftDeletedScript = { BangoScriptComponent->GetScriptGuid(), TStrongObjectPtr<UBlueprint>(Blueprint) };
+	TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>> SoftDeletedScript = { BangoScriptComponent->GetScriptGuid(), Blueprint.Pin() };
 	
 	SoftDeletedScripts.Add( SoftDeletedScript );
 	
 	Blueprint->Modify();
 	Blueprint->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	Blueprint->ListenForUndelete(BangoScriptComponent->GetScriptGuid());
 	
 	BangoScriptComponent->UnsetScript();
 	
-	UPackage* ActorPackage = BangoScriptComponent->GetPackage();
-	FString PackageFileName = FPackageName::LongPackageNameToFilename(ActorPackage->GetName(), FPackageName::GetAssetPackageExtension());
-	UPackage::SavePackage(ActorPackage, BangoScriptComponent->GetOwner(), *PackageFileName, FSavePackageArgs() );
+	//UPackage* ActorPackage = BangoScriptComponent->GetPackage();
+	//FString PackageFileName = FPackageName::LongPackageNameToFilename(ActorPackage->GetName(), FPackageName::GetAssetPackageExtension());
+	//UPackage::SavePackage(ActorPackage, BangoScriptComponent->GetOwner(), *PackageFileName, FSavePackageArgs() );
+	
+	//FString ScriptPackageFilename = FPackageName::LongPackageNameToFilename(ScriptPackage->GetName(), FPackageName::GetAssetPackageExtension());
+	//UPackage::SavePackage(ScriptPackage, nullptr, *ScriptPackageFilename, FSavePackageArgs());
 	
 	Blueprint->ClearEditorReferences();
 	
@@ -283,28 +301,25 @@ void UBangoEditorSubsystem::OnScriptComponentDestroyed(UBangoScriptComponent* Ba
 	
 	//CollectGarbage(RF_NoFlags);
 	
-	// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY - 
+	// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY
 	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([ScriptPackage] ()
 	{
 		int32 Deleted = ObjectTools::DeleteObjects( {ScriptPackage}, false );
 		UE_LOG(LogBango, Display, TEXT("Deleted %i script packages"), Deleted);
-		
-		DeleteEmptyFolders(Bango::Editor::GetScriptRootContentFolder());
-		//Bango::Editor::DeleteEmptyFolderFromDisk(FBangoPackageHelper::GetBangoScriptsFolderName());
 	}));
 }
 
-void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScriptInstance> ScriptClass)
+void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass)
 {
 	UPackage* ScriptPackage = ScriptClass->GetOuterUPackage();
-	UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(ScriptClass);
+	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(ScriptClass));
 	
 	if (!ScriptPackage || !Blueprint)
 	{
 		return;
 	}
 	
-	TPair<FGuid, TStrongObjectPtr<UBlueprint>> SoftDeletedScript = { ScriptClass->GetDefaultObject<UBangoScriptInstance>()->GetScriptGuid(), TStrongObjectPtr<UBlueprint>(Blueprint) };
+	TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>> SoftDeletedScript = { ScriptClass->GetDefaultObject<UBangoScript>()->GetScriptGuid(), TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) };
 	SoftDeletedScripts.Add(SoftDeletedScript);
 	
 	ScriptClass->Rename(nullptr, GetTransientPackage(), REN_DoNotDirty | REN_DontCreateRedirectors);
@@ -312,18 +327,20 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScriptInst
 	ObjectTools::DeleteObjects( { ScriptPackage } );
 	
 	Bango::Editor::DeleteEmptyFolderFromDisk(Bango::Editor::ScriptRootFolder);
+	
+	//Blueprint->	ListenForUndelete();
 }
 
-UBlueprint* UBangoEditorSubsystem::RetrieveSoftDeletedScript(FGuid Guid)
+UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveSoftDeletedScript(FGuid Guid)
 {
-	int32 Index = SoftDeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBlueprint>>& Element)
+	int32 Index = SoftDeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>& Element)
 	{
 		return Element.Key == Guid;
 	});
 	
 	if (Index >= 0)
 	{
-		TStrongObjectPtr<UBlueprint> Popped = SoftDeletedScripts[Index].Value;
+		TStrongObjectPtr<UBangoScriptBlueprint> Popped = SoftDeletedScripts[Index].Value;
 		
 		SoftDeletedScripts.RemoveAt(Index);
 		
@@ -331,236 +348,4 @@ UBlueprint* UBangoEditorSubsystem::RetrieveSoftDeletedScript(FGuid Guid)
 	}
 	
 	return nullptr;
-}
-
-void UBangoEditorSubsystem::DeleteEmptyFolders(const FString& RootPath, bool bShowSlowTask)
-{
-	TArray<FString> FoldersEmpty;
-	GetEmptyFolders(RootPath, FoldersEmpty);
-
-	if (FoldersEmpty.Num() == 0)
-	{
-		return;
-	}
-
-	FScopedSlowTask SlowTaskMain(
-		1.0f,
-		FText::FromString(TEXT("Deleting empty folders...")),
-		bShowSlowTask && GIsEditor && !IsRunningCommandlet()
-	);
-	SlowTaskMain.MakeDialog(false, false);
-	SlowTaskMain.EnterProgressFrame(1.0f);
-
-	FScopedSlowTask SlowTask(
-		FoldersEmpty.Num(),
-		FText::FromString(TEXT(" ")),
-		bShowSlowTask && GIsEditor && !IsRunningCommandlet()
-	);
-	SlowTask.MakeDialog(false, false);
-
-	bool bErrors = false;
-
-	const int32 NumFoldersTotal = FoldersEmpty.Num();
-	int32 NumFoldersDeleted = 0;
-
-	for (const auto& Folder : FoldersEmpty)
-	{
-		SlowTask.EnterProgressFrame(1.0f, FText::FromString(Folder));
-
-		if (!IFileManager::Get().DeleteDirectory(*Folder, true, true))
-		{
-			bErrors = true;
-			UE_LOG(LogBango, Warning, TEXT("Failed to delete empty folder, unknown reason: %s"), *Folder);
-			continue;
-		}
-
-		++NumFoldersDeleted;
-
-		// if folder deleted successfully, we must remove it from cached AssetRegistry paths also.
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistryModule.Get().RemovePath(PathConvertToRelative(Folder));
-	}
-
-	if (bErrors)
-	{
-		UE_LOG(LogBango, Error, TEXT("Failed to delete some empty script folders. Please see if OutputLog has more information"));
-	}
-}
-
-void UBangoEditorSubsystem::GetFolders(const FString& RootPath, TArray<FString>& OutFolders, bool bSearchRecursive)
-{
-	OutFolders.Empty();
-
-	struct FFindFoldersVisitor : IPlatformFile::FDirectoryVisitor
-	{
-		TArray<FString>& Folders;
-
-		explicit FFindFoldersVisitor(TArray<FString>& InFolders) : Folders(InFolders) { }
-
-		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
-		{
-			if (bIsDirectory)
-			{
-				Folders.Emplace(FPaths::ConvertRelativePathToFull(FilenameOrDirectory));
-			}
-
-			return true;
-		}
-	};
-
-	FFindFoldersVisitor FindFoldersVisitor{OutFolders};
-	if (bSearchRecursive)
-	{
-		FPlatformFileManager::Get().GetPlatformFile().IterateDirectoryRecursively(*RootPath, FindFoldersVisitor);
-	}
-	else
-	{
-		FPlatformFileManager::Get().GetPlatformFile().IterateDirectory(*RootPath, FindFoldersVisitor);
-	}
-}
-
-void UBangoEditorSubsystem::GetEmptyFolders(const FString& RootPath, TArray<FString>& Folders)
-{
-	TArray<FString> AllFolders;
-	
-	GetFolders(RootPath, AllFolders);
-	
-	Folders.Reserve(AllFolders.Num());
-	
-	for (const FString& Folder : AllFolders)
-	{
-		if (IsFolderEmpty(Folder) && !IsFolderEngineGenerated(Folder))
-		{
-			Folders.Emplace(Folder);
-		}
-	}
-}
-
-bool UBangoEditorSubsystem::IsFolderEmpty(const FString& InPath)
-{
-	if (InPath.IsEmpty())
-	{
-		return false;
-	}
-	
-	FName PathRel = FName(PathConvertToRelative(InPath));
-	
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	
-	if (AssetRegistryModule.Get().HasAssets(PathRel, true))
-	{
-		return false;
-	}
-	
-	FString PathAbs = PathConvertToAbsolute(InPath);
-	if (PathAbs.IsEmpty())
-	{
-		return false;
-	}
-	
-	TArray<FString> Files;
-	IFileManager::Get().FindFilesRecursive(Files, *PathAbs, TEXT("*"), true, false);
-	
-	return Files.Num() == 0;
-}
-
-bool UBangoEditorSubsystem::IsFolderEngineGenerated(const FString& InPath)
-{
-	const FString PathDevelopers = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / TEXT("Developers"));
-	const FString PathCollections = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) / TEXT("Collections");
-	const FString PathCurrentDeveloper = PathDevelopers / FPaths::GameUserDeveloperFolderName();
-	const FString PathCurrentDeveloperCollections = PathCurrentDeveloper / TEXT("Collections");
-
-	TSet<FString> EngineGeneratedPaths;
-	EngineGeneratedPaths.Emplace(PathDevelopers);
-	EngineGeneratedPaths.Emplace(PathCollections);
-	EngineGeneratedPaths.Emplace(PathCurrentDeveloper);
-	EngineGeneratedPaths.Emplace(PathCurrentDeveloperCollections);
-
-	return EngineGeneratedPaths.Contains(InPath);
-}
-
-FString UBangoEditorSubsystem::PathNormalize(const FString& InPath)
-{
-	if (InPath.IsEmpty())
-	{
-		return {};
-	}
-	
-	if (!(InPath.StartsWith(TEXT("/")) || InPath.StartsWith(TEXT("\\")) || (InPath.Len() > 2 && InPath[1] == ':')))
-	{
-		return {};
-	}
-	
-	FString Path = FPaths::ConvertRelativePathToFull(InPath).TrimStartAndEnd();
-	FPaths::RemoveDuplicateSlashes(Path);
-	FPaths::CollapseRelativeDirectories(Path);
-	
-	if (FPaths::GetExtension(Path).IsEmpty())
-	{
-		FPaths::NormalizeDirectoryName(Path);
-	}
-	else
-	{
-		FPaths::NormalizeFilename(Path);
-	}
-	
-	if (Path.EndsWith(TEXT("/")) || Path.EndsWith(TEXT("\\")))
-	{
-		Path = Path.LeftChop(1);
-	}
-	
-	return Path;
-}
-
-FString UBangoEditorSubsystem::PathConvertToAbsolute(const FString& InPath)
-{
-	FString PathNormalized = PathNormalize(InPath);
-	FString PathProjectContent = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()).LeftChop(1);
-	
-	if (PathNormalized.IsEmpty())
-	{
-		return {};
-	}
-	
-	if (PathNormalized.StartsWith(PathProjectContent))
-	{
-		return PathNormalized;
-	}
-	
-	if (PathNormalized.StartsWith("/Game"))
-	{
-		FString Path = PathNormalized;
-		Path.RemoveFromStart("/Game");
-		
-		return Path.IsEmpty() ? PathProjectContent : PathProjectContent / Path;
-	}
-	
-	return {};
-}
-
-FString UBangoEditorSubsystem::PathConvertToRelative(const FString& InPath)
-{
-	FString PathNormalized = PathNormalize(InPath);
-	FString PathProjectContent = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir().LeftChop(1));
-	
-	if (PathNormalized.IsEmpty())
-	{
-		return {};
-	}
-	
-	if (PathNormalized.StartsWith("/Game"))
-	{
-		return PathNormalized;
-	}
-	
-	if (PathNormalized.StartsWith(PathProjectContent))
-	{
-		FString Path = PathNormalized;
-		Path.RemoveFromStart("/Game");
-		
-		return Path.IsEmpty() ? "/Game" : "/Game"/ Path;
-	}
-	
-	return {};
 }

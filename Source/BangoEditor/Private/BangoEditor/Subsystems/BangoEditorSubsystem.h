@@ -17,7 +17,7 @@ class UBangoEditorSubsystem : public UEditorSubsystem
 
 	bool bDuplicateActorsActive = false;
 	
-	TArray<TPair<FGuid, TStrongObjectPtr<UBlueprint>>> SoftDeletedScripts;
+	TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> SoftDeletedScripts;
 	
 public:
 	// Simple solution to force any active FBangoScriptContainerCustomization instances to redraw
@@ -46,20 +46,9 @@ public:
 	
 	static TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> Filter;	
 	
-	void OnScriptComponentCreated(UBangoScriptComponent* BangoScriptComponent) const;
+	void OnScriptComponentCreated(UBangoScriptComponent* BangoScriptComponent, UBangoScriptBlueprint* ExistingBlueprint = nullptr) const;
 	void OnScriptComponentDestroyed(UBangoScriptComponent* BangoScriptComponent);
-	void SoftDeleteScriptPackage(TSubclassOf<UBangoScriptInstance> ScriptClass);
-	UBlueprint* RetrieveSoftDeletedScript(FGuid Guid);
+	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
+	UBangoScriptBlueprint* RetrieveSoftDeletedScript(FGuid Guid);
 
-	static void DeleteEmptyFolders(const FString& RootPath, bool bShowSlowTask = true);
-	
-	static void GetFolders(const FString& RootPath, TArray<FString>& OutFolders, bool bSearchRecursive = true);
-	static void GetEmptyFolders(const FString& RootPath, TArray<FString>& Folders);
-
-	static bool IsFolderEmpty(const FString& InPath);
-	static bool IsFolderEngineGenerated(const FString& InPath);
-
-	static FString PathNormalize(const FString& InPath);
-	static FString PathConvertToAbsolute(const FString& InPath);
-	static FString PathConvertToRelative(const FString& InPath);
 };

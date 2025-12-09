@@ -1,7 +1,7 @@
 ﻿#include "BangoScriptValidator.h"
 
 #include "K2Node_Event.h"
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScript.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFinishScript.h"
 #include "Misc/DataValidation.h"
 
@@ -9,10 +9,10 @@
 
 void UBangoScriptValidator::Initialize(FSubsystemCollectionBase& Collection)
 {
-	UBangoScriptInstance::OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
+	UBangoScript::OnScriptRequestValidation.BindStatic(&ThisClass::IsScriptDataValid);
 }
 
-EDataValidationResult UBangoScriptValidator::IsScriptDataValid(class FDataValidationContext& Context, const UBangoScriptInstance* ScriptObject)
+EDataValidationResult UBangoScriptValidator::IsScriptDataValid(class FDataValidationContext& Context, const UBangoScript* ScriptObject)
 {
 	UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(ScriptObject->GetClass());
 	

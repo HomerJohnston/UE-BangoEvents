@@ -4,7 +4,7 @@
 
 #include "BangoBlueprintFunctionLibrary.generated.h"
 
-class UBangoScriptInstance;
+class UBangoScript;
 struct FBangoScriptHandle;
 
 UCLASS()

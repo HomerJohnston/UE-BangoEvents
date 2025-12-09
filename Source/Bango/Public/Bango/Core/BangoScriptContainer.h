@@ -1,8 +1,11 @@
 ﻿#pragma once
 
-#include "BangoScriptHolder.generated.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
 
-class UBangoScriptInstance;
+#include "BangoScriptContainer.generated.h"
+
+class UBangoScript;
+class UBangoScriptBlueprint;
 
 /**
  * This struct is used to hold a script. It is used in ABangoTrigger and in UBangoScriptComponent.
@@ -14,15 +17,15 @@ struct FBangoScriptContainer
 	
 #if WITH_EDITORONLY_DATA
 	// This will be kept in sync with the UBangoScriptObject's ScriptGuid and is used for undo/redo purposes and other sync
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	FGuid Guid;
 	
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UBlueprint> ScriptBlueprint;
+	//UPROPERTY(VisibleAnywhere)
+	//TObjectPtr<UBangoScriptBlueprint> ScriptBlueprint;
 #endif
 	
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UBangoScriptInstance> ScriptClass;
+	UPROPERTY(VisibleAnywhere)
+	TSubclassOf<UBangoScript> ScriptClass;
 	
 #if WITH_EDITOR
 	void PrepareForDestroy();

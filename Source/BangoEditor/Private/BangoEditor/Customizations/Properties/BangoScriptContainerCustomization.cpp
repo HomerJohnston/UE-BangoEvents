@@ -1,10 +1,10 @@
-﻿#include "BangoEditor/Customizations/Properties/BangoScriptHolderCustomization.h"
+﻿#include "BangoEditor/Customizations/Properties/BangoScriptContainerCustomization.h"
 
 #include "BlueprintEditor.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "SEditorViewport.h"
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScript.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
@@ -69,7 +69,7 @@ UEdGraph* FBangoScriptContainerCustomization::GetPrimaryEventGraph() const
 
 void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
+	//ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
 	GuidProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, Guid));
 	
@@ -370,11 +370,17 @@ AActor* FBangoScriptContainerCustomization::GetOwner() const
 
 UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 {
-	UObject* BlueprintObject;
+	UObject* ScriptClassObject;
 	
-	if (ScriptBlueprintProperty->GetValue(BlueprintObject) == FPropertyAccess::Success)
+	if (ScriptClassProperty->GetValue(ScriptClassObject))
 	{
-		return Cast<UBlueprint>(BlueprintObject);
+		if (UClass* Class = Cast<UClass>(ScriptClassObject))
+		{
+			if (UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(Class))
+			{
+				return Blueprint;
+			}
+		}
 	}
 	
 	return nullptr;
@@ -382,7 +388,7 @@ UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 
 // ----------------------------------------------
 
-TSubclassOf<UBangoScriptInstance> FBangoScriptContainerCustomization::GetScriptClass() const
+TSubclassOf<UBangoScript> FBangoScriptContainerCustomization::GetScriptClass() const
 {
 	UObject* ClassObject;
 	

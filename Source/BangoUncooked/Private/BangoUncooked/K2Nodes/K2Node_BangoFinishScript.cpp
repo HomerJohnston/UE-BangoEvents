@@ -50,7 +50,7 @@ void UK2Node_BangoFinishScript::ExpandNode(class FKismetCompilerContext& Compile
 
 	FString UniqueID = *Compiler.GetGuid(this);
 	
-	Node_CallFunction->SetFromFunction(UBangoScriptInstance::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScriptInstance, Finish)));
+	Node_CallFunction->SetFromFunction(UBangoScript::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoScript, Finish)));
 	
 	Builder.FinishDeferredNodes();
 	

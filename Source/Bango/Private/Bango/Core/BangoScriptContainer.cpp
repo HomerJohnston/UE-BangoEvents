@@ -1,10 +1,9 @@
-﻿#include "Bango/BangoScriptHolder.h"
+﻿#include "Bango/Core/BangoScriptContainer.h"
 
 #if WITH_EDITOR
 void FBangoScriptContainer::PrepareForDestroy()
 {
 	Guid.Invalidate();
-	ScriptBlueprint = nullptr;
 	ScriptClass = nullptr;
 }
 #endif

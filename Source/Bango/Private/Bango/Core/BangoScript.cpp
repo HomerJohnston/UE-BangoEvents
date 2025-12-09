@@ -1,4 +1,4 @@
-#include "Bango/Core/BangoScriptObject.h"
+#include "Bango/Core/BangoScript.h"
 
 #include "DelayAction.h"
 #include "Bango/Core/BangoScriptHandle.h"
@@ -10,10 +10,10 @@
 #define LOCTEXT_NAMESPACE "Bango"
 
 #if WITH_EDITOR
-DataValidationDelegate UBangoScriptInstance::OnScriptRequestValidation;
+DataValidationDelegate UBangoScript::OnScriptRequestValidation;
 #endif
 
-void UBangoScriptInstance::RunScript(TSubclassOf<UBangoScriptInstance> Script, UObject* Runner, UObject* WorldContext)
+void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext)
 {
 	if (WorldContext == nullptr)
 	{
@@ -27,18 +27,18 @@ void UBangoScriptInstance::RunScript(TSubclassOf<UBangoScriptInstance> Script, U
 	}
 	
 	// TODO should I bother pooling?
-	UBangoScriptInstance* NewScriptInstance = NewObject<UBangoScriptInstance>(Runner, Script);
+	UBangoScript* NewScriptInstance = NewObject<UBangoScript>(Runner, Script);
 	NewScriptInstance->Execute_Internal();
 }
 
-FBangoScriptHandle UBangoScriptInstance::Execute_Internal()
+FBangoScriptHandle UBangoScript::Execute_Internal()
 {
     Handle = UBangoScriptSubsystem::RegisterScript(this);
     Start();
     return Handle;
 }
 
-void UBangoScriptInstance::Finish(UBangoScriptInstance* Script)
+void UBangoScript::Finish(UBangoScript* Script)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObject(Script, EGetWorldErrorMode::LogAndReturnNull))
     {
@@ -54,7 +54,7 @@ void UBangoScriptInstance::Finish(UBangoScriptInstance* Script)
     Script->Handle.Invalidate();
 }
 
-int32 UBangoScriptInstance::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)
+int32 UBangoScript::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)
 {
     int32 UUID = LatentInfo.UUID;
     
@@ -90,7 +90,7 @@ int32 UBangoScriptInstance::LaunchSleep_Internal(const UObject* WorldContextObje
     return 0;
 }
 
-void UBangoScriptInstance::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
+void UBangoScript::CancelSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -110,7 +110,7 @@ void UBangoScriptInstance::CancelSleep_Internal(UObject* WorldContextObject, int
     }
 }
 
-void UBangoScriptInstance::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
+void UBangoScript::SkipSleep_Internal(UObject* WorldContextObject, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -130,7 +130,7 @@ void UBangoScriptInstance::SkipSleep_Internal(UObject* WorldContextObject, int32
     }    
 }
 
-void UBangoScriptInstance::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
+void UBangoScript::SetSleepPause_Internal(UObject* WorldContextObject, bool bPaused, int32 ActionUUID)
 {
     if (ActionUUID == 0)
     {
@@ -150,13 +150,13 @@ void UBangoScriptInstance::SetSleepPause_Internal(UObject* WorldContextObject, b
     }    
 }
 
-float UBangoScriptInstance::Rand(float Hi, float Lo)
+float UBangoScript::Rand(float Hi, float Lo)
 {
     return FMath::RandRange(Lo, Hi);
 }
 
 #if WITH_EDITOR
-EDataValidationResult UBangoScriptInstance::IsDataValid(class FDataValidationContext& Context) const
+EDataValidationResult UBangoScript::IsDataValid(class FDataValidationContext& Context) const
 {
     if (OnScriptRequestValidation.IsBound())
     {
@@ -166,7 +166,7 @@ EDataValidationResult UBangoScriptInstance::IsDataValid(class FDataValidationCon
     return UObject::IsDataValid(Context);
 }
 
-void UBangoScriptInstance::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+void UBangoScript::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 {
 	// TODO API update
 	// BangoScriptObject.cpp(171,12): Warning C4996 : 'UObject::GetAssetRegistryTags': Implement the version that takes FAssetRegistryTagsContext instead. - Please update your code to the new API before upgrading to the next release, otherwise your project will no longer compile.

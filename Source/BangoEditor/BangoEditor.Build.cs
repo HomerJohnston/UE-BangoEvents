@@ -34,6 +34,8 @@ public class BangoEditor : ModuleRules
                 "DataValidation",
                 "EditorSubsystem",
 				"ContentBrowserData",
+				"AssetDefinition",
+				"ClassViewer",
             }
         );
     }

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Bango/BangoScriptHolder.h"
+#include "Bango/Core/BangoScriptContainer.h"
 #include "IPropertyTypeCustomization.h"
 
 class FBangoScriptContainerCustomization : public IPropertyTypeCustomization
@@ -16,7 +16,7 @@ public:
 	
 protected:
 
-	TSharedPtr<IPropertyHandle> ScriptBlueprintProperty;
+	//TSharedPtr<IPropertyHandle> ScriptBlueprintProperty;
 	TSharedPtr<IPropertyHandle> ScriptClassProperty;
 	TSharedPtr<IPropertyHandle> GuidProperty;
 	TWeakObjectPtr<UEdGraph> CurrentGraph;
@@ -64,7 +64,7 @@ protected:
 	
 	UEdGraph* GetPrimaryEventGraph() const;
 	
-	TSubclassOf<UBangoScriptInstance> GetScriptClass() const;
+	TSubclassOf<UBangoScript> GetScriptClass() const;
 	
 	// ------------------------------------------
 	
