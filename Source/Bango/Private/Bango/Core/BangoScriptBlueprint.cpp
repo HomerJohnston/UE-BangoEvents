@@ -101,6 +101,6 @@ void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransaction
 		
 			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
 		}
-	}	
+	}
 }
 #endif

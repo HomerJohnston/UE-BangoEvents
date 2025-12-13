@@ -57,8 +57,9 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 	
-FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
-	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
+	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
+	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
+	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
 }
 
 FString UBangoEditorSubsystem::GetState(UObject* Object) const
@@ -237,11 +238,6 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 
 	ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
 	
-	//Blueprint->Modify();
-	//Blueprint->GeneratedClass->Modify();
-	//NewScriptPackage->SetAssetAccessSpecifier(EAssetAccessSpecifier::Public);
-	//FKismetEditorUtilities::CompileBlueprint(Blueprint);
-	
 	FAssetRegistryModule::AssetCreated(Blueprint);
 	(void)NewScriptPackage->MarkPackageDirty();
 	
@@ -262,14 +258,14 @@ bool IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* Scrip
 	return true;
 }
 
-void UBangoEditorSubsystem::OnScriptComponentDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
 	if (!IsExistingScriptContainerValid(Outer, ScriptContainer))
 	{
 		return;
 	}
 		
-	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(ScriptContainer->ScriptClass)); 
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass); 
 	check(Blueprint);
 	
 	UPackage* ScriptPackage = Blueprint->GetPackage();
@@ -353,17 +349,58 @@ void UBangoEditorSubsystem::OnScriptComponentDestroyed(UObject* Outer, FBangoScr
 	//GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
 }
 
-void UBangoEditorSubsystem::OnScriptComponentDuplicated(UBangoScriptComponent* ScriptComponent)
+void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
-	UBangoScriptBlueprint* Blueprint = ScriptComponent->GetScriptBlueprint();
+	auto DelayOneFrame = [this, Outer, ScriptContainer] ()
+	{
+		check(IsValid(Outer));
+		check(ScriptContainer);
+	
+		// Stash the referenced blueprint
+		UBangoScriptBlueprint* OldBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);
+		
+		// Set up this new duplicated script container
+		ScriptContainer->Unset();
+		ScriptContainer->Guid = FGuid::NewGuid();		
+		
+		// Dupe the blueprint
+		FString NewBlueprintName;
+		UPackage* NewScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName);
+	
+		if (!NewScriptPackage)
+		{
+			UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
+			return;
+		}
+		
+		UBangoScriptBlueprint* Blueprint = nullptr;
+			
+		if (OldBlueprint)
+		{
+			Blueprint = DuplicateObject(OldBlueprint, NewScriptPackage);
+		}
+
+		if (Blueprint)
+		{
+			ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
+	
+			FAssetRegistryModule::AssetCreated(Blueprint);
+			(void)NewScriptPackage->MarkPackageDirty();
+	
+			// Tells FBangoScript property type customizations to regenerate
+			OnScriptGenerated.Broadcast();	
+		}
+	};
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
+	
+	/*
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);
 	
 	FString BPName;
-	UPackage* PackageForDuplicate = Bango::Editor::MakePackageForScript(ScriptComponent, BPName);
-	
-	if (!PackageForDuplicate)
-	{
-		return;
-	}
+	UPackage* PackageForDuplicate = Bango::Editor::MakePackageForScript(Outer, BPName);
+	check(PackageForDuplicate);
+*/
 	
 	//FGuid = 
 }
@@ -371,7 +408,7 @@ void UBangoEditorSubsystem::OnScriptComponentDuplicated(UBangoScriptComponent* S
 void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass)
 {
 	UPackage* ScriptPackage = ScriptClass->GetOuterUPackage();
-	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(ScriptClass));
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass);
 	
 	if (!ScriptPackage || !Blueprint)
 	{

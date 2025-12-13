@@ -53,8 +53,8 @@ public:
 	static TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> Filter;	
 	
 	void OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
-	void OnScriptComponentDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
-	void OnScriptComponentDuplicated(UBangoScriptComponent* ScriptComponent);
+	void OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	
 	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
 	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
