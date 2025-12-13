@@ -51,5 +51,7 @@ protected:
 public:
 	
 	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const UClass* InClass);
+	
+	void OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
 #endif
 };

@@ -19,21 +19,7 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 #if WITH_EDITOR
 void UBangoScriptBlueprint::ListenForUndelete()
 {	
-	auto OnUndelete = [this] (UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
-	{
-		if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
-		{
-			if (ScriptComponent->GetScriptGuid() == ScriptGuid)
-			{
-				StopListeningForUndelete();
-				ScriptGuid.Invalidate();
-			
-				FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
-			}
-		}	
-	};
-	
-	ListenForUndeleteHandle = FCoreUObjectDelegates::OnObjectTransacted.AddLambda(OnUndelete);
+	ListenForUndeleteHandle = FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnUndelete);
 }
 #endif
 
@@ -102,5 +88,19 @@ UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(c
 	}
 		
 	return BP;
+}
+
+void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+{
+	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
+	{
+		if (ScriptComponent->GetScriptGuid() == ScriptGuid)
+		{
+			StopListeningForUndelete();
+			ScriptGuid.Invalidate();
+		
+			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+		}
+	}	
 }
 #endif

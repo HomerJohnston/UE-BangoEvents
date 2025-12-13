@@ -74,6 +74,12 @@ void UBangoScriptComponent::OnComponentCreated()
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
+	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
+	if (HasAllFlags(RF_BeginDestroyed))
+	{
+		return;
+	}
+	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
 		if (Script.Guid.IsValid())

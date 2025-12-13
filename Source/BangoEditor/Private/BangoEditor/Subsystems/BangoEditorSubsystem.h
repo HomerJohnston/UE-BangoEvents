@@ -21,7 +21,7 @@ public:
 protected:
 	bool bDuplicateActorsActive = false;
 	
-	TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> SoftDeletedScripts;
+	TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> DeletedScripts;
 	
 public:
 	// Simple solution to force any active FBangoScriptContainerCustomization instances to redraw

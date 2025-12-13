@@ -201,32 +201,10 @@ void CheckComponentOrigin(UActorComponent* Component)
 	}
 }
 
-bool IsNewScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
 	check(IsValid(Outer));
 	check(ScriptContainer);
-	
-	if (ScriptContainer->Guid.IsValid())
-	{
-		UE_LOG(LogBango, Error, TEXT("Script Container already has a Guid!"));
-		return false;
-	}
-	
-	if (ScriptContainer->ScriptClass)
-	{
-		UE_LOG(LogBango, Error, TEXT("Script Container already has a script component!"));
-		return false;
-	}
-
-	return true;
-}
-
-void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
-{
-	if (!IsNewScriptContainerValid(Outer, ScriptContainer))
-	{
-		return;
-	}
 	
 	FString NewBlueprintName;
 	UPackage* NewScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName);
@@ -320,7 +298,7 @@ void UBangoEditorSubsystem::OnScriptComponentDestroyed(UObject* Outer, FBangoScr
 	ScriptPackage->AddToRoot();
 	
 	// Move the blueprint out into transient space. Store it in this subsystem instead for lookup and GC prevention.
-	SoftDeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) } );
+	DeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) } );
 	Blueprint->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
 	Blueprint->ListenForUndelete();
 	
@@ -401,7 +379,7 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> Sc
 	}
 	
 	TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>> SoftDeletedScript = { ScriptClass->GetDefaultObject<UBangoScript>()->GetScriptGuid(), TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) };
-	SoftDeletedScripts.Add(SoftDeletedScript);
+	DeletedScripts.Add(SoftDeletedScript);
 	
 	ScriptClass->Rename(nullptr, GetTransientPackage(), REN_DoNotDirty | REN_DontCreateRedirectors);
 	
@@ -416,16 +394,16 @@ UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
 {
 	auto Subsystem = Get();
 	
-	int32 Index = Subsystem->SoftDeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>& Element)
+	int32 Index = Subsystem->DeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>& Element)
 	{
 		return Element.Key == Guid;
 	});
 	
 	if (Index >= 0)
 	{
-		TStrongObjectPtr<UBangoScriptBlueprint> Popped = Subsystem->SoftDeletedScripts[Index].Value;
+		TStrongObjectPtr<UBangoScriptBlueprint> Popped = Subsystem->DeletedScripts[Index].Value;
 		
-		Subsystem->SoftDeletedScripts.RemoveAt(Index);
+		Subsystem->DeletedScripts.RemoveAt(Index);
 		
 		return Popped.Get();
 	}

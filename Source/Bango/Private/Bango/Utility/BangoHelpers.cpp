@@ -20,9 +20,16 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	if (GIsPlayInEditorWorld)
 		return false;
 	
-	if (!Component->GetWorld())
+	UWorld* World = Component->GetWorld();
+	
+	if (!World)
 		return false;
 
+	if (World->bIsTearingDown)
+	{
+		return false;
+	}
+	
 	if (Component->HasAnyFlags(RF_Transient))
 		return false;
 	
@@ -31,7 +38,7 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 		
 	if (Component->IsDefaultSubobject())
 	{
-		if (Component->GetWorld()->IsPlayInEditor())
+		if (World->IsPlayInEditor())
 			return false;
 		
 		return true;

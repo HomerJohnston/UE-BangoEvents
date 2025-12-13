@@ -83,7 +83,7 @@ UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Oute
 {
 	FGuid UniqueID = FGuid::NewGuid();
 	
-	FString FolderShortName = FString("BangoScript") + TEXT("_UID_") + UniqueID.ToString(EGuidFormats::UniqueObjectGuid);
+	FString FolderShortName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + UniqueID.ToString(EGuidFormats::UniqueObjectGuid);
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> GloballyUniqueObjectPath;
 	GloballyUniqueObjectPath += Actor->GetLevel()->GetPathName();
 	GloballyUniqueObjectPath += TEXT(".");
