@@ -6,25 +6,50 @@ UCLASS()
 class BANGO_API UBangoScriptBlueprint : public UBlueprint
 {
 	GENERATED_BODY()
+
+	friend class UBangoEditorSubsystem;
+	friend struct FBangoScriptContainer;
 	
+#if WITH_EDITOR
 public:
 	UBangoScriptBlueprint();
+#endif
 	
-public:
-	void ListenForUndelete(FGuid InGuid);
+#if WITH_EDITORONLY_DATA
+protected:
+	/** Every script will have a unique ID. This is used to help differentiate between scripts e.g. when a script owner (which may be an actor component or a simple UObject) is duplicated. */
+	UPROPERTY()
+	FGuid ScriptGuid;
+	
+	/** Every script must be tied to an actor. This is used to help determine when to save or delete script assets. */
+	UPROPERTY()
+	FGuid ActorGuid;
+	
+	FDelegateHandle ListenForUndeleteHandle;
+#endif
 
+#if WITH_EDITOR
+protected:
+	// When a script holder is deleted, the actual script blueprint (this) isn't deleted, it gets moved to the transient package. 
+	// If the user undos their delete, this lets Bango restore the blueprint back the way it was.
+	void ListenForUndelete();
+	void StopListeningForUndelete();
+
+	// TODO TESTING
 	bool SupportsDelegates() const override { return false; }
 	
+	// TODO TESTING
 	bool SupportedByDefaultBlueprintFactory() const override { return false; }
 	
+	/** Forces the blueprint script to save itself. */
 	void ForceSave();
+
+	void BeginDestroy() override;
 	
-protected:
-	void OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
-	
-	UPROPERTY()
-	FGuid Guid;
+	void SetGuid(FGuid InGuid);
 	
 public:
-	void SetGuid(FGuid InGuid);
+	
+	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const UClass* InClass);
+#endif
 };

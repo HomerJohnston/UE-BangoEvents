@@ -127,6 +127,7 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 	Box = SNew(SVerticalBox);
 	
 	ChildBuilder.AddCustomRow(LOCTEXT("BangoScriptHolder_SearchTerm", "Bango"))
+	.ShouldAutoExpand(true)
 	[
 		Box.ToSharedRef()
 	];
@@ -155,7 +156,7 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 	}
 
 	FString BPName;
-	UPackage* ScriptPackage = Bango::Editor::MakeScriptPackage(ScriptClassProperty, Packages[0], BPName);
+	UPackage* ScriptPackage = Bango::Editor::MakePackageForScript(ScriptClassProperty, Packages[0], BPName);
 	
 	if (!ScriptPackage)
 	{

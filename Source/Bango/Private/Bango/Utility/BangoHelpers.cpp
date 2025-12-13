@@ -1,12 +1,14 @@
 ﻿#include "Bango/Utility/BangoHelpers.h"
 
 #include "Bango/Core/BangoScriptBlueprint.h"
+#include "Bango/Core/BangoScriptContainer.h"
 #include "Components/ActorComponent.h"
 #include "UObject/Package.h"
 
 #if WITH_EDITOR
-TMulticastDelegate<void(UBangoScriptComponent*, UBangoScriptBlueprint*)> FBangoEditorDelegates::OnScriptComponentCreated;
-TMulticastDelegate<void(UBangoScriptComponent*)> FBangoEditorDelegates::OnScriptComponentDestroyed;
+TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerCreated;
+TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerDestroyed;
+TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerDuplicated;
 #endif
 
 #if WITH_EDITOR

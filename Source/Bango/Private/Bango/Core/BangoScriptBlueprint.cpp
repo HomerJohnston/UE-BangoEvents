@@ -5,19 +5,53 @@
 #include "Bango/Utility/BangoLog.h"
 #include "UObject/SavePackage.h"
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
 	bForceFullEditor = true;
 }
+#endif
 
-void UBangoScriptBlueprint::ListenForUndelete(FGuid InGuid)
-{
-	UE_LOG(LogBango, Display, TEXT("Listening for undelete..."));
-	FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnUndelete);
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptBlueprint::ListenForUndelete()
+{	
+	auto OnUndelete = [this] (UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+	{
+		if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
+		{
+			if (ScriptComponent->GetScriptGuid() == ScriptGuid)
+			{
+				StopListeningForUndelete();
+				ScriptGuid.Invalidate();
+			
+				FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+			}
+		}	
+	};
 	
-	Guid = InGuid;
+	ListenForUndeleteHandle = FCoreUObjectDelegates::OnObjectTransacted.AddLambda(OnUndelete);
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptBlueprint::StopListeningForUndelete()
+{
+	if (ListenForUndeleteHandle.IsValid())
+	{
+		FCoreUObjectDelegates::OnObjectTransacted.Remove(ListenForUndeleteHandle);		
+	}
+}
+#endif
+
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptBlueprint::ForceSave()
 {
 	if (!MarkPackageDirty())
@@ -33,26 +67,40 @@ void UBangoScriptBlueprint::ForceSave()
 	
 	UE_LOG(LogBango, Display, TEXT("Saved script blueprint? %i"), (uint8)(bSuccess));
 }
+#endif
 
-void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptBlueprint::BeginDestroy()
 {
-	UE_LOG(LogBango, Display, TEXT("Checking for undelete from %s"), *Object->GetName());
-	
-	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
-	{
-		if (ScriptComponent->GetScriptGuid() == Guid)
-		{
-			UE_LOG(LogBango, Display, TEXT("We found our owner again! Let's reattach!"));
-			FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);
-			Guid.Invalidate();
-			
-			FBangoEditorDelegates::OnScriptComponentCreated.Broadcast(ScriptComponent, this);
-		}
-	}
+	StopListeningForUndelete();
+	Super::BeginDestroy();
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptBlueprint::SetGuid(FGuid InGuid)
 {
 	Modify();
-	Guid = InGuid;
+	ScriptGuid = InGuid;
 }
+#endif
+
+// ----------------------------------------------
+
+#if WITH_EDITOR
+UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const UClass* InClass)
+{
+	UBangoScriptBlueprint* BP = NULL;
+		
+	if (InClass != NULL)
+	{
+		BP = Cast<UBangoScriptBlueprint>(InClass->ClassGeneratedBy);
+	}
+		
+	return BP;
+}
+#endif

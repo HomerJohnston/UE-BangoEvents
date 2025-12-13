@@ -15,6 +15,10 @@ class UBangoEditorSubsystem : public UEditorSubsystem
 {
 	GENERATED_BODY()
 
+public:
+	static UBangoEditorSubsystem* Get();
+	
+protected:
 	bool bDuplicateActorsActive = false;
 	
 	TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> SoftDeletedScripts;
@@ -27,6 +31,8 @@ public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	
 	FString GetState(UObject* Object) const;
+
+	void OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const;
 
 	void OnAssetPostImport(UFactory* Factory, UObject* Object) const;
 	void OnPackageDeleted(UPackage* Package) const;
@@ -46,9 +52,11 @@ public:
 	
 	static TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> Filter;	
 	
-	void OnScriptComponentCreated(UBangoScriptComponent* BangoScriptComponent, UBangoScriptBlueprint* ExistingBlueprint = nullptr) const;
-	void OnScriptComponentDestroyed(UBangoScriptComponent* BangoScriptComponent);
+	void OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void OnScriptComponentDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void OnScriptComponentDuplicated(UBangoScriptComponent* ScriptComponent);
+	
 	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
-	UBangoScriptBlueprint* RetrieveSoftDeletedScript(FGuid Guid);
+	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
 
 };

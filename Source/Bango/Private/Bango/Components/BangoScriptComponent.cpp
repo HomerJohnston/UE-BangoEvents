@@ -24,20 +24,50 @@ void UBangoScriptComponent::BeginPlay()
 	}
 }
 
+void UBangoScriptComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UE_LOG(LogBango, Warning, TEXT("Script Component EndPlay: %s"), *StaticEnum<EEndPlayReason::Type>()->GetValueAsString(EndPlayReason));
+	
+	Super::EndPlay(EndPlayReason);
+}
+
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
 	
-	Modify();
-	MarkPackageDirty();
-	GetOwner()->Modify();
-	GetOwner()->MarkPackageDirty();
-	
-	if (!GEditor->IsPlaySessionInProgress())
+	if (!Bango::IsComponentInEditedLevel(this))
 	{
-		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UBangoScriptComponent::TrySetGUID);
+		return;
 	}
+	
+	if (Script.Guid.IsValid())
+	{
+		UE_LOG(LogBango, Warning, TEXT("Tried to run SetupScript on UBangoScriptComponent but it already has a GUID! Skipping."))
+		return;
+	}
+
+	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+	
+	/*
+	auto Lambda = FTimerDelegate::CreateLambda([this]()
+	{
+		if (Script.Guid.IsValid())
+		{
+			UE_LOG(LogBango, Warning, TEXT("Tried to run SetupScript on UBangoScriptComponent but it already has a GUID! Skipping."))
+			return;
+		}
+
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+	});
+	
+	// TODO: I really don't know why I have to do this.
+	// If I don't do this, the details panel won't update. 
+	// Can I set up some internal delegate to fire correctly after the thing is loaded on the same frame?
+	//GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
+	
+	Lambda.Execute();
+	*/
 }
 #endif
 
@@ -48,8 +78,7 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	{
 		if (Script.Guid.IsValid())
 		{
-			//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.Broadcast(this);
-			FBangoEditorDelegates::OnScriptComponentDestroyed.Broadcast(this);
+			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &Script);
 		}
 	}
 	
@@ -62,31 +91,25 @@ void UBangoScriptComponent::PreSave(FObjectPreSaveContext SaveContext)
 {
 	Super::PreSave(SaveContext);
 	
-	if (Script.ScriptClass)
-	{
-		UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(Script.ScriptClass));
-		
-		if (Blueprint)
-		{
-			Blueprint->ForceSave();
-		}
-	}
+	Script.ForceSave();
 }
 #endif
 
 #if WITH_EDITOR
-void UBangoScriptComponent::TrySetGUID()
+void UBangoScriptComponent::PostEditImport()
 {
-	if (!Script.Guid.IsValid())
+	Super::PostEditImport();
+	
+	UE_LOG(LogBango, Display, TEXT("PostEditImport"));
+}
+#endif
+
+#if WITH_EDITOR
+void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
+{
+	if (Bango::IsComponentInEditedLevel(this))
 	{
-		Modify();
-		MarkPackageDirty();
-		GetOwner()->Modify();
-		GetOwner()->MarkPackageDirty();
-		
-		Script.Guid = FGuid::NewGuid();
-		
-		FBangoEditorDelegates::OnScriptComponentCreated.Broadcast(this, nullptr);
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
 }
 #endif
@@ -95,7 +118,7 @@ void UBangoScriptComponent::TrySetGUID()
 void UBangoScriptComponent::UnsetScript()
 {
 	Modify();
-	Script.PrepareForDestroy();
+	Script.Unset();
 	
 	UScriptStruct* ScriptContainerStruct = FBangoScriptContainer::StaticStruct();
 	FProperty* ScriptClassProperty = ScriptContainerStruct->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));

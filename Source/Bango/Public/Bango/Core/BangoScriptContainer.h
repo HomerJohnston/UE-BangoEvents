@@ -11,7 +11,7 @@ class UBangoScriptBlueprint;
  * This struct is used to hold a script. It is used in ABangoTrigger and in UBangoScriptComponent.
  */
 USTRUCT()
-struct FBangoScriptContainer
+struct BANGO_API FBangoScriptContainer
 {
 	GENERATED_BODY()
 	
@@ -25,9 +25,11 @@ struct FBangoScriptContainer
 #endif
 	
 	UPROPERTY(VisibleAnywhere)
-	TSubclassOf<UBangoScript> ScriptClass;
+	TSubclassOf<UBangoScript> ScriptClass = nullptr;
 	
 #if WITH_EDITOR
-	void PrepareForDestroy();
+	void Unset();
+	
+	void ForceSave();
 #endif
 };

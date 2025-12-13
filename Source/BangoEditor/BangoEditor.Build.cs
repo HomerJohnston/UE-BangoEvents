@@ -12,7 +12,7 @@ public class BangoEditor : ModuleRules
                 "Core", "Kismet",
             }
         );
-
+        
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {

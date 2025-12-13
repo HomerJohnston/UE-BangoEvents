@@ -12,21 +12,25 @@ class BANGO_API UBangoScriptComponent : public UActorComponent
 	GENERATED_BODY()
 	
 	friend class UBangoEditorSubsystem;
+	friend class UBangoScriptBlueprint;
 	
 public:
 	UBangoScriptComponent();
 	
 	void BeginPlay() override;
 	
-#if WITH_EDITOR
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
+#if WITH_EDITOR
 	void OnComponentCreated() override;
 
 	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
 	void PreSave(FObjectPreSaveContext SaveContext) override;
 	
-	void TrySetGUID();
+	void PostEditImport() override;
+	
+	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
 	void UnsetScript();
 #endif

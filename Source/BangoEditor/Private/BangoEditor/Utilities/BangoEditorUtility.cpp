@@ -4,6 +4,7 @@
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Core/BangoScript.h"
+#include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -39,19 +40,34 @@ AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
 	return nullptr;
 }
 
-UPackage* Bango::Editor::MakeScriptPackage(UBangoScriptComponent* Component, UObject* Outer, FString& NewBPName)
+UPackage* Bango::Editor::MakePackageForScript(UObject* Outer, FString& NewBPName)
 {
-	AActor* Actor = Component->GetOwner();
-	
-	if (!Actor)
+	if (!IsValid(Outer))
 	{
+		UE_LOG(LogBango, Error, TEXT("Tried to make a script package but null Outer was passed in!"));
 		return nullptr;
 	}
 	
-	return MakeScriptPackage_Internal(Actor, Outer, NewBPName);
+	UPackage* OuterPackage = Outer->GetPackage();
+	
+	AActor* Actor = Outer->GetTypedOuter<AActor>();
+	
+	if (!Actor)
+	{
+		UE_LOG(LogBango, Error, TEXT("Tried to make a script package for something which does not have an Actor outer! This should never happen."));
+		return nullptr;
+	}
+	
+	if (!OuterPackage)
+	{
+		UE_LOG(LogBango, Error, TEXT("Tried to make a script package for something which does not have a Package! This should never happen."));
+		return nullptr;
+	}
+	
+	return MakeScriptPackage_Internal(Actor, OuterPackage, NewBPName);
 }
 
-UPackage* Bango::Editor::MakeScriptPackage(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName)
+UPackage* Bango::Editor::MakePackageForScript(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName)
 {
 	AActor* Actor = GetActorOwner(ScriptProperty);
 	
@@ -99,7 +115,7 @@ UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FStri
 		return nullptr;
 	}
 	
-	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveSoftDeletedScript(Guid);
+	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveDeletedScript(Guid);
 	
 	if (ScriptBlueprint)
 	{
@@ -209,4 +225,8 @@ bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
 	}
 
 	return false;
+}
+
+void Bango::Editor::NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid)
+{
 }
