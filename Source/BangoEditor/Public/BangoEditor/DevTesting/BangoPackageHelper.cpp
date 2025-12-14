@@ -84,16 +84,15 @@ FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPac
 	check(GuidBase36.Len());
 
 	FString BaseDir = FBangoPackageHelper::GetLocalScriptsPath(InOuterPackageName);
-	
-	///*
+
+	/*
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;
 	ObjectPackageName.Append(BaseDir);
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36);
 	return ObjectPackageName.ToString();
-	//*/
+	*/
 	
-	/*
 	// TODO for some reason this is necessary to hide assets from the Content view. I'd really rather use the format above.
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;
 	ObjectPackageName.Append(BaseDir);
@@ -104,7 +103,6 @@ FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPac
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36 + 3);
 	return ObjectPackageName.ToString();
-	*/
 }
 
 FString FBangoPackageHelper::GetLocalScriptPackageInstanceName(const FString& OuterPackageName, const FString& ObjectPackageName)
