@@ -7,12 +7,12 @@
 
 // ----------------------------------------------
 
-#if WITH_EDITOR
 UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
+#if WITH_EDITORONLY_DATA
 	bForceFullEditor = true;
-}
 #endif
+}
 
 // ----------------------------------------------
 

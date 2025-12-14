@@ -10,10 +10,8 @@ class BANGO_API UBangoScriptBlueprint : public UBlueprint
 	friend class UBangoEditorSubsystem;
 	friend struct FBangoScriptContainer;
 	
-#if WITH_EDITOR
 public:
 	UBangoScriptBlueprint();
-#endif
 	
 #if WITH_EDITORONLY_DATA
 protected:
@@ -35,12 +33,6 @@ protected:
 	void ListenForUndelete();
 	void StopListeningForUndelete();
 
-	// TODO TESTING
-	bool SupportsDelegates() const override { return false; }
-	
-	// TODO TESTING
-	bool SupportedByDefaultBlueprintFactory() const override { return false; }
-	
 	/** Forces the blueprint script to save itself. */
 	void ForceSave();
 

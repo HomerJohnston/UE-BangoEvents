@@ -26,8 +26,6 @@ void UBangoScriptComponent::BeginPlay()
 
 void UBangoScriptComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	UE_LOG(LogBango, Warning, TEXT("Script Component EndPlay: %s"), *StaticEnum<EEndPlayReason::Type>()->GetValueAsString(EndPlayReason));
-	
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -50,26 +48,6 @@ void UBangoScriptComponent::OnComponentCreated()
 	{
 		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
 	}
-	
-	/*
-	auto Lambda = FTimerDelegate::CreateLambda([this]()
-	{
-		if (Script.Guid.IsValid())
-		{
-			UE_LOG(LogBango, Warning, TEXT("Tried to run SetupScript on UBangoScriptComponent but it already has a GUID! Skipping."))
-			return;
-		}
-
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
-	});
-	
-	// TODO: I really don't know why I have to do this.
-	// If I don't do this, the details panel won't update. 
-	// Can I set up some internal delegate to fire correctly after the thing is loaded on the same frame?
-	//GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
-	
-	Lambda.Execute();
-	*/
 }
 #endif
 
@@ -79,16 +57,10 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
+		Super::OnComponentDestroyed(bDestroyingHierarchy);
 		return;
 	}
-	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
-	
-	if (Blueprint)
-	{
 		
-	}
-	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
 		if (Script.Guid.IsValid())
@@ -104,9 +76,12 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 #if WITH_EDITOR
 void UBangoScriptComponent::PreSave(FObjectPreSaveContext SaveContext)
 {
-	Super::PreSave(SaveContext);
+	if (!IsRunningCommandlet())
+	{
+		Script.ForceSave();
+	}
 	
-	Script.ForceSave();
+	Super::PreSave(SaveContext);
 }
 #endif
 

@@ -76,7 +76,7 @@ FString UBangoEditorSubsystem::GetState(UObject* Object) const
 
 void UBangoEditorSubsystem::OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnObjectPreSave %s --- %s"), *Object->GetName(), *GetState(Object));	
+	//UE_LOG(LogBango, Display, TEXT("OnObjectPreSave %s --- %s"), *Object->GetName(), *GetState(Object));	
 }
 
 void UBangoEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object) const
@@ -307,7 +307,7 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	
 //#if 0
 	// The editor's deletion systems are async and run GC during the process
-	ScriptPackage->AddToRoot();
+	//ScriptPackage->AddToRoot();
 	
 	// Move the blueprint out into transient space. Store it in this subsystem instead for lookup and GC prevention.
 	DeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) } );
