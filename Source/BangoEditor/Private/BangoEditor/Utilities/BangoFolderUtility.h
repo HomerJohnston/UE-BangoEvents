@@ -14,4 +14,7 @@ namespace Bango::Editor
 	static FString PathNormalize(const FString& InPath);
 	static FString PathConvertToAbsolute(const FString& InPath);
 	static FString PathConvertToRelative(const FString& InPath);
+	
+	
+	static void DeleteUnreferencedScripts();
 }

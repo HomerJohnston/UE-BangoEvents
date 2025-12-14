@@ -1,7 +1,12 @@
 ﻿#include "BangoFolderUtility.h"
 
+#include "AssetToolsModule.h"
 #include "BangoEditorUtility.h"
+#include "IAssetTools.h"
+#include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Bango/Core/BangoScript.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
 
 void Bango::Editor::DeleteEmptyScriptFolders()
@@ -239,4 +244,30 @@ FString Bango::Editor::PathConvertToRelative(const FString& InPath)
 	}
 	
 	return {};
+}
+
+void Bango::Editor::DeleteUnreferencedScripts()
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	
+	TArray<FAssetData> BangoScriptAssets;
+	AssetRegistryModule.Get().GetAssetsByClass(UBangoScriptBlueprint::StaticClass()->GetClassPathName(), BangoScriptAssets);
+	
+	TArray<FAssetData> UnreferencedScripts;
+	
+	for (FAssetData& AssetData : BangoScriptAssets)
+	{
+		if (AssetData.GetObjectPathString().StartsWith(Bango::Editor::GetGameScriptRootFolder()))
+		{
+			TArray<FName> Referencers;
+			AssetRegistryModule.Get().GetReferencers(AssetData.GetPackage()->GetFName(), Referencers);
+			
+			if (Referencers.Num() == 0)
+			{
+				UnreferencedScripts.Add(AssetData);
+			}
+		}
+	}
+
+	ObjectTools::DeleteAssets(UnreferencedScripts, false);
 }

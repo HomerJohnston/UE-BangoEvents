@@ -94,6 +94,7 @@ void FBangoEditorModule::StartupModule()
 	
 	FEditorDelegates::OnShutdownPostPackagesSaved.AddLambda([] ()
 	{
+		Bango::Editor::DeleteUnreferencedScripts();
 		Bango::Editor::DeleteEmptyScriptFolders();
 	});
 }

@@ -37,7 +37,8 @@ public class BangoEditor : ModuleRules
 				"ContentBrowserData",
 				"AssetDefinition",
 				"ClassViewer",
-				"TypedElementFramework"
+				"TypedElementFramework",
+				"AssetTools"
             }
         );
     }
