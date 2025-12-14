@@ -22,6 +22,8 @@ struct FBangoBrushes
 	FName Icon_Plunger_Dim;
 	FName Icon_PortalIn;
 	FName Icon_PortalOut;
+	
+	FName Border_InlineBlueprintGraph;
 };
 
 extern FBangoBrushes BangoEditorBrushes;

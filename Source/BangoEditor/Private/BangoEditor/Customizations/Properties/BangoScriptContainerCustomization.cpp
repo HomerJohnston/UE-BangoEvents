@@ -5,6 +5,8 @@
 #include "IDetailChildrenBuilder.h"
 #include "SEditorViewport.h"
 #include "Bango/Core/BangoScript.h"
+#include "BangoEditor/BangoColor.h"
+#include "BangoEditor/BangoEditorStyle.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
@@ -75,6 +77,31 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	
 	CurrentGraph = GetPrimaryEventGraph();
 	
+	Box = SNew(SVerticalBox);
+	
+	HeaderRow.WholeRowContent()
+	[
+		SNew(SBox)
+		.Padding(0, 4, 0, 4)
+		[
+			SNew(SBorder)
+			.Padding(2)
+			.BorderImage(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Border_InlineBlueprintGraph))
+			.BorderBackgroundColor(BangoColor::Noir)
+			[
+				Box.ToSharedRef()
+			]			
+		]
+	];
+
+	HeaderRow.ResetToDefaultContent()
+	[
+		SNullWidget::NullWidget
+	];
+	
+	UpdateBox();	
+	
+	/*
 	HeaderRow.NameContent()
 	[
 		SNew(STextBlock)
@@ -105,7 +132,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 			]
 		]
 	];
-	
+	*/
 }
 
 // ----------------------------------------------
@@ -124,6 +151,8 @@ int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() 
 
 void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	return;
+	/*
 	Box = SNew(SVerticalBox);
 	
 	ChildBuilder.AddCustomRow(LOCTEXT("BangoScriptHolder_SearchTerm", "Bango"))
@@ -133,6 +162,7 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 	];
 
 	UpdateBox();
+	*/
 }
 
 // ----------------------------------------------
@@ -334,12 +364,22 @@ void FBangoScriptContainerCustomization::UpdateBox()
 					.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
 				]
 			]
-		];
-		Box->AddSlot()
-		.AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text( FText::FromName(GetBlueprint()->GetFName()))
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Bottom)
+			.Padding(8)
+			[
+				SNew(STextBlock)
+				.Text(FText::Format
+					(
+						INVTEXT("{0}\n{1}{2}"),
+						FText::FromName(GetBlueprint()->GetFName()),
+						FText::FromString( GetBlueprint()->GetPackage()->GetPathName()),
+						FText::FromString(FPackageName::GetAssetPackageExtension())
+					))
+				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
+				.ColorAndOpacity(BangoColor::Gray)
+			]
 		];
 	}
 	else
