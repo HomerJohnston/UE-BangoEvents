@@ -21,11 +21,11 @@ namespace Bango::Editor
 	
 	AActor* GetActorOwner(TSharedPtr<IPropertyHandle> Property);
 	
-	UPackage* MakePackageForScript(UObject* Outer, FString& NewBPName);
+	UPackage* MakePackageForScript(UObject* Outer, FString& NewBPName, FGuid Guid);
 
-	UPackage* MakePackageForScript(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName);
+	UPackage* MakePackageForScript(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName, FGuid Guid);
 	
-	UPackage* MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& NewBPName);
+	UPackage* MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& NewBPName, FGuid Guid);
 	
 	UBangoScriptBlueprint* MakeScriptAsset(UPackage* InPackage, FString Name, FGuid Guid);
 	

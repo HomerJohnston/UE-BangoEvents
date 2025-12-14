@@ -43,15 +43,6 @@ public:
 	DECLARE_EVENT_TwoParams(FBangoPackageHelper, FOnObjectPackagingModeChanged, UObject*, bool /* bExternal */);
 	static BANGOEDITOR_API FOnObjectPackagingModeChanged OnObjectPackagingModeChanged;
 
-	/**
-	 * Create an external package
-	 * @param InObjectOuter the object's outer
-	 * @param InObjectPath the fully qualified object path, in the format: 'Outermost.Outer.Name'
-	 * @param InFlags the package flags to apply
-	 * @return the created package
-	 */
-	static BANGOEDITOR_API UPackage* CreateLocalScriptPackage(const UObject* InObjectOuter, const FString& InObjectPath, EPackageFlags InFlags = FBangoPackageHelper::GetDefaultBangoPackageFlags(), const UExternalDataLayerAsset* InExternalDataLayerAsset = nullptr);
-
 	/** Returns default external package flags used to create external packages. */
 	static BANGOEDITOR_API EPackageFlags GetDefaultBangoPackageFlags();
 
@@ -88,7 +79,7 @@ public:
 	 * @param InObjectPath the fully qualified object path, in the format: 'Outermost.Outer.Name'
 	 * @return the package name
 	 */
-	static BANGOEDITOR_API FString GetLocalScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath);
+	static BANGOEDITOR_API FString GetLocalScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& OutGuidHash);
 
 	/**
 	 * Loads objects from an external package

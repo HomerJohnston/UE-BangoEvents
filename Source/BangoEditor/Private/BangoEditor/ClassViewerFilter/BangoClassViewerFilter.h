@@ -2,6 +2,9 @@
 
 #include "ClassViewerFilter.h"
 
+/**
+ * This class filters out level script from dialogs like New Blueprint or class selection dropdowns.
+ */
 class FBangoClassViewerFilter : public IClassViewerFilter
 {
 public:

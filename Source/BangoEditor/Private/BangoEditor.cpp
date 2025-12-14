@@ -1,6 +1,7 @@
 ﻿#include "BangoEditor.h"
 
 #include "ClassViewerModule.h"
+#include "IContentBrowserSingleton.h"
 #include "Bango/Core/BangoScript.h"
 #include "BangoEditor/BangoColor.h"
 #include "BangoEditor/BangoEditorStyle.h"
@@ -17,7 +18,6 @@
 #include "Styling/SlateStyleRegistry.h"
 
 #include "Bango/Core/BangoScriptContainer.h"
-#include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"

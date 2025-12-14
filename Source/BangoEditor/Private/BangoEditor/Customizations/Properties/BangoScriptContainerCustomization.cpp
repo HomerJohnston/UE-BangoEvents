@@ -155,18 +155,18 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 		return FReply::Handled();
 	}
 
+	void* GuidPtr;
+	GuidProperty->GetValueData(GuidPtr);
+	FGuid* Guid = reinterpret_cast<FGuid*>(GuidPtr);
+	
 	FString BPName;
-	UPackage* ScriptPackage = Bango::Editor::MakePackageForScript(ScriptClassProperty, Packages[0], BPName);
+	UPackage* ScriptPackage = Bango::Editor::MakePackageForScript(ScriptClassProperty, Packages[0], BPName, *Guid);
 	
 	if (!ScriptPackage)
 	{
 		return FReply::Handled();
 	}
 	
-	void* GuidPtr;
-	GuidProperty->GetValueData(GuidPtr);
-	
-	FGuid* Guid = reinterpret_cast<FGuid*>(GuidPtr);
 	UBlueprint* Script = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName, *Guid);
 	
 	if (!Script)
@@ -307,12 +307,13 @@ void FBangoScriptContainerCustomization::UpdateBox()
 	if (CurrentGraph.IsValid())
 	{
 		Box->AddSlot()
+		.AutoHeight()
 		[
 			SNew(SOverlay)
 			+ SOverlay::Slot()
 			[
 				SNew(SBox)
-				.HeightOverride(200)
+				.HeightOverride(300)
 				[
 					SNew(SGraphEditor)
 					.GraphToEdit(GetPrimaryEventGraph())
@@ -333,6 +334,12 @@ void FBangoScriptContainerCustomization::UpdateBox()
 					.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
 				]
 			]
+		];
+		Box->AddSlot()
+		.AutoHeight()
+		[
+			SNew(STextBlock)
+			.Text( FText::FromName(GetBlueprint()->GetFName()))
 		];
 	}
 	else

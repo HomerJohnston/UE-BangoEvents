@@ -41,13 +41,15 @@ void UBangoScriptComponent::OnComponentCreated()
 		return;
 	}
 	
+	// If it already has a Guid, it must have been a copy-paste.
 	if (Script.Guid.IsValid())
 	{
-		UE_LOG(LogBango, Warning, TEXT("Tried to run SetupScript on UBangoScriptComponent but it already has a GUID! Skipping."))
-		return;
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
-
-	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+	else
+	{
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+	}
 	
 	/*
 	auto Lambda = FTimerDelegate::CreateLambda([this]()
@@ -78,6 +80,13 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
 		return;
+	}
+	
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
+	
+	if (Blueprint)
+	{
+		
 	}
 	
 	if (Bango::IsComponentInEditedLevel(this))
