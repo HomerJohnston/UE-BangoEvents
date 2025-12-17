@@ -151,6 +151,33 @@ int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() 
 
 void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	if (GetOuter()->IsA(UBangoScriptComponent::StaticClass()))
+	{
+		return;
+	}
+	
+	ChildBuilder.AddCustomRow(INVTEXT("ASDF"))
+	.NameContent()
+	[
+		SNew(STextBlock)
+		.Text(LOCTEXT("BangoScriptNameOverride_Label", "Script Name"))
+	]
+	.ValueContent()
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		[
+			SNew(SEditableTextBox)
+			.HintText(LOCTEXT("BangoScriptNameOverride_HintText", "Optional"))	
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.Text(LOCTEXT("BangoScriptNameOverride_ApplyButtonLabel", "Apply"))
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_RenameScript)
+		]
+	];
 	return;
 	/*
 	Box = SNew(SVerticalBox);
@@ -262,6 +289,11 @@ FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 		true);
 	
 	return FReply::Handled();*/
+}
+
+FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
+{
+	return FReply::Handled();
 }
 
 // ----------------------------------------------
@@ -409,6 +441,19 @@ AActor* FBangoScriptContainerCustomization::GetOwner() const
 		{
 			return Component->GetOwner();
 		}
+	}
+	
+	return nullptr;
+}
+
+UObject* FBangoScriptContainerCustomization::GetOuter() const
+{
+	TArray<UObject*> OuterObjects;
+	ScriptClassProperty->GetOuterObjects(OuterObjects);
+	
+	if (OuterObjects.Num() == 1)
+	{
+		return OuterObjects[0];
 	}
 	
 	return nullptr;

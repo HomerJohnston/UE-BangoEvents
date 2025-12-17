@@ -35,6 +35,8 @@ public:
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
 	void UnsetScript();
+	
+	void OnRename();
 #endif
 	
 protected:

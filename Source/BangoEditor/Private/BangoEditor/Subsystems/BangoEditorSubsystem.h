@@ -46,7 +46,7 @@ public:
 	void OnLevelActorDeleted(AActor* Actor) const;
 
 	void OnObjectConstructed(UObject* Object) const;
-	void OnObjectRenamed(UObject* ObjectL, UObject* Object, FName Name) const;
+	void OnObjectRenamed(UObject* ObjectL, UObject* RenamedObjectOuter, FName OldName) const;
 	void OnAssetLoaded(UObject* Object) const;
 	void OnObjectModified(UObject* Object) const;
 	

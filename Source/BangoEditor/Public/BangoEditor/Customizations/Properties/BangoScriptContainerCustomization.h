@@ -37,7 +37,7 @@ protected:
 	FReply OnClicked_DeleteScript();
 	
 	// ------------------------------------------
-	
+
 	void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 	
 	int WidgetIndex_GraphEditor() const;
@@ -45,6 +45,8 @@ protected:
 	FReply OnClicked_EditScript() const;
 	
 	FReply OnClicked_EnlargeGraphView() const;
+	
+	FReply OnClicked_RenameScript() const;
 	
 	TSharedRef<SWidget> GetPopoutGraphEditor() const;
 	
@@ -59,6 +61,8 @@ protected:
 	// ------------------------------------------
 
 	AActor* GetOwner() const;
+	
+	UObject* GetOuter() const;
 	
 	UBlueprint* GetBlueprint() const;
 	

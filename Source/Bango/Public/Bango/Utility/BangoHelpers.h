@@ -13,7 +13,9 @@ struct FBangoEditorDelegates
 };
 #endif
 
+#if WITH_EDITOR
 namespace Bango
 {	
-	bool IsComponentInEditedLevel(UActorComponent* Component);
+	bool BANGO_API IsComponentInEditedLevel(UActorComponent* Component);
 }
+#endif

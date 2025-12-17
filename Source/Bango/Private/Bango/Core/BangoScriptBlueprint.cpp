@@ -11,6 +11,7 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
 #if WITH_EDITORONLY_DATA
 	bForceFullEditor = true;
+	OverriddenName = NAME_None;
 #endif
 }
 
@@ -89,7 +90,9 @@ UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(c
 		
 	return BP;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
 {
 	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
@@ -102,5 +105,50 @@ void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransaction
 			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
 		}
 	}
+}
+#endif
+
+#if WITH_EDITOR
+void UBangoScriptBlueprint::UpdateAutoName(UObject* Outer)
+{
+	FName NewName = FName(GetAutomaticName(Outer));
+	
+	if (NewName.IsValidXName(INVALID_NAME_CHARACTERS))
+	{
+		Rename(*NewName.ToString());
+	}
+}
+
+FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
+{
+	FString AutoName = "";
+	
+	TArray<FString> NameElements = { TEXT("Script") };
+
+	// Different Outer cases:
+	// 1) UBangoScriptComponent - call it "Script (COMPONENTNAME)" and  the editor subsystem will let people rename it by renaming the component
+	// 2) UActorComponent - call it "Script (COMPONENTNAME)" and in the FBangoScriptContainerCustomization we will expose a manual renaming field
+	// 3) AActor - call it "Script (ACTORLABEL)" and in the FBangoScriptContainerCustomization we will expose a manual renaming field
+	// 4) Null outer - this should never happen
+	
+	if (auto* OuterScriptComponent = Cast<UBangoScriptComponent>(Outer))
+	{
+		NameElements.Add(TEXT("(") + OuterScriptComponent->GetName() + TEXT(")"));
+	}
+	else if (auto* OuterActorComponent = Cast<UActorComponent>(Outer))
+	{
+		NameElements.Add("("+ OuterActorComponent->GetName() + ")");
+	}
+	else if (auto* OuterActor = Cast<AActor>(Outer))
+	{
+		NameElements.Add(OuterActor->GetActorLabel());
+	}
+	else
+	{
+		checkNoEntry();
+	}
+		
+	AutoName = FString::Join(NameElements, TEXT(" "));
+	return AutoName;
 }
 #endif

@@ -129,6 +129,16 @@ void UBangoScriptComponent::UnsetScript()
 		UE_LOG(LogBlueprint, Error, TEXT("Could not mark the actor package dirty?"));
 	}
 }
+
+void UBangoScriptComponent::OnRename()
+{
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
+
+	if (Blueprint)
+	{
+		Blueprint->UpdateAutoName(this);
+	}
+}
 #endif
 
 #if WITH_EDITOR
@@ -155,7 +165,7 @@ void UBangoScriptComponent::SetScriptBlueprint(UBangoScriptBlueprint* Blueprint)
 	}
 	
 	Modify();
-	MarkPackageDirty();
+	(void)MarkPackageDirty();
 	Script.ScriptClass = Blueprint->GeneratedClass;
 }
 #endif

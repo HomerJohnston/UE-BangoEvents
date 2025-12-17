@@ -60,6 +60,8 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
+	
+	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
 }
 
 FString UBangoEditorSubsystem::GetState(UObject* Object) const
@@ -158,13 +160,17 @@ void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
 	UE_LOG(LogBango, Display, TEXT("OnObjectConstructed: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
-void UBangoEditorSubsystem::OnObjectRenamed(UObject* Outer, UObject* Object, FName Name) const
+void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
 {
-	FString OuterString = Outer ? Outer->GetName() : "No Outer";
+	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
+	{
+		if (Bango::IsComponentInEditedLevel(ScriptComponent))
+		{
+			ScriptComponent->OnRename();
+		}
+	}
 	
-	FString ObjectString = Object ? Object->GetName() : "No Object";
-
-	UE_LOG(LogBango, Display, TEXT("OnObjectRenamed: %s  %s  %s --- %s"), *OuterString, *ObjectString, *Name.ToString(), *GetState(Object));
+	//UE_LOG(LogBango, Display, TEXT("OnObjectRenamed: %s  %s  %s --- %s"), *OuterString, *ObjectString, *OldName.ToString(), *GetState(RenamedObjectOuter));
 }
 
 void UBangoEditorSubsystem::OnAssetLoaded(UObject* Object) const
@@ -234,44 +240,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 		
-		FString BPName = "";
-		
-		if (auto* OuterScriptComponent = Cast<UBangoScriptComponent>(Outer))
-		{
-			// When it's a bango script, just call it "Script" and append the component name
-			TArray<FString> NameElements = { TEXT("Script") };
-			
-			/*
-			if (Actor = OuterScriptComponent->GetOwner())
-			{
-				NameElements.Add(Actor->GetActorLabel());
-			}
-			*/
-			
-			NameElements.Add(TEXT("(") + OuterScriptComponent->GetName() + TEXT(")"));
-			
-			BPName = FString::Join(NameElements, TEXT(" "));
-		}
-		else if (auto* OuterActorComponent = Cast<UActorComponent>(Outer))
-		{
-			AActor* Actor = OuterActorComponent->GetOwner();
-			
-			TArray<FString> NameElements;
-			
-			if (Actor)
-			{
-				NameElements.Add(Actor->GetActorLabel());
-			}
-			
-			NameElements.Add("("+ OuterActorComponent->GetName() + ")");
-			
-			BPName = FString::Join(NameElements, TEXT(" "));
-		}
-		else if (auto* OuterActor = Cast<AActor>(Outer))
-		{
-			// Use the actor
-			BPName = OuterActor->GetActorLabel();
-		}
+		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
 		
 		// This creation is from a new addition
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, "~" + BPName , ScriptContainer->Guid);

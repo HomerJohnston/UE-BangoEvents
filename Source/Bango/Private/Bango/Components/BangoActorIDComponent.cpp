@@ -25,10 +25,12 @@ void UBangoActorIDComponent::PostLoad()
 {
 	Super::PostLoad();
 	
+#if WITH_EDITOR
 	if (Bango::IsComponentInEditedLevel(this))
 	{
 		return;
 	}
+#endif
 	
 	UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
 }
