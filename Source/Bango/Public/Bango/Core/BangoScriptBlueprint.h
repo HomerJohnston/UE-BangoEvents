@@ -24,6 +24,8 @@ protected:
 	FGuid ActorGuid;
 	
 	FDelegateHandle ListenForUndeleteHandle;
+	
+	FName OverriddenName;
 #endif
 
 #if WITH_EDITOR
@@ -45,5 +47,9 @@ public:
 	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const UClass* InClass);
 	
 	void OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
+	
+	void UpdateAutoName(UObject* Outer);
+	
+	static FString GetAutomaticName(UObject* Outer);
 #endif
 };
