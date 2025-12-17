@@ -1,5 +1,6 @@
 ﻿#include "Bango/Core/BangoScriptBlueprint.h"
 
+#include "ObjectTools.h"
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
@@ -111,12 +112,7 @@ void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransaction
 #if WITH_EDITOR
 void UBangoScriptBlueprint::UpdateAutoName(UObject* Outer)
 {
-	FName NewName = FName(GetAutomaticName(Outer));
-	
-	if (NewName.IsValidXName(INVALID_NAME_CHARACTERS))
-	{
-		Rename(*NewName.ToString());
-	}
+	Rename(*GetAutomaticName(Outer));
 }
 
 FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)

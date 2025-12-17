@@ -52,7 +52,7 @@ protected:
 	
 	// ------------------------------------------
 
-	void OnPostScriptCreated();
+	void OnPostScriptCreatedOrRenamed();
 
 	void OnPreScriptDeleted();	
 

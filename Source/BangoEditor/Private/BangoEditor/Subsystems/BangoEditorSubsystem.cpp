@@ -167,6 +167,7 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 		if (Bango::IsComponentInEditedLevel(ScriptComponent))
 		{
 			ScriptComponent->OnRename();
+			OnScriptGenerated.Broadcast();
 		}
 	}
 	
@@ -243,7 +244,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
 		
 		// This creation is from a new addition
-		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, "~" + BPName , ScriptContainer->Guid);
+		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
 		Blueprint->SetGuid(ScriptContainer->Guid);
 		check(Blueprint);
 	}

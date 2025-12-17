@@ -20,14 +20,14 @@
 
 FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 {
-	PostScriptCreated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreated);
+	PostScriptCreated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed);
 	PreScriptDeleted.AddRaw(this, &FBangoScriptContainerCustomization::OnPreScriptDeleted);
 	
 	UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
 	
 	if (Subsystem)
 	{
-		Subsystem->OnScriptGenerated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreated);
+		Subsystem->OnScriptGenerated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed);
 	}
 }
 
@@ -346,7 +346,7 @@ TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() c
 		];
 }
 
-void FBangoScriptContainerCustomization::OnPostScriptCreated()
+void FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed()
 {
 	CurrentGraph = GetPrimaryEventGraph();
 	
