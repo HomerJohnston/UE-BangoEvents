@@ -4,7 +4,14 @@
 
 UBangoActorIDSubsystem* UBangoActorIDSubsystem::Get(UObject* WorldContext)
 {
-	return WorldContext->GetWorld()->GetSubsystem<UBangoActorIDSubsystem>();
+	UWorld* World = WorldContext->GetWorld();
+	
+ 	return World->GetSubsystem<UBangoActorIDSubsystem>();
+}
+
+void UBangoActorIDSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
 }
 
 bool UBangoActorIDSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
@@ -15,6 +22,11 @@ bool UBangoActorIDSubsystem::DoesSupportWorldType(const EWorldType::Type WorldTy
 void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, FName ID, AActor* Actor)
 {
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	
+	if (!Subsystem)
+	{
+		return;
+	}
 	
 	TWeakObjectPtr<AActor>* ExistingActor = Subsystem->Actors.Find(ID);
 

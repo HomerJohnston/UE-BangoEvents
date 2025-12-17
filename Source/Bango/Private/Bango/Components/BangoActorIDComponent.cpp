@@ -2,16 +2,40 @@
 
 #include "CanvasItem.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
+#include "Bango/Utility/BangoColor.h"
+#include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "Fonts/FontMeasure.h"
 
+UBangoActorIDComponent::UBangoActorIDComponent()
+{
+#if WITH_EDITORONLY_DATA 
+	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/NameTag.NameTag"));
+#endif
+}
+
+void UBangoActorIDComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
+}
+
+void UBangoActorIDComponent::PostLoad()
+{
+	Super::PostLoad();
+	
+	if (Bango::IsComponentInEditedLevel(this))
+	{
+		return;
+	}
+	
+	UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
+}
+
 void UBangoActorIDComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
 }
 
 void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -106,9 +130,19 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 	Canvas->GetCenter(X, Y);
 	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
 
-	float DistanceSquared = FVector::DistSquared(WorldCameraPos, Actor->GetActorLocation());
-	if (DistanceSquared > FMath::Square(2500.0f)) return;
+	const float MinDistance = 2000.0f;
+	const float MaxDistance = 2500.0f;
+	
+	const float MinDistanceSqr = FMath::Square(MinDistance);
+	const float MaxDistanceSqr = FMath::Square(MaxDistance);
+	
+	float DistanceSqr = FVector::DistSquared(WorldCameraPos, Actor->GetActorLocation());
+	if (DistanceSqr > MaxDistanceSqr) return;
 
+	float LerpAlpha = FMath::Clamp((DistanceSqr - MinDistanceSqr) / (MaxDistanceSqr - MinDistanceSqr), 0.0f, 1.0f);
+	
+	float Alpha = FMath::Lerp(1.0f, 0.0f, LerpAlpha);
+	
 	ScreenLocation = Canvas->Project(Actor->GetActorLocation() + FVector(0.f, 0.f, 150.f + LabelHeightAdjustment), false);
 	if (ScreenLocation.Z < 0.0f) return;
 
@@ -124,18 +158,27 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 		TextSize
 		);
 
-	Canvas->SetDrawColor(FColor(30, 30, 30, 150));
+	FLinearColor TagColor = BangoColor::White;
+	TagColor.A *= Alpha;
+	
+	Canvas->SetDrawColor(FColor(30, 30, 30, 150 * Alpha));
 	Canvas->DrawTile(
 		BackgroundTex,
-		ScreenLocation.X - 0.5f * TextSize.X - 10, ScreenLocation.Y - 5,
-		TextSize.X + 20, TextSize.Y + 10,
+		ScreenLocation.X - 0.5f * TextSize.X - /*10*/ 26, ScreenLocation.Y - 5,
+		TextSize.X + /*20*/36, TextSize.Y + 10,
 		0.0f,0.0f,1.0f,1.0f
 		);
 	//Canvas->DrawItem(Box);
-	FCanvasTextItem Label(FVector2D(ScreenLocation), FText::FromName(ActorID), Font, FLinearColor::White);
+	FCanvasTextItem Label(FVector2D(ScreenLocation), FText::FromName(ActorID), Font, TagColor);
 	Label.bCentreX = true;
+	Canvas->SetDrawColor(TagColor.ToFColor(false));
 	Canvas->DrawItem(Label);
 
+	
+	FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, 24.0f, 32.0f);
+	Canvas->SetDrawColor(TagColor.ToFColor(false));
+	Canvas->DrawIcon(Icon, ScreenLocation.X - 34.0f, ScreenLocation.Y - 2.0f, 0.6f);
+	
 	/*
 	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);
 	Canvas->DrawItem(HeaderText);

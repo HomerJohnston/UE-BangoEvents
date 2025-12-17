@@ -102,6 +102,8 @@ FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPac
 	ObjectPackageName.Append(*GuidBase36 + 1, 2);
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36 + 3);
+	ObjectPackageName.Append(TEXT("/"));
+	ObjectPackageName.Append(TEXT("BangoScript"));
 	return ObjectPackageName.ToString();
 }
 

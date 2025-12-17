@@ -17,6 +17,8 @@ class BANGO_API UBangoScriptComponent : public UActorComponent
 public:
 	UBangoScriptComponent();
 	
+	void OnRegister() override;
+	
 	void BeginPlay() override;
 	
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

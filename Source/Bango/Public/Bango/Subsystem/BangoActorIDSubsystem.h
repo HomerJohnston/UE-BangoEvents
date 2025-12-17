@@ -14,6 +14,8 @@ class UBangoActorIDSubsystem : public UWorldSubsystem
 protected:
 	static UBangoActorIDSubsystem* Get(UObject* WorldContext);
 
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	
 	bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 	
 protected:

@@ -234,8 +234,47 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 		
+		FString BPName = "";
+		
+		if (auto* OuterScriptComponent = Cast<UBangoScriptComponent>(Outer))
+		{
+			// When it's a bango script, just call it "Script" and append the component name
+			TArray<FString> NameElements = { TEXT("Script") };
+			
+			/*
+			if (Actor = OuterScriptComponent->GetOwner())
+			{
+				NameElements.Add(Actor->GetActorLabel());
+			}
+			*/
+			
+			NameElements.Add(TEXT("(") + OuterScriptComponent->GetName() + TEXT(")"));
+			
+			BPName = FString::Join(NameElements, TEXT(" "));
+		}
+		else if (auto* OuterActorComponent = Cast<UActorComponent>(Outer))
+		{
+			AActor* Actor = OuterActorComponent->GetOwner();
+			
+			TArray<FString> NameElements;
+			
+			if (Actor)
+			{
+				NameElements.Add(Actor->GetActorLabel());
+			}
+			
+			NameElements.Add("("+ OuterActorComponent->GetName() + ")");
+			
+			BPName = FString::Join(NameElements, TEXT(" "));
+		}
+		else if (auto* OuterActor = Cast<AActor>(Outer))
+		{
+			// Use the actor
+			BPName = OuterActor->GetActorLabel();
+		}
+		
 		// This creation is from a new addition
-		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, NewBlueprintName, ScriptContainer->Guid);
+		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, "~" + BPName , ScriptContainer->Guid);
 		Blueprint->SetGuid(ScriptContainer->Guid);
 		check(Blueprint);
 	}

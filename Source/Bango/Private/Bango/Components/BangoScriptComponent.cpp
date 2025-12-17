@@ -14,6 +14,13 @@ UBangoScriptComponent::UBangoScriptComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UBangoScriptComponent::OnRegister()
+{
+	Super::OnRegister();
+	
+	
+}
+
 void UBangoScriptComponent::BeginPlay()
 {
 	Super::BeginPlay();

@@ -8,6 +8,9 @@ class BANGO_API UBangoActorIDComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UBangoActorIDComponent();
+	
+public:
 	FName GetActorID() const { return ActorID; }
 	
 protected:
@@ -17,7 +20,14 @@ protected:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))
 	float LabelHeightAdjustment = 0.0f;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> IconTexture;
 #endif
+	
+	void PostInitProperties() override;
+	
+	void PostLoad() override;
 	
 	void BeginPlay() override;
 
