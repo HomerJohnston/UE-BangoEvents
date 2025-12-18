@@ -102,7 +102,7 @@ void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransaction
 		{
 			StopListeningForUndelete();
 			ScriptGuid.Invalidate();
-		
+			
 			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
 		}
 	}
@@ -112,7 +112,7 @@ void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransaction
 #if WITH_EDITOR
 void UBangoScriptBlueprint::UpdateAutoName(UObject* Outer)
 {
-	Rename(*GetAutomaticName(Outer));
+	Rename(*GetAutomaticName(Outer), nullptr, REN_DontCreateRedirectors);
 }
 
 FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)

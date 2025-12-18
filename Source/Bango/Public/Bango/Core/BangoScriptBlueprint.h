@@ -26,6 +26,8 @@ protected:
 	FDelegateHandle ListenForUndeleteHandle;
 	
 	FName OverriddenName;
+	
+	FString DeletedName;
 #endif
 
 #if WITH_EDITOR

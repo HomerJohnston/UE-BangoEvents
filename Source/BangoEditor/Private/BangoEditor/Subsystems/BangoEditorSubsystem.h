@@ -45,6 +45,8 @@ public:
 	void OnLevelActorAdded(AActor* Actor) const;
 	void OnLevelActorDeleted(AActor* Actor) const;
 
+	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
+	
 	void OnObjectConstructed(UObject* Object) const;
 	void OnObjectRenamed(UObject* ObjectL, UObject* RenamedObjectOuter, FName OldName) const;
 	void OnAssetLoaded(UObject* Object) const;

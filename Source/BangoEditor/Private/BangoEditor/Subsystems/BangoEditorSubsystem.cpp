@@ -37,7 +37,9 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	GEngine->OnLevelActorAdded().AddUObject(this, &ThisClass::OnLevelActorAdded);
 	GEngine->OnLevelActorDeleted().AddUObject(this, &ThisClass::OnLevelActorDeleted);
-
+	
+	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	
 	/*
 	FEditorDelegates::OnAssetPostImport.AddUObject(this, &ThisClass::OnAssetPostImport);
 	FEditorDelegates::OnPackageDeleted.AddUObject(this, &ThisClass::OnPackageDeleted);
@@ -155,6 +157,18 @@ void UBangoEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 	}
 }
 
+void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
+{
+	auto DelayCollectGarbage = FTimerDelegate::CreateLambda([] ()
+	{
+		CollectGarbage(RF_NoFlags);	
+	});
+	
+	DeletedScripts.Empty();
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayCollectGarbage);
+}
+
 void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
 {
 	UE_LOG(LogBango, Display, TEXT("OnObjectConstructed: %s --- %s"), *Object->GetName(), *GetState(Object));
@@ -233,7 +247,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		Blueprint = Subsystem->RetrieveDeletedScript(ScriptContainer->Guid);
 		check(Blueprint);
 		
-		Blueprint->Rename(nullptr, ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+		Blueprint->Rename(*Blueprint->DeletedName, ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
 	}
 	else
 	{
@@ -320,7 +334,10 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	
 	// Move the blueprint out into transient space. Store it in this subsystem instead for lookup and GC prevention.
 	DeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) } );
-	Blueprint->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	
+	Blueprint->DeletedName = Blueprint->GetName();
+	Blueprint->Rename(*ScriptContainer->Guid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	
 	Blueprint->ListenForUndelete();
 	
 	ScriptContainer->Unset();

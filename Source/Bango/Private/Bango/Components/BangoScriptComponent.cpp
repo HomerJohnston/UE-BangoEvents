@@ -6,6 +6,7 @@
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Exporters/Exporter.h"
 #include "UObject/ObjectSaveContext.h"
 #include "UObject/PropertyAccessUtil.h"
 

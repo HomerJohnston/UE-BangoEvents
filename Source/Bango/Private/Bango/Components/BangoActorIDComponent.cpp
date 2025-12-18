@@ -1,6 +1,7 @@
 ﻿#include "Bango/Components/BangoActorIDComponent.h"
 
 #include "CanvasItem.h"
+#include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/BangoHelpers.h"
