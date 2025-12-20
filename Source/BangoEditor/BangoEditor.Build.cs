@@ -38,7 +38,8 @@ public class BangoEditor : ModuleRules
 				"AssetDefinition",
 				"ClassViewer",
 				"TypedElementFramework",
-				"AssetTools"
+				"AssetTools",
+				"UMGEditor"
             }
         );
     }

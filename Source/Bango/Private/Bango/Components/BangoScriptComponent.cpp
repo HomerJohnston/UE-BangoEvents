@@ -73,6 +73,7 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	{
 		if (Script.Guid.IsValid())
 		{
+			// Moves handling over to an editor module
 			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &Script);
 		}
 	}

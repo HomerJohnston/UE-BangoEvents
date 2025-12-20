@@ -12,7 +12,7 @@ class UBangoScript;
 namespace Bango::Editor
 {
 	static FString ScriptRootFolder = TEXT("__BangoScripts__");
-	
+		
 	static TMulticastDelegate<void()> OnScriptGenerated;
 	
 	FString GetGameScriptRootFolder();

@@ -3,6 +3,8 @@
 #include "Bango/Core/BangoScriptContainer.h"
 #include "IPropertyTypeCustomization.h"
 
+class FBangoBlueprintEditor;
+
 class FBangoScriptContainerCustomization : public IPropertyTypeCustomization
 {
 public:
@@ -25,6 +27,8 @@ protected:
 	
 	TMulticastDelegate<void()> PostScriptCreated;
 	TMulticastDelegate<void()> PreScriptDeleted;
+	
+	//TSharedPtr<FBangoBlueprintEditor> BlueprintEditor;
 	
 	// ------------------------------------------
 	

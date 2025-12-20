@@ -19,9 +19,18 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 // ----------------------------------------------
 
 #if WITH_EDITOR
-void UBangoScriptBlueprint::ListenForUndelete()
+void UBangoScriptBlueprint::SoftDelete()
 {	
-	ListenForUndeleteHandle = FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnUndelete);
+	AddToRoot();
+	
+	DeletedName = GetName();
+	
+	Rename(*ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	
+	ClearEditorReferences();
+	
+	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.AddUObject(this, &ThisClass::OnBangoActorComponentUndoDelete);
 }
 #endif
 
@@ -30,10 +39,11 @@ void UBangoScriptBlueprint::ListenForUndelete()
 #if WITH_EDITOR
 void UBangoScriptBlueprint::StopListeningForUndelete()
 {
-	if (ListenForUndeleteHandle.IsValid())
-	{
-		FCoreUObjectDelegates::OnObjectTransacted.Remove(ListenForUndeleteHandle);		
-	}
+	FEditorDelegates::OnMapLoad.RemoveAll(this);
+	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.RemoveAll(this);
+	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);		
+	
+	RemoveFromRoot();
 }
 #endif
 
@@ -75,6 +85,11 @@ void UBangoScriptBlueprint::SetGuid(FGuid InGuid)
 	Modify();
 	ScriptGuid = InGuid;
 }
+
+void UBangoScriptBlueprint::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
+{
+	RemoveFromRoot();
+}
 #endif
 
 // ----------------------------------------------
@@ -91,20 +106,19 @@ UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(c
 		
 	return BP;
 }
-#endif
 
-#if WITH_EDITOR
-void UBangoScriptBlueprint::OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+void UBangoScriptBlueprint::OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint)
 {
-	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
+	if (FoundBlueprint)
 	{
-		if (ScriptComponent->GetScriptGuid() == ScriptGuid)
-		{
-			StopListeningForUndelete();
-			ScriptGuid.Invalidate();
-			
-			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
-		}
+		return;
+	}
+	
+	if (ScriptGuid == Guid)
+	{
+		StopListeningForUndelete();
+		//ScriptGuid.Invalidate();
+		FoundBlueprint = this;
 	}
 }
 #endif
@@ -146,5 +160,13 @@ FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 		
 	AutoName = FString::Join(NameElements, TEXT(" "));
 	return AutoName;
+}
+
+FString UBangoScriptBlueprint::RetrieveDeletedName()
+{
+	FString Temp = DeletedName;
+	DeletedName = "";
+	
+	return Temp;
 }
 #endif

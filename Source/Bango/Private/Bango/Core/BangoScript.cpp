@@ -20,6 +20,12 @@ void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, 
 		WorldContext = Runner;
 	}
 	
+	if (!Script)
+	{
+		UE_LOG(LogBango, Warning, TEXT("RunScript called with null script!"));
+		return;
+	}
+	
 	if (!WorldContext)
 	{
 		UE_LOG(LogBango, Error, TEXT("Tried to launch script but Runner and WorldContext were null!"));

@@ -4,6 +4,7 @@
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "SEditorViewport.h"
+#include "WidgetBlueprintEditor.h"
 #include "Bango/Core/BangoScript.h"
 #include "BangoEditor/BangoColor.h"
 #include "BangoEditor/BangoEditorStyle.h"
@@ -11,12 +12,20 @@
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "Kismet2/KismetEditorUtilities.h"
+#include "Misc/DefinePrivateMemberPtr.h"
 #include "UObject/SavePackage.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+
+#include "Bango/Private/Bango/ThirdParty/BMPrivateAccess.h"
+#include "BangoEditor/BlueprintEditor/BangoBlueprintEditor.h"
+#include "BangoEditor/Widgets/SBangoGraphEditor.h"
+#include "Editor/UMGEditor/Public/WidgetBlueprintEditor.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 // ----------------------------------------------
+
+class FWidgetBlueprintEditor;
 
 FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 {
@@ -269,8 +278,22 @@ FReply FBangoScriptContainerCustomization::OnClicked_EditScript() const
 
 FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 {
-	return OnClicked_EditScript();
-	/*
+//#if 0
+	TSharedRef<FBangoBlueprintEditor> NewBlueprintEditor(new FBangoBlueprintEditor());
+
+	const bool bShouldOpenInDefaultsMode = false;
+	TArray<UBlueprint*> Blueprints;
+	Blueprints.Add(GetBlueprint());
+
+	NewBlueprintEditor->InitBlueprintEditor(EToolkitMode::Standalone, nullptr, Blueprints, bShouldOpenInDefaultsMode);
+	//NewBlueprintEditor->InitWidgetBlueprintEditor(EToolkitMode::Standalone, nullptr, Blueprints, bShouldOpenInDefaultsMode);
+	
+	return FReply::Handled();
+//#endif 
+
+#if 0
+	//return OnClicked_EditScript();
+	
 	FViewport* Viewport = GEditor->GetActiveViewport();
 	FViewportClient* ViewportClient = Viewport->GetClient();
 	FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
@@ -288,7 +311,8 @@ FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 		FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup),
 		true);
 	
-	return FReply::Handled();*/
+	return FReply::Handled();
+#endif
 }
 
 FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
@@ -298,9 +322,31 @@ FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
 
 // ----------------------------------------------
 
+// 
+// UE_API virtual void SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents);
+//
+
+//DEFINE_PRIVATE_FUNCTION_ACCESSOR(FBlueprintEditor, SetupGraphEditorEvents, void);
+
 TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() const
 {
 	SGraphEditor::FGraphEditorEvents Events;
+	
+	TSharedRef<FBangoBlueprintEditor> BlueprintEditor = MakeShared<FBangoBlueprintEditor>();
+	//BlueprintEditor->InitBlueprintEditor(EToolkitMode::Standalone, nullptr, {GetBlueprint()}, true);
+	BlueprintEditor->SetupGraphEditorEvents_Impl(GetBlueprint(), GetPrimaryEventGraph(), Events);
+	
+	//FBlueprintEditor_Private::Call_SetupGraphEditorEvents(GetPrimaryEventGraph(), lpr, Events);
+	
+	
+	//UE_DEFINE_PRIVATE_MEMBER_PTR(void (UEdGraph*, SGraphEditor::FGraphEditorEvents&), Test, FBlueprintEditor, SetupGraphEditorEvents);
+	//Test();
+	
+	const bool bShouldOpenInDefaultsMode = false;
+	TArray<UBlueprint*> Blueprints;
+	Blueprints.Add(GetBlueprint());
+
+	//NewBlueprintEditor->InitWidgetBlueprintEditor(EToolkitMode::Standalone, nullptr, Blueprints, bShouldOpenInDefaultsMode);
 	
 	FVector2D ParentWindowSize = FSlateApplication::Get().GetActiveTopLevelWindow()->GetSizeInScreen();
 	
@@ -319,11 +365,12 @@ TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() c
 				SNew(SOverlay)
 				+ SOverlay::Slot()
 				[
-					SNew(SGraphEditor)
+					SNew(SBangoGraphEditor)
+					.BlueprintEditor(BlueprintEditor)
 					.GraphToEdit(GetPrimaryEventGraph())
-					.IsEditable(false)
+					.IsEditable(true)
 					.GraphEvents(Events)
-					.ShowGraphStateOverlay(false)
+					.ShowGraphStateOverlay(true)
 				]
 				+ SOverlay::Slot()
 				.HAlign(HAlign_Right)

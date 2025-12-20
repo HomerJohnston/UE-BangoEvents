@@ -34,7 +34,8 @@ protected:
 protected:
 	// When a script holder is deleted, the actual script blueprint (this) isn't deleted, it gets moved to the transient package. 
 	// If the user undos their delete, this lets Bango restore the blueprint back the way it was.
-	void ListenForUndelete();
+	void SoftDelete();
+	
 	void StopListeningForUndelete();
 
 	/** Forces the blueprint script to save itself. */
@@ -46,12 +47,18 @@ protected:
 	
 public:
 	
+	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
+	
 	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const UClass* InClass);
 	
-	void OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
+	void OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint);
+	
+	//void OnUndelete(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
 	
 	void UpdateAutoName(UObject* Outer);
 	
 	static FString GetAutomaticName(UObject* Outer);
+	
+	FString RetrieveDeletedName();
 #endif
 };

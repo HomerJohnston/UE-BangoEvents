@@ -21,7 +21,7 @@ public:
 protected:
 	bool bDuplicateActorsActive = false;
 	
-	TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> DeletedScripts;
+	//TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> DeletedScripts;
 	
 public:
 	// Simple solution to force any active FBangoScriptContainerCustomization instances to redraw
@@ -33,6 +33,7 @@ public:
 	FString GetState(UObject* Object) const;
 
 	void OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const;
+	void OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
 
 	void OnAssetPostImport(UFactory* Factory, UObject* Object) const;
 	void OnPackageDeleted(UPackage* Package) const;
@@ -46,6 +47,7 @@ public:
 	void OnLevelActorDeleted(AActor* Actor) const;
 
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
+	void PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const;
 	
 	void OnObjectConstructed(UObject* Object) const;
 	void OnObjectRenamed(UObject* ObjectL, UObject* RenamedObjectOuter, FName OldName) const;
@@ -60,5 +62,5 @@ public:
 	
 	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
 	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
-
+	
 };

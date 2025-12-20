@@ -1,23 +1,22 @@
 ﻿#include "BangoEditorSubsystem.h"
 
 #include "ContentBrowserDataSubsystem.h"
+#include "FileHelpers.h"
 #include "IContentBrowserDataModule.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Core/BangoScriptContainer.h"
-#include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
-#include "BangoEditor/DevTesting/BangoDummyObject.h"
-#include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
+#include "BangoEditor/Utilities/BangoFolderUtility.h"
 #include "Helpers/BangoHideScriptFolderFilter.h"
-#include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/ObjectSaveContext.h"
-#include "UObject/SavePackage.h"
+
+#define LOCTEXT_NAMESPACE "BangoEditor"
 
 TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> UBangoEditorSubsystem::Filter;
 
@@ -39,6 +38,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	GEngine->OnLevelActorDeleted().AddUObject(this, &ThisClass::OnLevelActorDeleted);
 	
 	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	FEditorDelegates::PreSaveWorldWithContext.AddUObject(this, &ThisClass::PreSaveWorldWithContext);
 	
 	/*
 	FEditorDelegates::OnAssetPostImport.AddUObject(this, &ThisClass::OnAssetPostImport);
@@ -64,6 +64,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
 	
 	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
+	FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnObjectTransacted);
 }
 
 FString UBangoEditorSubsystem::GetState(UObject* Object) const
@@ -81,6 +82,14 @@ FString UBangoEditorSubsystem::GetState(UObject* Object) const
 void UBangoEditorSubsystem::OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnObjectPreSave %s --- %s"), *Object->GetName(), *GetState(Object));	
+}
+
+void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+{
+	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
+	{
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+	}
 }
 
 void UBangoEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object) const
@@ -163,10 +172,14 @@ void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 	{
 		CollectGarbage(RF_NoFlags);	
 	});
-	
-	DeletedScripts.Empty();
-	
+		
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayCollectGarbage);
+}
+
+void UBangoEditorSubsystem::PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const
+{
+	UE_LOG(LogBango, Display, TEXT("PreSaveWorldWithContext"));
+	//ObjectTools::ForceDeleteObjects( { ScriptPackage }, true);
 }
 
 void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
@@ -225,15 +238,16 @@ void CheckComponentOrigin(UActorComponent* Component)
 
 void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
-	check(IsValid(Outer));
+	check(Outer);
 	check(ScriptContainer);
 	
 	FString NewBlueprintName;
-	UPackage* ScriptPackage = nullptr;
-	UBangoScriptBlueprint* Blueprint;
+	UPackage* ScriptPackage;
+	UBangoScriptBlueprint* Blueprint = nullptr;
 	
 	if (ScriptContainer->Guid.IsValid())
 	{
+		// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 	
 		if (!ScriptPackage)
@@ -242,34 +256,40 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 			return;
 		}
 	
-		// This creation is from an undo operation
-		UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
-		Blueprint = Subsystem->RetrieveDeletedScript(ScriptContainer->Guid);
-		check(Blueprint);
+		UBangoScriptBlueprint* FoundBlueprint = nullptr;
+		FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
 		
-		Blueprint->Rename(*Blueprint->DeletedName, ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+		if (FoundBlueprint)
+		{
+			Blueprint = FoundBlueprint;
+			Blueprint->StopListeningForUndelete();
+			Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+		}
 	}
 	else
 	{
+		// This creation is from a new addition
 		ScriptContainer->Guid = FGuid::NewGuid();
 		
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 		
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
 		
-		// This creation is from a new addition
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
 		Blueprint->SetGuid(ScriptContainer->Guid);
 		check(Blueprint);
 	}
 
-	ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
+	if (Blueprint)
+	{
+		ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
 	
-	FAssetRegistryModule::AssetCreated(Blueprint);
-	(void)ScriptPackage->MarkPackageDirty();
+		FAssetRegistryModule::AssetCreated(Blueprint);
+		(void)ScriptPackage->MarkPackageDirty();
 	
-	// Tells FBangoScript property type customizations to regenerate
-	OnScriptGenerated.Broadcast();
+		// Tells FBangoScript property type customizations to regenerate
+		OnScriptGenerated.Broadcast();	
+	}
 }
 
 bool IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer)
@@ -292,65 +312,23 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 		return;
 	}
 	
-	UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-
-	if (IsValid(Subsystem))
-	{
-		UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);
-
-		if (Blueprint)
-		{
-			Subsystem->CloseAllEditorsForAsset(Blueprint);
-		}
-	}
-		
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass); 
 	check(Blueprint);
 	
 	UPackage* ScriptPackage = Blueprint->GetPackage();
 	check(ScriptPackage);
-		
-#if 0
-	/*
-	// Duplicate the blueprint in the transient package and stash it.
-	UBangoScriptBlueprint* BlueprintCopy = DuplicateObject(Blueprint, GetTransientPackage());
-	BlueprintCopy->ListenForUndelete(ScriptContainer->Guid); // TODO the blueprint holds the Guid I shouldn't need to pass it in
-	SoftDeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(BlueprintCopy) } );
-	*/
+	
+	UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+	check(Subsystem);
 
-	Outer->Modify();
-	ScriptContainer->Unset();
-	(void)Outer->MarkPackageDirty();
-	
-	Blueprint->ClearEditorReferences();
-	
-	ResetLoaders(ScriptPackage);
-	CollectGarbage(RF_NoFlags);
-#endif
-	
-//#if 0
-	// The editor's deletion systems are async and run GC during the process
-	//ScriptPackage->AddToRoot();
-	
-	// Move the blueprint out into transient space. Store it in this subsystem instead for lookup and GC prevention.
-	DeletedScripts.Add( { ScriptContainer->Guid, TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) } );
-	
-	Blueprint->DeletedName = Blueprint->GetName();
-	Blueprint->Rename(*ScriptContainer->Guid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
-	
-	Blueprint->ListenForUndelete();
+	Subsystem->CloseAllEditorsForAsset(Blueprint);
+
+	Blueprint->SoftDelete();
 	
 	ScriptContainer->Unset();
-	Blueprint->ClearEditorReferences();
 	
-	//UBangoDummyObject* DummyObject = NewObject<UBangoDummyObject>(ScriptPackage, UBangoDummyObject::StaticClass());
-	//DummyObject->AddToRoot();
 	(void)ScriptPackage->MarkPackageDirty();
-	
-	//ResetLoaders(ScriptPackage);
-	//CollectGarbage(RF_NoFlags);
-//#endif
-	
+
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	
 	// I don't know if this helps anything. Probably not.
@@ -378,17 +356,46 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	}
 //#endif
 	
-	/*
-	auto Lambda = FTimerDelegate::CreateLambda([ScriptPackage, Blueprint, DummyObject] ()
+	(void)ScriptPackage->MarkPackageDirty();
+	
+	auto Lambda = FTimerDelegate::CreateLambda([ScriptPackage] ()
 	{
-		int32 Deleted = ObjectTools::DeleteObjects( { DummyObject }, false );
 		ScriptPackage->RemoveFromRoot();
-		UE_LOG(LogBango, Display, TEXT("Deleted %i script packages"), Deleted);
+		
+		//int32 Deleted = ObjectTools::DeleteObjects( { ScriptPackage }, false );
+		FEditorFileUtils::FPromptForCheckoutAndSaveParams Params;
+		Params.bPromptToSave = false;
+		
+		
+		EAppReturnType::Type Return = FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("DeleteScriptPackage_ConfirmYesNo", "Delete script package? This will clear your undo history. If you press no, you will be prompted to save the empty script package on level change or shutdown."));
+		
+		switch (Return)
+		{
+			case EAppReturnType::Yes:
+			{
+				//ObjectTools::ForceDeleteObjects( { ScriptPackage }, false);				
+				//ObjectTools::CleanupAfterSuccessfulDelete( { ScriptPackage }, true);
+				FEditorFileUtils::PromptForCheckoutAndSave( { ScriptPackage }, Params);
+
+				break;
+			}
+			case EAppReturnType::No:
+			{
+				break;
+			}
+			default:
+			{
+				checkNoEntry();
+			}
+		}
+				
+		Bango::Editor::DeleteEmptyScriptFolders(); // TODO this should be removed. I only want this to run on editor shutdown.
+		
 	});
-	*/
 	
 	// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY. I can't delete the package on the same frame.
-	//GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
+	GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
+	
 }
 
 void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
@@ -458,9 +465,8 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> Sc
 	}
 	
 	TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>> SoftDeletedScript = { ScriptClass->GetDefaultObject<UBangoScript>()->GetScriptGuid(), TStrongObjectPtr<UBangoScriptBlueprint>(Blueprint) };
-	DeletedScripts.Add(SoftDeletedScript);
 	
-	ScriptClass->Rename(nullptr, GetTransientPackage(), REN_DoNotDirty | REN_DontCreateRedirectors);
+	ScriptClass->Rename(nullptr, GetTransientPackage(), REN_DoNotDirty | REN_DontCreateRedirectors | REN_NonTransactional);
 	
 	ObjectTools::DeleteObjects( { ScriptPackage } );
 	
@@ -471,6 +477,7 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> Sc
 
 UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
 {
+	/*
 	auto Subsystem = Get();
 	
 	int32 Index = Subsystem->DeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>& Element)
@@ -486,6 +493,9 @@ UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
 		
 		return Popped.Get();
 	}
+	*/
 	
 	return nullptr;
 }
+
+#undef LOCTEXT_NAMESPACE
