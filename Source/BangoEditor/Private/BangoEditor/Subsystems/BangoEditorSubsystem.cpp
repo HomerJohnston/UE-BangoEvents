@@ -88,7 +88,10 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 {
 	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+		if (Bango::IsComponentInEditedLevel(ScriptComponent))
+		{
+			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+		}
 	}
 }
 

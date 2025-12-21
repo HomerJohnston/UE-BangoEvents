@@ -512,7 +512,7 @@ UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 {
 	UObject* ScriptClassObject;
 	
-	if (ScriptClassProperty->GetValue(ScriptClassObject))
+	if (ScriptClassProperty->GetValue(ScriptClassObject) == FPropertyAccess::Result::Success && ScriptClassObject)
 	{
 		if (UClass* Class = Cast<UClass>(ScriptClassObject))
 		{
@@ -522,7 +522,7 @@ UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 			}
 		}
 	}
-	
+
 	return nullptr;
 }
 
