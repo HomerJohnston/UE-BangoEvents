@@ -1,5 +1,16 @@
 ﻿#include "BangoBlueprintEditor.h"
 
+#include "EdGraphSchema_K2_Actions.h"
+#include "K2Node_Literal.h"
+#include "Bango/Utility/BangoLog.h"
+
+
+void FBangoBlueprintEditor::SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
+{
+	FBlueprintEditor::SetupGraphEditorEvents(InGraph, InEvents);
+	InEvents.OnDropActors.Unbind();
+	InEvents.OnDropActors = SGraphEditor::FOnDropActors::CreateSP(this, &FBangoBlueprintEditor::OnDropActors);
+}
 
 void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
@@ -23,6 +34,8 @@ void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, U
 	{
 		InEvents.OnCreateActionMenuAtLocation = SGraphEditor::FOnCreateActionMenuAtLocation::CreateSP(this, &FBangoBlueprintEditor::OnCreateGraphActionMenu);
 	}
+	
+	InEvents.OnDropActor = SGraphEditor::FOnDropActor::CreateSP(this, &FBangoBlueprintEditor::OnDropActor);
 }
 
 void FBangoBlueprintEditor::Tick(float DeltaTime)
@@ -58,6 +71,41 @@ void FBangoBlueprintEditor::Tick(float DeltaTime)
 			check(DeferredNamespaceImports.IsEmpty());
 		}
 	}
+}
+
+void FBangoBlueprintEditor::OnDropActor(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* EdGraph, const UE::Math::TVector2<double>& Vector2) const
+{
+	UE_LOG(LogBango, Display, TEXT("Test 1"));
+}
+
+void FBangoBlueprintEditor::OnDropActors(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* Graph, const UE::Math::TVector2<float>& DropLocation) const
+{
+	UE_LOG(LogBango, Display, TEXT("Test 2"));
+	
+	// We need to check that the dropped actor is in the right sublevel for the reference
+	//ULevel* BlueprintLevel = FBlueprintEditorUtils::GetLevelFromBlueprint(GetBlueprintObj());
+
+	//if (BlueprintLevel && FBlueprintEditorUtils::IsLevelScriptBlueprint(GetBlueprintObj()))
+	//{
+		FDeprecateSlateVector2D NodeLocation = DropLocation;
+		for (int32 i = 0; i < Actors.Num(); i++)
+		{
+			AActor* DroppedActor = Actors[i].Get();
+			if (DroppedActor && /*(DroppedActor->GetLevel() == BlueprintLevel) &&*/ !DroppedActor->IsChildActor())
+			{
+				UK2Node_Literal* ActorRefNode = FEdGraphSchemaAction_K2NewNode::SpawnNode<UK2Node_Literal>(
+					Graph,
+					NodeLocation,
+					EK2NewNodeFlags::SelectNewNode,
+					[DroppedActor](UK2Node_Literal* NewInstance)
+					{
+						NewInstance->SetObjectRef(DroppedActor);
+					}
+				);
+				NodeLocation.Y += UEdGraphSchema_K2::EstimateNodeHeight(ActorRefNode);
+			}
+		}
+	//}
 }
 
 /*
