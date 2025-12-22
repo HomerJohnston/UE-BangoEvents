@@ -92,9 +92,6 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 		Builder.CopyExternalConnection(Node_This.FoundActor, Node_FindActorFunction->GetReturnValuePin());
 	}
 	
-	// Final output
-	Builder.CopyExternalConnection(Node_This.FoundActor, Node_CastToType.CastedObject);
-	
 	// Done!
 	if (!bIsErrorFree)
 	{

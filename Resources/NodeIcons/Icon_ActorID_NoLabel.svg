@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="200mm"
+   height="200mm"
+   viewBox="0 0 200 200"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="Icon_ActorID_NoLabel.svg"
+   inkscape:export-filename="..\..\Content\Icon_ActorID.png"
+   inkscape:export-xdpi="4.0640001"
+   inkscape:export-ydpi="4.0640001"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.84363777"
+     inkscape:cx="542.88703"
+     inkscape:cy="294.5577"
+     inkscape:window-width="1661"
+     inkscape:window-height="1648"
+     inkscape:window-x="1514"
+     inkscape:window-y="196"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:12;stroke-opacity:1;paint-order:stroke markers fill"
+       id="rect1-7"
+       width="200"
+       height="200"
+       x="-1.4210855e-14"
+       y="0"
+       ry="23.230728" />
+    <rect
+       style="fill:#999999;fill-opacity:1;stroke:none;stroke-width:10.8333;stroke-opacity:1;paint-order:stroke markers fill"
+       id="rect1"
+       width="180.55544"
+       height="180.55544"
+       x="9.7222805"
+       y="9.7222805"
+       ry="15.475083" />
+    <path
+       d="M 100,28.103155 A 35.720562,35.720562 0 0 0 64.279186,63.823973 35.720562,35.720562 0 0 0 100,99.544789 35.720562,35.720562 0 0 0 135.72082,63.823973 35.720562,35.720562 0 0 0 100,28.103155 Z"
+       style="fill:#ffffff;stroke:none;stroke-width:35.5142;paint-order:stroke fill markers"
+       id="path7" />
+    <path
+       d="M 126.0656,109.76951 A 52.85785,52.85785 0 0 1 100,116.68175 52.85785,52.85785 0 0 1 73.93441,109.76951 h -3.573942 c -18.703134,1.8e-4 -33.8662,14.10696 -33.8708,31.51126 l -0.001,0.008 v 31.5185 h 33.871834 59.280088 33.8708 v -31.5185 -0.008 c -0.004,-17.4043 -15.16766,-31.51108 -33.8708,-31.51126 z"
+       style="fill:#ffffff;stroke-width:24;paint-order:markers fill stroke"
+       id="path6" />
+  </g>
+</svg>

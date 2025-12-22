@@ -34,6 +34,16 @@ public:
 	
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
+	void PostLoad() override;
+	
+	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
+	
+	void PostInitProperties() override;
+	
+	void PostApplyToComponent() override;
+	
+	void PostReloadConfig(class FProperty* PropertyThatWasLoaded) override;
+	
 	void UnsetScript();
 	
 	void OnRename();

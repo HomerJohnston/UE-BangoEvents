@@ -17,7 +17,7 @@ struct BANGO_API FBangoScriptContainer
 	
 #if WITH_EDITORONLY_DATA
 	// This will be kept in sync with the UBangoScriptObject's ScriptGuid and is used for undo/redo purposes and other sync
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	FGuid Guid;
 	
 	//UPROPERTY(VisibleAnywhere)

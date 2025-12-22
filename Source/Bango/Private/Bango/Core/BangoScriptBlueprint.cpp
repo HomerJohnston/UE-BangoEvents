@@ -1,6 +1,5 @@
 ﻿#include "Bango/Core/BangoScriptBlueprint.h"
 
-#include "ObjectTools.h"
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
@@ -143,7 +142,8 @@ FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 	
 	if (auto* OuterScriptComponent = Cast<UBangoScriptComponent>(Outer))
 	{
-		NameElements.Add(TEXT("(") + OuterScriptComponent->GetName() + TEXT(")"));
+		//NameElements.Add(TEXT("(") + OuterScriptComponent->GetName() + TEXT(")"));
+		NameElements = { OuterScriptComponent->GetName() };
 	}
 	else if (auto* OuterActorComponent = Cast<UActorComponent>(Outer))
 	{
@@ -155,6 +155,7 @@ FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 	}
 	else
 	{
+		// TODO this gets called with Outer == BlueprintNodeSpawner, is this bad?
 		checkNoEntry();
 	}
 		

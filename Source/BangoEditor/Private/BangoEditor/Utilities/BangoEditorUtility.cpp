@@ -42,7 +42,7 @@ AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
 
 UPackage* Bango::Editor::MakePackageForScript(UObject* Outer, FString& NewBPName, FGuid Guid)
 {
-	if (!IsValid(Outer))
+	if (!IsValid(Outer) || Outer->GetFlags() == RF_NoFlags || Outer->HasAnyFlags(RF_BeingRegenerated))
 	{
 		UE_LOG(LogBango, Error, TEXT("Tried to make a script package but null Outer was passed in!"));
 		return nullptr;

@@ -42,6 +42,22 @@ void UBangoScriptComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
 	
+	UE_LOG(LogBango, Warning, TEXT("OnComponentCreated"));
+	
+	// With RF_LoadCompleted this is a default actor component.
+	if (HasAllFlags(RF_LoadCompleted))
+	{
+		if (this->GetWorld() && this->ComponentIsInPersistentLevel(false))
+		{
+			auto Lambda = FTimerDelegate::CreateLambda([this] ()
+			{
+				FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+			});
+			this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
+		}
+		return;
+	}
+	
 	if (!Bango::IsComponentInEditedLevel(this))
 	{
 		return;
@@ -111,6 +127,41 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
 }
+
+void UBangoScriptComponent::PostLoad()
+{
+	Super::PostLoad();
+}
+
+void UBangoScriptComponent::PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph)
+{
+	Super::PostLoadSubobjects(OuterInstanceGraph);
+}
+
+void UBangoScriptComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
+}
+
+void UBangoScriptComponent::PostApplyToComponent()
+{
+	Super::PostApplyToComponent();
+	
+	// If it already has a Guid, it must have been a copy-paste.
+	if (Script.Guid.IsValid())
+	{
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+	}
+	else
+	{
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+	}
+}
+
+void UBangoScriptComponent::PostReloadConfig(class FProperty* PropertyThatWasLoaded)
+{
+	Super::PostReloadConfig(PropertyThatWasLoaded);
+}
 #endif
 
 #if WITH_EDITOR
@@ -134,6 +185,11 @@ void UBangoScriptComponent::UnsetScript()
 
 void UBangoScriptComponent::OnRename()
 {
+	if (HasAnyFlags(RF_MirroredGarbage))
+	{
+		return;
+	}
+	
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
 
 	if (Blueprint)

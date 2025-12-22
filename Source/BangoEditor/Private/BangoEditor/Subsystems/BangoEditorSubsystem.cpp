@@ -90,7 +90,7 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 	{
 		if (Bango::IsComponentInEditedLevel(ScriptComponent))
 		{
-			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+			//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
 		}
 	}
 }
@@ -244,30 +244,40 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	check(Outer);
 	check(ScriptContainer);
 	
+	if (!Outer->IsValidLowLevel() || Outer->HasAnyFlags(RF_Transient))
+	{
+		return;
+	}
+	
 	FString NewBlueprintName;
-	UPackage* ScriptPackage;
+	UPackage* ScriptPackage = nullptr;
 	UBangoScriptBlueprint* Blueprint = nullptr;
 	
 	if (ScriptContainer->Guid.IsValid())
 	{
-		// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
-		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
-	
-		if (!ScriptPackage)
+		/*
+		if (!Outer->HasAnyFlags(RF_WasLoaded))
 		{
-			UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
-			return;
-		}
+			// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
+			ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 	
-		UBangoScriptBlueprint* FoundBlueprint = nullptr;
-		FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
+			if (!ScriptPackage)
+			{
+				UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
+				return;
+			}
+	
+			UBangoScriptBlueprint* FoundBlueprint = nullptr;
+			FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
 		
-		if (FoundBlueprint)
-		{
-			Blueprint = FoundBlueprint;
-			Blueprint->StopListeningForUndelete();
-			Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+			if (FoundBlueprint)
+			{
+				Blueprint = FoundBlueprint;
+				Blueprint->StopListeningForUndelete();
+				Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+			}
 		}
+		*/
 	}
 	else
 	{
@@ -279,11 +289,16 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
 		
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
-		Blueprint->SetGuid(ScriptContainer->Guid);
-		check(Blueprint);
+		
+		if (Blueprint)
+		{
+			Blueprint->SetGuid(ScriptContainer->Guid);
+		}
+
+		//check(Blueprint);
 	}
 
-	if (Blueprint)
+	if (Blueprint && ScriptPackage)
 	{
 		ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
 	
@@ -363,42 +378,45 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	
 	auto Lambda = FTimerDelegate::CreateLambda([ScriptPackage] ()
 	{
-		ScriptPackage->RemoveFromRoot();
-		
-		//int32 Deleted = ObjectTools::DeleteObjects( { ScriptPackage }, false );
-		FEditorFileUtils::FPromptForCheckoutAndSaveParams Params;
-		Params.bPromptToSave = false;
-		
-		
-		EAppReturnType::Type Return = FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("DeleteScriptPackage_ConfirmYesNo", "Delete script package? This will clear your undo history. If you press no, you will be prompted to save the empty script package on level change or shutdown."));
-		
-		switch (Return)
+		if (ScriptPackage->IsValidLowLevel())
 		{
-			case EAppReturnType::Yes:
+			ScriptPackage->RemoveFromRoot();
+			
+			//int32 Deleted = ObjectTools::DeleteObjects( { ScriptPackage }, false );
+			FEditorFileUtils::FPromptForCheckoutAndSaveParams Params;
+			Params.bPromptToSave = false;
+		
+			EAppReturnType::Type Return = FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("DeleteScriptPackage_ConfirmYesNo", "Delete script package? This will clear your undo history. If you press no, you will be prompted to save the empty script package on level change or shutdown."));
+		
+			switch (Return)
 			{
-				//ObjectTools::ForceDeleteObjects( { ScriptPackage }, false);				
-				//ObjectTools::CleanupAfterSuccessfulDelete( { ScriptPackage }, true);
-				FEditorFileUtils::PromptForCheckoutAndSave( { ScriptPackage }, Params);
+				case EAppReturnType::Yes:
+				{
+					//ObjectTools::ForceDeleteObjects( { ScriptPackage }, false);				
+					//ObjectTools::CleanupAfterSuccessfulDelete( { ScriptPackage }, true);
+					FEditorFileUtils::PromptForCheckoutAndSave( { ScriptPackage }, Params);
 
-				break;
-			}
-			case EAppReturnType::No:
-			{
-				break;
-			}
-			default:
-			{
-				checkNoEntry();
+					break;
+				}
+				case EAppReturnType::No:
+				{
+					break;
+				}
+				default:
+				{
+					checkNoEntry();
+				}
 			}
 		}
-				
-		Bango::Editor::DeleteEmptyScriptFolders(); // TODO this should be removed. I only want this to run on editor shutdown.
 		
+		Bango::Editor::DeleteEmptyScriptFolders(); // TODO this should be removed. I only want this to run on editor shutdown.
 	});
 	
-	// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY. I can't delete the package on the same frame.
-	GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
-	
+	if (ScriptPackage != GetTransientPackage() && !Outer->HasAnyFlags(RF_WasLoaded))
+	{
+		// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY. I can't delete the package on the same frame.
+		GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
+	}
 }
 
 void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
@@ -444,7 +462,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		}
 	};
 	
-	GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
+	//GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
 	
 	/*
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);

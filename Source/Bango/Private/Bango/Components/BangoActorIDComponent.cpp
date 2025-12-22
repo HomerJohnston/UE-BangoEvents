@@ -13,7 +13,7 @@
 UBangoActorIDComponent::UBangoActorIDComponent()
 {
 #if WITH_EDITORONLY_DATA 
-	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/NameTag.NameTag"));
+	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_ActorID.Icon_ActorID"));
 #endif
 }
 
@@ -33,7 +33,7 @@ void UBangoActorIDComponent::PostLoad()
 	}
 #endif
 	
-	UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
+	//UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
 }
 
 void UBangoActorIDComponent::BeginPlay()
@@ -75,6 +75,11 @@ void UBangoActorIDComponent::OnRegister()
 		{
 			DebugDrawService = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawEditor));
 		}
+	}
+	
+	if (!Bango::IsComponentInEditedLevel(this))
+	{
+		UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
 	}
 }
 #endif
@@ -167,8 +172,8 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 	Canvas->SetDrawColor(FColor(30, 30, 30, 150 * Alpha));
 	Canvas->DrawTile(
 		BackgroundTex,
-		ScreenLocation.X - 0.5f * TextSize.X - /*10*/ 26, ScreenLocation.Y - 5,
-		TextSize.X + /*20*/36, TextSize.Y + 10,
+		ScreenLocation.X - 0.5f * TextSize.X - /*10*/ 16, ScreenLocation.Y - 5,
+		TextSize.X + /*20*/26, TextSize.Y + 10,
 		0.0f,0.0f,1.0f,1.0f
 		);
 	//Canvas->DrawItem(Box);
@@ -177,10 +182,9 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 	Canvas->SetDrawColor(TagColor.ToFColor(false));
 	Canvas->DrawItem(Label);
 
-	
-	FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, 24.0f, 32.0f);
+	FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, 32.0f, 32.0f);
 	Canvas->SetDrawColor(TagColor.ToFColor(false));
-	Canvas->DrawIcon(Icon, ScreenLocation.X - 34.0f, ScreenLocation.Y - 2.0f, 0.6f);
+	Canvas->DrawIcon(Icon, ScreenLocation.X - 34.0f, ScreenLocation.Y - 0.0f, 0.50f);
 	
 	/*
 	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);

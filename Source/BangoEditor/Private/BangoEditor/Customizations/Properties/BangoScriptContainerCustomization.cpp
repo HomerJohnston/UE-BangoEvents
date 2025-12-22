@@ -162,7 +162,7 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 {
 	if (GetOuter()->IsA(UBangoScriptComponent::StaticClass()))
 	{
-		return;
+		//return;
 	}
 	
 	ChildBuilder.AddCustomRow(INVTEXT("ASDF"))
@@ -187,6 +187,17 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_RenameScript)
 		]
 	];
+	
+	ChildBuilder.AddCustomRow(INVTEXT("ASDF"))
+	.NameContent()
+	[
+		GuidProperty->CreatePropertyNameWidget()
+	]
+	.ValueContent()
+	[
+		GuidProperty->CreatePropertyValueWidgetWithCustomization(nullptr)
+	];
+	
 	return;
 	/*
 	Box = SNew(SVerticalBox);

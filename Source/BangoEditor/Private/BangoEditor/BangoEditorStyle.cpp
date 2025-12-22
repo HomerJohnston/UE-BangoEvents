@@ -2,6 +2,8 @@
 
 #include "BangoEditor/BangoEditorStyle.h"
 
+#include "Bango/Components/BangoActorIDComponent.h"
+#include "Bango/Components/BangoScriptComponent.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Interfaces/IPluginManager.h"
 #include "BangoEditor/BangoColor.h"
@@ -286,7 +288,15 @@ void FBangoEditorStyle::SetupStyles()
 
 	//StyleInstance->Set("RichTextBlock.BoldHighlight", FTextBlockStyle(TextStyle_Normal));
 
-
+	{
+		const FString BangoScriptComponentIconPropName = FString::Printf(TEXT("ClassIcon.%s"), *UBangoScriptComponent::StaticClass()->GetName());
+		StyleInstance->Set(*BangoScriptComponentIconPropName, new FSlateVectorImageBrush(StyleInstance->RootToContentDir("NodeIcons/Icon_Script", L".svg"), FVector2f(20, 20), BangoColor::LightYellow));
+	}
+	{
+		const FString BangoActorIDComponentIconPropName = FString::Printf(TEXT("ClassIcon.%s"), *UBangoActorIDComponent::StaticClass()->GetName());
+		StyleInstance->Set(*BangoActorIDComponentIconPropName, new FSlateVectorImageBrush(StyleInstance->RootToContentDir("NodeIcons/Icon_ActorID", L".svg"), FVector2f(20, 20), BangoColor::LightYellow));
+	}
+	
 	// ============================================================================================
 	// EDITABLE TEXT BLOCK STYLES
 	// ============================================================================================

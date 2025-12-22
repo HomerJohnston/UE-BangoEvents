@@ -32,7 +32,7 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 		return false;
 	}
 	
-	if (Component->HasAnyFlags(RF_Transient))
+	if (Component->HasAnyFlags(RF_Transient | RF_ClassDefaultObject | RF_DefaultSubObject))
 		return false;
 	
 	if (Component->GetPackage() == GetTransientPackage())
