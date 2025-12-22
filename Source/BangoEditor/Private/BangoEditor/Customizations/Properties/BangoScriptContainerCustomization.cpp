@@ -160,7 +160,10 @@ int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() 
 
 void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	if (GetOuter()->IsA(UBangoScriptComponent::StaticClass()))
+	UObject* Outer = GetOuter();
+	
+	// TODO handle selection of multiple things
+	if (Outer && Outer->IsA(UBangoScriptComponent::StaticClass()))
 	{
 		//return;
 	}

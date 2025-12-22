@@ -85,6 +85,13 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 		return;
 	}
 		
+	// If we are a default actor component, we will always exist on the actor and the only time we'll be truly deleted is when the whole actor hierachy is being deleted
+	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
+	{
+		Super::OnComponentDestroyed(bDestroyingHierarchy);
+		return;
+	}
+	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
 		if (Script.Guid.IsValid())

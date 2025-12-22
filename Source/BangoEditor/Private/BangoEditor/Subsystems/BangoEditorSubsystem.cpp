@@ -194,6 +194,11 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 {
 	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
 	{
+		if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject))
+		{
+			return;
+		}
+		
 		if (Bango::IsComponentInEditedLevel(ScriptComponent))
 		{
 			ScriptComponent->OnRename();
@@ -244,7 +249,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	check(Outer);
 	check(ScriptContainer);
 	
-	if (!Outer->IsValidLowLevel() || Outer->HasAnyFlags(RF_Transient))
+	if (!IsValid(Outer) || !Outer->IsValidLowLevel() || Outer->HasAnyFlags(RF_Transient))
 	{
 		return;
 	}
@@ -282,6 +287,8 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	else
 	{
 		// This creation is from a new addition
+		Outer->Modify();
+		
 		ScriptContainer->Guid = FGuid::NewGuid();
 		
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
