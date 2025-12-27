@@ -6,6 +6,9 @@
 struct FBangoScriptHandle;
 class UBangoScript;
 
+using FGuidRegistration = TPair<TWeakObjectPtr<AActor>, FGuid>;
+using FNameRegistration = TPair<TWeakObjectPtr<AActor>, FName>;
+
 UCLASS()
 class UBangoActorIDSubsystem : public UWorldSubsystem
 {
@@ -19,15 +22,20 @@ protected:
 	bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 	
 protected:
-	UPROPERTY()
-	TMap<FName, TWeakObjectPtr<AActor>> Actors;
+	TMap<FName, FGuidRegistration> ActorsByName;
+	
+	TMap<FGuid, FNameRegistration> ActorsByGuid;
 	
 public:
-	static void RegisterActor(UObject* WorldContextObject, FName ID, AActor* Actor);
+	static void RegisterActor(UObject* WorldContextObject, AActor* Actor, FName Name, FGuid Guid);
 
-	static void UnregisterActor(UObject* WorldContextObject, FName ID);
+	static void UnregisterActor(UObject* WorldContextObject, FName Name);
+	
+	static void UnregisterActor(UObject* WorldContextObject, FGuid Guid);
 
-	static AActor* GetActor(UObject* WorldContextObject, FName ID);
+	static AActor* GetActor(UObject* WorldContextObject, FName Name);
+	
+	static AActor* GetActor(UObject* WorldContextObject, FGuid Guid);
 };
 
 UCLASS()
@@ -36,6 +44,9 @@ class UBangoActorIDBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Bango", DisplayName = "Get Actor by ID", meta = (WorldContext = "WorldContextObject"))
-	static AActor* GetActor(UObject* WorldContextObject, FName ActorID);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Bango", DisplayName = "Get Actor by Name", meta = (WorldContext = "WorldContextObject"))
+	static AActor* K2_GetActorByName(UObject* WorldContextObject, FName Name);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Bango", DisplayName = "Get Actor by GUID", meta = (WorldContext = "WorldContextObject"))
+	static AActor* K2_GetActorByGuid(UObject* WorldContextObject, FGuid Guid);
 };

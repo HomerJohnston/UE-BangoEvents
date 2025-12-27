@@ -48,6 +48,8 @@ FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
 	{
 		Subsystem->OnScriptGenerated.RemoveAll(this);
 	}
+	
+	FWorldDelegates::OnWorldBeginTearDown.RemoveAll(this);
 }
 
 // ----------------------------------------------
@@ -110,6 +112,8 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	
 	UpdateBox();	
 	
+	FEditorDelegates::OnMapLoad.AddSP(this, &FBangoScriptContainerCustomization::OnMapLoad);
+	
 	/*
 	HeaderRow.NameContent()
 	[
@@ -142,6 +146,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 		]
 	];
 	*/
+	
 }
 
 // ----------------------------------------------
@@ -552,6 +557,13 @@ TSubclassOf<UBangoScript> FBangoScriptContainerCustomization::GetScriptClass() c
 	}
 
 	return nullptr;
+}
+
+void FBangoScriptContainerCustomization::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
+{
+	// If we don't get rid of the blueprint graph, we get an editor crash when switching maps.
+	Box->ClearChildren();
+	CurrentGraph = nullptr;
 }
 
 // ----------------------------------------------

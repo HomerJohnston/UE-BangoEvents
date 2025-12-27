@@ -12,7 +12,11 @@ struct FBangoEditorMenus
 	
 	static void SetEditActorID();
 	
+	static void SetEditActorID(AActor* Actor, bool bBlocking = false);
+	
 	static bool Can_SetEditActorID();
+	
+	static TSharedPtr<SWindow> ActiveWindow;
 	
 	static TSharedRef<SWidget> GetIDEditingWidget(TSharedPtr<SEditableTextBox> InputBox);
 	

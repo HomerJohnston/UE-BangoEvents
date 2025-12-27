@@ -3,11 +3,14 @@
 #include "LevelEditor.h"
 #include "SEditorViewport.h"
 #include "Bango/Components/BangoActorIDComponent.h"
+#include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/Commands/BangoEditorActions.h"
 #include "Subsystems/EditorActorSubsystem.h"
 #include "Widgets/Input/STextEntryPopup.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
+
+TSharedPtr<SWindow> FBangoEditorMenus::ActiveWindow;
 
 FBangoEditorMenus::FBangoEditorMenus()
 {
@@ -60,11 +63,17 @@ void FBangoEditorMenus::SetEditActorID()
 
 	AActor* Actor = SelectedActors[0];
 
+	SetEditActorID(Actor);
+}
+
+void FBangoEditorMenus::SetEditActorID(AActor* Actor, bool bBlocking)
+{
 	if (!IsValid(Actor))
 	{
+		UE_LOG(LogBango, Error, TEXT("Tried to call SetEditActorID on invalid actor!"));
 		return;
 	}
-
+	
 	FViewport* Viewport = GEditor->GetActiveViewport();
 		
 	FViewportClient* ViewportClient = Viewport->GetClient();
@@ -98,7 +107,7 @@ void FBangoEditorMenus::SetEditActorID()
 		
 	if (IsValid(ExistingIDComponent))
 	{
-		ExistingName = ExistingIDComponent->GetActorID();
+		ExistingName = ExistingIDComponent->GetBangoName();
 	}
 		
 	TWeakObjectPtr<UBangoActorIDComponent> WeakExistingIDComponent = ExistingIDComponent;
@@ -108,16 +117,40 @@ void FBangoEditorMenus::SetEditActorID()
 	TSharedPtr<SWidget> PopupWidget = GetIDEditingWidget(InputBox);
 	PopupWidget->SlatePrepass(1.0);
 	
-	FSlateApplication::Get().PushMenu(
-		FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
-		FWidgetPath(),
-		PopupWidget.ToSharedRef(),
-		FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
-		FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup), 
-		false
-	);
+	if (!bBlocking)
+	{
+		FSlateApplication::Get().PushMenu(
+			FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
+			FWidgetPath(),
+			PopupWidget.ToSharedRef(),
+			FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
+			FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup), 
+			false
+		);
 	
-	FSlateApplication::Get().SetKeyboardFocus(InputBox);
+		FSlateApplication::Get().SetKeyboardFocus(InputBox);
+	}
+	else
+	{
+		InputBox->SetText(FText::FromString(Actor->GetActorLabel()));
+		
+		ActiveWindow = SNew(SWindow)
+			.Title(INVTEXT("Add ID"))
+			.ClientSize(FVector2D(400, 150))
+			.IsTopmostWindow(true)
+			[
+				PopupWidget.ToSharedRef()
+			];
+		
+		FSlateApplication::Get().SetKeyboardFocus(InputBox.ToSharedRef());
+		
+		ActiveWindow->SetWidgetToFocusOnActivate(InputBox);
+		
+		FSlateApplication::Get().AddModalWindow(
+			ActiveWindow.ToSharedRef(),
+			FSlateApplication::Get().GetActiveTopLevelWindow()
+			);
+	}
 }
 
 bool FBangoEditorMenus::Can_SetEditActorID()
@@ -196,6 +229,10 @@ TSharedRef<SWidget> FBangoEditorMenus::GetTitleWidget()
 	.VAlign(VAlign_Top)
 	[
 		SNew(SButton)
+		.Visibility_Lambda([]()
+		{
+			return FBangoEditorMenus::ActiveWindow.IsValid() ? EVisibility::Collapsed : EVisibility::Visible; 
+		})
 		.ToolTipText(LOCTEXT("EditActorIDWidget_CancelButtonToolTip", "Cancel"))
 		.ButtonStyle(FAppStyle::Get(), "HoverHintOnly")
 		.ContentPadding(4)
@@ -303,6 +340,11 @@ void FBangoEditorMenus::OnTextCommitted_IDField(const FText& InText, ETextCommit
 			NewComponent->SetActorID(NewID);
 		}
 	}
+	
+	if (ActiveWindow.IsValid())
+	{
+		ActiveWindow->RequestDestroyWindow();
+	}
 }
 
 TSharedPtr<SEditableTextBox> FBangoEditorMenus::CreateInputBox(TWeakObjectPtr<AActor> WeakActor, TWeakObjectPtr<UBangoActorIDComponent> WeakIDComponent)
@@ -317,7 +359,7 @@ TSharedPtr<SEditableTextBox> FBangoEditorMenus::CreateInputBox(TWeakObjectPtr<AA
 			return FText::GetEmpty();
 		}
 		
-		return FText::FromName(WeakIDComponent->GetActorID());
+		return FText::FromName(WeakIDComponent->GetBangoName());
 	})
 	.SelectAllTextWhenFocused(true)
 	.ClearKeyboardFocusOnCommit(true)

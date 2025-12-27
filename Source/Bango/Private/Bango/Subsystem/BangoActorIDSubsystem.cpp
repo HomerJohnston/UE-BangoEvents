@@ -25,7 +25,7 @@ bool UBangoActorIDSubsystem::DoesSupportWorldType(const EWorldType::Type WorldTy
 	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
 }
 
-void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, FName ID, AActor* Actor)
+void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, AActor* Actor, FName Name, FGuid Guid)
 {
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
 	
@@ -34,55 +34,91 @@ void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, FName ID
 		return;
 	}
 	
-	TWeakObjectPtr<AActor>* ExistingActor = Subsystem->Actors.Find(ID);
+	TPair<TWeakObjectPtr<AActor>, FName>* Pair = Subsystem->ActorsByGuid.Find(Guid);
 
-	if (ExistingActor)
+	if (Pair)
 	{
-		if (ExistingActor->Get() != Actor)
-		{
-			UE_LOG(LogBango, Error, TEXT("Attempted to register ActorID %s but it was already registered with another actor!"), *ID.ToString());
-		}
-		else
-		{
-			UE_LOG(LogBango, Warning, TEXT("Attempted to register ActorID %s but it was already registered!"), *ID.ToString());
-		}
+		UE_LOG(LogBango, Warning, TEXT("Attempted to register Actor %s but it was already registered!"), *Actor->GetName());
+		return;
 	}
-	else
-	{
-		Subsystem->Actors.Add(ID, Actor);
-	}
+
+	FNameRegistration NewNameReg { Actor, Name };
+	FGuidRegistration NewGuidReg { Actor, Guid };
+	
+	Subsystem->ActorsByName.Add(Name, NewGuidReg);
+	Subsystem->ActorsByGuid.Add(Guid, NewNameReg);
 }
 
-void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FName ID)
+void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FName Name)
 {
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	check(Subsystem);
 	
-	Subsystem->Actors.Remove(ID);
+	FGuidRegistration GuidReg = Subsystem->ActorsByName.FindAndRemoveChecked(Name);
+	Subsystem->ActorsByGuid.Remove(GuidReg.Value);
 }
 
-AActor* UBangoActorIDSubsystem::GetActor(UObject* WorldContextObject, FName ID)
+void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FGuid Guid)
 {
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	check(Subsystem);
 	
-	TWeakObjectPtr<AActor>* ActorPtr = Subsystem->Actors.Find(ID);
+	FNameRegistration NameReg = Subsystem->ActorsByGuid.FindAndRemoveChecked(Guid);
+	Subsystem->ActorsByName.Remove(NameReg.Value);
+}
 
-	if (!ActorPtr)
+AActor* UBangoActorIDSubsystem::GetActor(UObject* WorldContextObject, FName Name)
+{
+	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	check(Subsystem);
+	
+	FGuidRegistration* Registration = Subsystem->ActorsByName.Find(Name);
+
+	if (!Registration)
 	{
 		// TODO ERROR LOGGING
 		return nullptr;
 	}
 	
-	if (!ActorPtr->IsValid())
+	if (!Registration->Key.IsValid())
 	{
-		Subsystem->Actors.Remove(ID);
+		UnregisterActor(Subsystem, Name);
 		return nullptr;
 	}
 
 	bool bEvenIfPendingKill = false;
-	return ActorPtr->Get(bEvenIfPendingKill);
+	return Registration->Key.Get(bEvenIfPendingKill);
 }
 
-AActor* UBangoActorIDBlueprintFunctionLibrary::GetActor(UObject* WorldContextObject, FName ActorID)
+AActor* UBangoActorIDSubsystem::GetActor(UObject* WorldContextObject, FGuid Guid)
 {
-	return UBangoActorIDSubsystem::GetActor(WorldContextObject, ActorID);
+	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	check(Subsystem);
+	
+	FNameRegistration* Registration = Subsystem->ActorsByGuid.Find(Guid);
+
+	if (!Registration)
+	{
+		// TODO ERROR LOGGING
+		return nullptr;
+	}
+	
+	if (!Registration->Key.IsValid())
+	{
+		UnregisterActor(Subsystem, Guid);
+		return nullptr;
+	}
+
+	bool bEvenIfPendingKill = false;
+	return Registration->Key.Get(bEvenIfPendingKill);
+}
+
+AActor* UBangoActorIDBlueprintFunctionLibrary::K2_GetActorByName(UObject* WorldContextObject, FName Name)
+{
+	return UBangoActorIDSubsystem::GetActor(WorldContextObject, Name);
+}
+
+AActor* UBangoActorIDBlueprintFunctionLibrary::K2_GetActorByGuid(UObject* WorldContextObject, FGuid Guid)
+{
+	return UBangoActorIDSubsystem::GetActor(WorldContextObject, Guid);
 }

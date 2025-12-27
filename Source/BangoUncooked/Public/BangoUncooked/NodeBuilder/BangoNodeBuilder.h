@@ -281,11 +281,12 @@ inline void BangoSleep::Construct()
 }
 
 // ==========================================
-MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, ActorID, FoundActor);
+MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, BangoName, BangoGuid, FoundActor);
 
 inline void BangoFindActor::Construct()
 {
 	AllocateDefaultPins();
-	ActorID = FindPin("ActorID");
+	BangoName = FindPin("BangoName");
+	BangoGuid = FindPin("BangoGuid");
 	FoundActor = FindPin("FoundActor");
 }

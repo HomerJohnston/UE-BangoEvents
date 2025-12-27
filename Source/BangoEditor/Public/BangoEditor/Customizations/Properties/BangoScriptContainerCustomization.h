@@ -17,8 +17,6 @@ public:
 	// ------------------------------------------
 	
 protected:
-
-	//TSharedPtr<IPropertyHandle> ScriptBlueprintProperty;
 	TSharedPtr<IPropertyHandle> ScriptClassProperty;
 	TSharedPtr<IPropertyHandle> GuidProperty;
 	TWeakObjectPtr<UEdGraph> CurrentGraph;
@@ -27,11 +25,9 @@ protected:
 	
 	TMulticastDelegate<void()> PostScriptCreated;
 	TMulticastDelegate<void()> PreScriptDeleted;
-	
-	//TSharedPtr<FBangoBlueprintEditor> BlueprintEditor;
-	
+		
 	// ------------------------------------------
-	
+
 	void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 
 	int WidgetIndex_CreateDeleteScriptButtons() const;
@@ -76,4 +72,5 @@ protected:
 	
 	// ------------------------------------------
 	
+	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
 };

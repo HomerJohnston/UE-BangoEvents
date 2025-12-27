@@ -110,7 +110,7 @@ void UBangoScriptComponent::PreSave(FObjectPreSaveContext SaveContext)
 {
 	if (!IsRunningCommandlet())
 	{
-		Script.ForceSave();
+		//Script.ForceSave();
 	}
 	
 	Super::PreSave(SaveContext);

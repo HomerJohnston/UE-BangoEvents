@@ -11,6 +11,7 @@
 #include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
+#include "BangoEditor/Menus/BangoEditorMenus.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
 #include "Helpers/BangoHideScriptFolderFilter.h"
@@ -62,6 +63,8 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
+	
+	FBangoEditorDelegates::RequestNewID.AddUObject(this, &ThisClass::OnRequestNewID);
 	
 	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
 	FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnObjectTransacted);
@@ -291,11 +294,20 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		
 		ScriptContainer->Guid = FGuid::NewGuid();
 		
+#if 0
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
-		
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-		
+		// This is storing my script blueprints in __BangoScripts__ packages
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
+#endif
+		
+#if 1
+		// This is storing my script blueprints inside the level .umap file
+		AActor* Actor = Outer->GetTypedOuter<AActor>();
+		ULevel* Level = Actor->GetLevel();
+		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
+		Blueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), Level, FName(BPName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
+#endif
 		
 		if (Blueprint)
 		{
@@ -305,7 +317,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		//check(Blueprint);
 	}
 
-	if (Blueprint && ScriptPackage)
+	if (Blueprint /*&& ScriptPackage*/)
 	{
 		ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
 	
@@ -480,6 +492,11 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 */
 	
 	//FGuid = 
+}
+
+void UBangoEditorSubsystem::OnRequestNewID(AActor* Actor) const
+{
+	FBangoEditorMenus::SetEditActorID(Actor, true);
 }
 
 void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass)

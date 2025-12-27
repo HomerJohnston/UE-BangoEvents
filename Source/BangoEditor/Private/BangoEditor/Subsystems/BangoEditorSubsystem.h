@@ -60,6 +60,8 @@ public:
 	void OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	void OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	
+	void OnRequestNewID(AActor* Actor) const;
+	
 	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
 	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
 	

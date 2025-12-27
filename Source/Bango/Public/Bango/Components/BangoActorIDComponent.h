@@ -11,11 +11,16 @@ public:
 	UBangoActorIDComponent();
 	
 public:
-	FName GetActorID() const { return ActorID; }
+	FName GetBangoName() const { return Name; }
+	
+	const FGuid& GetBangoGuid() const { return Guid; }
 	
 protected:
 	UPROPERTY(EditAnywhere)
-	FName ActorID;
+	FName Name;
+	
+	UPROPERTY(VisibleAnywhere)
+	FGuid Guid;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))

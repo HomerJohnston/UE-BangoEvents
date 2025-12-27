@@ -3,7 +3,10 @@
 #include "EdGraphSchema_K2_Actions.h"
 #include "K2Node_Literal.h"
 #include "Bango/Utility/BangoLog.h"
+#include "BangoEditor/BangoEditorStyle.h"
+#include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 
+#define LOCTEXT_NAMESPACE "Bango"
 
 void FBangoBlueprintEditor::SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
@@ -82,30 +85,39 @@ void FBangoBlueprintEditor::OnDropActors(const TArray<TWeakObjectPtr<AActor>>& A
 {
 	UE_LOG(LogBango, Display, TEXT("Test 2"));
 	
-	// We need to check that the dropped actor is in the right sublevel for the reference
-	//ULevel* BlueprintLevel = FBlueprintEditorUtils::GetLevelFromBlueprint(GetBlueprintObj());
-
-	//if (BlueprintLevel && FBlueprintEditorUtils::IsLevelScriptBlueprint(GetBlueprintObj()))
-	//{
-		FDeprecateSlateVector2D NodeLocation = DropLocation;
-		for (int32 i = 0; i < Actors.Num(); i++)
+	FDeprecateSlateVector2D NodeLocation = DropLocation;
+	
+	for (int32 i = 0; i < Actors.Num(); i++)
+	{
+		AActor* DroppedActor = Actors[i].Get();
+		if (DroppedActor && /*(DroppedActor->GetLevel() == BlueprintLevel) &&*/ !DroppedActor->IsChildActor())
 		{
-			AActor* DroppedActor = Actors[i].Get();
-			if (DroppedActor && /*(DroppedActor->GetLevel() == BlueprintLevel) &&*/ !DroppedActor->IsChildActor())
-			{
-				UK2Node_Literal* ActorRefNode = FEdGraphSchemaAction_K2NewNode::SpawnNode<UK2Node_Literal>(
-					Graph,
-					NodeLocation,
-					EK2NewNodeFlags::SelectNewNode,
-					[DroppedActor](UK2Node_Literal* NewInstance)
-					{
-						NewInstance->SetObjectRef(DroppedActor);
-					}
-				);
-				NodeLocation.Y += UEdGraphSchema_K2::EstimateNodeHeight(ActorRefNode);
-			}
+			UK2Node_BangoFindActor* ActorFindNode = FEdGraphSchemaAction_K2NewNode::SpawnNode<UK2Node_BangoFindActor>(
+				Graph, 
+				NodeLocation, 
+				EK2NewNodeFlags::SelectNewNode, 
+				[DroppedActor] (UK2Node_BangoFindActor* NewNode)
+				{
+					NewNode->SetActor(DroppedActor);
+				});
 		}
-	//}
+	}
+}
+
+FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* InGraph) const
+{
+	// Create the appearance info
+	FGraphAppearanceInfo AppearanceInfo;
+
+	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
+	AppearanceInfo.InstructionText = FText::GetEmpty();
+	AppearanceInfo.PIENotifyText = GetPIEStatus();
+	AppearanceInfo.WarningText = INVTEXT("Test Error Text");
+
+	// Doesn't work
+	//AppearanceInfo.CornerImage = FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Plunger);
+
+	return AppearanceInfo;
 }
 
 /*
@@ -129,3 +141,5 @@ FActionMenuContent FBangoBlueprintEditor::OnCreateGraphActionMenu_Impl(UEdGraph*
 	return FActionMenuContent( ActionMenu, ActionMenu->GetFilterTextBox() );
 }
 */
+
+#undef LOCTEXT_NAMESPACE

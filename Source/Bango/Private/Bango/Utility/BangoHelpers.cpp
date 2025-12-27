@@ -1,7 +1,9 @@
 ﻿#include "Bango/Utility/BangoHelpers.h"
 
+#include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Core/BangoScriptContainer.h"
+#include "Bango/Utility/BangoLog.h"
 #include "Components/ActorComponent.h"
 #include "UObject/Package.h"
 
@@ -11,6 +13,8 @@ TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script C
 TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerDuplicated;
 
 TMulticastDelegate<void(FGuid /* Script ID */, UBangoScriptBlueprint*& /* Found Blueprint */)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
+
+TMulticastDelegate<void(AActor* Actor)> FBangoEditorDelegates::RequestNewID;
 #endif
 
 #if WITH_EDITOR
@@ -60,5 +64,42 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	
 		return true;
 	}
+}
+
+UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor)
+{
+	if (!Actor)
+	{
+		return nullptr;
+	}
+	
+	UBangoActorIDComponent* IDComponent = nullptr;
+	
+	TArray<UBangoActorIDComponent*> IDComponents;
+	Actor->GetComponents<UBangoActorIDComponent>(IDComponents);
+	
+	if (IDComponents.Num() == 0)
+	{
+		FBangoEditorDelegates::RequestNewID.Broadcast(Actor);
+		Actor->GetComponents<UBangoActorIDComponent>(IDComponents);
+	}
+
+	if (IDComponents.Num() == 1)
+	{
+		IDComponent = IDComponents[0];
+	}
+	else
+	{
+		UE_LOG(LogBango, Error, TEXT("Actor has more than one ID component!"));
+	}
+	
+	return IDComponent;
+}
+
+FName Bango::GetBangoName(AActor* Actor)
+{
+	UBangoActorIDComponent* IDComponent = GetActorIDComponent(Actor);
+	
+	return IDComponent ? IDComponent->GetBangoName() : NAME_None;
 }
 #endif

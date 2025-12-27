@@ -43,7 +43,7 @@ void UBangoActorIDComponent::BeginPlay()
 
 void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	UBangoActorIDSubsystem::UnregisterActor(this, ActorID);
+	UBangoActorIDSubsystem::UnregisterActor(this, Name);
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -52,13 +52,24 @@ void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UBangoActorIDComponent::SetActorID(FName NewID)
 {
 	Modify();
-	ActorID = NewID;
+	Name = NewID;
 }
 #endif
 
 #if WITH_EDITOR
 void UBangoActorIDComponent::OnRegister()
 {
+	// TODO handle runtime spawned instances
+	
+	if (Bango::IsComponentInEditedLevel(this))
+	{
+		if (!Guid.IsValid())
+		{
+			Modify();
+			Guid = FGuid::NewGuid();
+		}
+	}
+	
 	Super::OnRegister();
 
 	if (IsTemplate())
@@ -79,7 +90,7 @@ void UBangoActorIDComponent::OnRegister()
 	
 	if (!Bango::IsComponentInEditedLevel(this))
 	{
-		UBangoActorIDSubsystem::RegisterActor(this, ActorID, GetOwner());
+		UBangoActorIDSubsystem::RegisterActor(this, GetOwner(), Name, Guid);
 	}
 }
 #endif
@@ -159,7 +170,7 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 
 	UFont* Font = GEngine->GetLargeFont();
 	const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-	FVector2D TextSize = FontMeasureService->Measure(ActorID.ToString(), Font->GetLegacySlateFontInfo());
+	FVector2D TextSize = FontMeasureService->Measure(Name.ToString(), Font->GetLegacySlateFontInfo());
 
 	FCanvasBoxItem Box(
 		FVector2D(ScreenLocation.X - 0.5f * TextSize.X, ScreenLocation.Y - 0.5 * TextSize.Y),
@@ -177,7 +188,7 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController*
 		0.0f,0.0f,1.0f,1.0f
 		);
 	//Canvas->DrawItem(Box);
-	FCanvasTextItem Label(FVector2D(ScreenLocation), FText::FromName(ActorID), Font, TagColor);
+	FCanvasTextItem Label(FVector2D(ScreenLocation), FText::FromName(Name), Font, TagColor);
 	Label.bCentreX = true;
 	Canvas->SetDrawColor(TagColor.ToFColor(false));
 	Canvas->DrawItem(Label);

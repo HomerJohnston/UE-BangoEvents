@@ -58,7 +58,7 @@ void UBangoScriptBlueprint::ForceSave()
 		
 	UPackage* Package = GetOutermost(); 
 	
-	FString PackageFileName = FPackageName::LongPackageNameToFilename(Package->GetName(), FPackageName::GetAssetPackageExtension());
+	FString PackageFileName = FPackageName::LongPackageNameToFilename(Package->GetName(), FPackageName::GetMapPackageExtension()); // FPackageName::GetAssetPackageExtension());
 	
 	bool bSuccess = UPackage::SavePackage(Package, this, *PackageFileName, FSavePackageArgs());
 	

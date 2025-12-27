@@ -19,4 +19,7 @@ public:
 
 	void OnDropActors(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* EdGraph, const UE::Math::TVector2<float>& Vector2) const;
 	
+	// Sadly Epic didn't expose enough functionality for me to prevent adding multiple graphs 
+	//bool AreEventGraphsAllowed() const override { return false; }
+	FGraphAppearanceInfo GetGraphAppearance(class UEdGraph* InGraph) const override;
 };
