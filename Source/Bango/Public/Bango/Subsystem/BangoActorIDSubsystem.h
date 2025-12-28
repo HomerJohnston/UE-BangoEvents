@@ -29,10 +29,10 @@ protected:
 public:
 	static void RegisterActor(UObject* WorldContextObject, AActor* Actor, FName Name, FGuid Guid);
 
-	static void UnregisterActor(UObject* WorldContextObject, FName Name);
-	
 	static void UnregisterActor(UObject* WorldContextObject, FGuid Guid);
 
+	static void UnregisterActor(UObject* WorldContextObject, FName Name);
+	
 	static AActor* GetActor(UObject* WorldContextObject, FName Name);
 	
 	static AActor* GetActor(UObject* WorldContextObject, FGuid Guid);

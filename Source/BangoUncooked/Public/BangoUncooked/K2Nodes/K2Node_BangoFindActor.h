@@ -29,7 +29,7 @@ protected:
 	
 	/** This is set automatically when TargetActor is set. If this is set, TargetName should NOT be set, and vice versa. */
 	UPROPERTY(VisibleAnywhere)
-	FGuid TargetIDComponentGuid;
+	FGuid TargetBangoGuid;
 	
 	/** If the actor is unloaded, this can display the last known name. */
 	UPROPERTY()

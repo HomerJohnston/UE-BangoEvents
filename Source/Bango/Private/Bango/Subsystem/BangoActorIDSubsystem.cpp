@@ -42,11 +42,27 @@ void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, AActor* 
 		return;
 	}
 
-	FNameRegistration NewNameReg { Actor, Name };
-	FGuidRegistration NewGuidReg { Actor, Guid };
+	if (Name != NAME_None)
+	{
+		FGuidRegistration NewGuidReg { Actor, Guid };
+		Subsystem->ActorsByName.Add(Name, NewGuidReg);
+	}
 	
-	Subsystem->ActorsByName.Add(Name, NewGuidReg);
+	FNameRegistration NewNameReg { Actor, Name };
 	Subsystem->ActorsByGuid.Add(Guid, NewNameReg);
+}
+
+void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FGuid Guid)
+{
+	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
+	check(Subsystem);
+	
+	FNameRegistration NameReg = Subsystem->ActorsByGuid.FindAndRemoveChecked(Guid);
+	
+	if (NameReg.Value != NAME_None)
+	{
+		Subsystem->ActorsByName.Remove(NameReg.Value);
+	}
 }
 
 void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FName Name)
@@ -58,17 +74,14 @@ void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FName 
 	Subsystem->ActorsByGuid.Remove(GuidReg.Value);
 }
 
-void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FGuid Guid)
-{
-	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
-	check(Subsystem);
-	
-	FNameRegistration NameReg = Subsystem->ActorsByGuid.FindAndRemoveChecked(Guid);
-	Subsystem->ActorsByName.Remove(NameReg.Value);
-}
-
 AActor* UBangoActorIDSubsystem::GetActor(UObject* WorldContextObject, FName Name)
 {
+	if (Name == NAME_None)
+	{
+		UE_LOG(LogBango, Warning, TEXT("Tried to find actor with BangoName: None!"));
+		return nullptr;
+	}
+	
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
 	check(Subsystem);
 	

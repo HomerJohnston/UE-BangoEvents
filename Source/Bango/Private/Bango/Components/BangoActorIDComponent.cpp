@@ -43,7 +43,7 @@ void UBangoActorIDComponent::BeginPlay()
 
 void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	UBangoActorIDSubsystem::UnregisterActor(this, Name);
+	UBangoActorIDSubsystem::UnregisterActor(this, Guid);
 	
 	Super::EndPlay(EndPlayReason);
 }

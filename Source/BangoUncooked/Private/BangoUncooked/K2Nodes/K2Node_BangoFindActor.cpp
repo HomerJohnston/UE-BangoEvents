@@ -146,7 +146,14 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 
 	FString UniqueID = *Compiler.GetGuid(this);
 	
-	Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByName)));
+	if (!TargetActor.IsNull())
+	{
+		Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByGuid)));
+	}
+	else
+	{
+		Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByName)));
+	}
 	
 	if (IsValid(CastTo))
 	{
@@ -154,27 +161,22 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	}
 	
 	Builder.FinishDeferredNodes();
-		
+	
 	// -----------------
 	// Make connections
 	
-	if (Node_This.BangoName->HasAnyConnections())
+	if (!TargetActor.IsNull())
 	{
-		Builder.CopyExternalConnection(Node_This.BangoName, Node_FindActorFunction.FindPin("ActorID"));
+		FString GuidAsString = TargetBangoGuid.ToString(EGuidFormats::Digits);
+		Builder.SetDefaultValue(Node_FindActorFunction.FindPin("Guid"), GuidAsString);
 	}
-	else if (!TargetActor.IsNull())
+	else if (Node_This.BangoName->HasAnyConnections())
 	{
-		if (TargetActor.IsPending())
-		{
-			// TODO load actor? This is terrible. Perhaps I should just keep a soft actor ptr pin and use one or the other at runtime?
-		}
-		else
-		{
-			UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(TargetActor.Get());
-			
-			FString IDAsString = IDComponent->GetBangoName().ToString();
-			Builder.SetDefaultValue(Node_This.BangoName, IDAsString);	
-		}
+		Builder.CopyExternalConnection(Node_This.BangoName, Node_FindActorFunction.FindPin("Name"));
+	}
+	else
+	{
+		Builder.SetDefaultValue(Node_FindActorFunction.FindPin("Name"), Node_This.BangoName->DefaultValue);
 	}
 	
 	if (IsValid(CastTo))
@@ -204,7 +206,7 @@ void UK2Node_BangoFindActor::SetActor(AActor* Actor)
 	if (IDComponent)
 	{
 		TargetActor = Actor;
-		TargetIDComponentGuid = IDComponent->GetBangoGuid();
+		TargetBangoGuid = IDComponent->GetBangoGuid();
 		TargetName = NAME_None;
 		CastTo = Actor->GetClass();
 	}

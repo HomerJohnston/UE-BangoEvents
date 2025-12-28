@@ -470,10 +470,10 @@ void FBangoScriptContainerCustomization::UpdateBox()
 				SNew(STextBlock)
 				.Text(FText::Format
 					(
-						INVTEXT("{0}\n{1}{2}"),
+						INVTEXT("{0}\n{1}"),
 						FText::FromName(GetBlueprint()->GetFName()),
-						FText::FromString( GetBlueprint()->GetPackage()->GetPathName()),
-						FText::FromString(FPackageName::GetAssetPackageExtension())
+						FText::FromString( GetBlueprint()->GetPackage()->GetPathName())//,
+						//FText::FromString(FPackageName::GetAssetPackageExtension())
 					))
 				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
 				.ColorAndOpacity(BangoColor::Gray)
