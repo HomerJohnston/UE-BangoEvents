@@ -34,7 +34,22 @@ FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptObj
 	
 	Subsystem->RunningScripts.Add(NewHandle, ScriptObject);
 
-	UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
+	if (Subsystem->GetWorld()->HasBegunPlay())
+	{
+		UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
+		ScriptObject->Start();
+	}
+	else
+	{
+		UE_LOG(LogBango, Verbose, TEXT("Queing script for next frame: {%s}"), *ScriptObject->GetName());
+		
+		auto DelayedStart = FTimerDelegate::CreateLambda( [ScriptObject] ()
+		{
+			ScriptObject->Start();
+		});
+		
+		Subsystem->GetWorld()->GetTimerManager().SetTimerForNextTick(DelayedStart);
+	}
 	
 	return NewHandle;
 }

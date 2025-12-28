@@ -35,7 +35,9 @@ public:
 	void UpdateGraphNode() override;
 
 	void UpdateCompactNode();
-	
+
+	FText GetNodeCompactTitle_Impl() const;
+
 	FSlateColor ColorAndOpacity_ActorLabel() const;
 	
 	EVisibility Visibility_BangoNameIndicator() const;
@@ -43,4 +45,6 @@ public:
 	EVisibility Visibility_UnloadedIndicator() const;
 	
 	FText Text_BangoNameIndicator() const;
+	
+	//FText Text_GuidStatusWidget() const;
 };

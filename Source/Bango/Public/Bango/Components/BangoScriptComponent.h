@@ -6,6 +6,13 @@
 class UBlueprint;
 class UBangoScript;
 
+UENUM(BlueprintType)
+enum class EBangoScriptComponent_ThisArg : uint8
+{
+	OwnerActor,
+	ScriptComponent,
+};
+
 UCLASS(meta = (BlueprintSpawnableComponent), HideCategories = ("Navigation","Activation"))
 class BANGO_API UBangoScriptComponent : public UActorComponent
 {
@@ -53,6 +60,10 @@ protected:
 	/** By default, scripts will begin at BeginPlay. Use this to disable the script from running. */
 	UPROPERTY(EditAnywhere)
 	bool bPreventStarting = false;
+	
+	/** What to pass in as 'This' arg, defaults to the owning actor. */
+	UPROPERTY(EditAnywhere, DisplayName = "'This' Argument")
+	EBangoScriptComponent_ThisArg ThisArg;
 	
 	/** The actual script instance. */
 	UPROPERTY(EditAnywhere)

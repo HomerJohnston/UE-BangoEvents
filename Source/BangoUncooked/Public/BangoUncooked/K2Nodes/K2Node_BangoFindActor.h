@@ -6,6 +6,12 @@
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
+enum class EBangoFindActorNode_ErrorState : uint8
+{
+	OK,
+	Error,
+};
+
 UCLASS(MinimalAPI, DisplayName = "FindActor")
 class UK2Node_BangoFindActor : public UK2Node_BangoBase
 {
@@ -35,16 +41,17 @@ protected:
 	UPROPERTY()
 	FString CachedActorLabel;
 	
-	/** If the actor is unloaded, this can display the last known name. */
-	UPROPERTY()
-	FString CachedBangoName;
+	/** Used by the slate widget to highlight the node. */
+	EBangoFindActorNode_ErrorState ErrorState;
 	
 public:
 	TSubclassOf<AActor> GetCastTo() const { return CastTo; }
 	
 	TSoftObjectPtr<AActor> GetTargetActor() const { return TargetActor; } 
 	
-	//FName GetTargetActorID() const { return TargetActorID; }
+	FGuid GetTargetActorGuid() const { return TargetBangoGuid; }
+
+	const FString& GetCachedActorLabel() const { return CachedActorLabel; }
 	
 	bool ShouldDrawCompact() const override;
 	
@@ -54,6 +61,8 @@ public:
 	
 	FLinearColor GetNodeTitleTextColor() const override;
 	
+	EBangoFindActorNode_ErrorState GetErrorState() const { return ErrorState; }
+	
 public:
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	
@@ -62,6 +71,10 @@ public:
 	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	
 	void ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph) override;
+	
+	void ExpandNode_SoftActor(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph);
+	
+	void ExpandNode_ManualName(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph);
 	
 	bool IsNodePure() const override { return true; }
 	

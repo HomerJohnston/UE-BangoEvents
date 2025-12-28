@@ -12,6 +12,7 @@
 #include "K2Node_AddDelegate.h"
 #include "K2Node_DynamicCast.h"
 #include "K2Node_CreateDelegate.h"
+#include "K2Node_ConvertAsset.h"
 #include "K2Node_ExecutionSequence.h"
 #include "K2Node_GenericCreateObject.h"
 #include "K2Node_Self.h"
@@ -131,6 +132,15 @@ inline void CallFunction::Construct()
 	Exec = _Node->GetExecPin();
 	Then = _Node->GetThenPin();
 	Target = FindPin("Self");
+}
+
+MAKE_NODE_TYPE(ConvertAsset, UK2Node_ConvertAsset, NORMAL_CONSTRUCTION, Input, Output);
+
+inline void ConvertAsset::Construct()
+{
+	AllocateDefaultPins();
+	Input = _Node->FindPin(TEXT("Input"));
+	Output = _Node->FindPin(TEXT("Output"));
 }
 
 // ==========================================
@@ -281,11 +291,12 @@ inline void BangoSleep::Construct()
 }
 
 // ==========================================
-MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, BangoName, BangoGuid, FoundActor);
+MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, BangoName, BangoGuid, FoundActor, TargetActor);
 
 inline void BangoFindActor::Construct()
 {
 	AllocateDefaultPins();
+	TargetActor = FindPin("SoftActor");
 	BangoName = FindPin("BangoName");
 	BangoGuid = FindPin("BangoGuid");
 	FoundActor = FindPin("FoundActor");

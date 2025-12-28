@@ -47,9 +47,14 @@ void UK2Node_BangoFindActor::PostEditChangeProperty(struct FPropertyChangedEvent
 
 void UK2Node_BangoFindActor::AllocateDefaultPins()
 {
+	auto* SoftActorPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_SoftObject, FName("SoftActor"));
 	auto* BangoNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, FName("BangoName"));
 	auto* BangoGuidPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Struct, FName("BangoGuid")); 
+	
 	auto* FoundActorPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Object, FName("FoundActor"));
+	
+	// Always hidden
+	SoftActorPin->bHidden = true;
 	
 	// This pin is hidden when the node is set to a specific target actor
 	BangoNamePin->bHidden = !TargetActor.IsNull(); 
@@ -106,26 +111,120 @@ FText UK2Node_BangoFindActor::GetNodeTitle(ENodeTitleType::Type TitleType) const
 
 void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
 {
+	if (!TargetActor.IsNull())
+	{
+		ExpandNode_SoftActor(Compiler, SourceGraph);
+	}
+	else
+	{
+		ExpandNode_ManualName(Compiler, SourceGraph);
+	}
+}
+
+void UK2Node_BangoFindActor::ExpandNode_SoftActor(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
+{
 	// -----------------
 	// Error checking and fixup - if the node has a soft actor ptr assigned, we can check it. This works for manually dragged-in actor references only.
 	// TODO I should lock renaming actor IDs behind a system so I can fix up all blueprints automatically?
+	// TODO: FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified??? --- if an ID component is destroyed, I need to notify any blueprint graphs using it somehow... Not sure if I can look this up, though.
 	
 	if (TargetActor.IsValid())
 	{
 		CachedActorLabel = TargetActor->GetActorLabel();
 
+		/*
 		UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(TargetActor.Get());
 		
-		if (IDComponent)
-		{
-			CachedBangoName = IDComponent->GetBangoName().ToString();
-		}
-		else
+		if (!IDComponent)
 		{
 			Compiler.MessageLog.Error(*LOCTEXT("MissingActorIDComponent", "Actor is missing an ID component! @@").ToString(), this);
 		}
+		*/
 	}
 
+	Super::ExpandNode(Compiler, SourceGraph);
+
+	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
+	bool bIsErrorFree = true;
+
+	namespace NB = BangoNodeBuilder;
+	NB::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(5, 5));
+	
+	// -----------------
+	// Make nodes
+	
+	auto Node_This =					Builder.WrapExistingNode<NB::BangoFindActor>(this);
+	auto Node_ResolveSoft =				Builder.MakeNode<NB::ConvertAsset>(1, 1);
+	auto Node_CastToType =				Builder.MakeNode<NB::DynamicCast_Pure>(1, 1);
+	auto Node_SoftObjectPath =			Builder.MakeNode<NB::CallFunction>(1, 1);
+	auto Node_SoftObjectRef =			Builder.MakeNode<NB::CallFunction>(1, 1);
+	auto Node_ResolveObject =			Builder.MakeNode<NB::CallFunction>(1, 1);
+	
+	/*
+	*
+	UK2Node_CallFunction* ConvertToSoftObjectRef = Compiler->SpawnIntermediateNode<UK2Node_CallFunction>(OriginNode, Graph);
+	ConvertToSoftObjectRef->FunctionReference.SetExternalMember(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, Conv_SoftObjPathToSoftObjRef), UKismetSystemLibrary::StaticClass());
+	ConvertToSoftObjectRef->AllocateDefaultPins();
+
+	UK2Node_CallFunction* ConvertToObjectFunc = Compiler->SpawnIntermediateNode<UK2Node_CallFunction>(OriginNode, Graph);
+	ConvertToObjectFunc->FunctionReference.SetExternalMember(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, Conv_SoftObjectReferenceToObject), UKismetSystemLibrary::StaticClass());
+	ConvertToObjectFunc->AllocateDefaultPins();
+	*/
+	// -----------------
+	// Post-setup
+
+	FString UniqueID = *Compiler.GetGuid(this);
+	
+	Node_SoftObjectPath->SetFromFunction(UKismetSystemLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, MakeSoftObjectPath)));
+	Node_SoftObjectRef->SetFromFunction(UKismetSystemLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, Conv_SoftObjPathToSoftObjRef)));
+	Node_ResolveObject->SetFromFunction(UKismetSystemLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UKismetSystemLibrary, Conv_SoftObjectReferenceToObject)));
+	
+	if (IsValid(CastTo))
+	{
+		Node_CastToType->TargetType = CastTo;
+	}
+	
+	Builder.FinishDeferredNodes();
+	
+	UEdGraphPin* PathInput     = Node_SoftObjectPath->FindPin(FName("PathString"));
+	UEdGraphPin* PathOutput    = Node_SoftObjectPath->GetReturnValuePin();
+	UEdGraphPin* SoftRefInput  = Node_SoftObjectRef->FindPin(FName("SoftObjectPath"));
+	UEdGraphPin* SoftRefOutput = Node_SoftObjectRef->GetReturnValuePin();
+	UEdGraphPin* ConvertInput  = Node_ResolveObject->FindPin(FName("SoftObject"));
+	UEdGraphPin* ConvertOutput = Node_ResolveObject->GetReturnValuePin();
+
+	// -----------------
+	// Make connections
+	
+	UEdGraphPin* SoftObjectPathPin = Node_SoftObjectPath.FindPin(TEXT("PathString"));
+	
+	FString ActorPath = TargetActor.ToSoftObjectPath().ToString();
+	Builder.SetDefaultValue(PathInput, ActorPath);
+	
+	Builder.CreateConnection(PathOutput, SoftRefInput);
+	Builder.CreateConnection(SoftRefOutput, ConvertInput);
+	//Builder.CopyExternalConnection(Node_This.FoundActor, ConvertOutput);
+	
+	if (IsValid(CastTo))
+	{
+		Builder.CreateConnection(ConvertOutput, Node_CastToType.ObjectToCast);
+		Builder.CopyExternalConnection(Node_This.FoundActor, Node_CastToType.CastedObject);
+	}
+	
+	// Done!
+	if (!bIsErrorFree)
+	{
+		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
+	}
+	
+	ErrorState = bIsErrorFree ? EBangoFindActorNode_ErrorState::OK : EBangoFindActorNode_ErrorState::Error;
+	
+	// Disconnect ThisNode from the graph
+	BreakAllNodeLinks();
+}
+
+void UK2Node_BangoFindActor::ExpandNode_ManualName(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
+{
 	Super::ExpandNode(Compiler, SourceGraph);
 
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
@@ -144,16 +243,7 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// -----------------
 	// Post-setup
 
-	FString UniqueID = *Compiler.GetGuid(this);
-	
-	if (!TargetActor.IsNull())
-	{
-		Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByGuid)));
-	}
-	else
-	{
-		Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByName)));
-	}
+	Node_FindActorFunction->SetFromFunction(UBangoActorIDBlueprintFunctionLibrary::StaticClass()->FindFunctionByName(GET_FUNCTION_NAME_CHECKED(UBangoActorIDBlueprintFunctionLibrary, K2_GetActorByName)));
 	
 	if (IsValid(CastTo))
 	{
@@ -165,12 +255,7 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	// -----------------
 	// Make connections
 	
-	if (!TargetActor.IsNull())
-	{
-		FString GuidAsString = TargetBangoGuid.ToString(EGuidFormats::Digits);
-		Builder.SetDefaultValue(Node_FindActorFunction.FindPin("Guid"), GuidAsString);
-	}
-	else if (Node_This.BangoName->HasAnyConnections())
+	if (Node_This.BangoName->HasAnyConnections())
 	{
 		Builder.CopyExternalConnection(Node_This.BangoName, Node_FindActorFunction.FindPin("Name"));
 	}
@@ -194,6 +279,8 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 	{
 		Compiler.MessageLog.Error(*LOCTEXT("InternalConnectionError", "Internal connection error. @@").ToString(), this);
 	}
+	
+	ErrorState = bIsErrorFree ? EBangoFindActorNode_ErrorState::OK : EBangoFindActorNode_ErrorState::Error;
 	
 	// Disconnect ThisNode from the graph
 	BreakAllNodeLinks();

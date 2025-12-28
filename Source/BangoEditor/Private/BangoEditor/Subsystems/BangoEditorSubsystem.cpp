@@ -310,9 +310,10 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		ScriptContainer->Guid = FGuid::NewGuid();
 		
 #if 0
+		// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
+		// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-		// This is storing my script blueprints in __BangoScripts__ packages
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
 #endif
 		
@@ -320,7 +321,16 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		// This is storing my script blueprints inside the level .umap file
 		AActor* Actor = Outer->GetTypedOuter<AActor>();
 		ULevel* Level = Actor->GetLevel();
-		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
+		FString NominalBPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
+		FString BPName = NominalBPName;
+		
+		int32 Inc = 1;
+		
+		while (FindObject<UObject>(Level, *BPName) != NULL)
+		{
+			BPName = FString::Format(TEXT("{0}_{1}"), {NominalBPName, Inc});
+		}
+		
 		Blueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), Level, FName(BPName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
 #endif
 		

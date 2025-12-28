@@ -2,7 +2,7 @@
 
 #include "BangoActorIDComponent.generated.h"
 
-UCLASS(meta = (BlueprintSpawnableComponent))
+UCLASS(HideCategories=("Navigation", "Tags", "Activation", "AssetUserData"), meta = (BlueprintSpawnableComponent))
 class BANGO_API UBangoActorIDComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -16,10 +16,10 @@ public:
 	const FGuid& GetBangoGuid() const { return Guid; }
 	
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, NonPIEDuplicateTransient)
 	FName Name;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, NonPIEDuplicateTransient)
 	FGuid Guid;
 
 #if WITH_EDITORONLY_DATA

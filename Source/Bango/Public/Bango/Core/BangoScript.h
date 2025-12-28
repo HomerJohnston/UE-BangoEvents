@@ -29,7 +29,7 @@ DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
 using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScript* ScriptInstance)>;
 
 /**
- * 
+ * This is the actual script blueprint core class.
  */
 UCLASS(Abstract, Blueprintable)
 class BANGO_API UBangoScript : public UObject
@@ -57,6 +57,10 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	FGuid ScriptGuid;
 #endif
+	
+	/** Reference to the object that ran this script. */ // Assigned by the Bango Script Subsystem on run.
+	UPROPERTY(BlueprintReadOnly)
+	TWeakObjectPtr<UObject> This;
 	
     bool GetKeepAliveWhenIdle() const { return bPreventAutoDestroy; }
     

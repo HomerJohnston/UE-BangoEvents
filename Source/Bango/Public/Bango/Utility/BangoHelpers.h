@@ -23,7 +23,7 @@ namespace Bango
 {	
 	BANGO_API bool IsComponentInEditedLevel(UActorComponent* Component);
 	
-	BANGO_API UBangoActorIDComponent* GetActorIDComponent(AActor* Actor);
+	BANGO_API UBangoActorIDComponent* GetActorIDComponent(AActor* Actor, bool bForceCreate = false);
 	
 	BANGO_API FName GetBangoName(AActor* Actor);
 }

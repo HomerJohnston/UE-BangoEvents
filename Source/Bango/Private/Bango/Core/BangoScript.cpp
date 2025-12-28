@@ -20,6 +20,12 @@ void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, 
 		WorldContext = Runner;
 	}
 	
+	if (!Runner)
+	{
+		UE_LOG(LogBango, Error, TEXT("RunScript called with null runner!"));
+		return;
+	}
+	
 	if (!Script)
 	{
 		UE_LOG(LogBango, Warning, TEXT("RunScript called with null script!"));
@@ -32,15 +38,15 @@ void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, 
 		return;
 	}
 	
-	// TODO should I bother pooling?
-	UBangoScript* NewScriptInstance = NewObject<UBangoScript>(Runner, Script);
+	// TODO should I implement pooling? Maybe optional?
+ 	UBangoScript* NewScriptInstance = NewObject<UBangoScript>(Runner, Script);
+	NewScriptInstance->This = Runner;
 	NewScriptInstance->Execute_Internal();
 }
 
 FBangoScriptHandle UBangoScript::Execute_Internal()
 {
     Handle = UBangoScriptSubsystem::RegisterScript(this);
-    Start();
     return Handle;
 }
 

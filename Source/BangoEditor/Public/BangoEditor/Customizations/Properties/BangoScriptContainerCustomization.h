@@ -5,6 +5,14 @@
 
 class FBangoBlueprintEditor;
 
+enum class EBangoScriptRenameStatus
+{
+	ValidNewName,
+	MatchesCurrent,
+	MatchesOther,
+	InvalidNewName,
+};
+
 class FBangoScriptContainerCustomization : public IPropertyTypeCustomization
 {
 public:
@@ -26,6 +34,10 @@ protected:
 	TMulticastDelegate<void()> PostScriptCreated;
 	TMulticastDelegate<void()> PreScriptDeleted;
 		
+	FText ScriptNameText;
+	
+	EBangoScriptRenameStatus ProposedNameStatus;
+	
 	// ------------------------------------------
 
 	void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
@@ -47,6 +59,18 @@ protected:
 	FReply OnClicked_EnlargeGraphView() const;
 	
 	FReply OnClicked_RenameScript() const;
+	
+	void OnTextChanged_ScriptNameEditableText(const FText& Text);
+	
+	void SetProposedScriptName(const FText& Text);
+	
+	EBangoScriptRenameStatus GetProposedNameStatus();
+	
+	FSlateColor ForegroundColor_ScriptNameEditableText() const;
+	
+	FSlateColor FocusedForegroundColor_ScriptNameEditableText() const;
+	
+	bool IsEnabled_RenameScriptButton() const;
 	
 	TSharedRef<SWidget> GetPopoutGraphEditor() const;
 	

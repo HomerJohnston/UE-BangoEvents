@@ -223,7 +223,7 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 	TSharedRef<SWidget> TitleText = SNew(STextBlock)//AssignNew(InlineEditableText, SInlineEditableTextBlock)
 		.TextStyle( FAppStyle::Get(), "Graph.Node.NodeTitle" )
 		.ColorAndOpacity(this, &SGraphNode_BangoFindActor::ColorAndOpacity_ActorLabel)
-		.Text(this, &SGraphNode_BangoFindActor::GetNodeCompactTitle)
+		.Text(this, &SGraphNode_BangoFindActor::GetNodeCompactTitle_Impl)
 		.MinDesiredWidth(20.0f)
 		.OverflowPolicy(ETextOverflowPolicy::Ellipsis);
 	//InlineEditableText->SetColorAndOpacity(TAttribute<FLinearColor>::Create(TAttribute<FLinearColor>::FGetter::CreateSP(this, &SGraphNode::GetNodeTitleTextColor)));
@@ -287,6 +287,7 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 							.Thickness(1)
 							.SeparatorImage(FAppStyle::Get().GetBrush(TEXT("Menu.Separator")))
 						]
+						/*
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
 						.Padding(0, 0)
@@ -295,18 +296,17 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 							SNew(STextBlock)
 							.WrapTextAt(128.0f)
 							.TextStyle(FAppStyle::Get(), "Menu.Heading")
-							/*
-							.TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitleExtraLines")
-							.TextStyle(FAppStyle::Get(), "DialogButtonText")
-							.TextStyle(FAppStyle::Get(), "NormalText.Subdued")
-							.TextStyle(FAppStyle::Get(), "Menu.Label")
-							.TextStyle(FAppStyle::Get(), "HintText")
-							.TextStyle(FAppStyle::Get(), "FlatButton.DefaultTextStyle")
-							.TextStyle(FAppStyle::Get(), "MessageLog")
-							.TextStyle(FAppStyle::Get(), "TreeTable.NameText")
-							*/
+							// .TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitleExtraLines")
+							// .TextStyle(FAppStyle::Get(), "DialogButtonText")
+							// .TextStyle(FAppStyle::Get(), "NormalText.Subdued")
+							// .TextStyle(FAppStyle::Get(), "Menu.Label")
+							// .TextStyle(FAppStyle::Get(), "HintText")
+							// .TextStyle(FAppStyle::Get(), "FlatButton.DefaultTextStyle")
+							// .TextStyle(FAppStyle::Get(), "MessageLog")
+							// .TextStyle(FAppStyle::Get(), "TreeTable.NameText")
 							.Text(this, &SGraphNode_BangoFindActor::Text_BangoNameIndicator)
 						]
+						*/
 					]
 				]
 			]
@@ -316,19 +316,20 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 		.Padding(0, 2)
 		[
 			SNew(STextBlock)
-			.Visibility(this, &SGraphNode_BangoFindActor::Visibility_UnloadedIndicator)
 			.WrapTextAt(128.0f)
-			.TextStyle(FAppStyle::Get(), "Menu.Heading")
-			.Text(INVTEXT("(UNLOADED)"))
+			.TextStyle( FAppStyle::Get(), "Graph.Node.NodeTitleExtraLines" )
+			.Text(FText::Format(LOCTEXT("FindActorNode_MapLabel", "from {0}"), FText::FromString(LevelPackageName)))
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(0, 2)
 		[
 			SNew(STextBlock)
+			.Visibility(this, &SGraphNode_BangoFindActor::Visibility_UnloadedIndicator)
 			.WrapTextAt(128.0f)
-			.TextStyle( FAppStyle::Get(), "Graph.Node.NodeTitleExtraLines" )
-			.Text(FText::Format(LOCTEXT("FindActorNode_MapLabel", "from {0}"), FText::FromString(LevelPackageName)))
+			.TextStyle(FAppStyle::Get(), "Menu.Heading")
+			//.Text(this, &SGraphNode_BangoFindActor::Text_GuidStatusWidget)
+			.Text(LOCTEXT("Text_GuidStatusWidget_UnloadedActor", "UNLOADED"))
 		]
 	];
 	
@@ -507,6 +508,21 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 	CreateOutputSideAddButton(RightNodeBox);
 }
 
+FText SGraphNode_BangoFindActor::GetNodeCompactTitle_Impl() const
+{
+	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
+	check(Node);
+	
+	if (Node->GetTargetActor().IsValid())
+	{
+		return SGraphNode_BangoFindActor::GetNodeCompactTitle();
+	}
+	else
+	{
+		return FText::FromString(Node->GetCachedActorLabel());
+	}
+}
+
 FSlateColor SGraphNode_BangoFindActor::ColorAndOpacity_ActorLabel() const
 {
 	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
@@ -515,6 +531,11 @@ FSlateColor SGraphNode_BangoFindActor::ColorAndOpacity_ActorLabel() const
 	if (Node->GetTargetActor().IsPending())
 	{
 		return BangoColor::LightOrange;
+	}
+	
+	if (Node->GetErrorState() != EBangoFindActorNode_ErrorState::OK)
+	{
+		return BangoColor::OrangeRed;
 	}
 	
 	return BangoColor::White;
@@ -586,5 +607,33 @@ FText SGraphNode_BangoFindActor::Text_BangoNameIndicator() const
 		}
 	}
 }
+
+/*
+FText SGraphNode_BangoFindActor::Text_GuidStatusWidget() const
+{
+	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
+	TSoftObjectPtr<AActor> ActorSoft = Node->GetTargetActor();
+	
+	if (ActorSoft.IsNull())
+	{
+		return LOCTEXT("Text_GuidStatusWidget_NullActor", "Error: Null Actor!");
+	}
+	
+	if (ActorSoft.IsPending())
+	{
+		return LOCTEXT("Text_GuidStatusWidget_UnloadedActor", "UNLOADED");
+	}
+	
+	UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(ActorSoft.Get());
+	
+	if (IDComponent)
+	{
+		//return FText::FromString(GetBangoFindActorNode()->GetTargetActorGuid().ToString());
+		return FText::FromString(IDComponent->GetBangoGuid().ToString());
+	}
+	
+	return LOCTEXT("Text_GuidStatusWidget_MissingIdComponent", "MISSING ID COMPONENT");
+}
+*/
 
 #undef LOCTEXT_NAMESPACE

@@ -23,9 +23,9 @@
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-// ----------------------------------------------
-
 class FWidgetBlueprintEditor;
+
+// ==============================================
 
 FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 {
@@ -39,6 +39,8 @@ FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 		Subsystem->OnScriptGenerated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed);
 	}
 }
+
+// ----------------------------------------------
 
 FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
 {
@@ -82,6 +84,18 @@ UEdGraph* FBangoScriptContainerCustomization::GetPrimaryEventGraph() const
 
 void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	if (PropertyHandle->GetNumOuterObjects() != 1)
+	{
+		HeaderRow.WholeRowContent()
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("MultipleScriptsEdited_Warning", "    <Multiple Scripts>"))
+			.TextStyle(FAppStyle::Get(), "SmallText")
+		];
+		
+		return;
+	}
+	
 	//ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
 	GuidProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, Guid));
@@ -111,6 +125,8 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	];
 	
 	UpdateBox();	
+	
+	SetProposedScriptName(FText::FromString(GetBlueprint()->GetName()));
 	
 	FEditorDelegates::OnMapLoad.AddSP(this, &FBangoScriptContainerCustomization::OnMapLoad);
 	
@@ -165,6 +181,11 @@ int FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons() 
 
 void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	if (PropertyHandle->GetNumOuterObjects() != 1)
+	{
+		return;
+	}
+	
 	UObject* Outer = GetOuter();
 	
 	// TODO handle selection of multiple things
@@ -177,7 +198,8 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 	.NameContent()
 	[
 		SNew(STextBlock)
-		.Text(LOCTEXT("BangoScriptNameOverride_Label", "Script Name"))
+		.Text(LOCTEXT("BangoScriptNameOverride_Label", "Name"))
+		.TextStyle(FAppStyle::Get(), "SmallText")
 	]
 	.ValueContent()
 	[
@@ -185,13 +207,24 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 		+ SHorizontalBox::Slot()
 		[
 			SNew(SEditableTextBox)
-			.HintText(LOCTEXT("BangoScriptNameOverride_HintText", "Optional"))	
+			.HintText(LOCTEXT("BangoScriptNameOverride_HintText", "Optional"))
+			.SelectAllTextWhenFocused(true)
+			.ForegroundColor(this, &FBangoScriptContainerCustomization::ForegroundColor_ScriptNameEditableText)
+			.FocusedForegroundColor(this, &FBangoScriptContainerCustomization::FocusedForegroundColor_ScriptNameEditableText)
+			.MinDesiredWidth(160)
+			.Text_Lambda( [this] () { return ScriptNameText; })
+			.OnTextChanged(this, &FBangoScriptContainerCustomization::OnTextChanged_ScriptNameEditableText)
+			//.ColorAndOpacity(this, &FBangoScriptContainerCustomization::ColorAndOpacity_ScriptNameText)
 		]
 		+ SHorizontalBox::Slot()
 		.AutoWidth()
+		.Padding(4, 0, 0, 0)
 		[
 			SNew(SButton)
-			.Text(LOCTEXT("BangoScriptNameOverride_ApplyButtonLabel", "Apply"))
+			.IsEnabled(this, &FBangoScriptContainerCustomization::IsEnabled_RenameScriptButton)
+			.VAlign(VAlign_Center)
+			.Text(LOCTEXT("BangoScriptNameOverride_RenameButtonLabel", "Rename"))
+			.TextStyle(FAppStyle::Get(), "SmallText")
 			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_RenameScript)
 		]
 	];
@@ -339,13 +372,113 @@ FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
 	return FReply::Handled();
 }
 
+void FBangoScriptContainerCustomization::OnTextChanged_ScriptNameEditableText(const FText& Text)
+{
+	SetProposedScriptName(Text);
+}
+
+void FBangoScriptContainerCustomization::SetProposedScriptName(const FText& Text)
+{
+	ScriptNameText = Text;
+	ProposedNameStatus = GetProposedNameStatus();
+}
+
+EBangoScriptRenameStatus FBangoScriptContainerCustomization::GetProposedNameStatus()
+{
+	UPackage* Package = GetBlueprint()->GetPackage();
+	
+	if (Package)
+	{
+		TArray<UObject*> Objects;
+		GetObjectsWithPackage(Package, Objects, false);
+		
+		FString ProposedBlueprintClassName = ScriptNameText.ToString();
+		
+		if (ProposedBlueprintClassName == GetBlueprint()->GetName())
+		{
+			return EBangoScriptRenameStatus::MatchesCurrent;
+		}
+		
+		if (!ProposedBlueprintClassName.EndsWith(TEXT("_C")))
+		{
+			ProposedBlueprintClassName.Append(TEXT("_C"));
+		}
+		
+		bool bMatch = false;
+		
+		for (UObject* Object : Objects)
+		{
+			// I need to make sure we don't cause *any* object name conflicts
+			/*
+			if (!Object->IsA<UBlueprintGeneratedClass>())
+			{
+				continue;
+			}
+			*/
+			
+			if (ProposedBlueprintClassName == Object->GetName())
+			{
+				bMatch = true;
+				break;
+			}
+		}
+				
+		if (bMatch)
+		{
+			return EBangoScriptRenameStatus::MatchesOther;
+		}
+
+		// TODO check for valid chars
+		return EBangoScriptRenameStatus::ValidNewName;
+	}
+
+	return EBangoScriptRenameStatus::InvalidNewName;
+}
+
+FSlateColor FBangoScriptContainerCustomization::ForegroundColor_ScriptNameEditableText() const
+{
+	return FocusedForegroundColor_ScriptNameEditableText().GetSpecifiedColor().Desaturate(0.25f);
+}
+
+FSlateColor FBangoScriptContainerCustomization::FocusedForegroundColor_ScriptNameEditableText() const
+{
+	switch (ProposedNameStatus)
+	{
+		case EBangoScriptRenameStatus::MatchesCurrent:
+		{
+			return BangoColor::Gray;
+		}
+		case EBangoScriptRenameStatus::MatchesOther:
+		{
+			return BangoColor::LightRed;
+		}
+		case EBangoScriptRenameStatus::ValidNewName:
+		{
+			return BangoColor::LightGreen;
+		}
+		default:
+		{
+			return BangoColor::Error;
+		}
+	}
+}
+
+bool FBangoScriptContainerCustomization::IsEnabled_RenameScriptButton() const
+{
+	switch (ProposedNameStatus)
+	{
+		case EBangoScriptRenameStatus::ValidNewName:
+		{
+			return true;
+		}
+		default:
+		{
+			return false;
+		}
+	}
+}
+
 // ----------------------------------------------
-
-// 
-// UE_API virtual void SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents);
-//
-
-//DEFINE_PRIVATE_FUNCTION_ACCESSOR(FBlueprintEditor, SetupGraphEditorEvents, void);
 
 TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() const
 {
@@ -470,10 +603,10 @@ void FBangoScriptContainerCustomization::UpdateBox()
 				SNew(STextBlock)
 				.Text(FText::Format
 					(
-						INVTEXT("{0}\n{1}"),
+						INVTEXT("{0}\n{1}{2}"),
 						FText::FromName(GetBlueprint()->GetFName()),
-						FText::FromString( GetBlueprint()->GetPackage()->GetPathName())//,
-						//FText::FromString(FPackageName::GetAssetPackageExtension())
+						FText::FromString( GetBlueprint()->GetPackage()->GetPathName()),
+						FText::FromString( GetBlueprint()->GetPackage()->ContainsMap() ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension())
 					))
 				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
 				.ColorAndOpacity(BangoColor::Gray)

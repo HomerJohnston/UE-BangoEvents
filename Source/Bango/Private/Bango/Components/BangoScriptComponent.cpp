@@ -27,8 +27,28 @@ void UBangoScriptComponent::BeginPlay()
 	Super::BeginPlay();
 	
 	if (!bPreventStarting)
-	{
-		UBangoScript::RunScript(Script.ScriptClass, this);
+	{	
+		UObject* ThisInput = nullptr;
+		
+		switch (ThisArg)
+		{
+			case EBangoScriptComponent_ThisArg::OwnerActor:
+			{
+				ThisInput = GetOwner();
+				break;
+			}
+			case EBangoScriptComponent_ThisArg::ScriptComponent:
+			{
+				ThisInput = this;
+				break;
+			}
+			default:
+			{
+				checkNoEntry();
+			}
+		}
+		
+		UBangoScript::RunScript(Script.ScriptClass, ThisInput);
 	}
 }
 

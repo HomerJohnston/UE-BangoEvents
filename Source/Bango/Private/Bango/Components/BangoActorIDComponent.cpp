@@ -39,6 +39,8 @@ void UBangoActorIDComponent::PostLoad()
 void UBangoActorIDComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UBangoActorIDSubsystem::RegisterActor(this, GetOwner(), Name, Guid);
 }
 
 void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -86,11 +88,6 @@ void UBangoActorIDComponent::OnRegister()
 		{
 			DebugDrawService = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawEditor));
 		}
-	}
-	
-	if (!Bango::IsComponentInEditedLevel(this))
-	{
-		UBangoActorIDSubsystem::RegisterActor(this, GetOwner(), Name, Guid);
 	}
 }
 #endif

@@ -66,7 +66,7 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	}
 }
 
-UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor)
+UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor, bool bForceCreate)
 {
 	if (!Actor)
 	{
@@ -80,8 +80,15 @@ UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor)
 	
 	if (IDComponents.Num() == 0)
 	{
-		FBangoEditorDelegates::RequestNewID.Broadcast(Actor);
-		Actor->GetComponents<UBangoActorIDComponent>(IDComponents);
+		if (bForceCreate)
+		{
+			FBangoEditorDelegates::RequestNewID.Broadcast(Actor);
+			Actor->GetComponents<UBangoActorIDComponent>(IDComponents);	
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 
 	if (IDComponents.Num() == 1)

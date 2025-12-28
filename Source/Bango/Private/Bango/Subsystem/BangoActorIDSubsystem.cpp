@@ -59,12 +59,29 @@ void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FGuid 
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
 	check(Subsystem);
 	
+#if 1
 	FNameRegistration NameReg = Subsystem->ActorsByGuid.FindAndRemoveChecked(Guid);
 	
 	if (NameReg.Value != NAME_None)
 	{
 		Subsystem->ActorsByName.Remove(NameReg.Value);
 	}
+#endif
+
+	// Safer variant for debugging. Should I enable this in editor builds always? With error logging?
+#if 0
+	FNameRegistration* NameReg = Subsystem->ActorsByGuid.Find(Guid);
+	
+	if (NameReg)
+	{
+		if (NameReg->Value != NAME_None)
+		{
+			Subsystem->ActorsByName.Remove(NameReg->Value);
+		}
+		
+		Subsystem->ActorsByGuid.Remove(Guid);
+	}
+#endif
 }
 
 void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FName Name)
