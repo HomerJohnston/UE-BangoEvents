@@ -225,7 +225,7 @@ void UBangoActorIDComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	
 	if (IsBeingEditorDeleted())
 	{
-		UE_LOG(LogBango, Warning, TEXT("Bango ID Component OnComponentDestroyed: %s"), *this->GetName());
+		//UE_LOG(LogBango, Warning, TEXT("Bango ID Component OnComponentDestroyed: %s"), *this->GetName());
 	}
 }
 

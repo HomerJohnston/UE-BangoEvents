@@ -91,7 +91,7 @@ void FBangoEditorMenus::SetEditActorID(AActor* Actor, bool bBlocking)
 	FSceneView* SceneView = EditorViewportClient->CalcSceneView(&ViewFamilyContext);
 		
 	FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
-	UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+	//UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
 		
 	if (SceneView)
 	{
@@ -99,7 +99,7 @@ void FBangoEditorMenus::SetEditActorID(AActor* Actor, bool bBlocking)
 		SceneView->WorldToPixel(Actor->GetActorLocation() + 100 * FVector::UpVector, PixelPoint);
 		ScreenPos.X = VPWindowPos.X + PixelPoint.X - 100;
 		ScreenPos.Y = VPWindowPos.Y + PixelPoint.Y - 100;
-		UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), ScreenPos.X, ScreenPos.Y);
 	}
 
 	UBangoActorIDComponent* ExistingIDComponent = Actor->FindComponentByClass<UBangoActorIDComponent>();

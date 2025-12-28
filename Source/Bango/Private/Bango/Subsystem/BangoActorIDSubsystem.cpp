@@ -4,15 +4,17 @@
 
 UBangoActorIDSubsystem* UBangoActorIDSubsystem::Get(UObject* WorldContext)
 {
+	check(WorldContext);
+	
 	UWorld* World = WorldContext->GetWorld();
 	
-	if (World)
+	if (!World)
 	{
 		UE_LOG(LogBango, Error, TEXT("Failed to find world, this should never happen?"));
-	 	return World->GetSubsystem<UBangoActorIDSubsystem>();
+		return nullptr;
 	}
-	
-	return nullptr;
+
+	return World->GetSubsystem<UBangoActorIDSubsystem>();
 }
 
 void UBangoActorIDSubsystem::Initialize(FSubsystemCollectionBase& Collection)

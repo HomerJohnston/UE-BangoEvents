@@ -34,7 +34,7 @@ FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptObj
 	
 	Subsystem->RunningScripts.Add(NewHandle, ScriptObject);
 
-	UE_LOG(LogBango, Display, TEXT("Script running: {%s}"), *ScriptObject->GetName());
+	UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
 	
 	return NewHandle;
 }
@@ -52,7 +52,7 @@ void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScript
 	
 	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
 	{
-		UE_LOG(LogBango, Display, TEXT("Script halting: {%s}"), *Script->GetName());
+		UE_LOG(LogBango, Verbose, TEXT("Script halting: {%s}"), *Script->GetName());
 		UBangoScript::Finish(Script);
 	}
 
@@ -87,7 +87,7 @@ void UBangoScriptSubsystem::Tick(float DeltaTime, ELevelTick TickType, ENamedThr
 	{
 		if (Manager.GetNumActionsForObject(Script) == 0)
 		{
-			UE_LOG(LogBango, Display, TEXT("Idle script being automatically destroyed: {%s}"), *Script->GetName());
+			UE_LOG(LogBango, Verbose, TEXT("Idle script being automatically destroyed: {%s}"), *Script->GetName());
 			DeadScriptHandles.Add(Handle);
 		}
 	}

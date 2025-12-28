@@ -92,7 +92,7 @@ int32 UBangoScript::LaunchSleep_Internal(const UObject* WorldContextObject, floa
         }
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Unknown error running LaunchSleep_Internal!"));
+    UE_LOG(LogBango, Warning, TEXT("Unknown error running LaunchSleep_Internal!"));
     return 0;
 }
 

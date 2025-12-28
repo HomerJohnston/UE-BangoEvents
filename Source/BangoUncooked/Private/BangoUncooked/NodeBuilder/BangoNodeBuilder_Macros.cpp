@@ -4,7 +4,7 @@
 
 BangoNodeBuilder::Builder::Builder(class FKismetCompilerContext& InContext, UEdGraph* InParentGraph, class UK2Node* InSourceNode, const UEdGraphSchema* InSchema, bool* InErrorBool, FVector2f Anchor)
 {
-	UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::Setup - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
+	//UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::Setup - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
 	
 	if (bAwaitingSpawnFinish)
 	{
@@ -26,7 +26,7 @@ BangoNodeBuilder::Builder::Builder(class FKismetCompilerContext& InContext, UEdG
 
 void BangoNodeBuilder::Builder::FinishDeferredNodes(bool bLogUnconnectedPins)
 {
-	UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::FinishSpawningAllNodes - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
+	//UE_LOG(LogBango, Display, TEXT("Bango_NodeBuilder::FinishSpawningAllNodes - bAwaitingSpawnFinish: %s"), bAwaitingSpawnFinish ? TEXT("TRUE" : TEXT("FALSE")));
 	
 	if (!bAwaitingSpawnFinish)
 	{

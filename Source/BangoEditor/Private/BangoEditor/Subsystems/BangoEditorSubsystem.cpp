@@ -98,80 +98,90 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 	}
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object) const
 {
 	FString FactoryString = Factory ? Factory->GetName() : "No Factory";
 	
 	FString ObjectString = Object ? Object->GetName() : "No Super";
 
-	UE_LOG(LogBango, Display, TEXT("OnAssetPostImport %s %s --- %s"), *FactoryString, *ObjectString, *GetState(Object));
+	//UE_LOG(LogBango, Display, TEXT("OnAssetPostImport %s %s --- %s"), *FactoryString, *ObjectString, *GetState(Object));
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnPackageDeleted(UPackage* Package) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnPackageDeleted: %s"), *Package->GetName());
+	//UE_LOG(LogBango, Display, TEXT("OnPackageDeleted: %s"), *Package->GetName());
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnAssetsAddExtraObjectsToDelete(TArray<UObject*>& Objects) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnAssetsAddExtraObjectsToDelete:"));
+	//UE_LOG(LogBango, Display, TEXT("OnAssetsAddExtraObjectsToDelete:"));
 	
 	for (auto X : Objects)
 	{
-		UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
+		//UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
 	}
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnAssetsPreDelete(const TArray<UObject*>& Objects) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnAssetsPreDelete:"));
+	//UE_LOG(LogBango, Display, TEXT("OnAssetsPreDelete:"));
 	
 	for (auto X : Objects)
 	{
-		UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
+		//UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
 	}
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnAssetsDeleted(const TArray<UClass*>& Classes)
 {
-	UE_LOG(LogBango, Display, TEXT("OnAssetsDeleted:"));
+	//UE_LOG(LogBango, Display, TEXT("OnAssetsDeleted:"));
 	
 	for (auto X : Classes)
 	{
-		UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
+		//UE_LOG(LogBango, Display, TEXT("     %s --- %s"), *X->GetName(), *GetState(X));
 	}
 }
 
+// TODO erase??????
 void UBangoEditorSubsystem::OnDuplicateActorsBegin()
 {
-	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsBegin"));
+	//UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsBegin"));
 	bDuplicateActorsActive = true;
 }
 
+// TODO erase??????
 void UBangoEditorSubsystem::OnDuplicateActorsEnd()
 {
-	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsEnd"));
+	//UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsEnd"));
 	bDuplicateActorsActive = false;
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnLevelActorAdded(AActor* Actor) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnLevelActorAdded: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
+	//UE_LOG(LogBango, Display, TEXT("OnLevelActorAdded: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnLevelActorDeleted: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
+	//UE_LOG(LogBango, Display, TEXT("OnLevelActorDeleted: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 	
 	TArray<UActorComponent*> Comps;
 	Actor->GetComponents(Comps);
 	
 	for (auto X : Comps)
 	{
-		UE_LOG(LogBango, Display, TEXT("Deleted comp... %s"), *(X->GetName()));
+		//UE_LOG(LogBango, Display, TEXT("Deleted comp... %s"), *(X->GetName()));
 	}
 }
 
+// TODO document what this is for?
 void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
 {
 	auto DelayCollectGarbage = FTimerDelegate::CreateLambda([] ()
@@ -182,15 +192,17 @@ void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayCollectGarbage);
 }
 
+// TODO erase
 void UBangoEditorSubsystem::PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const
 {
-	UE_LOG(LogBango, Display, TEXT("PreSaveWorldWithContext"));
+	//UE_LOG(LogBango, Display, TEXT("PreSaveWorldWithContext"));
 	//ObjectTools::ForceDeleteObjects( { ScriptPackage }, true);
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnObjectConstructed: %s --- %s"), *Object->GetName(), *GetState(Object));
+	//UE_LOG(LogBango, Display, TEXT("OnObjectConstructed: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
 void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
@@ -212,16 +224,19 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 	//UE_LOG(LogBango, Display, TEXT("OnObjectRenamed: %s  %s  %s --- %s"), *OuterString, *ObjectString, *OldName.ToString(), *GetState(RenamedObjectOuter));
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnAssetLoaded(UObject* Object) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnAssetLoaded: %s --- %s"), *Object->GetName(), *GetState(Object));
+	//UE_LOG(LogBango, Display, TEXT("OnAssetLoaded: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
+// TODO erase
 void UBangoEditorSubsystem::OnObjectModified(UObject* Object) const
 {
-	UE_LOG(LogBango, Display, TEXT("OnObjectModified: %s --- %s"), *Object->GetName(), *GetState(Object));
+	//UE_LOG(LogBango, Display, TEXT("OnObjectModified: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
+// TODO erase
 void CheckComponentOrigin(UActorComponent* Component)
 {
 	if (!Component)
@@ -231,19 +246,19 @@ void CheckComponentOrigin(UActorComponent* Component)
 	
 	if (Component->IsDefaultSubobject())
 	{
-		UE_LOG(LogTemp, Log, TEXT("Component created via CreateDefaultSubobject in C++"));
+		UE_LOG(LogBango, Log, TEXT("Component created via CreateDefaultSubobject in C++"));
 	}
 	else if (Component->CreationMethod == EComponentCreationMethod::Instance)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Component created via NewObject or added in Level Editor"));
+		UE_LOG(LogBango, Log, TEXT("Component created via NewObject or added in Level Editor"));
 	}
 	else if (Component->CreationMethod == EComponentCreationMethod::SimpleConstructionScript)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Component added in Blueprint editor"));
+		UE_LOG(LogBango, Log, TEXT("Component added in Blueprint editor"));
 	}
 	else if (Component->CreationMethod == EComponentCreationMethod::UserConstructionScript)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Component created in Blueprint Construction Script"));
+		UE_LOG(LogBango, Log, TEXT("Component created in Blueprint Construction Script"));
 	}
 }
 
