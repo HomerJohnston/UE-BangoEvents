@@ -7,6 +7,8 @@
 #include "Bango/Utility/BangoHelpers.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
+#include "WorldPartition/ActorDescContainerInstance.h"
+#include "WorldPartition/WorldPartition.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -33,6 +35,16 @@ FLinearColor UK2Node_BangoFindActor::GetNodeTitleColor() const
 FLinearColor UK2Node_BangoFindActor::GetNodeTitleTextColor() const
 {
 	return BangoColor::Orange;
+}
+
+FText UK2Node_BangoFindActor::GetTooltipText() const
+{
+	if (!TargetActor.IsNull())
+	{
+		return LOCTEXT("TooltipText_BangoFindActorNode_TargetActor", "Soft actor pointer lookup");
+	}
+	
+	return LOCTEXT("TooltipText_BangoFindActorNode_BangoName", "Bango ID Component lookup");
 }
 
 void UK2Node_BangoFindActor::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -85,25 +97,41 @@ FText UK2Node_BangoFindActor::GetNodeTitle(ENodeTitleType::Type TitleType) const
 		{
 			return FText::FromString(TargetActor->GetActorLabel());
 		}
-		else
+		
+		UWorld* World = GetWorld();
+	
+		if (World)
 		{
-			if (!CachedActorLabel.IsEmpty())
+			UWorldPartition* WorldPartition = World->GetWorldPartition();
+		
+			if (WorldPartition)
 			{
-				return FText::FromString(CachedActorLabel);
-			}
+				UActorDescContainerInstance* ActorDescContainer = WorldPartition->GetActorDescContainerInstance();
 			
-			FString SubPath = TargetActor.ToSoftObjectPath().GetSubPathString();
-			
-			int32 LastDotIndex;
-			if (SubPath.FindLastChar(TEXT('.'), LastDotIndex))
-			{
-				FString ActorName = SubPath.Mid(LastDotIndex + 1);
+				if (ActorDescContainer)
+				{
+					const FWorldPartitionActorDescInstance* ActorDesc = ActorDescContainer->GetActorDescInstanceByPath(GetTargetActor().ToSoftObjectPath());
 				
-				return FText::Format(LOCTEXT("BangoFindActorNodeTitle_Unloaded", "{0}"), FText::FromString(ActorName));
+					if (ActorDesc)
+					{
+						return FText::FromName(ActorDesc->GetActorLabel());
+					}
+				}
 			}
-			
-			checkNoEntry();
 		}
+		
+		// Fall back to pulling a name out of the raw path
+		FString SubPath = TargetActor.ToSoftObjectPath().GetSubPathString();
+		
+		int32 LastDotIndex;
+		if (SubPath.FindLastChar(TEXT('.'), LastDotIndex))
+		{
+			FString ActorName = SubPath.Mid(LastDotIndex + 1);
+			
+			return FText::Format(LOCTEXT("BangoFindActorNodeTitle_Unloaded", "{0}"), FText::FromString(ActorName));
+		}
+		
+		checkNoEntry();
 	}
 	
 	return LOCTEXT("BangoFindActorNode_Title", "Find Actor");
@@ -123,25 +151,6 @@ void UK2Node_BangoFindActor::ExpandNode(class FKismetCompilerContext& Compiler, 
 
 void UK2Node_BangoFindActor::ExpandNode_SoftActor(class FKismetCompilerContext& Compiler, UEdGraph* SourceGraph)
 {
-	// -----------------
-	// Error checking and fixup - if the node has a soft actor ptr assigned, we can check it. This works for manually dragged-in actor references only.
-	// TODO I should lock renaming actor IDs behind a system so I can fix up all blueprints automatically?
-	// TODO: FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified??? --- if an ID component is destroyed, I need to notify any blueprint graphs using it somehow... Not sure if I can look this up, though.
-	
-	if (TargetActor.IsValid())
-	{
-		CachedActorLabel = TargetActor->GetActorLabel();
-
-		/*
-		UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(TargetActor.Get());
-		
-		if (!IDComponent)
-		{
-			Compiler.MessageLog.Error(*LOCTEXT("MissingActorIDComponent", "Actor is missing an ID component! @@").ToString(), this);
-		}
-		*/
-	}
-
 	Super::ExpandNode(Compiler, SourceGraph);
 
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
@@ -186,6 +195,9 @@ void UK2Node_BangoFindActor::ExpandNode_SoftActor(class FKismetCompilerContext& 
 	
 	Builder.FinishDeferredNodes();
 	
+	// -----------------
+	// Make connections
+	
 	UEdGraphPin* PathInput     = Node_SoftObjectPath->FindPin(FName("PathString"));
 	UEdGraphPin* PathOutput    = Node_SoftObjectPath->GetReturnValuePin();
 	UEdGraphPin* SoftRefInput  = Node_SoftObjectRef->FindPin(FName("SoftObjectPath"));
@@ -193,11 +205,6 @@ void UK2Node_BangoFindActor::ExpandNode_SoftActor(class FKismetCompilerContext& 
 	UEdGraphPin* ConvertInput  = Node_ResolveObject->FindPin(FName("SoftObject"));
 	UEdGraphPin* ConvertOutput = Node_ResolveObject->GetReturnValuePin();
 
-	// -----------------
-	// Make connections
-	
-	UEdGraphPin* SoftObjectPathPin = Node_SoftObjectPath.FindPin(TEXT("PathString"));
-	
 	FString ActorPath = TargetActor.ToSoftObjectPath().ToString();
 	Builder.SetDefaultValue(PathInput, ActorPath);
 	
@@ -288,22 +295,11 @@ void UK2Node_BangoFindActor::ExpandNode_ManualName(class FKismetCompilerContext&
 
 void UK2Node_BangoFindActor::SetActor(AActor* Actor)
 {
-	UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(Actor);
-	
-	if (IDComponent)
-	{
-		TargetActor = Actor;
-		TargetBangoGuid = IDComponent->GetBangoGuid();
-		TargetName = NAME_None;
-		CastTo = Actor->GetClass();
-	}
-}
+	TargetActor = Actor;
+	CastTo = Actor->GetClass();
 
-void UK2Node_BangoFindActor::PostCDOCompiled(const FPostCDOCompiledContext& Context)
-{
-	
-	
-	Super::PostCDOCompiled(Context);
+	// Manual name is unused with a target actor
+	TargetName = NAME_None;
 }
 
 AActor* UK2Node_BangoFindActor::GetReferencedLevelActor() const
@@ -319,25 +315,6 @@ AActor* UK2Node_BangoFindActor::GetReferencedLevelActor() const
 	}
 	
 	return nullptr;
-}
-
-void UK2Node_BangoFindActor::ReconstructNode()
-{
-	Super::ReconstructNode();
-}
-
-void UK2Node_BangoFindActor::PreloadRequiredAssets()
-{
-}
-
-void UK2Node_BangoFindActor::PostReconstructNode()
-{
-	Super::PostReconstructNode();
-}
-
-void UK2Node_BangoFindActor::ValidateNodeDuringCompilation(class FCompilerResultsLog& MessageLog) const
-{
-	Super::ValidateNodeDuringCompilation(MessageLog);
 }
 
 #undef LOCTEXT_NAMESPACE

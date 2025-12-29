@@ -26,29 +26,9 @@ void UBangoScriptComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!bPreventStarting)
+	if (bRunOnBeginPlay)
 	{	
-		UObject* ThisInput = nullptr;
-		
-		switch (ThisArg)
-		{
-			case EBangoScriptComponent_ThisArg::OwnerActor:
-			{
-				ThisInput = GetOwner();
-				break;
-			}
-			case EBangoScriptComponent_ThisArg::ScriptComponent:
-			{
-				ThisInput = this;
-				break;
-			}
-			default:
-			{
-				checkNoEntry();
-			}
-		}
-		
-		UBangoScript::RunScript(Script.ScriptClass, ThisInput);
+		Run();
 	}
 }
 
@@ -227,6 +207,34 @@ void UBangoScriptComponent::OnRename()
 #endif
 
 #if WITH_EDITOR
+void UBangoScriptComponent::Run()
+{
+	UObject* ThisInput = nullptr;
+		
+#if 0
+	switch (ThisArg)
+	{
+		case EBangoScriptComponent_ThisArg::OwnerActor:
+		{
+			ThisInput = GetOwner();
+			break;
+		}
+		case EBangoScriptComponent_ThisArg::ScriptComponent:
+		{
+			ThisInput = this;
+			break;
+		}
+		default:
+		{
+			checkNoEntry();
+		}
+	}
+#endif
+	ThisInput = GetOwner();
+		
+	UBangoScript::RunScript(Script.ScriptClass, ThisInput);
+}
+
 FGuid UBangoScriptComponent::GetScriptGuid() const
 {
 	return Script.Guid;

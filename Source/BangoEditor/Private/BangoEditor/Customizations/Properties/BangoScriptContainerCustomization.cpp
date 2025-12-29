@@ -126,7 +126,12 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	
 	UpdateBox();	
 	
-	SetProposedScriptName(FText::FromString(GetBlueprint()->GetName()));
+	UBlueprint* Blueprint = GetBlueprint();
+	
+	if (Blueprint)
+	{
+		SetProposedScriptName(FText::FromString(Blueprint->GetName()));
+	}
 	
 	FEditorDelegates::OnMapLoad.AddSP(this, &FBangoScriptContainerCustomization::OnMapLoad);
 	

@@ -40,7 +40,13 @@ FName UK2Node_BangoBase::GetCornerIcon() const
 
 FText UK2Node_BangoBase::GetToolTipHeading() const
 {
-	return (bIsLatent) ? LOCTEXT("LatentFunc", "Latent") : FText::GetEmpty();
+	if (bIsLatent)
+	{
+		return LOCTEXT("NodeToolTipHeading_LatentFunc", "Latent (Bango)");
+	}
+	
+	//return LOCTEXT("NodeToolTipHeading_NormalFunc", "(Bango)");
+	return FText::GetEmpty();
 }
 
 bool UK2Node_BangoBase::ShouldShowNodeProperties() const

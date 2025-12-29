@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
+#include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 
 #include "K2Node_BangoFindActor.generated.h"
 
@@ -12,6 +13,9 @@ enum class EBangoFindActorNode_ErrorState : uint8
 	Error,
 };
 
+/**
+ * Works as either a soft pointer to an actor (when dragged onto the graph from world outliner) or a manual Bango ID name lookup.
+ */
 UCLASS(MinimalAPI, DisplayName = "FindActor")
 class UK2Node_BangoFindActor : public UK2Node_BangoBase
 {
@@ -33,14 +37,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TSoftObjectPtr<AActor> TargetActor;
 	
-	/** This is set automatically when TargetActor is set. If this is set, TargetName should NOT be set, and vice versa. */
-	UPROPERTY(VisibleAnywhere)
-	FGuid TargetBangoGuid;
-	
-	/** If the actor is unloaded, this can display the last known name. */
-	UPROPERTY()
-	FString CachedActorLabel;
-	
 	/** Used by the slate widget to highlight the node. */
 	EBangoFindActorNode_ErrorState ErrorState;
 	
@@ -48,10 +44,6 @@ public:
 	TSubclassOf<AActor> GetCastTo() const { return CastTo; }
 	
 	TSoftObjectPtr<AActor> GetTargetActor() const { return TargetActor; } 
-	
-	FGuid GetTargetActorGuid() const { return TargetBangoGuid; }
-
-	const FString& GetCachedActorLabel() const { return CachedActorLabel; }
 	
 	bool ShouldDrawCompact() const override;
 	
@@ -62,6 +54,8 @@ public:
 	FLinearColor GetNodeTitleTextColor() const override;
 	
 	EBangoFindActorNode_ErrorState GetErrorState() const { return ErrorState; }
+	
+	FText GetTooltipText() const override;
 	
 public:
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -80,19 +74,20 @@ public:
 	
 	BANGOUNCOOKED_API void SetActor(AActor* Actor);
 	
-	void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
-	
 	AActor* GetReferencedLevelActor() const override;
-	
-	void ReconstructNode() override;
-	
-	void PreloadRequiredAssets() override;
-	
-	void PostReconstructNode() override;
-	
-	//void ReallocatePinsDuringReconstruction(TArray<UEdGraphPin*>& OldPins) override;
-	
-	void ValidateNodeDuringCompilation(class FCompilerResultsLog& MessageLog) const override;
 };
 
+using namespace BangoNodeBuilder;
+
+// ==========================================
+MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, BangoName, BangoGuid, FoundActor, TargetActor);
+
+inline void BangoFindActor::Construct()
+{
+	AllocateDefaultPins();
+	TargetActor = FindPin("SoftActor");
+	BangoName = FindPin("BangoName");
+	BangoGuid = FindPin("BangoGuid");
+	FoundActor = FindPin("FoundActor");
+}
 #undef LOCTEXT_NAMESPACE

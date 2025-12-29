@@ -28,6 +28,7 @@
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 #include "K2Node_Knot.h"
+#include "K2Node_VariableGet.h"
 
 using namespace BangoNodeBuilder;	
 using enum EBangoPinRequired;
@@ -290,14 +291,10 @@ inline void BangoSleep::Construct()
 	Completed = FindPin("Completed");
 }
 
-// ==========================================
-MAKE_NODE_TYPE(BangoFindActor, UK2Node_BangoFindActor, NORMAL_CONSTRUCTION, BangoName, BangoGuid, FoundActor, TargetActor);
+MAKE_NODE_TYPE(VariableGet, UK2Node_VariableGet, DEFERRED_CONSTRUCTION, Output);
 
-inline void BangoFindActor::Construct()
+inline void VariableGet::Construct()
 {
 	AllocateDefaultPins();
-	TargetActor = FindPin("SoftActor");
-	BangoName = FindPin("BangoName");
-	BangoGuid = FindPin("BangoGuid");
-	FoundActor = FindPin("FoundActor");
+	Output = _Node->GetValuePin();
 }

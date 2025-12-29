@@ -59,9 +59,14 @@ protected:
 #endif
 	
 	/** Reference to the object that ran this script. */ // Assigned by the Bango Script Subsystem on run.
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY()
 	TWeakObjectPtr<UObject> This;
 	
+	/** When adding a 'This' node to the script, it will use this specified output class. See also  */
+	UPROPERTY(EditAnywhere, DisplayName = "'This' Class")
+	TSubclassOf<UObject> This_ClassType;
+	
+protected:
     bool GetKeepAliveWhenIdle() const { return bPreventAutoDestroy; }
     
     // Ghetto hack for cooking, how can I get rid of this? 
@@ -71,6 +76,10 @@ public:
     
 #if WITH_EDITOR
 	FGuid GetScriptGuid() const { return ScriptGuid; }
+	
+	TSubclassOf<UObject> GetThis_ClassType() const { return This_ClassType; }
+	
+	void SetThis_ClassType(UClass* Class) { This_ClassType = Class; }
 #endif
 	
 public:

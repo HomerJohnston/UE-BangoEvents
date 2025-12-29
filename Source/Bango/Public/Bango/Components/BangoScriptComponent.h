@@ -6,12 +6,15 @@
 class UBlueprint;
 class UBangoScript;
 
+// TODO think more whether I want this. I currently just set 'This' to the closest owner actor.
+/*
 UENUM(BlueprintType)
 enum class EBangoScriptComponent_ThisArg : uint8
 {
 	OwnerActor,
 	ScriptComponent,
 };
+*/
 
 UCLASS(meta = (BlueprintSpawnableComponent), HideCategories = ("Navigation","Activation"))
 class BANGO_API UBangoScriptComponent : public UActorComponent
@@ -59,16 +62,22 @@ public:
 protected:
 	/** By default, scripts will begin at BeginPlay. Use this to disable the script from running. */
 	UPROPERTY(EditAnywhere)
-	bool bPreventStarting = false;
+	bool bRunOnBeginPlay = false;
 	
-	/** What to pass in as 'This' arg, defaults to the owning actor. */
+	/*
+	/ What to pass in as 'This' arg, defaults to the owning actor. /
 	UPROPERTY(EditAnywhere, DisplayName = "'This' Argument")
 	EBangoScriptComponent_ThisArg ThisArg;
-	
+	*/
+		
 	/** The actual script instance. */
 	UPROPERTY(EditAnywhere)
 	FBangoScriptContainer Script;
 
+public:
+	UFUNCTION(BlueprintCallable)
+	void Run();
+	
 #if WITH_EDITOR
 public:
 	

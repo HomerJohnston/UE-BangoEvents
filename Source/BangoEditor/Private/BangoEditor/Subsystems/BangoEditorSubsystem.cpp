@@ -337,6 +337,19 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		if (Blueprint)
 		{
 			Blueprint->SetGuid(ScriptContainer->Guid);
+			
+			UClass* GenClass = Blueprint->GeneratedClass;
+			
+			if (GenClass)
+			{
+				UObject* CDO = GenClass->GetDefaultObject();
+				UBangoScript* BangoScript = Cast<UBangoScript>(CDO);
+				
+				if (BangoScript)
+				{
+					BangoScript->SetThis_ClassType(Actor->GetClass());
+				}
+			}
 		}
 
 		//check(Blueprint);

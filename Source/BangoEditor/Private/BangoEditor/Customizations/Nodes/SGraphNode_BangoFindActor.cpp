@@ -11,6 +11,7 @@
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "Styling/SlateIconFinder.h"
+#include "WorldPartition/WorldPartition.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 
@@ -513,14 +514,7 @@ FText SGraphNode_BangoFindActor::GetNodeCompactTitle_Impl() const
 	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
 	check(Node);
 	
-	if (Node->GetTargetActor().IsValid())
-	{
-		return SGraphNode_BangoFindActor::GetNodeCompactTitle();
-	}
-	else
-	{
-		return FText::FromString(Node->GetCachedActorLabel());
-	}
+	return Node->GetNodeTitle(ENodeTitleType::Type::FullTitle);
 }
 
 FSlateColor SGraphNode_BangoFindActor::ColorAndOpacity_ActorLabel() const
