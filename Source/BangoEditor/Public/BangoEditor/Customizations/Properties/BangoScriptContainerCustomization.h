@@ -25,6 +25,7 @@ public:
 	// ------------------------------------------
 	
 protected:
+	TSharedPtr<IPropertyHandle> ScriptContainerProperty;
 	TSharedPtr<IPropertyHandle> ScriptClassProperty;
 	TSharedPtr<IPropertyHandle> GuidProperty;
 	TWeakObjectPtr<UEdGraph> CurrentGraph;

@@ -27,6 +27,8 @@ class BANGO_API UBangoScriptComponent : public UActorComponent
 public:
 	UBangoScriptComponent();
 	
+	void PrintState(FString Msg) const;
+
 	void OnRegister() override;
 	
 	void BeginPlay() override;

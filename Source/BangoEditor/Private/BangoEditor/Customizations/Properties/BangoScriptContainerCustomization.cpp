@@ -17,6 +17,7 @@
 #include "Widgets/Layout/SWidgetSwitcher.h"
 
 #include "Bango/Private/Bango/ThirdParty/BMPrivateAccess.h"
+#include "Bango/Utility/BangoHelpers.h"
 #include "BangoEditor/BlueprintEditor/BangoBlueprintEditor.h"
 #include "BangoEditor/Widgets/SBangoGraphEditor.h"
 #include "Editor/UMGEditor/Public/WidgetBlueprintEditor.h"
@@ -97,9 +98,10 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	}
 	
 	//ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
+	ScriptContainerProperty = PropertyHandle;
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
 	GuidProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, Guid));
-	
+		
 	CurrentGraph = GetPrimaryEventGraph();
 	
 	Box = SNew(SVerticalBox);
@@ -271,6 +273,14 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 {
 	TArray<UPackage*> Packages;
 	
+	void* ScriptContainerPtr = nullptr;
+	ScriptContainerProperty->GetValueData(ScriptContainerPtr);
+	
+	FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(ScriptContainerPtr);
+	
+	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(GetOuter(), ScriptContainer);
+	
+	/*
 	ScriptClassProperty->GetOuterPackages(Packages);
 	
 	if (Packages.Num() != 1)
@@ -297,11 +307,12 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 		return FReply::Handled();
 	}
 
-	if (Bango::Editor::SaveScriptPackage(ScriptPackage, Script))
-	{
+	//if (Bango::Editor::SaveScriptPackage(ScriptPackage, Script))
+	//{
 		ScriptClassProperty->SetValue(Script->GeneratedClass);
 		PostScriptCreated.Broadcast();
-	}
+	//}
+	*/
 	
 	return FReply::Handled();
 }
@@ -622,8 +633,28 @@ void FBangoScriptContainerCustomization::UpdateBox()
 	{
 		Box->AddSlot()
 		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("BangoScriptHolder_NoScriptGraphLabel", "No script"))
+			SNew(SWidgetSwitcher)
+			.WidgetIndex(this, &FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons)
+			+ SWidgetSwitcher::Slot()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
+				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
+			]
+			+ SWidgetSwitcher::Slot()
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("BangoScriptHolder_DeleteScriptButtonText", "Delete"))
+					.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+					.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteScript)
+				]
+			]
+			//SNew(STextBlock)
+			//.Text(LOCTEXT("BangoScriptHolder_NoScriptGraphLabel", "No script"))
 		];
 	}
 }
