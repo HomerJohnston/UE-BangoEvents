@@ -23,9 +23,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#505050"
      inkscape:document-units="mm"
-     inkscape:zoom="0.1491355"
-     inkscape:cx="-841.51663"
-     inkscape:cy="697.35242"
+     inkscape:zoom="1.193084"
+     inkscape:cx="449.67496"
+     inkscape:cy="149.19318"
      inkscape:window-width="5120"
      inkscape:window-height="2089"
      inkscape:window-x="1192"
@@ -39,13 +39,14 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#999999;fill-opacity:1;stroke:#ffffff;stroke-width:12;stroke-opacity:1;paint-order:stroke fill markers"
+       style="fill:#ffffff;fill-opacity:0.25;stroke:#ffffff;stroke-width:12;stroke-opacity:1;paint-order:stroke fill markers"
        id="rect1"
-       width="152.44716"
-       height="102.3872"
-       x="23.776421"
-       y="48.8064"
-       ry="8.8041182" />
+       width="166.64006"
+       height="134.32126"
+       x="16.90173"
+       y="33.726433"
+       ry="15.013517"
+       rx="0" />
     <path
        d="M 65.598482,62.921489 A 17.860281,17.860281 0 0 0 47.738074,80.781898 17.860281,17.860281 0 0 0 65.598482,98.642306 17.860281,17.860281 0 0 0 83.458891,80.781898 17.860281,17.860281 0 0 0 65.598482,62.921489 Z"
        style="fill:#ffffff;stroke:none;stroke-width:17.7571;paint-order:stroke fill markers"

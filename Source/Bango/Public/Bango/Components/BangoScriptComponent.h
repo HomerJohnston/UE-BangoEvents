@@ -62,7 +62,7 @@ public:
 #endif
 	
 protected:
-	/** By default, scripts will begin at BeginPlay. Use this to disable the script from running. */
+	/** Use this to run the script automatically upon BeginPlay. */
 	UPROPERTY(EditAnywhere)
 	bool bRunOnBeginPlay = false;
 	

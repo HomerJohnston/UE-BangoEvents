@@ -66,6 +66,27 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	}
 }
 
+bool Bango::IsBeingEditorDeleted(UActorComponent* Component)
+{
+	// 1. Must be in editor world
+	if (GIsPlayInEditorWorld || Component->GetWorld() == nullptr || Component->GetWorld()->IsGameWorld())
+		return false;
+
+	// 2. Component must be explicitely removed from its owner
+	if (Component->GetOwner() && !Component->GetOwner()->GetComponents().Contains(Component))
+		return true;
+
+	// 3. NOT deleted because PIE ended
+	if (GEditor && GEditor->PlayWorld != nullptr)
+		return false;
+
+	// 4. NOT deleted because a Blueprint reinstance/recompile replaced it
+	if (Component->HasAnyFlags(RF_Transient) && Component->HasAnyFlags(RF_ClassDefaultObject) == false)
+		return false;
+
+	return false;
+}
+
 UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor, bool bForceCreate)
 {
 	if (!Actor)

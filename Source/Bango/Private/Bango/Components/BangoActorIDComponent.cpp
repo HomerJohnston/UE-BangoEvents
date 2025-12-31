@@ -61,8 +61,6 @@ void UBangoActorIDComponent::SetActorID(FName NewID)
 #if WITH_EDITOR
 void UBangoActorIDComponent::OnRegister()
 {
-	// TODO handle runtime spawned instances
-	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
 		if (!Guid.IsValid())
@@ -73,177 +71,86 @@ void UBangoActorIDComponent::OnRegister()
 	}
 	
 	Super::OnRegister();
-
-	if (IsTemplate())
-	{
-		return;
-	}
-
-	if (GetWorld()->IsEditorWorld())
-	{
-		FEditorDelegates::PreBeginPIE.AddUObject(this, &ThisClass::UnregisterDebugDraw);
-		FEditorDelegates::PrePIEEnded.AddUObject(this, &ThisClass::ReregisterDebugDraw);
-		
-		if (!DebugDrawService.IsValid())
-		{
-			DebugDrawService = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawEditor));
-		}
-	}
-}
-#endif
-
-#if WITH_EDITOR
-void UBangoActorIDComponent::UnregisterDebugDraw(const bool PIE)
-{
-	UDebugDrawService::Unregister(DebugDrawService);
-	DebugDrawService.Reset();
-}
-#endif
-
-#if WITH_EDITOR
-void UBangoActorIDComponent::ReregisterDebugDraw(const bool PIE)
-{
-	if (!DebugDrawService.IsValid())
-	{
-		DebugDrawService = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(this, &ThisClass::DebugDrawEditor));
-	}
+	
+	BangoDebugDraw_Register<UBangoActorIDComponent>(this);
 }
 #endif
 
 #if WITH_EDITOR
 void UBangoActorIDComponent::OnUnregister()
 {
-	Super::OnUnregister();
+	BangoDebugDraw_Unregister(this);
 	
-	if (IsTemplate())
-	{
-		return;
-	}
-
-	UDebugDrawService::Unregister(DebugDrawService);
-
-	DebugDrawService.Reset();
+	Super::OnUnregister();
 }
 #endif
 
 #if WITH_EDITOR
-void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, APlayerController* ALWAYS_NULL) const
+void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
 {
-	FVector ScreenLocation;
-	
-	const UWorld* World = GetWorld();
-	if (!IsValid(World)) return;
-
-	AActor* Actor = GetOwner();
-	if (!IsValid(Actor)) return;
-
-	double X, Y;
-	
-	FVector WorldCameraPos;
-	FVector WorldCameraDir;
-
-	// Validity Logic
-	Canvas->GetCenter(X, Y);
-	Canvas->Deproject(FVector2D(X, Y), WorldCameraPos, WorldCameraDir);
-
-	const float MinDistance = 2000.0f;
-	const float MaxDistance = 2500.0f;
-	
-	const float MinDistanceSqr = FMath::Square(MinDistance);
-	const float MaxDistanceSqr = FMath::Square(MaxDistance);
-	
-	float DistanceSqr = FVector::DistSquared(WorldCameraPos, Actor->GetActorLocation());
-	if (DistanceSqr > MaxDistanceSqr) return;
-
-	float LerpAlpha = FMath::Clamp((DistanceSqr - MinDistanceSqr) / (MaxDistanceSqr - MinDistanceSqr), 0.0f, 1.0f);
-	
-	float Alpha = FMath::Lerp(1.0f, 0.0f, LerpAlpha);
-	
-	ScreenLocation = Canvas->Project(Actor->GetActorLocation() + FVector(0.f, 0.f, 150.f + LabelHeightAdjustment), false);
-	if (ScreenLocation.Z < 0.0f) return;
-
-	UTexture* BorderTex = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture")); //WhiteSquareTexture
 	UTexture* BackgroundTex = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture"));
-
 	UFont* Font = GEngine->GetLargeFont();
+	
 	const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 	FVector2D TextSize = FontMeasureService->Measure(Name.ToString(), Font->GetLegacySlateFontInfo());
 
-	FCanvasBoxItem Box(
-		FVector2D(ScreenLocation.X - 0.5f * TextSize.X, ScreenLocation.Y - 0.5 * TextSize.Y),
-		TextSize
-		);
-
+	/*
+	FVector2D BoxPos(ScreenLocation.X - 0.5f * TextSize.X, ScreenLocation.Y - 0.5 * TextSize.Y); 
+	FCanvasBoxItem Box(BoxPos, TextSize);
+	*/
+	
 	FLinearColor TagColor = BangoColor::White;
 	TagColor.A *= Alpha;
 	
-	Canvas->SetDrawColor(FColor(30, 30, 30, 150 * Alpha));
-	Canvas->DrawTile(
-		BackgroundTex,
-		ScreenLocation.X - 0.5f * TextSize.X - /*10*/ 16, ScreenLocation.Y - 5,
-		TextSize.X + /*20*/26, TextSize.Y + 10,
-		0.0f,0.0f,1.0f,1.0f
-		);
-	//Canvas->DrawItem(Box);
-	FCanvasTextItem Label(FVector2D(ScreenLocation), FText::FromName(Name), Font, TagColor);
-	Label.bCentreX = true;
-	Canvas->SetDrawColor(TagColor.ToFColor(false));
-	Canvas->DrawItem(Label);
-
-	FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, 32.0f, 32.0f);
-	Canvas->SetDrawColor(TagColor.ToFColor(false));
-	Canvas->DrawIcon(Icon, ScreenLocation.X - 34.0f, ScreenLocation.Y - 0.0f, 0.50f);
+	float IconRawSize = 32.0f;
+	float IconPadding = 4.0f;
+	float IconScale = 0.5f;
+	float Padding = 4.0f;
+	float Border = 2.0f;
 	
-	/*
-	FCanvasTextItem HeaderText = GetDebugHeaderText(ScreenLocation, Distance);
-	Canvas->DrawItem(HeaderText);
+	float IconSize = IconRawSize * IconScale;
 	
-	if (Distance < DevSettings->GetNearDisplayDistance())
 	{
-		TDelegate<TArray<FBangoDebugTextEntry>()> DataGetter = TDelegate<TArray<FBangoDebugTextEntry>()>::CreateUObject(this, &ThisClass::GetDebugDataString_Editor);
-
-		// I could have just use newlines in a single FCanvasTextItem but there's no way to set up text justification nicely in it, text is always left justified.
-		// By setting up an array of individual items I can keep them all centre justified and manually offset each one.
-		TArray<FCanvasTextItem> DataText = GetDebugFooterText(Canvas, ScreenLocation, DataGetter, Distance);
-
-		for (FCanvasTextItem& Text : DataText)
-		{
-			Canvas->DrawItem(Text);	
-		}
+		// Background Border
+		float X = ScreenLocation.X - 0.5f * TextSize.X - Padding - 0.5f * IconSize - 0.5f * IconPadding;
+		float Y = ScreenLocation.Y - 0.5f * FMath::Max(TextSize.Y, IconSize) - Padding;
+		float XL = TextSize.X + 2.0 * Padding + IconSize + IconPadding;
+		float YL = FMath::Max(TextSize.Y, IconSize) + 2.0 * Padding;
+		FVector4f UV(0.0f, 0.0f, 1.0f, 1.0f);
+	
+		Canvas->SetDrawColor(FColor(0, 0, 0, 200 * Alpha));
+		Canvas->DrawTile(BackgroundTex, X, Y, XL, YL, UV.X, UV.Y, UV.Z, UV.Z);
+		
+		Canvas->SetDrawColor(FColor(150, 150, 150, 150 * Alpha));
+		Canvas->DrawTile(BackgroundTex, X - Border, Y - Border, XL + 2.0 * Border, YL + 2.0 * Border, UV.X, UV.Y, UV.Z, UV.Z);
 	}
-	*/
-}
-#endif
-
-#if WITH_EDITOR
-void UBangoActorIDComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
-{
-	Super::OnComponentDestroyed(bDestroyingHierarchy);
 	
-	if (IsBeingEditorDeleted())
 	{
-		//UE_LOG(LogBango, Warning, TEXT("Bango ID Component OnComponentDestroyed: %s"), *this->GetName());
+		// ID Text
+		float X = ScreenLocation.X + 0.5f * IconSize + 0.5f * IconPadding;
+		float Y = ScreenLocation.Y - 0.5f;
+		
+		FCanvasTextItem Label(FVector2D(X, Y), FText::FromName(Name), Font, TagColor);
+		Label.bCentreX = true;
+		Label.bCentreY = true;
+		Canvas->SetDrawColor(TagColor.ToFColor(false));
+		Canvas->DrawItem(Label);
+	}
+	
+	{
+		// ID Icon
+		float X = ScreenLocation.X - 0.5f * TextSize.X - 0.5f * IconSize - 0.5f * IconPadding;
+		float Y = ScreenLocation.Y - 0.5f * IconSize;
+		
+		FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, IconRawSize, IconRawSize);
+		Canvas->SetDrawColor(TagColor.ToFColor(false));
+		Canvas->DrawIcon(Icon, X, Y, IconScale);
 	}
 }
 
-bool UBangoActorIDComponent::IsBeingEditorDeleted() const
+void UBangoActorIDComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
 {
-	// 1. Must be in editor world
-	if (GIsPlayInEditorWorld || GetWorld() == nullptr || GetWorld()->IsGameWorld())
-		return false;
-
-	// 2. Component must be explicitely removed from its owner
-	if (GetOwner() && !GetOwner()->GetComponents().Contains(this))
-		return true;
-
-	// 3. NOT deleted because PIE ended
-	if (GEditor && GEditor->PlayWorld != nullptr)
-		return false;
-
-	// 4. NOT deleted because a Blueprint reinstance/recompile replaced it
-	if (HasAnyFlags(RF_Transient) && HasAnyFlags(RF_ClassDefaultObject) == false)
-		return false;
-
-	return false;
+	//DebugDrawEditor(Canvas, ScreenLocation, 0.5f * Alpha);
 }
 #endif
+

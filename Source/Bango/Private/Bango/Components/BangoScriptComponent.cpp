@@ -237,7 +237,7 @@ void UBangoScriptComponent::OnRename()
 	
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
 
-	if (Blueprint)
+	if (Blueprint && Blueprint->GetName() == GetName())
 	{
 		Blueprint->UpdateAutoName(this);
 	}

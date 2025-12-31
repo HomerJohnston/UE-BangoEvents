@@ -45,7 +45,7 @@ namespace BangoColor
 	DECLARE_COLOR(DeepOrange,		0.100, 0.050, 0.010);
 
 	DECLARE_COLOR(LightYellow,		0.900, 0.850, 0.250);
-	DECLARE_COLOR(Yellow,			0.850, 0.800, 0.050);
+	DECLARE_COLOR(Yellow,			1.000, 0.820, 0.200);
 	DECLARE_COLOR(YellowGray,		0.500, 0.450, 0.250);
 
 	DECLARE_COLOR(OrangeRed,		0.920, 0.070, 0.020);

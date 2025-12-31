@@ -1,9 +1,11 @@
 ﻿#pragma once
 
+#include "Bango/Private/Bango/Editor/BangoDebugDrawServiceBase.h"
+
 #include "BangoActorIDComponent.generated.h"
 
 UCLASS(HideCategories=("Navigation", "Tags", "Activation", "AssetUserData"), meta = (BlueprintSpawnableComponent))
-class BANGO_API UBangoActorIDComponent : public UActorComponent
+class BANGO_API UBangoActorIDComponent : public UActorComponent, public FBangoDebugDrawServiceBase
 {
 	GENERATED_BODY()
 
@@ -24,7 +26,7 @@ protected:
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))
-	float LabelHeightAdjustment = 0.0f;
+	float LabelHeight = 200.0f;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;
@@ -42,20 +44,14 @@ protected:
 public:
 	void SetActorID(FName NewID);
 
-	FDelegateHandle DebugDrawService;
-	
 	void OnRegister() override;
 
-	void UnregisterDebugDraw(const bool PIE);
-	
-	void ReregisterDebugDraw(const bool PIE);
-	
 	void OnUnregister() override;
 	
-	void DebugDrawEditor(UCanvas* Canvas, APlayerController* PlayerController) const;
+	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 	
-	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+	
+	float GetLabelHeight() const override { return LabelHeight; }
 #endif
-	
-	bool IsBeingEditorDeleted() const;
 };
