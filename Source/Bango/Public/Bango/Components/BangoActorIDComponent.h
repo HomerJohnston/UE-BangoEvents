@@ -32,8 +32,6 @@ protected:
 	TObjectPtr<UTexture2D> IconTexture;
 #endif
 	
-	void PostInitProperties() override;
-	
 	void PostLoad() override;
 	
 	void BeginPlay() override;

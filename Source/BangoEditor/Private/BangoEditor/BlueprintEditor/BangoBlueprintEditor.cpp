@@ -112,7 +112,7 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
 	AppearanceInfo.InstructionText = FText::GetEmpty();
 	AppearanceInfo.PIENotifyText = GetPIEStatus();
-	AppearanceInfo.WarningText = INVTEXT("Test Error Text");
+	//AppearanceInfo.WarningText = INVTEXT("Test Error Text");
 
 	// Doesn't work
 	//AppearanceInfo.CornerImage = FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Plunger);

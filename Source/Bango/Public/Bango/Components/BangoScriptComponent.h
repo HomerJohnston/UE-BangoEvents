@@ -1,5 +1,10 @@
 ﻿#pragma once
+
 #include "Bango/Core/BangoScriptContainer.h"
+
+#if WITH_EDITOR
+#include "Bango/Private/Bango/Editor/BangoDebugDrawServiceBase.h"
+#endif
 
 #include "BangoScriptComponent.generated.h"
 
@@ -17,7 +22,7 @@ enum class EBangoScriptComponent_ThisArg : uint8
 */
 
 UCLASS(meta = (BlueprintSpawnableComponent), HideCategories = ("Navigation","Activation"))
-class BANGO_API UBangoScriptComponent : public UActorComponent
+class BANGO_API UBangoScriptComponent : public UActorComponent, public FBangoDebugDrawServiceBase
 {
 	GENERATED_BODY()
 	
@@ -30,6 +35,8 @@ public:
 	void PrintState(FString Msg) const;
 
 	void OnRegister() override;
+	
+	void OnUnregister() override;
 	
 	void BeginPlay() override;
 	
@@ -76,6 +83,13 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FBangoScriptContainer Script;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> IconTexture;
+	
+	TWeakObjectPtr<UBangoScript> RunningInstance;
+#endif
+	
 public:
 	UFUNCTION(BlueprintCallable)
 	void Run();
@@ -90,5 +104,9 @@ public:
 	void SetScriptBlueprint(UBangoScriptBlueprint* Blueprint); 
 	
 	void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
+	
+	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+	
+	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 #endif
 };

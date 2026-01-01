@@ -4,6 +4,7 @@
 #include "Bango/Core/BangoScript.h"
 //#include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
+#include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Exporters/Exporter.h"
@@ -13,17 +14,14 @@
 UBangoScriptComponent::UBangoScriptComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	
+#if WITH_EDITORONLY_DATA 
+	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+#endif
 }
 
 void UBangoScriptComponent::PrintState(FString Msg) const
-{
-	bool bIsTemplate = IsTemplate();
-	bool bIsValid = IsValid(this);
-	bool bMirroredGarbage = HasAllFlags(RF_MirroredGarbage);
-	bool bGarbage = HasAnyInternalFlags(EInternalObjectFlags::Garbage);
-	bool bUnreachable = HasAnyInternalFlags(EInternalObjectFlags::Unreachable);
-	bool bPendingConstruction = HasAnyInternalFlags(EInternalObjectFlags::PendingConstruction);
-	
+{	
 	uint32 Flags = (uint32)GetOwner()->GetFlags();
 	uint32 IntFlags = (uint32)GetOwner()->GetInternalFlags();
 	
@@ -50,7 +48,14 @@ void UBangoScriptComponent::OnRegister()
 {
 	Super::OnRegister();
 	
-	
+	BangoDebugDraw_Register<ThisClass>(this);
+}
+
+void UBangoScriptComponent::OnUnregister()
+{
+	BangoDebugDraw_Unregister(this);
+
+	Super::OnUnregister();
 }
 
 void UBangoScriptComponent::BeginPlay()
@@ -270,7 +275,7 @@ void UBangoScriptComponent::Run()
 #endif
 	ThisInput = GetOwner();
 		
-	UBangoScript::RunScript(Script.ScriptClass, ThisInput);
+	RunningInstance = UBangoScript::RunScript(Script.ScriptClass, ThisInput);
 }
 
 FGuid UBangoScriptComponent::GetScriptGuid() const
@@ -305,5 +310,48 @@ void UBangoScriptComponent::SetScriptBlueprint(UBangoScriptBlueprint* Blueprint)
 void UBangoScriptComponent::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
 {
 	Super::Super::PostEditUndo(TransactionAnnotation);
+}
+#endif
+
+#if WITH_EDITOR
+void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
+{
+	FLinearColor TagColor;
+	
+	if (RunningInstance.IsStale())
+	{
+		TagColor = BangoColor::YellowBase;
+	}
+	else if (RunningInstance.IsValid())
+	{
+		TagColor = BangoColor::Green;
+	}
+	else
+	{
+		TagColor = BangoColor::White;
+	}
+	
+	TagColor.A *= Alpha;
+	
+	float IconRawSize = 32.0f;
+	float IconScale = 0.5f;
+	
+	float IconSize = IconRawSize * IconScale;
+	
+	{
+		// ID Icon
+		float X = ScreenLocation.X - 0.5f * IconSize;
+		float Y = ScreenLocation.Y - 0.5f * IconSize;
+		
+		FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, IconRawSize, IconRawSize);
+		Canvas->SetDrawColor(TagColor.ToFColor(false));
+		Canvas->DrawIcon(Icon, X, Y, IconScale);
+	}
+	
+}
+
+void UBangoScriptComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
+{
+	DebugDrawEditor(Canvas, ScreenLocation, Alpha);
 }
 #endif

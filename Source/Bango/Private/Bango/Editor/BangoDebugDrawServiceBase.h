@@ -1,4 +1,6 @@
 ﻿#pragma once
+
+#if WITH_EDITOR
 #include "Bango/Utility/BangoHelpers.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
@@ -8,9 +10,9 @@
  * Usage: 
  * 1) Inherit this onto your AActorComponent class
  * 2) Override OnRegister
- *   - After Super::OnRegister, call BangoDebugDraw_Register
+ *   - After Super::OnRegister, call BangoDebugDraw_Register<ThisClass>(this);
  * 3) Override OnUnregister
- *   - Before Super::OnUnregister, call BangoDebugDraw_Unregister
+ *   - Before Super::OnUnregister, call BangoDebugDraw_Unregister(this);
  * 4) Override DebugDrawEditor and implement
  * 5) Optionally override GetLabelHeight to return a UPROPERTY or other logic
  */
@@ -225,3 +227,4 @@ inline void FBangoDebugDrawServiceBase::__DebugDrawDispatch(UCanvas* Canvas, TDe
 }
 
 // ----------------------------------------------
+#endif

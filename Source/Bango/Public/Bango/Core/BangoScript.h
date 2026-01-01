@@ -83,7 +83,7 @@ public:
 #endif
 	
 public:
-	static void RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext = nullptr);
+	static UBangoScript* RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext = nullptr);
 	
 protected:
 	

@@ -13,7 +13,7 @@
 DataValidationDelegate UBangoScript::OnScriptRequestValidation;
 #endif
 
-void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext)
+UBangoScript* UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext)
 {
 	if (WorldContext == nullptr)
 	{
@@ -23,25 +23,27 @@ void UBangoScript::RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, 
 	if (!Runner)
 	{
 		UE_LOG(LogBango, Error, TEXT("RunScript called with null runner!"));
-		return;
+		return nullptr;
 	}
 	
 	if (!Script)
 	{
 		UE_LOG(LogBango, Warning, TEXT("RunScript called with null script!"));
-		return;
+		return nullptr;
 	}
 	
 	if (!WorldContext)
 	{
 		UE_LOG(LogBango, Error, TEXT("Tried to launch script but Runner and WorldContext were null!"));
-		return;
+		return nullptr;
 	}
 	
 	// TODO should I implement pooling? Maybe optional?
  	UBangoScript* NewScriptInstance = NewObject<UBangoScript>(Runner, Script);
 	NewScriptInstance->This = Runner;
 	NewScriptInstance->Execute_Internal();
+	
+	return NewScriptInstance;
 }
 
 FBangoScriptHandle UBangoScript::Execute_Internal()
@@ -64,6 +66,8 @@ void UBangoScript::Finish(UBangoScript* Script)
     Script->OnFinishDelegate.Broadcast();
 
     Script->Handle.Invalidate();
+	
+	Script->MarkAsGarbage();
 }
 
 int32 UBangoScript::LaunchSleep_Internal(const UObject* WorldContextObject, float Duration, struct FLatentActionInfo LatentInfo, FOnLatentActionTick BPDelayTickEvent, FOnLatentActionCompleted BPDelayCompleteEvent)

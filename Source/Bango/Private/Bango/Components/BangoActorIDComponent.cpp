@@ -12,14 +12,11 @@
 
 UBangoActorIDComponent::UBangoActorIDComponent()
 {
+	PrimaryComponentTick.bCanEverTick = false;
+	
 #if WITH_EDITORONLY_DATA 
 	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_ActorID.Icon_ActorID"));
 #endif
-}
-
-void UBangoActorIDComponent::PostInitProperties()
-{
-	Super::PostInitProperties();
 }
 
 void UBangoActorIDComponent::PostLoad()
@@ -93,11 +90,6 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLoca
 	
 	const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 	FVector2D TextSize = FontMeasureService->Measure(Name.ToString(), Font->GetLegacySlateFontInfo());
-
-	/*
-	FVector2D BoxPos(ScreenLocation.X - 0.5f * TextSize.X, ScreenLocation.Y - 0.5 * TextSize.Y); 
-	FCanvasBoxItem Box(BoxPos, TextSize);
-	*/
 	
 	FLinearColor TagColor = BangoColor::White;
 	TagColor.A *= Alpha;
@@ -150,7 +142,7 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLoca
 
 void UBangoActorIDComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
 {
-	//DebugDrawEditor(Canvas, ScreenLocation, 0.5f * Alpha);
+	
 }
 #endif
 
