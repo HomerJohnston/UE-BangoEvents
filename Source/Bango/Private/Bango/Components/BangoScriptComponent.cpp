@@ -15,7 +15,7 @@ UBangoScriptComponent::UBangoScriptComponent()
 	
 #if WITH_EDITORONLY_DATA 
 	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
-	LabelOffset = 32.0f;
+	LabelOffset = -48.0f;
 #endif
 }
 
@@ -273,9 +273,20 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		}
 		else if (RunningHandle.IsNull())
 		{
-			TagColor = BangoColor::DarkGrey;
+			TagColor = FLinearColor::Black;
 		}
 	}
+	else
+	{
+		if (bRunOnBeginPlay)
+		{
+			TagColor = BangoColor::Green;
+		}
+	}
+	
+	FText LabelText = FText::FromString(Description);
+	FVector2D TextSize = FVector2D::ZeroVector;
+	UFont* Font = GEngine->GetLargeFont();
 	
 	TagColor.A *= Alpha;
 	
@@ -283,10 +294,44 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 	float IconScale = 0.5f;
 	
 	float IconSize = IconRawSize * IconScale;
+	float Padding = 4.0f;
+	float Border = 2.0f;
+	float IconPadding = 4.0f;
+	
+	if (!LabelText.IsEmpty())
+	{
+		const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
+		TextSize = FontMeasureService->Measure(LabelText.ToString(), Font->GetLegacySlateFontInfo());
+	}
+
+	float TotalWidth = IconSize;
+	float TotalHeight = FMath::Max(IconSize, IconSize);
+	
+	if (TextSize.X > KINDA_SMALL_NUMBER)
+	{
+		TotalWidth += IconPadding + TextSize.X;
+	}
+	
+	{
+		float X = ScreenLocation.X - 0.5f * TotalWidth - Padding;
+		float Y = ScreenLocation.Y - 0.5f * TotalHeight - Padding;
+		float XL = TotalWidth + 2.0f * Padding;
+		float YL = TotalHeight + 2.0f * Padding;
+		
+		FVector4f UV(0.0f, 0.0f, 1.0f, 1.0f);
+	
+		UTexture* BackgroundTex = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture"));
+		
+		Canvas->SetDrawColor(FColor(150, 150, 150, 150 * Alpha));
+		Canvas->DrawTile(BackgroundTex, X - Border, Y - Border, XL + 2.0 * Border, YL + 2.0 * Border, UV.X, UV.Y, UV.Z, UV.Z);
+		
+		Canvas->SetDrawColor(FColor(20, 20, 20, 150 * Alpha));
+		Canvas->DrawTile(BackgroundTex, X, Y, XL, YL, UV.X, UV.Y, UV.Z, UV.Z);
+	}
 	
 	{
 		// ID Icon
-		float X = ScreenLocation.X - 0.5f * IconSize;
+		float X = ScreenLocation.X - 0.5f * TotalWidth;
 		float Y = ScreenLocation.Y - 0.5f * IconSize;
 		
 		FCanvasIcon Icon = UCanvas::MakeIcon(IconTexture, 0.0f, 0.0f, IconRawSize, IconRawSize);
@@ -294,22 +339,13 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		Canvas->DrawIcon(Icon, X, Y, IconScale);
 	}
 	
-	if (bRunOnBeginPlay)
+	if (!LabelText.IsEmpty())
 	{
 		// Text
-		float X = ScreenLocation.X + 0.5f * IconSize + 4.0f;
+		float X = ScreenLocation.X - 0.5f * TotalWidth + 0.5f * IconSize + 0.5f * IconPadding;
 		float Y = ScreenLocation.Y;
 		
-		static uint64 i = 0;
-		i++;
-		
-		FText LabelText = LOCTEXT("EditorViewportScriptIcon_AutoRunLabel", "Autorun");
-		UFont* Font = GEngine->GetLargeFont();
-		
-		// const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
-		// FVector2D TextSize = FontMeasureService->Measure(LabelText.ToString(), Font->GetLegacySlateFontInfo());
-	
-		FCanvasTextItem Text(FVector2D(X, Y), LabelText, Font, BangoColor::White);
+		FCanvasTextItem Text(FVector2D(X + 0.5f * IconSize + IconPadding, Y), LabelText, Font, BangoColor::White);
 		Text.bCentreY = true;
 		Canvas->DrawItem(Text);
 	}

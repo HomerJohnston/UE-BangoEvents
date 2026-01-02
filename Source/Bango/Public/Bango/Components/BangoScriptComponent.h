@@ -58,8 +58,12 @@ protected:
 	UPROPERTY(EditAnywhere, DisplayName = "Autoplay")
 	bool bRunOnBeginPlay = false;
 	
-	/** The actual script instance. */
+	/** Optional description text for editor usage only */
 	UPROPERTY(EditAnywhere)
+	FString Description;
+	
+	/** The actual script instance. */
+	UPROPERTY(VisibleAnywhere)
 	FBangoScriptContainer Script;
 
 #if WITH_EDITORONLY_DATA

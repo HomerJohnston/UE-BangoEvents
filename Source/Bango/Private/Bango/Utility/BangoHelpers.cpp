@@ -20,6 +20,12 @@ TMulticastDelegate<void(AActor* Actor)> FBangoEditorDelegates::RequestNewID;
 #if WITH_EDITOR
 bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 {
+	check(Component);
+	
+	TMap<int, int> asdf;
+	
+	int& NewValue = asdf.Add(1, 2);
+	
 	if (!GEditor)
 		return false;
 		
@@ -32,16 +38,28 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 		return false;
 
 	if (World->bIsTearingDown)
-	{
 		return false;
-	}
 	
 	if (Component->HasAnyFlags(RF_Transient | RF_ClassDefaultObject | RF_DefaultSubObject))
 		return false;
 	
+	if (Component->HasAnyFlags(RF_MirroredGarbage | RF_BeginDestroyed | RF_FinishDestroyed))
+		return false;
+	
+	if (Component->HasAnyFlags(RF_NeedPostLoad))
+		return false;
+	
 	if (Component->GetPackage() == GetTransientPackage())
 		return false;
-		
+	
+	AActor* Actor = Component->GetOwner();
+	
+	if (!Actor || Actor->IsTemplate())
+		return false;
+	
+	if (Actor->HasAnyFlags(RF_Transient))
+		return false;
+	
 	if (Component->IsDefaultSubobject())
 	{
 		if (World->IsPlayInEditor())

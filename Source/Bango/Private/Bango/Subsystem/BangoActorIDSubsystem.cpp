@@ -40,12 +40,20 @@ void UBangoActorIDSubsystem::RegisterActor(UObject* WorldContextObject, AActor* 
 
 	if (Pair)
 	{
-		UE_LOG(LogBango, Warning, TEXT("Attempted to register Actor %s but it was already registered!"), *Actor->GetName());
+		UE_LOG(LogBango, Warning, TEXT("Attempted to register Actor %s but actor was already registered!"), *Actor->GetName());
 		return;
 	}
-
+	
 	if (Name != NAME_None)
 	{
+		TPair<TWeakObjectPtr<AActor>, FGuid>* PairByName = Subsystem->ActorsByName.Find(Name);
+		
+		if (PairByName)
+		{
+			UE_LOG(LogBango, Warning, TEXT("Attempted to register Bango Name %s but it was already registered to another actor!"), *Name.ToString());
+			return;
+		}
+		
 		FGuidRegistration NewGuidReg { Actor, Guid };
 		Subsystem->ActorsByName.Add(Name, NewGuidReg);
 	}
@@ -58,6 +66,12 @@ void UBangoActorIDSubsystem::UnregisterActor(UObject* WorldContextObject, FGuid 
 {
 	UBangoActorIDSubsystem* Subsystem = Get(WorldContextObject);
 	check(Subsystem);
+	
+	if (!Guid.IsValid())
+	{
+		UE_LOG(LogBango, Warning, TEXT("Tried to unregister Bango Actor ID but Guid was null!"));
+		return;
+	}
 	
 #if 1
 	FNameRegistration NameReg = Subsystem->ActorsByGuid.FindAndRemoveChecked(Guid);

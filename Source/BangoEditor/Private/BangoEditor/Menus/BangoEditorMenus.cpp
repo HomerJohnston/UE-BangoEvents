@@ -328,7 +328,7 @@ void FBangoEditorMenus::OnTextCommitted_IDField(const FText& InText, ETextCommit
 	if (ExistingIDComponent.IsValid())
 	{
 		FScopedTransaction T(LOCTEXT("EditActorID", "Edit Bango Actor ID")); // lol this doesn't work
-		ExistingIDComponent->SetActorID(FName(NewID));
+		ExistingIDComponent->SetBangoName(FName(NewID));
 	}
 	else
 	{
@@ -337,7 +337,7 @@ void FBangoEditorMenus::OnTextCommitted_IDField(const FText& InText, ETextCommit
 						
 		if (NewComponent)
 		{
-			NewComponent->SetActorID(NewID);
+			NewComponent->SetBangoName(NewID);
 		}
 	}
 	

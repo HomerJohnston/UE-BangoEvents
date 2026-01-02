@@ -132,7 +132,9 @@ protected:
 protected:
     static DataValidationDelegate OnScriptRequestValidation;
     
-    //void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+public:
+	static FSoftClassPath SelectedScript;
+    
 #endif
 };
 

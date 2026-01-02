@@ -13,17 +13,18 @@ public:
 	UBangoActorIDComponent();
 	
 public:
-	FName GetBangoName() const { return Name; }
-	
-	const FGuid& GetBangoGuid() const { return Guid; }
+	FName GetBangoName() const { return BangoName; }
 	
 protected:
-	UPROPERTY(EditAnywhere, NonPIEDuplicateTransient)
-	FName Name;
+	UPROPERTY(EditAnywhere, NonPIEDuplicateTransient, TextExportTransient)
+	FName BangoName;
 	
-	UPROPERTY(VisibleAnywhere, NonPIEDuplicateTransient)
-	FGuid Guid;
-
+	UPROPERTY(EditAnywhere, NonPIEDuplicateTransient, TextExportTransient)
+	FGuid BangoGuid;
+	
+	UPROPERTY(EditAnywhere, NonPIEDuplicateTransient, TextExportTransient)
+	FGuid UnusedGuid;
+	
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))
 	float LabelHeight = 200.0f;
@@ -31,25 +32,56 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;
 #endif
+	void PostInitProperties() override;
+	
+	void PostReinitProperties() override;
+	
+	void PostDuplicate(bool bDuplicateForPIE) override;
 	
 	void PostLoad() override;
+
+	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
+	
+	void PostLinkerChange() override;
+
+	void Serialize(FArchive& Ar) override;
+	
+	bool Rename(const TCHAR* NewName = nullptr, UObject* NewOuter = nullptr, ERenameFlags Flags = (0)) override;
+	
+	void PostEditImport() override;
+	
+	void PostApplyToComponent() override;
+	
+	void CheckForErrors() override;
+	
+	void InitializeComponent() override;
 	
 	void BeginPlay() override;
 
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
+	void PrintGuid(const FString& FuncName);
+	
+#if WITH_EDITOR
+private:
+	void EnsureValidGuid();
+#endif
+	
 #if WITH_EDITOR
 public:
-	void SetActorID(FName NewID);
+	void SetBangoName(FName NewID);
 
 	void OnRegister() override;
 
 	void OnUnregister() override;
+
+	void OnComponentCreated() override;
 	
 	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 	
 	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 	
 	float GetLabelHeight() const override { return LabelHeight; }
+	
 #endif
 };

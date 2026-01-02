@@ -52,6 +52,8 @@ FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
 		Subsystem->OnScriptGenerated.RemoveAll(this);
 	}
 	
+	UBangoScript::SelectedScript.Reset();
+	
 	FWorldDelegates::OnWorldBeginTearDown.RemoveAll(this);
 }
 
@@ -578,6 +580,8 @@ void FBangoScriptContainerCustomization::OnPreScriptDeleted()
 void FBangoScriptContainerCustomization::UpdateBox()
 {
 	SGraphEditor::FGraphEditorEvents Events;
+	
+	UBangoScript::SelectedScript = GetScriptClass()->GetPathName();
 	
 	Box->ClearChildren();
 	
