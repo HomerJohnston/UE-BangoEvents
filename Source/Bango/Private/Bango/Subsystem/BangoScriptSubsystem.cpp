@@ -3,6 +3,63 @@
 #include "Bango/Core/BangoScriptHandle.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
+
+#define LOCTEXT_NAMESPACE "Bango"
+
+// ==============================================
+// FBangoQueuedScript
+
+void FBangoQueuedScript::LoadAsync()
+{
+	// Already loading or loaded
+	if (ScriptClassHandle.IsValid())
+	{
+		return;
+	}
+
+	// Forget about it
+	if (!Runner.IsValid())
+	{
+		return;
+	}
+	
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	ScriptClassHandle = Streamable.RequestAsyncLoad(ScriptClass.ToSoftObjectPath());
+}
+
+// ----------------------------------------------
+
+void FBangoQueuedScript::LoadSync()
+{
+	// Already loading or loaded
+	if (ScriptClassHandle.IsValid())
+	{
+		return;
+	}
+
+	// Forget about it
+	if (!Runner.IsValid())
+	{
+		return;
+	}
+	
+	UE_LOG(LogBango, Warning, TEXT("Loading Bango script synchronously. You should consider preloading this earlier. Runner: %s, Script: %s"), *Runner->GetName(), *ScriptClass->GetName());
+	
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	Streamable.LoadSynchronous(ScriptClass.ToSoftObjectPath(), false, &ScriptClassHandle);
+}
+
+// ----------------------------------------------
+
+bool FBangoQueuedScript::IsReadyToRun()
+{
+	return Runner.IsValid() && ScriptClass.IsValid();
+}
+
+// ==============================================
+// UBangoScriptSubsystem
 
 UBangoScriptSubsystem* UBangoScriptSubsystem::Get(UObject* WorldContext)
 {
@@ -14,10 +71,14 @@ UBangoScriptSubsystem* UBangoScriptSubsystem::Get(UObject* WorldContext)
 	return nullptr;
 }
 
+// ----------------------------------------------
+
 bool UBangoScriptSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
 {
 	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
 }
+
+// ----------------------------------------------
 
 void UBangoScriptSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -26,74 +87,129 @@ void UBangoScriptSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	TickFunction.RegisterTickFunction(GetWorld()->PersistentLevel);
 }
 
-FBangoScriptHandle UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptObject)
+// ----------------------------------------------
+
+FBangoScriptHandle UBangoScriptSubsystem::EnqueueScript(TSoftClassPtr<UBangoScript> ScriptClass, UObject* Runner, bool bLoadImmediately)
 {
-	UBangoScriptSubsystem* Subsystem = Get(ScriptObject);
-
-	FBangoScriptHandle NewHandle = FBangoScriptHandle();
-	
-	Subsystem->RunningScripts.Add(NewHandle, ScriptObject);
-
-	if (Subsystem->GetWorld()->HasBegunPlay())
+	if (!Runner)
 	{
-		UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
-		ScriptObject->Start();
+		UE_LOG(LogBango, Error, TEXT("RunScript called with null runner!"));
+		return FBangoScriptHandle::GetNullHandle();
 	}
-	else
+
+	if (ScriptClass.IsNull())
 	{
-		UE_LOG(LogBango, Verbose, TEXT("Queing script for next frame: {%s}"), *ScriptObject->GetName());
-		
-		auto DelayedStart = FTimerDelegate::CreateLambda( [ScriptObject] ()
-		{
-			ScriptObject->Start();
-		});
-		
-		Subsystem->GetWorld()->GetTimerManager().SetTimerForNextTick(DelayedStart);
+		UE_LOG(LogBango, Warning, TEXT("RunScript called with null script!"));
+		return FBangoScriptHandle::GetNullHandle();
+	}
+
+	UBangoScriptSubsystem* Subsystem = Get(Runner);
+	
+	if (!Subsystem)
+	{
+		UE_LOG(LogBango, Error, TEXT("RunScript called but could not find UBangoScriptSubsystem!"));
+		return FBangoScriptHandle::GetNullHandle();
 	}
 	
-	return NewHandle;
+	FBangoScriptHandle Handle = FBangoScriptHandle::NewHandle();
+	
+	EnqueueScriptWithHandle(Handle, ScriptClass, Runner, bLoadImmediately);
+	
+	return Handle;
 }
 
-void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScriptHandle& Handle)
+void UBangoScriptSubsystem::EnqueueScriptWithHandle(FBangoScriptHandle Handle, TSoftClassPtr<UBangoScript> ScriptClass, UObject* Runner, bool bLoadImmediately)
 {
-	if (!Handle.IsValid())
+	check(Runner);
+	
+	UBangoScriptSubsystem* Subsystem = Get(Runner);
+	check(Subsystem);
+	
+	FBangoQueuedScript QueuedScript { Runner, ScriptClass, Handle };
+	
+	if (bLoadImmediately)
 	{
+		QueuedScript.LoadSync();
+	}
+	
+	Subsystem->QueuedScripts.Add( MoveTemp(QueuedScript) );
+}
+
+// ----------------------------------------------
+
+void UBangoScriptSubsystem::AbortScript(UObject* Requester, FBangoScriptHandle& Handle)
+{
+	if (!Handle.IsRunning())
+	{
+		UE_LOG(LogBango, Warning, TEXT("AbortScript called with invalid script handle!"));
 		return;
 	}
 	
+	if (!IsValid(Requester))
+	{
+		UE_LOG(LogBango, Warning, TEXT("AbortScript called with null requester! A requester is necessary for world context."));
+		return;
+	}
+
+	UWorld* World = Requester->GetWorld();
+	if (!World || !World->IsGameWorld())
+	{
+		UE_LOG(LogBango, Warning, TEXT("AbortScript called with invalid requested not in game world!"));
+		return;
+	}
+	
+	UBangoScriptSubsystem* Subsystem = UBangoScriptSubsystem::Get(Requester);
+	
+	if (!Subsystem)
+	{
+		UE_LOG(LogBango, Warning, TEXT("AbortScript called but could not get subsytem, unknown error!"));
+		return;
+	}
+	
+	Subsystem->UnregisterScript(Requester, Handle);
+	Handle.Invalidate();
+}
+
+void UBangoScriptSubsystem::RegisterOnScriptFinished(UObject* WorldContext, FBangoScriptHandle RunningHandle, const TDelegate<void(FBangoScriptHandle)>& Delegate)
+{
+	check(WorldContext);
 	UBangoScriptSubsystem* Subsystem = Get(WorldContext);
-
-	TObjectPtr<UBangoScript> Script;
+	check(Subsystem);
 	
-	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
+	auto QueuedScriptContainsHandle = [RunningHandle] (const FBangoQueuedScript& QueuedScript) -> bool
 	{
-		UE_LOG(LogBango, Verbose, TEXT("Script halting: {%s}"), *Script->GetName());
-		UBangoScript::Finish(Script);
+		return QueuedScript.Handle == RunningHandle;
+	};
+	
+	if (Subsystem->RunningScripts.Contains(RunningHandle) || Subsystem->QueuedScripts.ContainsByPredicate(QueuedScriptContainsHandle))
+	{
+		Subsystem->OnScriptFinished.Add(Delegate);
 	}
-
-	Handle.Invalidate();
 }
 
-void UBangoScriptSubsystem::AbortScript(UObject* WorldContext, FBangoScriptHandle& Handle)
-{
-	if (!Handle.IsValid())
-	{
-		return;
-	}
-	
-	UnregisterScript(WorldContext, Handle);
-
-	Handle.Invalidate();
-}
+// ----------------------------------------------
 
 void UBangoScriptSubsystem::Tick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
 {
 	UWorld* World = GetWorld();
-	if (!World)
+	
+	if (!World || !World->IsGameWorld())
 	{
+		UE_LOG(LogBango, Warning, TEXT("Bango Script Subsytem tried to tick outside of game world!"));
 		return;
 	}
+
+	PruneFinishedScripts(World);
+
+	PruneQueuedInvalidRunnerScripts();
 	
+	LoadQueuedScripts();
+	
+	LaunchQueuedScripts();
+}
+
+void UBangoScriptSubsystem::PruneFinishedScripts(UWorld* World)
+{
 	FLatentActionManager& Manager = World->GetLatentActionManager();
 
 	TArray<FBangoScriptHandle> DeadScriptHandles;
@@ -110,5 +226,103 @@ void UBangoScriptSubsystem::Tick(float DeltaTime, ELevelTick TickType, ENamedThr
 	for (FBangoScriptHandle& Handle : DeadScriptHandles)
 	{
 		UnregisterScript(this, Handle);
+	}	
+}
+
+void UBangoScriptSubsystem::PruneQueuedInvalidRunnerScripts()
+{
+	for (int32 i = 0; i < QueuedScripts.Num(); ++i)
+	{
+		FBangoQueuedScript& QueuedScript = QueuedScripts[i];
+		
+		// If runner has become invalid, remove this script from the queue
+		if (!QueuedScript.Runner.IsValid())
+		{
+			QueuedScripts.RemoveAtSwap(i, EAllowShrinking::No);
+			--i;
+		}
 	}
 }
+
+void UBangoScriptSubsystem::LoadQueuedScripts()
+{
+	for (FBangoQueuedScript& QueuedScript : QueuedScripts)
+	{
+		QueuedScript.LoadAsync();
+	}
+}
+
+void UBangoScriptSubsystem::LaunchQueuedScripts()
+{
+	bool bScriptsRan = false;
+	
+	for (int32 i = 0; i < QueuedScripts.Num(); ++i)
+	{
+		FBangoQueuedScript& QueuedScript = QueuedScripts[i];
+		
+		if (QueuedScript.IsReadyToRun())
+		{
+			UObject* Runner = QueuedScript.Runner.Get();
+			check(Runner);
+			
+			TSubclassOf<UBangoScript> ScriptClass = QueuedScript.ScriptClass.Get();
+			check(ScriptClass);
+			
+			UBangoScript* NewScriptInstance = NewObject<UBangoScript>(Runner, ScriptClass);
+			NewScriptInstance->Handle = QueuedScript.Handle;
+			NewScriptInstance->This = Runner;
+			
+			RegisterScript(NewScriptInstance);
+			
+			QueuedScripts.RemoveAtSwap(i, EAllowShrinking::No);
+			--i;
+		}
+	}
+	
+	// microoptimizations yay! let's just not care if theres 10 slots for queued scripts. Most of the time there will probably be 2 or 3.
+	if (bScriptsRan && QueuedScripts.GetSlack() > 10)
+	{
+		QueuedScripts.Shrink();
+	}
+}
+
+// ----------------------------------------------
+
+void UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptObject)
+{
+	UBangoScriptSubsystem* Subsystem = Get(ScriptObject);
+	check(Subsystem->GetWorld()->HasBegunPlay());
+
+	Subsystem->RunningScripts.Add(ScriptObject->Handle, ScriptObject);
+	
+	UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
+	ScriptObject->Start();
+}
+
+// ----------------------------------------------
+
+void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScriptHandle& Handle)
+{
+	if (!Handle.IsRunning())
+	{
+		return;
+	}
+	
+	UBangoScriptSubsystem* Subsystem = Get(WorldContext);
+
+	TObjectPtr<UBangoScript> Script;
+	
+	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
+	{
+		UE_LOG(LogBango, Verbose, TEXT("Script halting: {%s}"), *Script->GetName());
+		UBangoScript::Finish(Script);
+	}
+
+	OnScriptFinished.Broadcast(Handle);
+	
+	Handle.Invalidate();
+}
+
+// ----------------------------------------------
+
+#undef LOCTEXT_NAMESPACE

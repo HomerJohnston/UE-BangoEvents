@@ -2,9 +2,7 @@
 
 #include "Bango/Core/BangoScriptContainer.h"
 
-#if WITH_EDITOR
 #include "Bango/Private/Bango/Editor/BangoDebugDrawServiceBase.h"
-#endif
 
 #include "BangoScriptComponent.generated.h"
 
@@ -34,34 +32,21 @@ public:
 	
 	void PrintState(FString Msg) const;
 
+	void BeginPlay() override;
+	
+#if WITH_EDITOR
+public:
 	void OnRegister() override;
 	
 	void OnUnregister() override;
 	
-	void BeginPlay() override;
-	
-	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
-#if WITH_EDITOR
 	void OnComponentCreated() override;
 
 	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
-	void PreSave(FObjectPreSaveContext SaveContext) override;
-	
-	void PostEditImport() override;
-	
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
-	void PostLoad() override;
-	
-	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
-	
-	void PostInitProperties() override;
-	
 	void PostApplyToComponent() override;
-	
-	void PostReloadConfig(class FProperty* PropertyThatWasLoaded) override;
 	
 	void UnsetScript();
 	
@@ -70,15 +55,9 @@ public:
 	
 protected:
 	/** Use this to run the script automatically upon BeginPlay. */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, DisplayName = "Autoplay")
 	bool bRunOnBeginPlay = false;
 	
-	/*
-	/ What to pass in as 'This' arg, defaults to the owning actor. /
-	UPROPERTY(EditAnywhere, DisplayName = "'This' Argument")
-	EBangoScriptComponent_ThisArg ThisArg;
-	*/
-		
 	/** The actual script instance. */
 	UPROPERTY(EditAnywhere)
 	FBangoScriptContainer Script;
@@ -87,10 +66,12 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;
 	
-	TWeakObjectPtr<UBangoScript> RunningInstance;
+	UPROPERTY(Transient)
+	FBangoScriptHandle RunningHandle;
 #endif
 	
 public:
+	/** Runs the script. */
 	UFUNCTION(BlueprintCallable)
 	void Run();
 	
@@ -103,7 +84,7 @@ public:
 	
 	void SetScriptBlueprint(UBangoScriptBlueprint* Blueprint); 
 	
-	void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
+	void OnScriptFinished(FBangoScriptHandle FinishedHandle);
 	
 	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 	

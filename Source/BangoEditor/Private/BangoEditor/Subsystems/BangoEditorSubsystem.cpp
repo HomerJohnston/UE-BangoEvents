@@ -276,7 +276,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	UPackage* ScriptPackage = nullptr;
 	UBangoScriptBlueprint* Blueprint = nullptr;
 	
-	if (ScriptContainer->Guid.IsValid())
+	if (ScriptContainer->GetGuid().IsValid())
 	{
 		/*
 		if (!Outer->HasAnyFlags(RF_WasLoaded))
@@ -307,17 +307,18 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		// This creation is from a new addition
 		Outer->Modify();
 		
-		ScriptContainer->Guid = FGuid::NewGuid();
-		
-#if 0
-		// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
-		// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
-		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
-		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->Guid);
-#endif
+		ScriptContainer->GenerateGuid();
 		
 #if 1
+		// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
+		// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
+		AActor* Actor = Outer->GetTypedOuter<AActor>();
+		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
+		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
+		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->GetGuid());
+#endif
+		
+#if 0
 		// This is storing my script blueprints inside the level .umap file
 		AActor* Actor = Outer->GetTypedOuter<AActor>();
 		ULevel* Level = Actor->GetLevel();
@@ -336,7 +337,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		
 		if (Blueprint)
 		{
-			Blueprint->SetGuid(ScriptContainer->Guid);
+			Blueprint->SetGuid(ScriptContainer->GetGuid());
 			
 			UClass* GenClass = Blueprint->GeneratedClass;
 			
@@ -357,7 +358,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 
 	if (Blueprint /*&& ScriptPackage*/)
 	{
-		ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
+		ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
 	
 		FAssetRegistryModule::AssetCreated(Blueprint);
 		(void)ScriptPackage->MarkPackageDirty();
@@ -372,7 +373,7 @@ bool IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* Scrip
 	check(IsValid(Outer));
 	check(ScriptContainer);
 	
-	if (!ScriptContainer->ScriptClass || !ScriptContainer->Guid.IsValid())
+	if (!ScriptContainer->GetScriptClass() || !ScriptContainer->GetGuid().IsValid())
 	{
 		return false;
 	}
@@ -387,7 +388,7 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 		return;
 	}
 	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass); 
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass()); 
 	check(Blueprint);
 	
 	UPackage* ScriptPackage = Blueprint->GetPackage();
@@ -484,15 +485,15 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		check(ScriptContainer);
 	
 		// Stash the referenced blueprint
-		UBangoScriptBlueprint* OldBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);
+		UBangoScriptBlueprint* OldBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
 		
 		// Set up this new duplicated script container
 		ScriptContainer->Unset();
-		ScriptContainer->Guid = FGuid::NewGuid();		
+		ScriptContainer->GenerateGuid();		
 		
 		// Dupe the blueprint
 		FString NewBlueprintName;
-		UPackage* NewScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
+		UPackage* NewScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
 	
 		if (!NewScriptPackage)
 		{
@@ -509,7 +510,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 
 		if (Blueprint)
 		{
-			ScriptContainer->ScriptClass = Blueprint->GeneratedClass;
+			ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
 	
 			FAssetRegistryModule::AssetCreated(Blueprint);
 			(void)NewScriptPackage->MarkPackageDirty();
@@ -537,7 +538,7 @@ void UBangoEditorSubsystem::OnRequestNewID(AActor* Actor) const
 	FBangoEditorMenus::SetEditActorID(Actor, true);
 }
 
-void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass)
+void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	UPackage* ScriptPackage = ScriptClass->GetOuterUPackage();
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass);

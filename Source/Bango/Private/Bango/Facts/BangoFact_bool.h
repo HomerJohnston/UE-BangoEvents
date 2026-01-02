@@ -13,7 +13,7 @@ struct FBangoFact_bool : public FBangoFactBase
 	BANGO_GENERATED_BODY(bool);
 	
 	UPROPERTY()
-	bool Value;
+	bool Value = false;
 };
 
 DEFINE_BANGO_FACT_GETSET(bool);

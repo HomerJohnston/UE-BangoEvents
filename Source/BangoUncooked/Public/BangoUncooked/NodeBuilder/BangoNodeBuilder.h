@@ -210,6 +210,7 @@ inline void BangoRunScript::Construct()
 }
 
 // ==========================================
+/*
 MAKE_NODE_TYPE(BangoExecuteScript_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTION, Exec, Then, Target, Result);
 
 inline void BangoExecuteScript_Internal::Construct()
@@ -221,6 +222,7 @@ inline void BangoExecuteScript_Internal::Construct()
 	Target = FindPin("Self");
 	Result = _Node->GetReturnValuePin();
 }
+*/
 
 // ==========================================
 MAKE_NODE_TYPE(BangoCancelSleep_Internal, UK2Node_CallFunction, NORMAL_CONSTRUCTION, Exec, Then, ActionUUID);

@@ -1,13 +1,33 @@
 ﻿#include "Bango/Core/BangoScriptHandle.h"
 
+FGuid FBangoScriptHandle::ExpiredGuid = FGuid(0, 0, 0, 1); 
+
 FBangoScriptHandle::FBangoScriptHandle()
 {
-	Guid = FGuid::NewGuid();
 }
 
-bool FBangoScriptHandle::IsValid()
+FBangoScriptHandle::FBangoScriptHandle(FGuid InGuid) : Guid(InGuid)
+{
+}
+
+bool FBangoScriptHandle::IsNull() const
+{
+	return !Guid.IsValid();
+}
+
+bool FBangoScriptHandle::IsRunning() const
 {
 	return Guid.IsValid();
+}
+
+bool FBangoScriptHandle::IsExpired() const
+{
+	return Guid == ExpiredGuid;
+}
+
+void FBangoScriptHandle::Expire()
+{
+	Guid = ExpiredGuid;
 }
 
 void FBangoScriptHandle::Invalidate()

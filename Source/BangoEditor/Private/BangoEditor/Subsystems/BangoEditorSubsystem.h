@@ -62,7 +62,7 @@ public:
 	
 	void OnRequestNewID(AActor* Actor) const;
 	
-	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
+	void SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass);
 	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
 	
 };

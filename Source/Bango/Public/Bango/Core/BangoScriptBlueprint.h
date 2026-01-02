@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Bango/Core/BangoScript.h"
+
 #include "BangoScriptBlueprint.generated.h"
 
 UCLASS()
@@ -49,7 +51,7 @@ public:
 	
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
 	
-	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const UClass* InClass);
+	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass);
 	
 	void OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint);
 	

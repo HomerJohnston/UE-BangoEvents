@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#if WITH_EDITOR
 #include "Bango/Utility/BangoHelpers.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
@@ -18,6 +17,7 @@
  */
 class FBangoDebugDrawServiceBase
 {
+#if WITH_EDITOR
 public:
 	virtual ~FBangoDebugDrawServiceBase() = default;
 	
@@ -66,12 +66,17 @@ protected:
 	float MaxDistance = 2500.0f;
 	float DefaultLabelHeight = 200.0f;
 	
+	// This should be overridden in all user classes, use this to avoid having different labels overlap each other. This is kind of ghetto but it's easy and it works.
+	float LabelOffset = 0.0f;
+	
 	// Override this to return a UPROPERTY value
-	virtual float GetLabelHeight() const { return DefaultLabelHeight; }
+	virtual float GetLabelHeight() const { return DefaultLabelHeight + LabelOffset; }
+#endif
 };
 
 // ==============================================
 
+#if WITH_EDITOR
 template <typename T>
 inline void FBangoDebugDrawServiceBase::BangoDebugDraw_Register(UActorComponent* Component)
 {

@@ -1,15 +1,13 @@
 ﻿#include "Bango/Components/BangoScriptComponent.h"
 
-#include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "Bango/Core/BangoScript.h"
-//#include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
-#include "Exporters/Exporter.h"
-#include "UObject/ObjectSaveContext.h"
-#include "UObject/PropertyAccessUtil.h"
+#include "Fonts/FontMeasure.h"
+
+#define LOCTEXT_NAMESPACE "Bango"
 
 UBangoScriptComponent::UBangoScriptComponent()
 {
@@ -17,6 +15,7 @@ UBangoScriptComponent::UBangoScriptComponent()
 	
 #if WITH_EDITORONLY_DATA 
 	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+	LabelOffset = 32.0f;
 #endif
 }
 
@@ -44,20 +43,6 @@ void UBangoScriptComponent::PrintState(FString Msg) const
 	UE_LOG(LogBango, Display, TEXT("%s"), *FString::Format(TEXT("{0}: {1} | {2}"), { Msg, *BitString1, *BitString2 } ));
 }
 
-void UBangoScriptComponent::OnRegister()
-{
-	Super::OnRegister();
-	
-	BangoDebugDraw_Register<ThisClass>(this);
-}
-
-void UBangoScriptComponent::OnUnregister()
-{
-	BangoDebugDraw_Unregister(this);
-
-	Super::OnUnregister();
-}
-
 void UBangoScriptComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -68,17 +53,30 @@ void UBangoScriptComponent::BeginPlay()
 	}
 }
 
-void UBangoScriptComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+#if WITH_EDITOR
+void UBangoScriptComponent::OnRegister()
 {
-	Super::EndPlay(EndPlayReason);
+	Super::OnRegister();
+	
+	BangoDebugDraw_Register<ThisClass>(this);
 }
+#endif
+
+#if WITH_EDITOR
+void UBangoScriptComponent::OnUnregister()
+{
+	BangoDebugDraw_Unregister(this);
+
+	Super::OnUnregister();
+}
+#endif
 
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
 	
-	PrintState("OnComponentCreated");
+	// PrintState("OnComponentCreated");
 	
 	// With RF_LoadCompleted this is a default actor component.
 	
@@ -105,7 +103,7 @@ void UBangoScriptComponent::OnComponentCreated()
 	}
 	
 	// If it already has a Guid, it must have been a copy-paste.
-	if (Script.Guid.IsValid())
+	if (Script.GetGuid().IsValid())
 	{
 		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
@@ -119,7 +117,7 @@ void UBangoScriptComponent::OnComponentCreated()
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	PrintState("OnComponentDestroyed");
+	// PrintState("OnComponentDestroyed");
 	
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
@@ -137,7 +135,7 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
-		if (Script.Guid.IsValid())
+		if (Script.GetGuid().IsValid())
 		{
 			// Moves handling over to an editor module
 			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &Script);
@@ -145,27 +143,6 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	}
 	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
-}
-#endif
-
-#if WITH_EDITOR
-void UBangoScriptComponent::PreSave(FObjectPreSaveContext SaveContext)
-{
-	if (!IsRunningCommandlet())
-	{
-		//Script.ForceSave();
-	}
-	
-	Super::PreSave(SaveContext);
-}
-#endif
-
-#if WITH_EDITOR
-void UBangoScriptComponent::PostEditImport()
-{
-	Super::PostEditImport();
-	
-	UE_LOG(LogBango, Display, TEXT("PostEditImport"));
 }
 #endif
 
@@ -178,27 +155,12 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 	}
 }
 
-void UBangoScriptComponent::PostLoad()
-{
-	Super::PostLoad();
-}
-
-void UBangoScriptComponent::PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph)
-{
-	Super::PostLoadSubobjects(OuterInstanceGraph);
-}
-
-void UBangoScriptComponent::PostInitProperties()
-{
-	Super::PostInitProperties();
-}
-
 void UBangoScriptComponent::PostApplyToComponent()
 {
 	Super::PostApplyToComponent();
 	
 	// If it already has a Guid, it must have been a copy-paste.
-	if (Script.Guid.IsValid())
+	if (Script.GetGuid().IsValid())
 	{
 		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
@@ -208,10 +170,6 @@ void UBangoScriptComponent::PostApplyToComponent()
 	}
 }
 
-void UBangoScriptComponent::PostReloadConfig(class FProperty* PropertyThatWasLoaded)
-{
-	Super::PostReloadConfig(PropertyThatWasLoaded);
-}
 #endif
 
 #if WITH_EDITOR
@@ -220,13 +178,6 @@ void UBangoScriptComponent::UnsetScript()
 	Modify();
 	Script.Unset();
 	
-	UScriptStruct* ScriptContainerStruct = FBangoScriptContainer::StaticStruct();
-	FProperty* ScriptClassProperty = ScriptContainerStruct->FindPropertyByName(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
-	
-	FPropertyChangedEvent PostEvent2(ScriptClassProperty);
-	
-	PostEditChangeProperty(PostEvent2);
-		
 	if (!MarkPackageDirty())
 	{
 		UE_LOG(LogBlueprint, Error, TEXT("Could not mark the actor package dirty?"));
@@ -240,7 +191,7 @@ void UBangoScriptComponent::OnRename()
 		return;
 	}
 	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.ScriptClass);
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.GetScriptClass());
 
 	if (Blueprint && Blueprint->GetName() == GetName())
 	{
@@ -249,45 +200,33 @@ void UBangoScriptComponent::OnRename()
 }
 #endif
 
-#if WITH_EDITOR
 void UBangoScriptComponent::Run()
 {
-	UObject* ThisInput = nullptr;
-		
-#if 0
-	switch (ThisArg)
+#if WITH_EDITOR
+	RunningHandle = 
+#endif
+	UBangoScriptSubsystem::EnqueueScript(Script.GetScriptClass(), GetOwner());
+	
+#if WITH_EDITOR
+	if (RunningHandle.IsRunning())
 	{
-		case EBangoScriptComponent_ThisArg::OwnerActor:
-		{
-			ThisInput = GetOwner();
-			break;
-		}
-		case EBangoScriptComponent_ThisArg::ScriptComponent:
-		{
-			ThisInput = this;
-			break;
-		}
-		default:
-		{
-			checkNoEntry();
-		}
+		TDelegate<void(FBangoScriptHandle)> OnFinished = TDelegate<void(FBangoScriptHandle)>::CreateUObject(this, &ThisClass::OnScriptFinished);
+		UBangoScriptSubsystem::RegisterOnScriptFinished(this, RunningHandle, OnFinished);
 	}
 #endif
-	ThisInput = GetOwner();
-		
-	RunningInstance = UBangoScript::RunScript(Script.ScriptClass, ThisInput);
 }
 
+#if WITH_EDITOR
 FGuid UBangoScriptComponent::GetScriptGuid() const
 {
-	return Script.Guid;
+	return Script.GetGuid();
 }
 #endif
 
 #if WITH_EDITOR
 UBangoScriptBlueprint* UBangoScriptComponent::GetScriptBlueprint() const
 {
-	return Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(Script.ScriptClass));
+	return Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(Script.GetScriptClass().LoadSynchronous()));
 }
 #endif
 
@@ -302,33 +241,40 @@ void UBangoScriptComponent::SetScriptBlueprint(UBangoScriptBlueprint* Blueprint)
 	
 	Modify();
 	(void)MarkPackageDirty();
-	Script.ScriptClass = Blueprint->GeneratedClass;
+	
+	Script.SetScriptClass(Cast<UClass>(Blueprint->GeneratedClass));
 }
-#endif
 
-#if WITH_EDITOR
-void UBangoScriptComponent::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
+void UBangoScriptComponent::OnScriptFinished(FBangoScriptHandle FinishedHandle)
 {
-	Super::Super::PostEditUndo(TransactionAnnotation);
+	if (FinishedHandle != RunningHandle)
+	{
+		return;
+	}
+	
+	RunningHandle.Expire();
 }
 #endif
 
 #if WITH_EDITOR
 void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
 {
-	FLinearColor TagColor;
-	
-	if (RunningInstance.IsStale())
+	FLinearColor TagColor = BangoColor::White;
+
+	if (GetWorld()->IsGameWorld())
 	{
-		TagColor = BangoColor::YellowBase;
-	}
-	else if (RunningInstance.IsValid())
-	{
-		TagColor = BangoColor::Green;
-	}
-	else
-	{
-		TagColor = BangoColor::White;
+		if (RunningHandle.IsExpired())
+		{
+			TagColor = BangoColor::YellowBase;
+		}
+		else if (RunningHandle.IsRunning())
+		{
+			TagColor = BangoColor::LightBlue;
+		}
+		else if (RunningHandle.IsNull())
+		{
+			TagColor = BangoColor::DarkGrey;
+		}
 	}
 	
 	TagColor.A *= Alpha;
@@ -348,6 +294,25 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		Canvas->DrawIcon(Icon, X, Y, IconScale);
 	}
 	
+	if (bRunOnBeginPlay)
+	{
+		// Text
+		float X = ScreenLocation.X + 0.5f * IconSize + 4.0f;
+		float Y = ScreenLocation.Y;
+		
+		static uint64 i = 0;
+		i++;
+		
+		FText LabelText = LOCTEXT("EditorViewportScriptIcon_AutoRunLabel", "Autorun");
+		UFont* Font = GEngine->GetLargeFont();
+		
+		// const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
+		// FVector2D TextSize = FontMeasureService->Measure(LabelText.ToString(), Font->GetLegacySlateFontInfo());
+	
+		FCanvasTextItem Text(FVector2D(X, Y), LabelText, Font, BangoColor::White);
+		Text.bCentreY = true;
+		Canvas->DrawItem(Text);
+	}
 }
 
 void UBangoScriptComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
@@ -355,3 +320,5 @@ void UBangoScriptComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocatio
 	DebugDrawEditor(Canvas, ScreenLocation, Alpha);
 }
 #endif
+
+#undef LOCTEXT_NAMESPACE

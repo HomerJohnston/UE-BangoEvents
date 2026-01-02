@@ -13,7 +13,7 @@ struct FBangoFact_FVector : public FBangoFactBase
 	BANGO_GENERATED_BODY(FVector);
 	
 	UPROPERTY()
-	FVector Value;
+	FVector Value = FVector::ZeroVector;
 };
 
 DEFINE_BANGO_FACT_GETSET(FVector);

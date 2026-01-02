@@ -15,6 +15,7 @@
 #include "KismetCompiler.h"
 #include "Bango/Core/BangoBlueprintFunctionLibrary.h"
 #include "Bango/Core/BangoScript.h"
+#include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -98,24 +99,25 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 {
 	Super::ExpandNode(Compiler, SourceGraph);
 
+	namespace NB = BangoNodeBuilder;
+	
 	const UEdGraphSchema_K2* Schema = Compiler.GetSchema();
 	bool bIsErrorFree = true;
 
-	BangoNodeBuilder::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
+	NB::Builder Builder(Compiler, SourceGraph, this, Schema, &bIsErrorFree, FVector2f(0, 1));
 	
 	// -----------------
 	// Make nodes
 	
-	using namespace BangoNodeBuilder;
-	auto Node_This =					Builder.WrapExistingNode<BangoRunScript>(this);
-	auto Node_Self =					Builder.MakeNode<SelfReference>(0, 2);
-	auto Node_CreateScriptObject =		Builder.MakeNode<CreateObject>(1, 1);
-	auto Node_CastToBangoScript =		Builder.MakeNode<DynamicCast_Pure>(5, 5);
-	auto Node_Branch =					Builder.MakeNode<Branch>(3, 2);
-	auto Node_CreateDelegate =			Builder.MakeNode<CreateDelegate>(4, 1);
-	auto Node_AddDelegate =				Builder.MakeNode<AddDelegate>(4, 0);
-	auto Node_ExecuteScript =			Builder.MakeNode<BangoExecuteScript_Internal>(5, 1);
-	auto Node_ScriptCompletedEvent =	Builder.MakeNode<CustomEvent>(6, 1);
+	auto Node_This =					Builder.WrapExistingNode<NB::BangoRunScript>(this);
+	auto Node_Self =					Builder.MakeNode<NB::SelfReference>(0, 2);
+	auto Node_CreateScriptObject =		Builder.MakeNode<NB::CreateObject>(1, 1);
+	auto Node_CastToBangoScript =		Builder.MakeNode<NB::DynamicCast_Pure>(5, 5);
+	auto Node_Branch =					Builder.MakeNode<NB::Branch>(3, 2);
+	auto Node_CreateDelegate =			Builder.MakeNode<NB::CreateDelegate>(4, 1);
+	auto Node_AddDelegate =				Builder.MakeNode<NB::AddDelegate>(4, 0);
+	auto Node_ExecuteScript =			Builder.MakeNode<NB::CallFunction>(5, 1);
+	auto Node_ScriptCompletedEvent =	Builder.MakeNode<NB::CustomEvent>(6, 1);
 
 	// -----------------
 	// Post-setup
@@ -174,6 +176,8 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	
 	Node_CastToBangoScript->TargetType = UBangoScript::StaticClass(); 
 	
+	Node_ExecuteScript->FunctionReference.SetExternalMember(GET_FUNCTION_NAME_CHECKED(UBangoScriptSubsystem, EnqueueScript), UBangoScriptSubsystem::StaticClass());
+	
 	Builder.FinishDeferredNodes(true);
 
 	// -----------------
@@ -211,7 +215,7 @@ void UK2Node_BangoRunScript::ExpandNode(class FKismetCompilerContext& Compiler, 
 	Builder.CreateConnection(Node_ScriptCompletedEvent.Delegate, Node_AddDelegate.Delegate);
 	
 	// Final output
-	Builder.MoveExternalConnection(Node_This.Handle, Node_ExecuteScript.Result);
+	//Builder.MoveExternalConnection(Node_This.Handle, Node_ExecuteScript.Result);
 
 	if (!bIsErrorFree)
 	{

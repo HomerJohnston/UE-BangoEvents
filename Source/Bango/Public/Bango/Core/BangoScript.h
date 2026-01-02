@@ -69,11 +69,7 @@ protected:
 protected:
     bool GetKeepAliveWhenIdle() const { return bPreventAutoDestroy; }
     
-    // Ghetto hack for cooking, how can I get rid of this? 
 public:
-    UPROPERTY()
-    FString Owner;
-    
 #if WITH_EDITOR
 	FGuid GetScriptGuid() const { return ScriptGuid; }
 	
@@ -81,16 +77,7 @@ public:
 	
 	void SetThis_ClassType(UClass* Class) { This_ClassType = Class; }
 #endif
-	
-public:
-	static UBangoScript* RunScript(TSubclassOf<UBangoScript> Script, UObject* Runner, UObject* WorldContext = nullptr);
-	
-protected:
-	
-    /** This is called by Bango. */ 
-    UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
-    FBangoScriptHandle Execute_Internal();
-    
+	    
 protected:
     /** This is implemented by designers. */
     UFUNCTION(BlueprintImplementableEvent)
@@ -104,6 +91,13 @@ protected:
     bool ImplementsGetWorld() const override { return true; }
 #endif
     
+public:
+	/** This is used by the script subsystem to respond to scripts finishing. */
+	TMulticastDelegate<void(FBangoScriptHandle)> OnFinish_Native;
+	
+protected:
+	
+	/** This is used by the RunScript K2 node to continue exec when a script is finished. */
     UPROPERTY(BlueprintAssignable)
     FOnFinishDelegate OnFinishDelegate;
 
@@ -138,7 +132,7 @@ protected:
 protected:
     static DataValidationDelegate OnScriptRequestValidation;
     
-    void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+    //void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif
 };
 

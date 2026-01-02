@@ -13,7 +13,7 @@ struct FBangoFact_double : public FBangoFactBase
 	BANGO_GENERATED_BODY(double);
 	
 	UPROPERTY()
-	double Value;
+	double Value = 0.0;
 };
 
 DEFINE_BANGO_FACT_GETSET(double);

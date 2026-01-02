@@ -5,6 +5,8 @@
 #include "Bango/Utility/BangoLog.h"
 #include "UObject/SavePackage.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(BangoScriptBlueprint)
+
 // ----------------------------------------------
 
 UBangoScriptBlueprint::UBangoScriptBlueprint()
@@ -94,13 +96,13 @@ void UBangoScriptBlueprint::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 // ----------------------------------------------
 
 #if WITH_EDITOR
-UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const UClass* InClass)
+UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass)
 {
 	UBangoScriptBlueprint* BP = NULL;
 		
 	if (InClass != NULL)
 	{
-		BP = Cast<UBangoScriptBlueprint>(InClass->ClassGeneratedBy);
+		BP = Cast<UBangoScriptBlueprint>(InClass.LoadSynchronous()->ClassGeneratedBy);
 	}
 		
 	return BP;

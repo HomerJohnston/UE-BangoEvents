@@ -9,14 +9,33 @@ struct FBangoScriptHandle
 
 	FBangoScriptHandle();
 
+	FBangoScriptHandle(FGuid InGuid);
+	
+public:
+	static FBangoScriptHandle GetNullHandle()
+	{
+		static FBangoScriptHandle NullHandle = FBangoScriptHandle(FGuid(0, 0, 0, 0));
+		return NullHandle;
+	}
+	
+	static FBangoScriptHandle NewHandle()
+	{
+		FGuid NewGuid = FGuid::NewGuid();
+		
+		// For that one in a trillion chance...
+		while (NewGuid == ExpiredGuid)
+		{
+			NewGuid = FGuid::NewGuid();
+		}
+		
+		return FBangoScriptHandle(NewGuid);
+	}
+	
 private:
-	UPROPERTY()
+	UPROPERTY(meta = (IgnoreForMemberInitializationTest))
 	FGuid Guid;
 
-	/*
-	UPROPERTY()
-	TWeakObjectPtr<UBangoScriptObject> Script;
-*/
+	static FGuid ExpiredGuid; 
 	
 	friend uint32 GetTypeHash(const FBangoScriptHandle& ScriptHandle)
 	{
@@ -29,7 +48,13 @@ public:
 		return Guid == Other.Guid;
 	}
 
-	bool IsValid();
+	bool IsNull() const;
+	
+	bool IsRunning() const;
+	
+	bool IsExpired() const;
+	
+	void Expire();
 	
 	void Invalidate();
 };

@@ -633,28 +633,10 @@ void FBangoScriptContainerCustomization::UpdateBox()
 	{
 		Box->AddSlot()
 		[
-			SNew(SWidgetSwitcher)
-			.WidgetIndex(this, &FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons)
-			+ SWidgetSwitcher::Slot()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
-				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
-			]
-			+ SWidgetSwitcher::Slot()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				[
-					SNew(SButton)
-					.Text(LOCTEXT("BangoScriptHolder_DeleteScriptButtonText", "Delete"))
-					.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-					.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteScript)
-				]
-			]
-			//SNew(STextBlock)
-			//.Text(LOCTEXT("BangoScriptHolder_NoScriptGraphLabel", "No script"))
+			SNew(SButton)
+			.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
+			.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
 		];
 	}
 }
@@ -698,13 +680,19 @@ UObject* FBangoScriptContainerCustomization::GetOuter() const
 
 UBlueprint* FBangoScriptContainerCustomization::GetBlueprint() const
 {
-	UObject* ScriptClassObject;
+	void* ScriptClassPtr = nullptr;
 	
-	if (ScriptClassProperty->GetValue(ScriptClassObject) == FPropertyAccess::Result::Success && ScriptClassObject)
+	if (ScriptClassProperty->GetValueData(ScriptClassPtr) == FPropertyAccess::Result::Success)
 	{
-		if (UClass* Class = Cast<UClass>(ScriptClassObject))
+		TSoftClassPtr<UBangoScript>* ScriptClass = reinterpret_cast<TSoftClassPtr<UBangoScript>*>(ScriptClassPtr);
+
+		if (ScriptClass)
 		{
-			if (UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(Class))
+			UObject* ScriptClassLoaded = ScriptClass->LoadSynchronous();
+			
+			TSubclassOf<UBangoScript> BangoScriptClassLoaded = Cast<UClass>(ScriptClassLoaded);
+			
+			if (UBlueprint* Blueprint = UBlueprint::GetBlueprintFromClass(BangoScriptClassLoaded))
 			{
 				return Blueprint;
 			}
