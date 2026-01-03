@@ -94,6 +94,7 @@ FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPac
 	*/
 	
 	// TODO for some reason this is necessary to hide assets from the Content view. I'd really rather use the format above.
+	// !!! I think assets are simply hidden from view if they contain invalid characters like ~ ...
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;
 	ObjectPackageName.Append(BaseDir);
 	ObjectPackageName.Append(TEXT("/"));
@@ -102,8 +103,6 @@ FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPac
 	ObjectPackageName.Append(*GuidBase36 + 1, 2);
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36 + 3);
-	ObjectPackageName.Append(TEXT("/"));
-	ObjectPackageName.Append(TEXT("BangoScript"));
 	return ObjectPackageName.ToString();
 }
 

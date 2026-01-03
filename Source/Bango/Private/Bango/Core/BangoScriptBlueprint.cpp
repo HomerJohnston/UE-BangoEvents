@@ -31,7 +31,7 @@ void UBangoScriptBlueprint::SoftDelete()
 	
 	DeletedName = GetName();
 	
-	Rename(*ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
 	
 	ClearEditorReferences();
 	
@@ -167,6 +167,9 @@ FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 	}
 		
 	AutoName = FString::Join(NameElements, TEXT(" "));
+	
+	//FName SanitizedName = MakeUniqueObjectName(Outer, UBangoScriptBlueprint::StaticClass(), FName(AutoName));
+	
 	return AutoName;
 }
 

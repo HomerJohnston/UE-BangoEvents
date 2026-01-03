@@ -56,7 +56,7 @@ public:
 	
 	static TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> Filter;	
 	
-	void OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, bool bImmediate = false);
 	void OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	void OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	

@@ -90,15 +90,20 @@ UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Oute
 	const UPackage* OutermostPackage = Outer->IsA<UPackage>() ? CastChecked<UPackage>(Outer) : Outer->GetOutermostObject()->GetPackage();
 	const FString RootPath = OutermostPackage->GetName();
 	FString GuidHashString;
-	const FString ExternalObjectPackageName = FBangoPackageHelper::GetLocalScriptPackageName(RootPath, FolderShortName, GuidHashString);
+	FString ExternalObjectPackageName = FBangoPackageHelper::GetLocalScriptPackageName(RootPath, FolderShortName, GuidHashString);
 
-	FString FinalPath = ExternalObjectPackageName;// + FPackageName::GetAssetPackageExtension();
+	FName Name = "BangoScript"; //Outer->GetFName();
+	Name = MakeUniqueObjectName(Outer, UBangoScript::StaticClass(), Name);
 	
-	NewBPName = GuidHashString;
+	FString FinalPath = ExternalObjectPackageName / Name.ToString();// + FPackageName::GetAssetPackageExtension();
+	
+	//NewBPName = GuidHashString;
 	//NewBPName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + GuidHashString;
 	UPackage* NewPackage = CreatePackage(*FinalPath);
 	NewPackage->SetFlags(RF_Public);
 	NewPackage->SetPackageFlags(PKG_NewlyCreated);
+	
+	NewBPName = FPackageName::LongPackageNameToFilename(NewPackage->GetName());
 	
 	return NewPackage;
 }

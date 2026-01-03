@@ -53,10 +53,7 @@ void FBangoBlueprintEditor::Tick(float DeltaTime)
 		SaveEditedObjectState();
 	}
 
-	if (InstructionsFadeCountdown > 0.f)
-	{
-		InstructionsFadeCountdown -= DeltaTime;
-	}
+	OpenTime += DeltaTime;
 
 	if (bPendingDeferredClose)
 	{
@@ -113,52 +110,82 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	FGraphAppearanceInfo AppearanceInfo;
 
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
-	AppearanceInfo.InstructionText = FText::GetEmpty();
+	AppearanceInfo.InstructionText = GetOwnerNameAsText();
 	AppearanceInfo.PIENotifyText = GetPIEStatus();
-	
-	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
-	
-	FText WarningTextFormat = LOCTEXT("AppearanceWarningText_Blueprint", "({0})");
-	
-	if (Blueprint && !Blueprint->GetActor().IsNull())
-	{
-		TSoftObjectPtr<AActor> Actor = Blueprint->GetActor();
-		
-		if (Actor.IsValid())
-		{
-			AppearanceInfo.WarningText = FText::Format(WarningTextFormat, { FText::FromString(Actor->GetActorLabel()) } );
-		}
-		else
-		{
-			UWorld* World = Actor->GetWorld();
 
-			if (World)
-			{
-				UWorldPartition* WorldPartition = World->GetWorldPartition();
+	const float StartTimeNoFade = 2.0f;
+	const float FadeDuration = 4.0f;
+	const float MinFade = 0.15f;
 	
-				if (WorldPartition)
-				{
-					UActorDescContainerInstance* ActorDescContainer = WorldPartition->GetActorDescContainerInstance();
-		
-					if (ActorDescContainer)
-					{
-						const FWorldPartitionActorDescInstance* ActorDesc = ActorDescContainer->GetActorDescInstanceByPath(Actor.ToSoftObjectPath());
-			
-						if (ActorDesc)
-						{
-							AppearanceInfo.WarningText = FText::Format(WarningTextFormat, { FText::FromName(ActorDesc->GetActorLabel()) } );
-						}
-					}
-				}
-			}
-		}
-
-	}
+	float Alpha = FMath::LerpStable(1.0f, 0.0f, (OpenTime - StartTimeNoFade) / FadeDuration);
+	Alpha = FMath::Clamp(Alpha, MinFade, 1.0f);
+	
+	AppearanceInfo.InstructionFade = Alpha; 
+	
 	
 	// Doesn't do anything. Unimplemented UE feature.
 	//AppearanceInfo.CornerImage = ???
 
 	return AppearanceInfo;
+}
+
+FText FBangoBlueprintEditor::GetOwnerNameAsText() const
+{
+	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
+	
+	if (!Blueprint)
+	{
+		return FText::GetEmpty();
+	}
+	
+	TSoftObjectPtr<AActor> Actor = Blueprint->GetActor();
+	FText LevelActorTextFormat = LOCTEXT("OwnerNameText_ScriptGraph", "{0}: {1}");
+	
+	if (Actor.IsNull())
+	{
+		return LOCTEXT("OwnerName_NoActor", "Standalone Script");
+	}
+	else if (Actor.IsValid())
+	{
+		UPackage* LevelPackage = Actor->GetLevel()->GetPackage();
+		return FText::Format(LevelActorTextFormat, { FText::FromString(FPackageName::GetShortName(LevelPackage)), FText::FromString(Actor->GetActorLabel()) } );
+	}
+	else
+	{
+		// Try to get it from world partition
+		UWorld* World = GEditor->EditorWorld;
+		
+		if (World)
+		{
+			UWorldPartition* WorldPartition = World->GetWorldPartition();
+	
+			if (WorldPartition)
+			{
+				UActorDescContainerInstance* ActorDescContainer = WorldPartition->GetActorDescContainerInstance();
+		
+				if (ActorDescContainer)
+				{
+					const FWorldPartitionActorDescInstance* ActorDesc = ActorDescContainer->GetActorDescInstanceByPath(Actor.ToSoftObjectPath());
+			
+					if (ActorDesc)
+					{
+						UPackage* LevelPackage = World->PersistentLevel.GetPackage();
+						return FText::Format(LevelActorTextFormat, { FText::FromString(FPackageName::GetShortName(LevelPackage)), FText::FromName(ActorDesc->GetActorLabel()) } );
+					}
+				}
+			}
+		}
+		
+		// Unknown/unloaded fallback
+		return LOCTEXT("OwnerName_UnloadedActor", "Unknown/Unloaded Actor");
+	}
+}
+
+void FBangoBlueprintEditor::PostInitAssetEditor()
+{
+	FBlueprintEditor::PostInitAssetEditor();
+	
+	OpenTime = 0.0f;
 }
 
 /*

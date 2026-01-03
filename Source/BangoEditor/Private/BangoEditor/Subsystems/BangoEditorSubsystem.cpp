@@ -58,7 +58,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 	
-	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
+	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated, false);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
 	
@@ -260,112 +260,116 @@ void CheckComponentOrigin(UActorComponent* Component)
 	}
 }
 
-void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, bool bImmediate)
 {
-	check(Outer);
-	check(ScriptContainer);
-	
-	if (!IsValid(Outer) || !Outer->IsValidLowLevel() || Outer->HasAnyFlags(RF_Transient))
+	if (bDuplicateActorsActive)
 	{
+		//OnScriptContainerDuplicated(Outer, ScriptContainer);
 		return;
 	}
 	
-	FString NewBlueprintName;
-	UPackage* ScriptPackage = nullptr;
-	UBangoScriptBlueprint* Blueprint = nullptr;
+	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
+	TWeakObjectPtr<UObject> WeakOuter = Outer;
 	
-	if (ScriptContainer->GetGuid().IsValid())
+	auto Delayed = FTimerDelegate::CreateLambda([WeakThis, WeakOuter, ScriptContainer] ()
 	{
-		/*
-		if (!Outer->HasAnyFlags(RF_WasLoaded))
+		if (!WeakThis.IsValid() || !WeakOuter.IsValid())
 		{
-			// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
-			ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
-	
-			if (!ScriptPackage)
-			{
-				UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
-				return;
-			}
-	
-			UBangoScriptBlueprint* FoundBlueprint = nullptr;
-			FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
-		
-			if (FoundBlueprint)
-			{
-				Blueprint = FoundBlueprint;
-				Blueprint->StopListeningForUndelete();
-				Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
-			}
-		}
-		*/
-	}
-	else
-	{
-		// This creation is from a new addition
-		Outer->Modify();
-		
-		ScriptContainer->GenerateGuid();
-		
-#if 1
-		// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
-		// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
-		AActor* Actor = Outer->GetTypedOuter<AActor>();
-		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
-		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->GetGuid());
-		
-		Blueprint->Modify();
-		Blueprint->Actor = Actor;
-#endif
-		
-#if 0
-		// This is storing my script blueprints inside the level .umap file
-		AActor* Actor = Outer->GetTypedOuter<AActor>();
-		ULevel* Level = Actor->GetLevel();
-		FString NominalBPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-		FString BPName = NominalBPName;
-		
-		int32 Inc = 1;
-		
-		while (FindObject<UObject>(Level, *BPName) != NULL)
-		{
-			BPName = FString::Format(TEXT("{0}_{1}"), {NominalBPName, Inc});
+			return;
 		}
 		
-		Blueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), Level, FName(BPName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
-#endif
+		UBangoEditorSubsystem* This = WeakThis.Get();
+		UObject* Outer = WeakOuter.Get();
 		
-		if (Blueprint)
+		FString NewBlueprintName;
+		UPackage* ScriptPackage = nullptr;
+		UBangoScriptBlueprint* Blueprint = nullptr;
+		
+		if (ScriptContainer->GetGuid().IsValid())
 		{
-			Blueprint->SetGuid(ScriptContainer->GetGuid());
-			
-			UClass* GenClass = Blueprint->GeneratedClass;
-			
-			if (GenClass)
+			/*
+			if (!Outer->HasAnyFlags(RF_WasLoaded))
 			{
-				UObject* CDO = GenClass->GetDefaultObject();
-				UBangoScript* BangoScript = Cast<UBangoScript>(CDO);
-				
-				if (BangoScript)
+				// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
+				ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
+		
+				if (!ScriptPackage)
 				{
-					BangoScript->SetThis_ClassType(Actor->GetClass());
+					UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
+					return;
+				}
+		
+				UBangoScriptBlueprint* FoundBlueprint = nullptr;
+				FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
+			
+				if (FoundBlueprint)
+				{
+					Blueprint = FoundBlueprint;
+					Blueprint->StopListeningForUndelete();
+					Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
+				}
+			}
+			*/
+		}
+		else
+		{
+			// This creation is from a new addition
+			Outer->Modify();
+			
+			ScriptContainer->GenerateGuid();
+			
+	#if 1
+			// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
+			// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
+			AActor* Actor = Outer->GetTypedOuter<AActor>();
+			ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
+			
+			FString ShortPackageName = FPackageName::GetShortName(ScriptPackage);
+
+			Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, ShortPackageName, ScriptContainer->GetGuid());
+			
+			Blueprint->Modify();
+			Blueprint->Actor = Actor;
+	#endif
+			
+			if (Blueprint)
+			{
+				Blueprint->SetGuid(ScriptContainer->GetGuid());
+				
+				UClass* GenClass = Blueprint->GeneratedClass;
+				
+				if (GenClass)
+				{
+					UObject* CDO = GenClass->GetDefaultObject();
+					UBangoScript* BangoScript = Cast<UBangoScript>(CDO);
+					
+					if (BangoScript)
+					{
+						BangoScript->SetThis_ClassType(Actor->GetClass());
+					}
 				}
 			}
 		}
 
-		//check(Blueprint);
-	}
-
-	if (Blueprint /*&& ScriptPackage*/)
+		if (Blueprint)
+		{
+			ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
+		
+			FAssetRegistryModule::AssetCreated(Blueprint);
+			(void)ScriptPackage->MarkPackageDirty();
+		
+			// Tells FBangoScript property type customizations to regenerate
+			This->OnScriptGenerated.Broadcast();	
+		}
+	});
+	
+	if (!bImmediate)
 	{
-		ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
-	
-		FAssetRegistryModule::AssetCreated(Blueprint);
-		(void)ScriptPackage->MarkPackageDirty();
-	
-		// Tells FBangoScript property type customizations to regenerate
-		OnScriptGenerated.Broadcast();	
+		GEditor->GetTimerManager()->SetTimerForNextTick(Delayed);
+	}
+	else
+	{
+		Delayed.Execute();
 	}
 }
 
@@ -480,11 +484,27 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 
 void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
-	auto DelayOneFrame = [this, Outer, ScriptContainer] ()
-	{
-		check(IsValid(Outer));
-		check(ScriptContainer);
+	// When an actor is added to the world containing a CDO ScriptComponent, this function might be called. 
+	TWeakObjectPtr<UObject> WeakOuter = Outer;
+	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
 	
+	auto DelayOneFrame = [WeakThis, WeakOuter, ScriptContainer] ()
+	{
+		if (!WeakThis.IsValid() || !WeakOuter.IsValid())
+		{
+			return;
+		}
+				
+		UObject* Outer = WeakOuter.Get();
+		UBangoEditorSubsystem* This = WeakThis.Get();
+		
+		if (!ScriptContainer->GetScriptClass())
+		{
+			// Switch over to the created path; this path happens when you drag a content blueprint into the scene as it "duplicates" the content asset
+			This->OnScriptContainerCreated(Outer, ScriptContainer, true);
+			return;
+		}
+		
 		// Stash the referenced blueprint
 		UBangoScriptBlueprint* OldBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
 		
@@ -506,8 +526,10 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 			
 		if (OldBlueprint)
 		{
-			Blueprint = DuplicateObject(OldBlueprint, NewScriptPackage, FName(NewBlueprintName));
-			Blueprint->Actor = Outer->GetTypedOuter<AActor>();
+			Blueprint = DuplicateObject(OldBlueprint, NewScriptPackage, FName(FPackageName::GetShortName(NewScriptPackage)));
+			//FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
+			//Blueprint->Rename(*BPName, nullptr, REN_NonTransactional | REN_DontCreateRedirectors);
+			Blueprint->Actor = Outer->GetTypedOuter<AActor>();	
 		}
 
 		if (Blueprint)
@@ -518,7 +540,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 			(void)NewScriptPackage->MarkPackageDirty();
 	
 			// Tells FBangoScript property type customizations to regenerate
-			OnScriptGenerated.Broadcast();	
+			This->OnScriptGenerated.Broadcast();	
 		}
 	};
 	

@@ -113,10 +113,11 @@ void UBangoScriptComponent::OnComponentCreated()
 		return;
 	}
 	
-	// If it already has a Guid, it must have been a copy-paste.
+	// TODO how do we handle copy-paste? PostEditImport?
+	// If it already has a Guid, it was a duplicate or a copy paste, let PostDuplicate handle it for duplicate
 	if (Script.GetGuid().IsValid())
 	{
-		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+		//FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 	}
 	else
 	{
@@ -175,26 +176,27 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 		// Component is part of a blueprint; requires different handling, UE duplicates everything a million billion times and it's very annoying
 		if (!GetOwner()->HasAnyFlags(RF_WasLoaded))
 		{
-			TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
+			//TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
 		
-			auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
-			{
-				if (!WeakThis.IsValid())
-				{
-					return;
-				}
+			//auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
+			//{
+				//if (!WeakThis.IsValid())
+				//{
+				//	return;
+				//}
 			
-				UBangoScriptComponent* Component = WeakThis.Get();
+				//UBangoScriptComponent* Component = WeakThis.Get();
 			
-				if (!Bango::IsComponentInEditedLevel(Component))
-				{
-					return;
-				}
+				//if (!Bango::IsComponentInEditedLevel(Component))
+				//{
+				//	return;
+				//}
 			
-				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(Component, &Component->Script);
-			});
+				//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+			//});
 	
-			this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
+			//this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
 		}
 	}
 }
@@ -245,7 +247,7 @@ void UBangoScriptComponent::OnRename()
 
 	if (Blueprint && Blueprint->GetName() == GetName())
 	{
-		Blueprint->UpdateAutoName(this);
+		//Blueprint->UpdateAutoName(this);
 	}
 }
 #endif
@@ -334,7 +336,17 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		}
 	}
 	
-	FText LabelText = FText::FromString(Description);
+	FText LabelText;
+	
+	if (!Description.IsEmpty())
+	{
+		LabelText = FText::FromString(Description);
+	}
+	else
+	{
+		LabelText = FText::FromString(GetName());
+	}
+	
 	FVector2D TextSize = FVector2D::ZeroVector;
 	UFont* Font = GEngine->GetLargeFont();
 	
