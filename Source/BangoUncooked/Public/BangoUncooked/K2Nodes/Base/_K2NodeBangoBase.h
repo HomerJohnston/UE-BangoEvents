@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include "K2Node_CallFunction.h"
-#include "KismetCompiler.h"
 
 #include "_K2NodeBangoBase.generated.h"
+
+class UBangoScriptBlueprint;
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -40,6 +40,8 @@ public:
 	FLinearColor GetNodeTitleColor() const override;
 	
 	FLinearColor GetNodeTitleTextColor() const override;
+	
+	BANGOUNCOOKED_API UBangoScriptBlueprint* GetBangoScriptBlueprint() const;
 };
 
 #undef LOCTEXT_NAMESPACE

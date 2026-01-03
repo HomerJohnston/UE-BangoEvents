@@ -4,6 +4,7 @@
 #include "SCommentBubble.h"
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
 #include "BangoEditor/BangoColor.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoThis.h"
 #include "Styling/SlateIconFinder.h"
@@ -100,18 +101,25 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 
 	TSharedRef<SOverlay> NodeOverlay = SNew(SOverlay);
 
-	TSharedRef<SWidget> TitleText = SNew(STextBlock)//AssignNew(InlineEditableText, SInlineEditableTextBlock)
+	TSharedRef<SWidget> TitleText = SNew(STextBlock)
 		.TextStyle( FAppStyle::Get(), "Graph.Node.NodeTitle" )
-		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_ActorLabel)
-		.Text(this, &SGraphNode_BangoThis::GetNodeCompactTitle_Impl)
+		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_NodeTitle)
+		.Text(this, &SGraphNode_BangoThis::Text_NodeTitle)
 		.MinDesiredWidth(20.0f)
 		.OverflowPolicy(ETextOverflowPolicy::Ellipsis);
+
+	TSharedRef<SWidget> ActorLabelText = SNew(STextBlock)
+		.TextStyle(FAppStyle::Get(), "Menu.Heading")
+		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_ActorLabel)
+		.Text(this, &SGraphNode_BangoThis::Text_ActorLabel)
+		.MinDesiredWidth(20.0f)
+		.OverflowPolicy(ETextOverflowPolicy::MultilineEllipsis);
 
 	TSubclassOf<AActor> Subclass = GetBangoThisNode()->GetClassType();
 	
 	TSharedPtr<SImage> ClassIcon = SNew(SImage)
 		.Image(FSlateIconFinder::FindIconBrushForClass(Subclass ? Subclass : NULL))
-		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_ActorLabel);
+		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_NodeTitle);
 	
 	TSharedRef<SHorizontalBox> Box = SNew(SHorizontalBox);
 	
@@ -135,17 +143,19 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 		[
 			SNew(SBox)
 			.HeightOverride(16)
+			.MaxDesiredWidth(120)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				[
-					SNew(SBox)
-					.MaxDesiredWidth(160)
-					[
-						TitleText
-					]
-				]
+				TitleText
+			]
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(-20, 2, -40, 4)
+		[
+			SNew(SBox)
+			.MaxDesiredWidth(120)
+			[
+				ActorLabelText
 			]
 		]
 	];
@@ -166,7 +176,7 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 	// Calculate a padding amount clamping to the min/max settings
 	float PinPaddingRight = MinNodePadding;
 
-	EVerticalAlignment PinVerticalAlignment = VAlign_Center;
+	EVerticalAlignment PinVerticalAlignment = VAlign_Top; // VAlign_Center;
 
 	// But if this is an impure node, we'll align the pins to the top, 
 	// and add some padding so that the exec pins line up with the exec pins of other nodes
@@ -325,20 +335,48 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 	CreateOutputSideAddButton(RightNodeBox);
 }
 
-FText SGraphNode_BangoThis::GetNodeCompactTitle_Impl() const
+FText SGraphNode_BangoThis::Text_NodeTitle() const
 {
 	UK2Node_BangoThis* Node = GetBangoThisNode();
-	check(Node);
 	
 	return Node->GetNodeTitle(ENodeTitleType::Type::FullTitle);
+}
+
+FText SGraphNode_BangoThis::Text_ActorLabel() const
+{
+	UK2Node_BangoThis* Node = GetBangoThisNode();
+
+	UBangoScriptBlueprint* Blueprint = Node->GetBangoScriptBlueprint();
+	
+	if (Blueprint && Blueprint->GetActor().IsValid())
+	{
+		return FText::FromString(Blueprint->GetActor()->GetActorLabel());
+	}
+	else
+	{
+		return LOCTEXT("ThisNode_ActorLabel_Unloaded", "Unloaded");
+	}
+}
+
+FSlateColor SGraphNode_BangoThis::ColorAndOpacity_NodeTitle() const
+{
+	return BangoColor::White;
 }
 
 FSlateColor SGraphNode_BangoThis::ColorAndOpacity_ActorLabel() const
 {
 	UK2Node_BangoThis* Node = GetBangoThisNode();
-	check(Node);
+
+	UBangoScriptBlueprint* Blueprint = Node->GetBangoScriptBlueprint();
 	
-	return BangoColor::White;
+	if (Blueprint && Blueprint->GetActor().IsValid())
+	{
+		return BangoColor::Gray;
+	}
+	else
+	{
+		return BangoColor::Red;
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -20,6 +20,11 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 // ----------------------------------------------
 
 #if WITH_EDITOR
+const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
+{
+	return Actor;
+}
+
 void UBangoScriptBlueprint::SoftDelete()
 {	
 	AddToRoot();

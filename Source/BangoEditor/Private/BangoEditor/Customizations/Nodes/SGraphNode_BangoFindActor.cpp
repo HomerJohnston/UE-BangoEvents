@@ -270,46 +270,6 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 						TitleText
 					]
 				]
-				+ SHorizontalBox::Slot()
-				.VAlign(VAlign_Center)
-				.AutoWidth()
-				[
-					SNew(SBox)
-					.Visibility(this, &SGraphNode_BangoFindActor::Visibility_BangoNameIndicator)
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.Padding(8, 0)
-						.VAlign(VAlign_Fill)
-						[
-							SNew(SSeparator)
-							.Orientation(Orient_Vertical)
-							.Thickness(1)
-							.SeparatorImage(FAppStyle::Get().GetBrush(TEXT("Menu.Separator")))
-						]
-						/*
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.Padding(0, 0)
-						.VAlign(VAlign_Center)
-						[
-							SNew(STextBlock)
-							.WrapTextAt(128.0f)
-							.TextStyle(FAppStyle::Get(), "Menu.Heading")
-							// .TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitleExtraLines")
-							// .TextStyle(FAppStyle::Get(), "DialogButtonText")
-							// .TextStyle(FAppStyle::Get(), "NormalText.Subdued")
-							// .TextStyle(FAppStyle::Get(), "Menu.Label")
-							// .TextStyle(FAppStyle::Get(), "HintText")
-							// .TextStyle(FAppStyle::Get(), "FlatButton.DefaultTextStyle")
-							// .TextStyle(FAppStyle::Get(), "MessageLog")
-							// .TextStyle(FAppStyle::Get(), "TreeTable.NameText")
-							.Text(this, &SGraphNode_BangoFindActor::Text_BangoNameIndicator)
-						]
-						*/
-					]
-				]
 			]
 		]
 		+ SVerticalBox::Slot()
@@ -350,7 +310,7 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 	// Calculate a padding amount clamping to the min/max settings
 	float PinPaddingRight = MinNodePadding;
 
-	EVerticalAlignment PinVerticalAlignment = VAlign_Center;
+	EVerticalAlignment PinVerticalAlignment = VAlign_Top; // VAlign_Center;
 
 	// But if this is an impure node, we'll align the pins to the top, 
 	// and add some padding so that the exec pins line up with the exec pins of other nodes

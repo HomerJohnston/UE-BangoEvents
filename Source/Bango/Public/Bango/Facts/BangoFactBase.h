@@ -44,16 +44,17 @@ public:
 
 // ----------------------------------------------
 
+// TODO should I remove inline and move to a CPP or not
 #define DEFINE_BANGO_FACT_GETSET(TYPE)\
 namespace Bango\
 {\
-	void Set(FName Name, TYPE NewValue, UObject* WorldContext = nullptr)\
+	inline void Set(FName Name, TYPE NewValue, UObject* WorldContext = nullptr)\
 	{\
 		TInstancedStruct<FBangoFactBase> NewFact = TInstancedStruct<FBangoFactBase>::Make<FBangoFact_##TYPE>(NewValue);\
 		UBangoFactSubsystem::SetFact(Name, NewFact, WorldContext);\
 	}\
 	\
-	bool GetValue(FName Name, TYPE& OutValue, UObject* WorldContext = nullptr)\
+	inline bool GetValue(FName Name, TYPE& OutValue, UObject* WorldContext = nullptr)\
 	{\
 		TInstancedStruct<FBangoFactBase>* Fact = UBangoFactSubsystem::GetFact(Name, WorldContext);\
 		\

@@ -2,9 +2,12 @@
 
 #include "EdGraphSchema_K2_Actions.h"
 #include "K2Node_Literal.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
+#include "WorldPartition/ActorDescContainerInstance.h"
+#include "WorldPartition/WorldPartition.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 
@@ -112,10 +115,48 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
 	AppearanceInfo.InstructionText = FText::GetEmpty();
 	AppearanceInfo.PIENotifyText = GetPIEStatus();
-	//AppearanceInfo.WarningText = INVTEXT("Test Error Text");
+	
+	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
+	
+	FText WarningTextFormat = LOCTEXT("AppearanceWarningText_Blueprint", "({0})");
+	
+	if (Blueprint && !Blueprint->GetActor().IsNull())
+	{
+		TSoftObjectPtr<AActor> Actor = Blueprint->GetActor();
+		
+		if (Actor.IsValid())
+		{
+			AppearanceInfo.WarningText = FText::Format(WarningTextFormat, { FText::FromString(Actor->GetActorLabel()) } );
+		}
+		else
+		{
+			UWorld* World = Actor->GetWorld();
 
-	// Doesn't work
-	//AppearanceInfo.CornerImage = FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Icon_Plunger);
+			if (World)
+			{
+				UWorldPartition* WorldPartition = World->GetWorldPartition();
+	
+				if (WorldPartition)
+				{
+					UActorDescContainerInstance* ActorDescContainer = WorldPartition->GetActorDescContainerInstance();
+		
+					if (ActorDescContainer)
+					{
+						const FWorldPartitionActorDescInstance* ActorDesc = ActorDescContainer->GetActorDescInstanceByPath(Actor.ToSoftObjectPath());
+			
+						if (ActorDesc)
+						{
+							AppearanceInfo.WarningText = FText::Format(WarningTextFormat, { FText::FromName(ActorDesc->GetActorLabel()) } );
+						}
+					}
+				}
+			}
+		}
+
+	}
+	
+	// Doesn't do anything. Unimplemented UE feature.
+	//AppearanceInfo.CornerImage = ???
 
 	return AppearanceInfo;
 }

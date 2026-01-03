@@ -1,6 +1,7 @@
 ﻿#include "Bango/Components/BangoScriptComponent.h"
 
 #include "Bango/Core/BangoScript.h"
+#include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/BangoHelpers.h"
@@ -76,29 +77,39 @@ void UBangoScriptComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
 	
-	// PrintState("OnComponentCreated");
-	
-	// With RF_LoadCompleted this is a default actor component.
-	
-	// Because UE creates and destroys components a thousand times a second, we will not use this.
-	// We will instead create the script using the details customization on the script container. This is probably more reliable anyway.  
-	if (HasAllFlags(RF_LoadCompleted))
+	if (!Bango::IsComponentInEditedLevel(this))
 	{
-		/*
-		if (this->GetWorld() && this->ComponentIsInPersistentLevel(false))
-		{
-			auto Lambda = FTimerDelegate::CreateLambda([this] ()
-			{
-				FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
-			});
-			this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
-		}
-		*/
 		return;
 	}
 	
-	if (!Bango::IsComponentInEditedLevel(this))
+	// PrintState("OnComponentCreated");
+	
+	// With RF_LoadCompleted this is a default actor component. We rely on PostDuplicated instead.
+	if (HasAllFlags(RF_LoadCompleted))
 	{
+		/*
+		TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
+		
+		auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
+		{
+			if (!WeakThis.IsValid())
+			{
+				return;
+			}
+			
+			UBangoScriptComponent* Component = WeakThis.Get();
+			
+			if (!Bango::IsComponentInEditedLevel(Component))
+			{
+				return;
+			}
+			
+			BangoUtility::Debug::PrintComponentState(Component, "Created (next frame)...");
+			// FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Component, &Script);
+		});
+	
+		this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
+		*/
 		return;
 	}
 	
@@ -149,9 +160,42 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 #if WITH_EDITOR
 void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 {
-	if (Bango::IsComponentInEditedLevel(this))
+	if (!Bango::IsComponentInEditedLevel(this))
 	{
+		return;
+	}
+	
+	if (CreationMethod == EComponentCreationMethod::Instance)
+	{
+		// Component was added to an actor in the level; this case is very easy to handle, PostDuplicate is only called on real human-initiated duplications
 		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+	}
+	else
+	{
+		// Component is part of a blueprint; requires different handling, UE duplicates everything a million billion times and it's very annoying
+		if (!GetOwner()->HasAnyFlags(RF_WasLoaded))
+		{
+			TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
+		
+			auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
+			{
+				if (!WeakThis.IsValid())
+				{
+					return;
+				}
+			
+				UBangoScriptComponent* Component = WeakThis.Get();
+			
+				if (!Bango::IsComponentInEditedLevel(Component))
+				{
+					return;
+				}
+			
+				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(Component, &Component->Script);
+			});
+	
+			this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
+		}
 	}
 }
 
@@ -159,14 +203,20 @@ void UBangoScriptComponent::PostApplyToComponent()
 {
 	Super::PostApplyToComponent();
 	
-	// If it already has a Guid, it must have been a copy-paste.
-	if (Script.GetGuid().IsValid())
+	if (CreationMethod == EComponentCreationMethod::Instance)
 	{
-		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+		// If it already has a Guid, it must have been a copy-paste.
+		if (Script.GetGuid().IsValid())
+		{
+			FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+		}
+		else
+		{
+			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+		}
 	}
 	else
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
 	}
 }
 
@@ -313,6 +363,7 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 	}
 	
 	{
+		// Background
 		float X = ScreenLocation.X - 0.5f * TotalWidth - Padding;
 		float Y = ScreenLocation.Y - 0.5f * TotalHeight - Padding;
 		float XL = TotalWidth + 2.0f * Padding;
@@ -322,9 +373,11 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 	
 		UTexture* BackgroundTex = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture"));
 		
+		// Larger whitish rectangle
 		Canvas->SetDrawColor(FColor(150, 150, 150, 150 * Alpha));
 		Canvas->DrawTile(BackgroundTex, X - Border, Y - Border, XL + 2.0 * Border, YL + 2.0 * Border, UV.X, UV.Y, UV.Z, UV.Z);
 		
+		// Darker background
 		Canvas->SetDrawColor(FColor(20, 20, 20, 150 * Alpha));
 		Canvas->DrawTile(BackgroundTex, X, Y, XL, YL, UV.X, UV.Y, UV.Z, UV.Z);
 	}

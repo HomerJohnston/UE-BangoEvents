@@ -41,19 +41,17 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
 	FEditorDelegates::PreSaveWorldWithContext.AddUObject(this, &ThisClass::PreSaveWorldWithContext);
 	
-	/*
-	FEditorDelegates::OnAssetPostImport.AddUObject(this, &ThisClass::OnAssetPostImport);
-	FEditorDelegates::OnPackageDeleted.AddUObject(this, &ThisClass::OnPackageDeleted);
-	FEditorDelegates::OnAssetsAddExtraObjectsToDelete.AddUObject(this, &ThisClass::OnAssetsAddExtraObjectsToDelete);
-	FEditorDelegates::OnAssetsPreDelete.AddUObject(this, &ThisClass::OnAssetsPreDelete);
-	FEditorDelegates::OnAssetsDeleted.AddUObject(this, &ThisClass::OnAssetsDeleted);
+	// FEditorDelegates::OnAssetPostImport.AddUObject(this, &ThisClass::OnAssetPostImport);
+	// FEditorDelegates::OnPackageDeleted.AddUObject(this, &ThisClass::OnPackageDeleted);
+	// FEditorDelegates::OnAssetsAddExtraObjectsToDelete.AddUObject(this, &ThisClass::OnAssetsAddExtraObjectsToDelete);
+	// FEditorDelegates::OnAssetsPreDelete.AddUObject(this, &ThisClass::OnAssetsPreDelete);
+	// FEditorDelegates::OnAssetsDeleted.AddUObject(this, &ThisClass::OnAssetsDeleted);
 	FEditorDelegates::OnDuplicateActorsBegin.AddUObject(this, &ThisClass::OnDuplicateActorsBegin);
 	FEditorDelegates::OnDuplicateActorsEnd.AddUObject(this, &ThisClass::OnDuplicateActorsEnd);
-	FCoreUObjectDelegates::OnObjectConstructed.AddUObject(this, &ThisClass::OnObjectConstructed);
-	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
-	FCoreUObjectDelegates::OnAssetLoaded.AddUObject(this, &ThisClass::OnAssetLoaded);
-	FCoreUObjectDelegates::OnObjectModified.AddUObject(this, &ThisClass::OnObjectModified);
-	*/
+	// FCoreUObjectDelegates::OnObjectConstructed.AddUObject(this, &ThisClass::OnObjectConstructed);
+	// FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
+	// FCoreUObjectDelegates::OnAssetLoaded.AddUObject(this, &ThisClass::OnAssetLoaded);
+	// FCoreUObjectDelegates::OnObjectModified.AddUObject(this, &ThisClass::OnObjectModified);
 	
 	FCoreUObjectDelegates::OnObjectPreSave.AddUObject(this, &ThisClass::OnObjectPreSave);
 	
@@ -150,27 +148,27 @@ void UBangoEditorSubsystem::OnAssetsDeleted(const TArray<UClass*>& Classes)
 // TODO erase??????
 void UBangoEditorSubsystem::OnDuplicateActorsBegin()
 {
-	//UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsBegin"));
+	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsBegin"));
 	bDuplicateActorsActive = true;
 }
 
 // TODO erase??????
 void UBangoEditorSubsystem::OnDuplicateActorsEnd()
 {
-	//UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsEnd"));
+	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsEnd"));
 	bDuplicateActorsActive = false;
 }
 
 // TODO erase
 void UBangoEditorSubsystem::OnLevelActorAdded(AActor* Actor) const
 {
-	//UE_LOG(LogBango, Display, TEXT("OnLevelActorAdded: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
+	UE_LOG(LogBango, Display, TEXT("OnLevelActorAdded: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 }
 
 // TODO erase
 void UBangoEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 {
-	//UE_LOG(LogBango, Display, TEXT("OnLevelActorDeleted: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
+	UE_LOG(LogBango, Display, TEXT("OnLevelActorDeleted: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 	
 	TArray<UActorComponent*> Comps;
 	Actor->GetComponents(Comps);
@@ -316,6 +314,9 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
 		FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
 		Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, BPName , ScriptContainer->GetGuid());
+		
+		Blueprint->Modify();
+		Blueprint->Actor = Actor;
 #endif
 		
 #if 0
@@ -506,6 +507,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		if (OldBlueprint)
 		{
 			Blueprint = DuplicateObject(OldBlueprint, NewScriptPackage, FName(NewBlueprintName));
+			Blueprint->Actor = Outer->GetTypedOuter<AActor>();
 		}
 
 		if (Blueprint)
@@ -520,17 +522,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		}
 	};
 	
-	//GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
-	
-	/*
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->ScriptClass);
-	
-	FString BPName;
-	UPackage* PackageForDuplicate = Bango::Editor::MakePackageForScript(Outer, BPName);
-	check(PackageForDuplicate);
-*/
-	
-	//FGuid = 
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
 }
 
 void UBangoEditorSubsystem::OnRequestNewID(AActor* Actor) const

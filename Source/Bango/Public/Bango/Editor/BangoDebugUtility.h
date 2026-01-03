@@ -9,8 +9,10 @@ namespace BangoUtility
 	{
 		static void PrintComponentState(UActorComponent* Component, FString Msg)
 		{
-			uint32 Flags = (uint32)Component->GetOwner()->GetFlags();
-			uint32 IntFlags = (uint32)Component->GetOwner()->GetInternalFlags();
+			UE_LOG(LogBango, Display, TEXT("Owner Actor: %s, package: %s"), *Component->GetOwner()->GetActorLabel(), *Component->GetOwner()->GetPackage()->GetName());
+			
+			uint32 Flags = (uint32)Component->GetFlags();
+			uint32 IntFlags = (uint32)Component->GetInternalFlags();
 	
 			FString BitString1;
 			FString BitString2;

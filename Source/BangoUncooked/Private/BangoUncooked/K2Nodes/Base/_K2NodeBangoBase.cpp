@@ -2,6 +2,7 @@
 
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
+#include "Bango/Core/BangoScriptBlueprint.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -72,6 +73,11 @@ FLinearColor UK2Node_BangoBase::GetNodeTitleColor() const
 FLinearColor UK2Node_BangoBase::GetNodeTitleTextColor() const
 {
 	return FLinearColor::Gray;
+}
+
+UBangoScriptBlueprint* UK2Node_BangoBase::GetBangoScriptBlueprint() const
+{
+	return Cast<UBangoScriptBlueprint>(GetBlueprint());
 }
 
 #undef LOCTEXT_NAMEPSACE

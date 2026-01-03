@@ -46,8 +46,8 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	if (Component->HasAnyFlags(RF_MirroredGarbage | RF_BeginDestroyed | RF_FinishDestroyed))
 		return false;
 	
-	if (Component->HasAnyFlags(RF_NeedPostLoad))
-		return false;
+	//if (Component->HasAnyFlags(RF_NeedPostLoad))
+	//	return false;
 	
 	if (Component->GetPackage() == GetTransientPackage())
 		return false;

@@ -30,7 +30,11 @@ public:
 
 	void UpdateCompactNode();
 
-	FText GetNodeCompactTitle_Impl() const;
+	FText Text_NodeTitle() const;
 
+	FText Text_ActorLabel() const;
+	
+	FSlateColor ColorAndOpacity_NodeTitle() const;
+	
 	FSlateColor ColorAndOpacity_ActorLabel() const;
 };

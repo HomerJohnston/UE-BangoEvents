@@ -40,10 +40,12 @@ public:
 	
 	void OnUnregister() override;
 	
+	// This is only used to spawn script assets for level instance added components
 	void OnComponentCreated() override;
 
 	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	
+	// This is only used to spawn script assets for CDO spawned components (actor dragged into world) as well as for duplicating any actors or any instance components
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
 	void PostApplyToComponent() override;

@@ -21,15 +21,18 @@ protected:
 	UPROPERTY()
 	FGuid ScriptGuid;
 	
-	/** Every script must be tied to an actor. This is used to help determine when to save or delete script assets. */
+	/** Scripts *may* be tied to an actor. */
 	UPROPERTY()
-	FGuid ActorGuid;
+	TSoftObjectPtr<AActor> Actor;
 	
 	FDelegateHandle ListenForUndeleteHandle;
 	
 	FName OverriddenName;
 	
 	FString DeletedName;
+	
+public:
+	const TSoftObjectPtr<AActor> GetActor() const;
 #endif
 
 #if WITH_EDITOR
