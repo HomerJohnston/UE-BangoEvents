@@ -575,23 +575,23 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> 
 
 UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
 {
-	/*
-	auto Subsystem = Get();
+	TArray<UObject*> AllTransientObjects;
+	GetObjectsWithOuter(GetTransientPackage(), AllTransientObjects);
 	
-	int32 Index = Subsystem->DeletedScripts.IndexOfByPredicate( [Guid] (const TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>& Element)
+	int32 Index = AllTransientObjects.IndexOfByPredicate([Guid] (const UObject* Element)
 	{
-		return Element.Key == Guid;
+		if (const UBangoScriptBlueprint* Script = Cast<UBangoScriptBlueprint>(Element))
+		{
+			return Script->ScriptGuid == Guid;
+		}
+		
+		return false;
 	});
 	
-	if (Index >= 0)
+	if (Index != INDEX_NONE)
 	{
-		TStrongObjectPtr<UBangoScriptBlueprint> Popped = Subsystem->DeletedScripts[Index].Value;
-		
-		Subsystem->DeletedScripts.RemoveAt(Index);
-		
-		return Popped.Get();
+		return Cast<UBangoScriptBlueprint>(AllTransientObjects[Index]);
 	}
-	*/
 	
 	return nullptr;
 }

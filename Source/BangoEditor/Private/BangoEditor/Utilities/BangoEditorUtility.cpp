@@ -134,7 +134,7 @@ UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const
 	
 	if (ScriptBlueprint)
 	{
-		ScriptBlueprint->Rename(nullptr, InPackage, REN_DontCreateRedirectors);
+		ScriptBlueprint->Rename(*ScriptBlueprint->RetrieveDeletedName(), InPackage, REN_DontCreateRedirectors);
 	}
 	else
 	{

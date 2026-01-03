@@ -31,7 +31,8 @@ void UBangoScriptBlueprint::SoftDelete()
 	
 	DeletedName = GetName();
 	
-	Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
+	// I need to rename the script here to something guaranteed unique, because I can't put multiple scripts with the same name all into the transient package
+	//Rename(*ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
 	
 	ClearEditorReferences();
 	

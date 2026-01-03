@@ -13,8 +13,6 @@ public:
 	void Tick(float DeltaTime) override;
 	//FActionMenuContent OnCreateGraphActionMenu_Impl(UEdGraph* InGraph, const FVector2f& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed);
 	
-	void OnDropActor(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* EdGraph, const UE::Math::TVector2<double>& Vector2) const;
-
 	void OnDropActors(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* EdGraph, const UE::Math::TVector2<float>& Vector2) const;
 	
 	// Sadly Epic didn't expose enough functionality for me to prevent adding multiple graphs 

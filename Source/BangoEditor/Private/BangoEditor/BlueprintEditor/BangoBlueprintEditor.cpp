@@ -40,8 +40,6 @@ void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, U
 	{
 		InEvents.OnCreateActionMenuAtLocation = SGraphEditor::FOnCreateActionMenuAtLocation::CreateSP(this, &FBangoBlueprintEditor::OnCreateGraphActionMenu);
 	}
-	
-	InEvents.OnDropActor = SGraphEditor::FOnDropActor::CreateSP(this, &FBangoBlueprintEditor::OnDropActor);
 }
 
 void FBangoBlueprintEditor::Tick(float DeltaTime)
@@ -74,11 +72,6 @@ void FBangoBlueprintEditor::Tick(float DeltaTime)
 			check(DeferredNamespaceImports.IsEmpty());
 		}
 	}
-}
-
-void FBangoBlueprintEditor::OnDropActor(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* EdGraph, const UE::Math::TVector2<double>& Vector2) const
-{
-	UE_LOG(LogBango, Display, TEXT("Test 1"));
 }
 
 void FBangoBlueprintEditor::OnDropActors(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* Graph, const UE::Math::TVector2<float>& DropLocation) const
