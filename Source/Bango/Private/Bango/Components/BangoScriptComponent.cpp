@@ -1,5 +1,6 @@
 ﻿#include "Bango/Components/BangoScriptComponent.h"
 
+#include "AssetToolsModule.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
@@ -121,7 +122,7 @@ void UBangoScriptComponent::OnComponentCreated()
 	}
 	else
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, GetName(), false);
 	}
 }
 #endif
@@ -169,7 +170,7 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 	if (CreationMethod == EComponentCreationMethod::Instance)
 	{
 		// Component was added to an actor in the level; this case is very easy to handle, PostDuplicate is only called on real human-initiated duplications
-		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, GetName());
 	}
 	else
 	{
@@ -193,7 +194,7 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 				//}
 			
 				//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
-				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, GetName());
 			//});
 	
 			//this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
@@ -210,11 +211,11 @@ void UBangoScriptComponent::PostApplyToComponent()
 		// If it already has a Guid, it must have been a copy-paste.
 		if (Script.GetGuid().IsValid())
 		{
-			FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+			//FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
 		}
 		else
 		{
-			FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
+			//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
 		}
 	}
 	else
@@ -245,8 +246,16 @@ void UBangoScriptComponent::OnRename()
 	
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.GetScriptClass());
 
-	if (Blueprint && Blueprint->GetName() == GetName())
+	if (Blueprint)
 	{
+		FAssetToolsModule& AssetToolsModule =
+		FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+
+		TArray<FAssetRenameData> Renames;
+		Renames.Emplace(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), GetName());
+
+		AssetToolsModule.Get().RenameAssets(Renames);
+		
 		//Blueprint->UpdateAutoName(this);
 	}
 }

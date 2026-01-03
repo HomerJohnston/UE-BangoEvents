@@ -112,6 +112,7 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
 	AppearanceInfo.InstructionText = GetOwnerNameAsText();
 	AppearanceInfo.PIENotifyText = GetPIEStatus();
+	AppearanceInfo.WarningText = WarningText;
 
 	const float StartTimeNoFade = 2.0f;
 	const float FadeDuration = 4.0f;
@@ -179,6 +180,11 @@ FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 		// Unknown/unloaded fallback
 		return LOCTEXT("OwnerName_UnloadedActor", "Unknown/Unloaded Actor");
 	}
+}
+
+void FBangoBlueprintEditor::SetWarningText(const FText& InText)
+{
+	WarningText = InText;
 }
 
 void FBangoBlueprintEditor::PostInitAssetEditor()

@@ -58,7 +58,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 	
-	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated, false);
+	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
 	
@@ -260,7 +260,7 @@ void CheckComponentOrigin(UActorComponent* Component)
 	}
 }
 
-void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, bool bImmediate)
+void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)
 {
 	if (bDuplicateActorsActive)
 	{
@@ -271,7 +271,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
 	TWeakObjectPtr<UObject> WeakOuter = Outer;
 	
-	auto Delayed = FTimerDelegate::CreateLambda([WeakThis, WeakOuter, ScriptContainer] ()
+	auto Delayed = FTimerDelegate::CreateLambda([WeakThis, WeakOuter, ScriptContainer, Name] ()
 	{
 		if (!WeakThis.IsValid() || !WeakOuter.IsValid())
 		{
@@ -281,7 +281,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		UBangoEditorSubsystem* This = WeakThis.Get();
 		UObject* Outer = WeakOuter.Get();
 		
-		FString NewBlueprintName;
+		FString NewBlueprintName = Name;
 		UPackage* ScriptPackage = nullptr;
 		UBangoScriptBlueprint* Blueprint = nullptr;
 		
@@ -322,7 +322,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 			// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
 			// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
 			AActor* Actor = Outer->GetTypedOuter<AActor>();
-			ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
+			ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewBlueprintName, ScriptContainer->GetGuid());
 			
 			FString ShortPackageName = FPackageName::GetShortName(ScriptPackage);
 
@@ -482,13 +482,13 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	}
 }
 
-void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)
 {
 	// When an actor is added to the world containing a CDO ScriptComponent, this function might be called. 
 	TWeakObjectPtr<UObject> WeakOuter = Outer;
 	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
 	
-	auto DelayOneFrame = [WeakThis, WeakOuter, ScriptContainer] ()
+	auto DelayOneFrame = [WeakThis, WeakOuter, ScriptContainer, Name] ()
 	{
 		if (!WeakThis.IsValid() || !WeakOuter.IsValid())
 		{
@@ -501,7 +501,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		if (!ScriptContainer->GetScriptClass())
 		{
 			// Switch over to the created path; this path happens when you drag a content blueprint into the scene as it "duplicates" the content asset
-			This->OnScriptContainerCreated(Outer, ScriptContainer, true);
+			This->OnScriptContainerCreated(Outer, ScriptContainer, Name, true);
 			return;
 		}
 		
@@ -513,8 +513,8 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		ScriptContainer->GenerateGuid();		
 		
 		// Dupe the blueprint
-		FString NewBlueprintName;
-		UPackage* NewScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->GetGuid());
+		FString BPName = Name;
+		UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, BPName, ScriptContainer->GetGuid());
 	
 		if (!NewScriptPackage)
 		{

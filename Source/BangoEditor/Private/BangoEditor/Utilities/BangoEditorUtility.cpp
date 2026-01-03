@@ -40,7 +40,7 @@ AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
 	return nullptr;
 }
 
-UPackage* Bango::Editor::MakePackageForScript(UObject* Outer, FString& NewBPName, FGuid Guid)
+UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, FString& InOutBPName, FGuid Guid)
 {
 	if (!IsValid(Outer) || Outer->GetFlags() == RF_NoFlags || Outer->HasAnyFlags(RF_BeingRegenerated))
 	{
@@ -64,10 +64,10 @@ UPackage* Bango::Editor::MakePackageForScript(UObject* Outer, FString& NewBPName
 		return nullptr;
 	}
 	
-	return MakeScriptPackage_Internal(Actor, OuterPackage, NewBPName, Guid);
+	return MakeScriptPackage_Internal(Actor, OuterPackage, InOutBPName, Guid);
 }
 
-UPackage* Bango::Editor::MakePackageForScript(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName, FGuid Guid)
+UPackage* Bango::Editor::MakeLevelScriptPackage(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& InOutBPName, FGuid Guid)
 {
 	AActor* Actor = GetActorOwner(ScriptProperty);
 	
@@ -76,10 +76,10 @@ UPackage* Bango::Editor::MakePackageForScript(TSharedPtr<IPropertyHandle> Script
 		return nullptr;
 	}
 	
-	return MakeScriptPackage_Internal(Actor, Outer, NewBPName, Guid);
+	return MakeScriptPackage_Internal(Actor, Outer, InOutBPName, Guid);
 }
 
-UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& NewBPName, FGuid Guid)
+UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& InOutBPName, FGuid Guid)
 {
 	FString FolderShortName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + Guid.ToString(EGuidFormats::UniqueObjectGuid);
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> GloballyUniqueObjectPath;
@@ -90,25 +90,35 @@ UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Oute
 	const UPackage* OutermostPackage = Outer->IsA<UPackage>() ? CastChecked<UPackage>(Outer) : Outer->GetOutermostObject()->GetPackage();
 	const FString RootPath = OutermostPackage->GetName();
 	FString GuidHashString;
-	FString ExternalObjectPackageName = FBangoPackageHelper::GetLocalScriptPackageName(RootPath, FolderShortName, GuidHashString);
+	FString ExternalObjectPackageName = FBangoPackageHelper::GetScriptPackageName(RootPath, FolderShortName, GuidHashString);
 
-	FName Name = "BangoScript"; //Outer->GetFName();
-	Name = MakeUniqueObjectName(Outer, UBangoScript::StaticClass(), Name);
+	FString FinalPath;
 	
-	FString FinalPath = ExternalObjectPackageName / Name.ToString();// + FPackageName::GetAssetPackageExtension();
+	if (InOutBPName.IsEmpty())
+	{
+		FName Name = "BangoScript"; //Outer->GetFName();
+		Name = MakeUniqueObjectName(Outer, UBangoScript::StaticClass(), Name);
+		FinalPath = ExternalObjectPackageName / Name.ToString();// + FPackageName::GetAssetPackageExtension();
+	}
+	else
+	{
+		FinalPath = ExternalObjectPackageName / InOutBPName;
+	}
 	
-	//NewBPName = GuidHashString;
-	//NewBPName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + GuidHashString;
 	UPackage* NewPackage = CreatePackage(*FinalPath);
 	NewPackage->SetFlags(RF_Public);
 	NewPackage->SetPackageFlags(PKG_NewlyCreated);
 	
-	NewBPName = FPackageName::LongPackageNameToFilename(NewPackage->GetName());
+	FString PackageName = FPackageName::LongPackageNameToFilename(NewPackage->GetName());
+	if (InOutBPName != PackageName)
+	{
+		InOutBPName = PackageName;
+	}
 	
 	return NewPackage;
 }
 
-UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, FString Name, FGuid Guid)
+UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const FString& Name, FGuid Guid)
 {
 	if (!InPackage)
 	{

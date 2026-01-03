@@ -70,7 +70,7 @@ public:
 	 * @param InPackageShortName Optional short name to use instead of the package short name
 	 * @return the path
 	 */
-	static BANGOEDITOR_API FString GetLocalScriptsPath(UPackage* InPackage, const FString& InPackageShortName = FString(), bool bTryUsingPackageLoadedPath = false);
+	//static BANGOEDITOR_API FString GetLocalScriptsPath(UPackage* InPackage, const FString& InPackageShortName = FString(), bool bTryUsingPackageLoadedPath = false);
 
 
 	/**
@@ -79,7 +79,7 @@ public:
 	 * @param InObjectPath the fully qualified object path, in the format: 'Outermost.Outer.Name'
 	 * @return the package name
 	 */
-	static BANGOEDITOR_API FString GetLocalScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& OutGuidHash);
+	static BANGOEDITOR_API FString GetScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& OutGuidHash);
 
 	/**
 	 * Loads objects from an external package

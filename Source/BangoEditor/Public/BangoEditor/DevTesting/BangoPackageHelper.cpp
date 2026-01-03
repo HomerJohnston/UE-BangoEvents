@@ -16,7 +16,6 @@ FBangoPackageHelper::FOnObjectPackagingModeChanged FBangoPackageHelper::OnObject
 
 FString FBangoPackageHelper::GetLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName)
 {
-	// Strip the temp prefix if found
 	FString ExternalObjectsPath;
 
 	auto TrySplitLongPackageName = [&InPackageShortName](const FString& InOuterPackageName, FString& OutExternalObjectsPath)
@@ -38,17 +37,6 @@ FString FBangoPackageHelper::GetLocalScriptsPath(const FString& InOuterPackageNa
 		return false;
 	};
 
-	// This exists only to support the Fortnite Foundation Outer streaming which prefix a valid package with /Temp (/Temp/Game/...)
-	// Unsaved worlds also have a /Temp prefix but no other mount point in their paths and they should fallback to not stripping the prefix. (first call to SplitLongPackageName will fail and second will succeed)
-	if (InOuterPackageName.StartsWith(TEXT("/Temp")))
-	{
-		FString BaseOuterPackageName = InOuterPackageName.Mid(5);
-		if (TrySplitLongPackageName(BaseOuterPackageName, ExternalObjectsPath))
-		{
-			return ExternalObjectsPath;
-		}
-	}
-
 	if (TrySplitLongPackageName(InOuterPackageName, ExternalObjectsPath))
 	{
 		return ExternalObjectsPath;
@@ -57,19 +45,22 @@ FString FBangoPackageHelper::GetLocalScriptsPath(const FString& InOuterPackageNa
 	return FString();
 }
 
-FString FBangoPackageHelper::GetLocalScriptsPath(UPackage* InPackage, const FString& InPackageShortName /* = FString()*/, bool bTryUsingPackageLoadedPath /* = false*/)
+/*
+FString FBangoPackageHelper::GetLocalScriptsPath(UPackage* InPackage, const FString& InPackageShortName, bool bTryUsingPackageLoadedPath)
 {
 	check(InPackage);
 	if (bTryUsingPackageLoadedPath && !InPackage->GetLoadedPath().IsEmpty())
 	{
 		return FBangoPackageHelper::GetLocalScriptsPath(InPackage->GetLoadedPath().GetPackageName());
 	}
+	
 	// We can't use the Package->FileName here because it might be a duplicated a package
 	// We can't use the package short name directly in some cases either (PIE, instanced load) as it may contain pie prefix or not reflect the real object location
 	return FBangoPackageHelper::GetLocalScriptsPath(InPackage->GetName(), InPackageShortName);
 }
+*/
 
-FString FBangoPackageHelper::GetLocalScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& GuidBase36)
+FString FBangoPackageHelper::GetScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& GuidBase36)
 {
 	// Convert the object path to lowercase to make sure we get the same hash for case insensitive file systems
 	FString ObjectPath = InObjectPath.ToLower();

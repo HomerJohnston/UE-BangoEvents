@@ -25,6 +25,10 @@ public:
 
 	float OpenTime;
 	
+	FText WarningText;
+	
+	void SetWarningText(const FText& InText);
+	
 protected:
 	void PostInitAssetEditor() override;
 };

@@ -21,13 +21,17 @@ namespace Bango::Editor
 	
 	AActor* GetActorOwner(TSharedPtr<IPropertyHandle> Property);
 	
-	UPackage* MakePackageForScript(UObject* Outer, FString& NewBPName, FGuid Guid);
+	// Normal starting point for making a new package
+	UPackage* MakeLevelScriptPackage(UObject* Outer, FString& InOutBPName, FGuid Guid);
 
-	UPackage* MakePackageForScript(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& NewBPName, FGuid Guid);
+	// Intended to be used from a details customization; currently unused, left in case I want it later
+	UPackage* MakeLevelScriptPackage(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& InOutBPName, FGuid Guid);
 	
-	UPackage* MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& NewBPName, FGuid Guid);
+	// Actual function that makes the .uasset file containing a level script package
+	UPackage* MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& InOutBPName, FGuid Guid);
 	
-	UBangoScriptBlueprint* MakeScriptAsset(UPackage* InPackage, FString Name, FGuid Guid);
+	// Actual function that makes the UBangoScriptBlueprint for a level script
+	UBangoScriptBlueprint* MakeScriptAsset(UPackage* InPackage, const FString& Name, FGuid Guid);
 	
 	bool SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* ScriptBlueprint);
 	

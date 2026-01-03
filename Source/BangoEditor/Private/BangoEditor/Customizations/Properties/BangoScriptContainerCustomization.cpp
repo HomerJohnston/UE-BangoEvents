@@ -280,7 +280,7 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 	
 	FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(ScriptContainerPtr);
 	
-	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(GetOuter(), ScriptContainer);
+	//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(GetOuter(), ScriptContainer);
 	
 	/*
 	ScriptClassProperty->GetOuterPackages(Packages);
@@ -351,6 +351,8 @@ FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 //#if 0
 	TSharedRef<FBangoBlueprintEditor> NewBlueprintEditor(new FBangoBlueprintEditor());
 
+	NewBlueprintEditor->SetWarningText(INVTEXT("Test!"));
+	
 	const bool bShouldOpenInDefaultsMode = false;
 	TArray<UBlueprint*> Blueprints;
 	Blueprints.Add(GetBlueprint());

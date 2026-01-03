@@ -8,9 +8,9 @@
 #include "UObject/Package.h"
 
 #if WITH_EDITOR
-TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerCreated;
-TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerDestroyed;
-TMulticastDelegate<void(UObject* /* Outer */, FBangoScriptContainer* /* Script Container */)> FBangoEditorDelegates::OnScriptContainerDuplicated;
+TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/, bool /*bImmediate*/)> FBangoEditorDelegates::OnScriptContainerCreated;
+TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/)> FBangoEditorDelegates::OnScriptContainerDestroyed;
+TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/)> FBangoEditorDelegates::OnScriptContainerDuplicated;
 
 TMulticastDelegate<void(FGuid /* Script ID */, UBangoScriptBlueprint*& /* Found Blueprint */)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
 
