@@ -27,13 +27,20 @@ const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 
 void UBangoScriptBlueprint::SoftDelete()
 {
-	AddToRoot();
+	/*
+	// Make a duplicate of this blueprint and throw it in the transient package
+	UBangoScriptBlueprint* Copy = DuplicateObject(this, GetTransientPackage(), *ScriptGuid.ToString());
 	
-	// Remove from root on map load
-	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	// TODO keeping the script alive with references in it might cause nuisances when deleting those referenced objects, how can I improve this?
+	// We'll remove this on level change (OnMapLoad)
+	Copy->AddToRoot();
+	Copy->DeletedName = this->GetName();
 	
-	// Respond to an undo delete
-	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.AddUObject(this, &ThisClass::OnBangoActorComponentUndoDelete);
+	this->ClearEditorReferences();
+	
+	FEditorDelegates::OnMapLoad.AddUObject(Copy, &ThisClass::OnMapLoad);
+	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.AddUObject(Copy, &ThisClass::OnBangoActorComponentUndoDelete);
+	*/
 }
 #endif
 
@@ -44,8 +51,9 @@ void UBangoScriptBlueprint::StopListeningForUndelete()
 {
 	FEditorDelegates::OnMapLoad.RemoveAll(this);
 	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.RemoveAll(this);
+	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);		
 	
-	RemoveFromRoot();
+	//RemoveFromRoot();
 }
 #endif
 

@@ -86,7 +86,7 @@ void FBangoEditorModule::StartupModule()
 	FBangoEditorMenus::BuildMenus();
 	
 	//////////////////
-	//REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptContainer, FBangoScriptContainerCustomization);
+	REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptContainer, FBangoScriptContainerCustomization);
 	
 	LateRegisterClassFilter();
 	

@@ -138,6 +138,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 	}
 	
 	FEditorDelegates::OnMapLoad.AddSP(this, &FBangoScriptContainerCustomization::OnMapLoad);
+	FBangoEditorDelegates::OnScriptContainerDestroyed.AddSP(this, &FBangoScriptContainerCustomization::OnScriptContainerDestroyed);
 	
 	/*
 	HeaderRow.NameContent()
@@ -718,6 +719,11 @@ TSubclassOf<UBangoScript> FBangoScriptContainerCustomization::GetScriptClass() c
 	}
 
 	return nullptr;
+}
+
+void FBangoScriptContainerCustomization::OnScriptContainerDestroyed(UObject* Object, FBangoScriptContainer* BangoScriptContainer)
+{
+	OnPreScriptDeleted();
 }
 
 void FBangoScriptContainerCustomization::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)

@@ -353,17 +353,10 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 
 void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
-	if (!IsExistingScriptContainerValid(Outer, ScriptContainer))
-	{
-		return;
-	}
-	
+	check(IsExistingScriptContainerValid(Outer, ScriptContainer));
+		
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass()); 
-	
-	if (!Blueprint)
-	{
-		return;
-	}
+	check(Blueprint);
 
 	Outer->Modify();
 	
@@ -373,22 +366,20 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	
 	ScriptContainer->Unset();
 
+	// We will delay our action by one frame to allow other things to prepare for this. The property type customization needs time to clean itself up.
 	auto Test = [Blueprint] ()
 	{
 		FGuid Guid = FGuid::NewGuid();
 		
 		ObjectTools::FPackageGroupName PGN;
-		PGN.PackageName = GetTransientPackage()->GetPathName();
+		PGN.PackageName = "/Game/__BangoScripts__/TEMP/Test";
 		PGN.GroupName = TEXT("");
 		PGN.ObjectName = Guid.ToString();
 		
 		TSet<UPackage*> ObjectsUserRefusedToFullyLoad;
 		bool bPromptToOverwrite = false;
 		
-		UBangoScriptBlueprint* Duplicate = Cast<UBangoScriptBlueprint>( ObjectTools::DuplicateSingleObject(Blueprint, PGN, ObjectsUserRefusedToFullyLoad, bPromptToOverwrite) );
-		check(Duplicate);
-		
-		Duplicate->SoftDelete();
+		UObject* NewObject = ObjectTools::DuplicateSingleObject(Blueprint, PGN, ObjectsUserRefusedToFullyLoad, bPromptToOverwrite);
 		
 		int32 NumDelete = ObjectTools::ForceDeleteObjects( { Blueprint }, false );
 		

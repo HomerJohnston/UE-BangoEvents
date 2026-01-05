@@ -148,10 +148,15 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	
 	if (Bango::IsComponentInEditedLevel(this))
 	{
-		if (Script.GetGuid().IsValid())
+		if (Script.GetScriptClass())
 		{
-			// Moves handling over to an editor module
+			// Moves handling over to an editor module to handle more complicated package deletion/undo management
 			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &Script);
+		}
+		else
+		{
+			// Simply reset everything
+			UnsetScript();
 		}
 	}
 	

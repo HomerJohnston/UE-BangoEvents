@@ -97,5 +97,7 @@ protected:
 	
 	// ------------------------------------------
 	
+	void OnScriptContainerDestroyed(UObject* Object, FBangoScriptContainer* BangoScriptContainer);
+	
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
 };
