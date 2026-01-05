@@ -26,17 +26,13 @@ const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 }
 
 void UBangoScriptBlueprint::SoftDelete()
-{	
+{
 	AddToRoot();
 	
-	DeletedName = GetName();
-	
-	// I need to rename the script here to something guaranteed unique, because I can't put multiple scripts with the same name all into the transient package
-	//Rename(*ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_NonTransactional);
-	
-	ClearEditorReferences();
-	
+	// Remove from root on map load
 	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	
+	// Respond to an undo delete
 	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.AddUObject(this, &ThisClass::OnBangoActorComponentUndoDelete);
 }
 #endif
@@ -48,7 +44,6 @@ void UBangoScriptBlueprint::StopListeningForUndelete()
 {
 	FEditorDelegates::OnMapLoad.RemoveAll(this);
 	FBangoEditorDelegates::OnBangoActorComponentUndoDelete.RemoveAll(this);
-	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);		
 	
 	RemoveFromRoot();
 }

@@ -33,13 +33,13 @@ namespace Bango::Editor
 	// Actual function that makes the UBangoScriptBlueprint for a level script
 	UBangoScriptBlueprint* MakeScriptAsset(UPackage* InPackage, const FString& Name, FGuid Guid);
 	
-	bool SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* ScriptBlueprint);
+	//bool SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* ScriptBlueprint);
 	
-	void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
+	//void SoftDeleteScriptPackage(TSubclassOf<UBangoScript> ScriptClass);
 	
 	// I can't find any existing PUBLIC code in this retarded engine to do this, so now I have to copy code from AssetViewUtils
 	bool DeleteEmptyFolderFromDisk(const FString& InPathToDelete);
 	
-	void NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid = FGuid());
+	//void NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid = FGuid());
 	
 }

@@ -19,6 +19,8 @@ public:
 	//bool AreEventGraphsAllowed() const override { return false; }
 	FGraphAppearanceInfo GetGraphAppearance(class UEdGraph* InGraph) const override;
 	
+	FText GetLevelNameAsText() const;
+	
 	FText GetOwnerNameAsText() const;
 
 	float OpenTime;

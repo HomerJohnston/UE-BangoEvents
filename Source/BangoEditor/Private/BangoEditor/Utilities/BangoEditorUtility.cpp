@@ -138,7 +138,14 @@ UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const
 	}
 	else
 	{
-		ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(Name), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
+		// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.  \U0001F9FE is the "receipt" char. 
+		// \U0001F4DC Manuscript / Scroll
+		// \U0001F9FE Receipt
+		// \U0001F4A5 Explosion
+		// \U0001F4CD Pushpin
+		// \U0000FE6B Small Form @
+		// \U0000FF5E Halfwidth Forms ~
+		ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(TEXT("~") + Name), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
 	}
 	
 	InPackage->GetOutermost()->MarkPackageDirty();
@@ -157,6 +164,7 @@ UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const
 	return ScriptBlueprint;
 }
 
+#if 0
 bool Bango::Editor::SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* ScriptBlueprint)
 {
 	const FString PackageName = ScriptPackage->GetName();
@@ -197,6 +205,7 @@ bool Bango::Editor::SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* Scrip
 	
 	return false;
 }
+#endif
 
 // TODO erase this, replaced by editor subsystem funcs
 bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
@@ -240,8 +249,4 @@ bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
 	}
 
 	return false;
-}
-
-void Bango::Editor::NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid)
-{
 }

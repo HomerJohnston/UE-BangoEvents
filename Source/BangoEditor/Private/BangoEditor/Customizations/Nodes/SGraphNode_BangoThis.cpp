@@ -108,13 +108,15 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 		.MinDesiredWidth(20.0f)
 		.OverflowPolicy(ETextOverflowPolicy::Ellipsis);
 
+	/*
 	TSharedRef<SWidget> ActorLabelText = SNew(STextBlock)
 		.TextStyle(FAppStyle::Get(), "Menu.Heading")
 		.ColorAndOpacity(this, &SGraphNode_BangoThis::ColorAndOpacity_ActorLabel)
 		.Text(this, &SGraphNode_BangoThis::Text_ActorLabel)
 		.MinDesiredWidth(20.0f)
 		.OverflowPolicy(ETextOverflowPolicy::MultilineEllipsis);
-
+	*/
+	
 	TSubclassOf<AActor> Subclass = GetBangoThisNode()->GetClassType();
 	
 	TSharedPtr<SImage> ClassIcon = SNew(SImage)
@@ -127,7 +129,7 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 	{
 		Box->AddSlot()
 		.AutoWidth()
-		.Padding(0, 4, 4, 0)
+		.Padding(0, 0, 4, 0)
 		.VAlign(VAlign_Top)
 		[
 			ClassIcon.ToSharedRef()
@@ -135,7 +137,10 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 	}
 	
 	Box->AddSlot()
+	.VAlign(VAlign_Center)
 	[
+		TitleText
+		/*
 		SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 		.AutoHeight()
@@ -158,6 +163,7 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 				ActorLabelText
 			]
 		]
+		*/
 	];
 	
 	NodeOverlay->AddSlot()

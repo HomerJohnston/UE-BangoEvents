@@ -102,8 +102,26 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	// Create the appearance info
 	FGraphAppearanceInfo AppearanceInfo;
 
-	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText_Blueprint", "SCRIPT");
-	AppearanceInfo.InstructionText = GetOwnerNameAsText();
+	FText OwnerNameText = GetOwnerNameAsText();
+	FText LevelNameText = GetLevelNameAsText();
+	
+	/*
+	if (OwnerNameText.IsEmpty())
+	{
+		OwnerNameText = LOCTEXT("ScriptBlueprintEditor_OwnerNameText_None", "Bango Script");
+	}
+	
+	if (LevelNameText.IsEmpty())
+	{
+		LevelNameText = LOCTEXT("ScriptBlueprintEditor_LevelNameText_None", "Content Asset");
+	}
+	*/
+	
+	FText InstructionText = OwnerNameText.IsEmpty() ? OwnerNameText : FText::Format(INVTEXT("Actor \U00002014 {0}"), { OwnerNameText }) ;
+	FText CornerText = LevelNameText.IsEmpty() ? LOCTEXT("ScriptBlueprintEditor_ContentScript", "Content Script") : LOCTEXT("ScriptBlueprintEditor_LevelScript", "Level Script");
+	
+	AppearanceInfo.CornerText = CornerText;
+	AppearanceInfo.InstructionText = InstructionText;
 	AppearanceInfo.PIENotifyText = GetPIEStatus();
 	AppearanceInfo.WarningText = WarningText;
 
@@ -116,14 +134,13 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	
 	AppearanceInfo.InstructionFade = Alpha; 
 	
-	
 	// Doesn't do anything. Unimplemented UE feature.
 	//AppearanceInfo.CornerImage = ???
 
 	return AppearanceInfo;
 }
 
-FText FBangoBlueprintEditor::GetOwnerNameAsText() const
+FText FBangoBlueprintEditor::GetLevelNameAsText() const
 {
 	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
 	
@@ -133,16 +150,15 @@ FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 	}
 	
 	TSoftObjectPtr<AActor> Actor = Blueprint->GetActor();
-	FText LevelActorTextFormat = LOCTEXT("OwnerNameText_ScriptGraph", "{0}: {1}");
 	
 	if (Actor.IsNull())
 	{
-		return LOCTEXT("OwnerName_NoActor", "Standalone Script");
+		return FText::GetEmpty();
 	}
 	else if (Actor.IsValid())
 	{
 		UPackage* LevelPackage = Actor->GetLevel()->GetPackage();
-		return FText::Format(LevelActorTextFormat, { FText::FromString(FPackageName::GetShortName(LevelPackage)), FText::FromString(Actor->GetActorLabel()) } );
+		return FText::FromString(FPackageName::GetShortName(LevelPackage) + FPackageName::GetMapPackageExtension());
 	}
 	else
 	{
@@ -164,14 +180,63 @@ FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 					if (ActorDesc)
 					{
 						UPackage* LevelPackage = World->PersistentLevel.GetPackage();
-						return FText::Format(LevelActorTextFormat, { FText::FromString(FPackageName::GetShortName(LevelPackage)), FText::FromName(ActorDesc->GetActorLabel()) } );
+						return FText::FromString(FPackageName::GetShortName(LevelPackage) + FPackageName::GetMapPackageExtension());
 					}
 				}
 			}
 		}
 		
 		// Unknown/unloaded fallback
-		return LOCTEXT("OwnerName_UnloadedActor", "Unknown/Unloaded Actor");
+		return LOCTEXT("OwnerName_UnloadedActor", "Unloaded Level");
+	}
+}
+
+FText FBangoBlueprintEditor::GetOwnerNameAsText() const
+{
+	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
+	
+	if (!Blueprint)
+	{
+		return FText::GetEmpty();
+	}
+	
+	TSoftObjectPtr<AActor> Actor = Blueprint->GetActor();
+	
+	if (Actor.IsNull())
+	{
+		return FText::GetEmpty();
+	}
+	else if (Actor.IsValid())
+	{
+		return FText::FromString(Actor->GetActorLabel());
+	}
+	else
+	{
+		// Try to get it from world partition
+		UWorld* World = GEditor->EditorWorld;
+		
+		if (World)
+		{
+			UWorldPartition* WorldPartition = World->GetWorldPartition();
+	
+			if (WorldPartition)
+			{
+				UActorDescContainerInstance* ActorDescContainer = WorldPartition->GetActorDescContainerInstance();
+		
+				if (ActorDescContainer)
+				{
+					const FWorldPartitionActorDescInstance* ActorDesc = ActorDescContainer->GetActorDescInstanceByPath(Actor.ToSoftObjectPath());
+			
+					if (ActorDesc)
+					{
+						return FText::FromName(ActorDesc->GetActorLabel());
+					}
+				}
+			}
+		}
+		
+		// Unknown/unloaded fallback
+		return LOCTEXT("OwnerName_UnloadedActor", "Unloaded Actor");
 	}
 }
 
