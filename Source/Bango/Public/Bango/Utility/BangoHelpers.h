@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+class UBangoScript;
 class UBangoActorIDComponent;
 struct FBangoScriptContainer;
 class UBangoScriptBlueprint;
@@ -9,7 +10,7 @@ class UBangoScriptComponent;
 struct FBangoEditorDelegates
 {
 	BANGO_API static TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/, bool /*bImmediate*/)> OnScriptContainerCreated;
-	BANGO_API static TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/)> OnScriptContainerDestroyed;
+	BANGO_API static TMulticastDelegate<void(UObject* /*Outer*/, TSoftClassPtr<UBangoScript> /*Script Container*/)> OnScriptContainerDestroyed;
 	BANGO_API static TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/)> OnScriptContainerDuplicated;
 	
 	BANGO_API static TMulticastDelegate<void(FGuid /*ScriptID*/, UBangoScriptBlueprint*& /*FoundBlueprint*/)> OnBangoActorComponentUndoDelete;

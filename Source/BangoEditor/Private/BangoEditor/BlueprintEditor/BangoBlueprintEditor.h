@@ -31,4 +31,6 @@ public:
 	
 protected:
 	void PostInitAssetEditor() override;
+	
+	void PasteGeneric() override;
 };

@@ -721,7 +721,7 @@ TSubclassOf<UBangoScript> FBangoScriptContainerCustomization::GetScriptClass() c
 	return nullptr;
 }
 
-void FBangoScriptContainerCustomization::OnScriptContainerDestroyed(UObject* Object, FBangoScriptContainer* BangoScriptContainer)
+void FBangoScriptContainerCustomization::OnScriptContainerDestroyed(UObject* Object, TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	OnPreScriptDeleted();
 }

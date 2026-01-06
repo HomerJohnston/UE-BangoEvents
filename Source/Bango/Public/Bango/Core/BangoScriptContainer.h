@@ -22,7 +22,7 @@ public:
 	//FBangoScriptHandle Run(UObject* Runner, bool bImmediate);
 	
 	const TSoftClassPtr<UBangoScript>& GetScriptClass() const { return ScriptClass; }
-	
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	TSoftClassPtr<UBangoScript> ScriptClass;
@@ -54,5 +54,8 @@ public:
 	{
 		ScriptClass = NewScriptClass;
 	}
+	
+	void TryRestoreScriptFromTransientPackage();
+
 #endif
 };

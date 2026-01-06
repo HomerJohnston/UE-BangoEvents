@@ -252,6 +252,11 @@ void FBangoBlueprintEditor::PostInitAssetEditor()
 	OpenTime = 0.0f;
 }
 
+void FBangoBlueprintEditor::PasteGeneric()
+{
+	FBlueprintEditor::PasteGeneric();
+}
+
 /*
 FActionMenuContent FBangoBlueprintEditor::OnCreateGraphActionMenu_Impl(UEdGraph* InGraph, const FVector2f& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed)
 {

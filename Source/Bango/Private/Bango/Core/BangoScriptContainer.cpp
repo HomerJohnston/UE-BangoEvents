@@ -73,4 +73,8 @@ void FBangoScriptContainer::Unset()
 	ScriptClass = nullptr;
 	ScriptClass.Reset();
 }
+
+void FBangoScriptContainer::TryRestoreScriptFromTransientPackage()
+{
+}
 #endif

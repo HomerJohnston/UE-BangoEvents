@@ -30,6 +30,7 @@ protected:
 	FName OverriddenName;
 	
 	FString DeletedName;
+	FSoftObjectPath DeletedPackagePath;
 	
 public:
 	const TSoftObjectPtr<AActor> GetActor() const;
@@ -65,5 +66,7 @@ public:
 	static FString GetAutomaticName(UObject* Outer);
 	
 	FString RetrieveDeletedName();
+	
+	bool RestoreToPackage();
 #endif
 };

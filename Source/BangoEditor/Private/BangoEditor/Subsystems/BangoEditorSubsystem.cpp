@@ -14,12 +14,21 @@
 #include "Bango/Editor/BangoScriptHelperSubsystem.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
+#include "BangoEditor/DevTesting/BangoDummyObject.h"
 #include "BangoEditor/Menus/BangoEditorMenus.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
 #include "Developer/AssetTools/Private/AssetTools.h"
+#include "Editor/Transactor.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "Helpers/BangoHideScriptFolderFilter.h"
+#include "Kismet2/KismetReinstanceUtilities.h"
+#include "Serialization/ArchiveReplaceObjectRef.h"
+#include "Serialization/FindObjectReferencers.h"
+#include "Subsystems/EditorAssetSubsystem.h"
 #include "UObject/ObjectSaveContext.h"
+#include "UObject/PropertyIterator.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -91,11 +100,64 @@ void UBangoEditorSubsystem::OnObjectPreSave(UObject* Object, FObjectPreSaveConte
 
 void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
 {
+	// TODO build a setup to register other class types for undo handling
+	// TODO dismantle mount everest into functions
 	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(GetValid(Object)))
 	{
 		if (Bango::IsComponentInEditedLevel(ScriptComponent))
 		{
-			//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(ScriptComponent, &ScriptComponent->Script);
+			// Find a script container on this thing and make it do stuff
+			for (TFieldIterator<FProperty> It(UBangoScriptComponent::StaticClass()); It; ++It)
+			{
+				const FProperty* Property = *It;
+				
+				if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+				{
+					if (StructProperty->Struct == FBangoScriptContainer::StaticStruct())
+					{
+						void* Value = nullptr;
+						Value = StructProperty->ContainerPtrToValuePtr<void>(Object);
+						
+						if (Value)
+						{
+							FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(Value);
+							
+							TArray<UObject*> TransientObjects;
+							GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
+	
+							for (UObject* TransientObject : TransientObjects)
+							{
+								if (UBangoScriptBlueprint* ScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
+								{
+									if (ScriptBlueprint->ScriptGuid == ScriptContainer->GetGuid())
+									{
+										if (FPackageName::DoesPackageExist(ScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
+										{
+											UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
+											ScriptContainer->Unset();
+											return;
+										}
+										
+										UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
+										RestoredPackage->SetFlags(RF_Public);
+										RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+										
+										ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+										ScriptBlueprint->Modify();
+										ScriptBlueprint->ClearFlags(RF_Transient);
+										
+										FAssetRegistryModule::AssetCreated(ScriptBlueprint);
+										(void)ScriptBlueprint->MarkPackageDirty();
+//										RestoredPackage->FullyLoad();
+										
+										GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -351,11 +413,191 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 	}
 }
 
-void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+#pragma region FBlueprintUnloader
+struct FBlueprintUnloader
 {
-	check(IsExistingScriptContainerValid(Outer, ScriptContainer));
+public:
+	FBlueprintUnloader(UBlueprint* OldBlueprint);
+
+	/** 
+	 * Unloads the specified Blueprint (marking it pending-kill, and removing it 
+	 * from its outer package). Optionally, will unload the package as well.
+	 *
+	 * @param  bResetPackage	Whether or not this should unload the entire package.
+	 */
+	void UnloadBlueprint(const bool bResetPackage);
+	
+	/** 
+	 * Replaces all old references to the original blueprints (its class/CDO/etc.)
+	 * @param  NewBlueprint	The blueprint to replace old references with
+	 */
+	void ReplaceStaleRefs(UBlueprint* NewBlueprint);
+
+private:
+	TWeakObjectPtr<UBlueprint> OldBlueprint;
+	UClass*  OldGeneratedClass;
+	UObject* OldCDO;
+	UClass*  OldSkeletonClass;
+	UObject* OldSkelCDO;
+};
+
+
+FBlueprintUnloader::FBlueprintUnloader(UBlueprint* OldBlueprintIn)
+	: OldBlueprint(OldBlueprintIn)
+	, OldGeneratedClass(OldBlueprint->GeneratedClass)
+	, OldCDO(nullptr)
+	, OldSkeletonClass(OldBlueprint->SkeletonGeneratedClass)
+	, OldSkelCDO(nullptr)
+{
+	if (OldGeneratedClass != nullptr)
+	{
+		OldCDO = OldGeneratedClass->GetDefaultObject(/*bCreateIfNeeded =*/false);
+	}
+	if (OldSkeletonClass != nullptr)
+	{
+		OldSkelCDO = OldSkeletonClass->GetDefaultObject(/*bCreateIfNeeded =*/false);
+	}
+	OldBlueprint = OldBlueprintIn;
+}
+
+void FBlueprintUnloader::UnloadBlueprint(const bool bResetPackage)
+{
+	if (OldBlueprint.IsValid())
+	{
+		UBlueprint* UnloadingBp = OldBlueprint.Get();
+
+		UPackage* const OldPackage = UnloadingBp->GetOutermost();
+		bool const bIsDirty = OldPackage->IsDirty();
+
+		UPackage* const TransientPackage = GetTransientPackage();
+		check(OldPackage != TransientPackage); // is the blueprint already unloaded?
 		
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass()); 
+		FName const BlueprintName = UnloadingBp->GetFName();
+		// move the blueprint to the transient package (to be picked up by garbage collection later)
+		FName UnloadedName = MakeUniqueObjectName(TransientPackage, UBlueprint::StaticClass(), BlueprintName);
+		UnloadingBp->Rename(*UnloadedName.ToString(), TransientPackage, REN_DontCreateRedirectors | REN_DoNotDirty);
+		// @TODO: currently, REN_DoNotDirty does not guarantee that the package 
+		//        will not be marked dirty
+		OldPackage->SetDirtyFlag(bIsDirty);
+
+		// make sure the blueprint is properly trashed (remove it from the package)
+		UnloadingBp->SetFlags(RF_Transient);
+		UnloadingBp->ClearFlags(RF_Standalone | RF_Transactional);
+		UnloadingBp->RemoveFromRoot();
+		UnloadingBp->MarkAsGarbage();
+		// if it's in the undo buffer, then we have to clear that...
+		if (FKismetEditorUtilities::IsReferencedByUndoBuffer(UnloadingBp))
+		{
+			GEditor->Trans->Reset(LOCTEXT("UnloadedBlueprint", "Unloaded Blueprint"));
+		}
+
+		if (bResetPackage)
+		{
+			TArray<UPackage*> PackagesToUnload;
+			PackagesToUnload.Add(OldPackage);
+
+			FText PackageUnloadError;
+			UPackageTools::UnloadPackages(PackagesToUnload, PackageUnloadError);
+
+			if (!PackageUnloadError.IsEmpty())
+			{
+				const FText ErrorMessage = FText::Format(LOCTEXT("UnloadBpPackageError", "Failed to unload Bluprint '{0}': {1}"),
+					FText::FromName(BlueprintName), PackageUnloadError);
+				FSlateNotificationManager::Get().AddNotification(FNotificationInfo(ErrorMessage));
+
+				// fallback to manually setting up the package so it can reload 
+				// the blueprint 
+				ResetLoaders(OldPackage);
+				OldPackage->ClearFlags(RF_WasLoaded);
+				OldPackage->bHasBeenFullyLoaded = false;
+				OldPackage->GetMetaData().RemoveMetaDataOutsidePackage(OldPackage);
+			}
+		}
+
+		UnloadingBp->ClearEditorReferences();
+
+		// handled in FBlueprintEditor (from the OnBlueprintUnloaded event)
+// 		IAssetEditorInstance* EditorInst = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(UnloadingBp, /*bFocusIfOpen =*/false);
+// 		if (EditorInst != nullptr)
+// 		{
+// 			EditorInst->CloseWindow();
+// 		}
+	}
+}
+
+void FBlueprintUnloader::ReplaceStaleRefs(UBlueprint* NewBlueprint)
+{
+	//--------------------------------------
+	// Construct redirects
+	//--------------------------------------
+
+	TMap<UObject*, UObject*> Redirects;
+	TArray<UObject*> OldObjsNeedingReplacing;
+
+	if (OldBlueprint.IsValid(/*bEvenIfPendingKill =*/true))
+	{
+		UBlueprint* ToBeReplaced = OldBlueprint.Get(/*bEvenIfPendingKill =*/true);
+		if (OldGeneratedClass != nullptr)
+		{
+			OldObjsNeedingReplacing.Add(OldGeneratedClass);
+			Redirects.Add(OldGeneratedClass, NewBlueprint->GeneratedClass);
+		}
+		if (OldCDO != nullptr)
+		{
+			OldObjsNeedingReplacing.Add(OldCDO);
+			Redirects.Add(OldCDO, NewBlueprint->GeneratedClass->GetDefaultObject());
+		}
+		if (OldSkeletonClass != nullptr)
+		{
+			OldObjsNeedingReplacing.Add(OldSkeletonClass);
+			Redirects.Add(OldSkeletonClass, NewBlueprint->SkeletonGeneratedClass);
+		}
+		if (OldSkelCDO != nullptr)
+		{
+			OldObjsNeedingReplacing.Add(OldSkelCDO);
+			Redirects.Add(OldSkelCDO, NewBlueprint->SkeletonGeneratedClass->GetDefaultObject());
+		}
+
+		OldObjsNeedingReplacing.Add(ToBeReplaced);
+		Redirects.Add(ToBeReplaced, NewBlueprint);
+
+		// clear the object being debugged; otherwise ReplaceInstancesOfClass()  
+		// trys to reset it with a new level instance, and OldBlueprint won't 
+		// match the new instance's type (it's now a NewBlueprint)
+		ToBeReplaced->SetObjectBeingDebugged(nullptr);
+	}
+
+	//--------------------------------------
+	// Replace old references
+	//--------------------------------------
+
+	TArray<UObject*> Referencers;
+	// find all objects, still referencing the old blueprint/class/cdo/etc.
+	for (auto Referencer : TFindObjectReferencers<UObject>(OldObjsNeedingReplacing, /*PackageToCheck =*/nullptr, /*bIgnoreTemplates =*/false))
+	{
+		Referencers.Add(Referencer.Value);
+	}
+
+	FBlueprintCompileReinstancer::ReplaceInstancesOfClass(OldGeneratedClass, NewBlueprint->GeneratedClass, FReplaceInstancesOfClassParameters());
+
+	for (UObject* Referencer : Referencers)
+	{
+		FArchiveReplaceObjectRef<UObject>(Referencer, Redirects);
+	}
+}
+#pragma endregion 
+
+void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
+{
+	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
+
+	if (!FPackageName::DoesPackageExist(ScriptClassPath.GetLongPackageName()))
+	{
+		UE_LOG(LogBango, Warning, TEXT("OnScriptContainerDestroyed called with invalid ScriptClass path (check earlier logs, maybe the .uasset file was deleted already)!"));
+		return;	
+	}
+	
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
 	check(Blueprint);
 
 	Outer->Modify();
@@ -363,53 +605,32 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, FBangoScr
 	UPackage* OldPackage = Blueprint->GetPackage();
 	
 	Blueprint->ClearEditorReferences();
-	
-	ScriptContainer->Unset();
 
+	// TODO make sure i don't leave any raw pointer delay lambda crash dumbassery in my code, i've rewritten this thing a million different ways 
 	// We will delay our action by one frame to allow other things to prepare for this. The property type customization needs time to clean itself up.
-	auto Test = [Blueprint] ()
+	auto Fuck = FTimerDelegate::CreateLambda([OldPackage, Blueprint] ()
 	{
-		FGuid Guid = FGuid::NewGuid();
+		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
+
+		// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
+		// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
+		Blueprint->DeletedName = Blueprint->GetName();
+		Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
+		Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
 		
-		ObjectTools::FPackageGroupName PGN;
-		PGN.PackageName = "/Game/__BangoScripts__/TEMP/Test";
-		PGN.GroupName = TEXT("");
-		PGN.ObjectName = Guid.ToString();
+		UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
 		
-		TSet<UPackage*> ObjectsUserRefusedToFullyLoad;
-		bool bPromptToOverwrite = false;
-		
-		UObject* NewObject = ObjectTools::DuplicateSingleObject(Blueprint, PGN, ObjectsUserRefusedToFullyLoad, bPromptToOverwrite);
-		
-		int32 NumDelete = ObjectTools::ForceDeleteObjects( { Blueprint }, false );
-		
-		TArray<UObject*> Test;
-		GetObjectsWithOuter(GetTransientPackage(), Test);
-		
+		int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
+				
 		if (NumDelete == 0)
 		{
-			ObjectTools::ForceDeleteObjects( { Blueprint } );
+			ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
 		}
 
 		Bango::Editor::DeleteEmptyScriptFolders(); // TODO maybe this should be removed. I might only want this to run on editor shutdown or a manual run.
-	};
+	});
 
-	GEditor->GetTimerManager()->SetTimerForNextTick(Test);
-	
-	/*
-	TWeakObjectPtr<UObject> WeakOuter;
-	
-	auto Delay = [WeakOuter, ScriptContainer] ()
-	{
-		UObject* Outer = WeakOuter.Get();
-
-		if (!Outer)
-		{
-			return;
-		}
-	};
-	*/
-	//GEditor->GetTimerManager()->SetTimerForNextTick(Delay);
+	GEditor->GetTimerManager()->SetTimerForNextTick(Fuck);
 }
 
 #if 0

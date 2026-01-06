@@ -108,15 +108,17 @@ void UBangoScriptBlueprint::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass)
 {
 	UBangoScriptBlueprint* BP = NULL;
-		
+	
 	if (InClass != NULL)
 	{
 		BP = Cast<UBangoScriptBlueprint>(InClass.LoadSynchronous()->ClassGeneratedBy);
 	}
-		
+	
 	return BP;
 }
+#endif
 
+#if WITH_EDITOR
 void UBangoScriptBlueprint::OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint)
 {
 	if (FoundBlueprint)
@@ -138,7 +140,9 @@ void UBangoScriptBlueprint::UpdateAutoName(UObject* Outer)
 {
 	Rename(*GetAutomaticName(Outer), nullptr, REN_DontCreateRedirectors);
 }
+#endif
 
+#if WITH_EDITOR
 FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 {
 	FString AutoName = "";
@@ -176,12 +180,21 @@ FString UBangoScriptBlueprint::GetAutomaticName(UObject* Outer)
 	
 	return AutoName;
 }
+#endif
 
+#if WITH_EDITOR
 FString UBangoScriptBlueprint::RetrieveDeletedName()
 {
 	FString Temp = DeletedName;
 	DeletedName = "";
 	
 	return Temp;
+}
+#endif
+
+#if WITH_EDITOR
+bool UBangoScriptBlueprint::RestoreToPackage()
+{
+	return true;
 }
 #endif

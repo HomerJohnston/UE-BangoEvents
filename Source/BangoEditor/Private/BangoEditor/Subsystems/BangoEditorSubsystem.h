@@ -58,7 +58,7 @@ public:
 	
 	void OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name = "", bool bImmediate = false);
 
-	void OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void OnScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass);
 	bool IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 
 	void OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name = "");

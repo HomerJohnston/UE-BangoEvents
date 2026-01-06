@@ -130,37 +130,33 @@ void UBangoScriptComponent::OnComponentCreated()
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	// PrintState("OnComponentDestroyed");
+	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
+	bool bInEditedLevel = Bango::IsComponentInEditedLevel(this);
 	
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+		
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
-		Super::OnComponentDestroyed(bDestroyingHierarchy);
+		//Super::OnComponentDestroyed(bDestroyingHierarchy);
 		return;
 	}
 		
 	// If we are a default actor component, we will always exist on the actor and the only time we'll be truly deleted is when the whole actor hierachy is being deleted
 	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
 	{
-		Super::OnComponentDestroyed(bDestroyingHierarchy);
+		//Super::OnComponentDestroyed(bDestroyingHierarchy);
 		return;
 	}
-	
-	if (Bango::IsComponentInEditedLevel(this))
+
+	if (bInEditedLevel)
 	{
-		if (Script.GetScriptClass())
+		if (!ScriptClass.IsNull())
 		{
 			// Moves handling over to an editor module to handle more complicated package deletion/undo management
-			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &Script);
-		}
-		else
-		{
-			// Simply reset everything
-			UnsetScript();
+			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
 		}
 	}
-	
-	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 #endif
 
