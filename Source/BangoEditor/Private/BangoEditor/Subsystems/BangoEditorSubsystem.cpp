@@ -5,6 +5,7 @@
 #include "FileHelpers.h"
 #include "IAssetTools.h"
 #include "IContentBrowserDataModule.h"
+#include "ISourceControlModule.h"
 #include "MeshPaintVisualize.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -137,20 +138,66 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 											ScriptContainer->Unset();
 											return;
 										}
+									
+										if (ISourceControlModule::Get().IsEnabled())
+										{
+											/*
+											ISourceControlProvider& SourceControlProvider = ISourceControlModule::Get().GetProvider();
+
+											TArray<UPackage*> PackagesToSave;
+											for (UPackage* Package : DirtyDatabasePackages)
+											{
+												FSourceControlStatePtr SourceControlState = SourceControlProvider.GetState(Package, EStateCacheUsage::Use);
+												if (SourceControlState->IsCheckedOutOther())
+												{
+													UE_LOG(LogAnimationCompression, Warning, TEXT("Package %s is already checked out by someone, will not check out"), *SourceControlState->GetFilename());
+												}
+												else if (!SourceControlState->IsCurrent())
+												{
+													UE_LOG(LogAnimationCompression, Warning, TEXT("Package %s is not at head, will not check out"), *SourceControlState->GetFilename());
+												}
+												else if (SourceControlState->CanCheckout())
+												{
+													const ECommandResult::Type StatusResult = SourceControlProvider.Execute(ISourceControlOperation::Create<FCheckOut>(), Package);
+													if (StatusResult != ECommandResult::Succeeded)
+													{
+														UE_LOG(LogAnimationCompression, Log, TEXT("Package %s failed to check out"), *SourceControlState->GetFilename());
+														bFailedToSave = true;
+													}
+													else
+													{
+														PackagesToSave.Add(Package);
+													}
+												}
+												else if (!SourceControlState->IsSourceControlled() || SourceControlState->CanEdit())
+												{
+													PackagesToSave.Add(Package);
+												}
+											}
+
+											UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true);
+											ISourceControlModule::Get().QueueStatusUpdate(PackagesToSave);
+											*/
+										}
+										else
+										{
+											// No source control, just restore the transient copy we made on destroy into a new package. NOTE: The new package will have a few bytes different.
+											UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
+											RestoredPackage->SetFlags(RF_Public);
+											RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+											RestoredPackage->SetPersistentGuid(ScriptBlueprint->DeletedPackagePersistentGuid);
+											RestoredPackage->SetPackageId(ScriptBlueprint->DeletedPackageId);
 										
-										UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
-										RestoredPackage->SetFlags(RF_Public);
-										RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+											ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+											ScriptBlueprint->Modify();
+											ScriptBlueprint->ClearFlags(RF_Transient);
 										
-										ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-										ScriptBlueprint->Modify();
-										ScriptBlueprint->ClearFlags(RF_Transient);
+											FAssetRegistryModule::AssetCreated(ScriptBlueprint);
+											(void)ScriptBlueprint->MarkPackageDirty();
+											//										RestoredPackage->FullyLoad();
 										
-										FAssetRegistryModule::AssetCreated(ScriptBlueprint);
-										(void)ScriptBlueprint->MarkPackageDirty();
-//										RestoredPackage->FullyLoad();
-										
-										GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
+											GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
+										}
 									}
 								}
 							}
@@ -616,6 +663,8 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, TSoftClas
 		// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
 		Blueprint->DeletedName = Blueprint->GetName();
 		Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
+		Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
+		Blueprint->DeletedPackageId = OldPackage->GetPackageId();
 		Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
 		
 		UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);

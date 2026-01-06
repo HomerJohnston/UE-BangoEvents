@@ -31,6 +31,8 @@ protected:
 	
 	FString DeletedName;
 	FSoftObjectPath DeletedPackagePath;
+	FGuid DeletedPackagePersistentGuid;
+	FPackageId DeletedPackageId;
 	
 public:
 	const TSoftObjectPtr<AActor> GetActor() const;
