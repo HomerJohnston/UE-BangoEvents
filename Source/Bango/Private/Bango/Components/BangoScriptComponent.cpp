@@ -431,6 +431,18 @@ void UBangoScriptComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocatio
 {
 	DebugDrawEditor(Canvas, ScreenLocation, Alpha);
 }
+
+void UBangoScriptComponent::PreEditUndo()
+{
+	Super::PreEditUndo();
+	
+	__UNDO_Script = Script;
+}
+
+void UBangoScriptComponent::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
+{
+	Super::Super::PostEditUndo(TransactionAnnotation);
+}
 #endif
 
 #undef LOCTEXT_NAMESPACE

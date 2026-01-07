@@ -74,6 +74,9 @@ protected:
 	
 	UPROPERTY(Transient)
 	FBangoScriptHandle RunningHandle;
+	
+	//
+	FBangoScriptContainer __UNDO_Script;
 #endif
 	
 public:
@@ -95,5 +98,10 @@ public:
 	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
 	
 	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+
+	virtual void PreEditUndo() override;
+
+	virtual void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
+	
 #endif
 };
