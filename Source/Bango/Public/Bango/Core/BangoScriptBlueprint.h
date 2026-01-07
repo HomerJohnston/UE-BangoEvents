@@ -9,36 +9,13 @@ class BANGO_API UBangoScriptBlueprint : public UBlueprint
 {
 	GENERATED_BODY()
 
+#if WITH_EDITOR
 	friend class UBangoEditorSubsystem;
 	friend struct FBangoScriptContainer;
 	
 public:
 	UBangoScriptBlueprint();
 	
-#if WITH_EDITORONLY_DATA
-protected:
-	/** Every script will have a unique ID. This is used to help differentiate between scripts e.g. when a script owner (which may be an actor component or a simple UObject) is duplicated. */
-	UPROPERTY()
-	FGuid ScriptGuid;
-	
-	/** Scripts *may* be tied to an actor. */
-	UPROPERTY()
-	TSoftObjectPtr<AActor> Actor;
-	
-	FDelegateHandle ListenForUndeleteHandle;
-	
-	FName OverriddenName;
-	
-	FString DeletedName;
-	FSoftObjectPath DeletedPackagePath;
-	FGuid DeletedPackagePersistentGuid;
-	FPackageId DeletedPackageId;
-	
-public:
-	const TSoftObjectPtr<AActor> GetActor() const;
-#endif
-
-#if WITH_EDITOR
 protected:
 	// When a script holder is deleted, the actual script blueprint (this) isn't deleted, it gets moved to the transient package. 
 	// If the user undos their delete, this lets Bango restore the blueprint back the way it was.
@@ -56,7 +33,7 @@ protected:
 public:
 	
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
-	
+
 	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass);
 	
 	void OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint);
@@ -71,4 +48,30 @@ public:
 	
 	bool RestoreToPackage();
 #endif
+	
+#if WITH_EDITORONLY_DATA
+protected:
+	/** Every script will have a unique ID. This is used to help differentiate/ID scripts when a script owner is duplicated or deleted/restored via undo. */
+	UPROPERTY(NonPIEDuplicateTransient, TextExportTransient)
+	FGuid ScriptGuid;
+	
+	/** Scripts *may* be tied to an actor. This is only used for blueprint editor niceties and has no effect on gameplay. */
+	UPROPERTY(NonPIEDuplicateTransient, TextExportTransient)
+	TSoftObjectPtr<AActor> Actor;
+	
+	// These are assigned when a script is deleted (i.e. when something owning a script is deleted), and is used to restore the script back to an identical-to-original state.
+	FString DeletedName; // The original name, e.g. ~BangoScript
+	FSoftObjectPath DeletedPackagePath; // The original package path, e.g. /Game/__BangoScripts__/Level/ActorID/ScriptID/BangoScript.uasset
+	FGuid DeletedPackagePersistentGuid; // UPackage Guid
+	FPackageId DeletedPackageId; // UPackage ID
+	bool bFileReadOnly; // Whether the original .uasset file was read-only // TODO I may not need this if I just rely on version control to restore a deleted file?
+	
+public:
+	const TSoftObjectPtr<AActor> GetActor() const;
+	
+	const FGuid& GetScriptGuid();
+
+	void SetScriptGuid(FGuid InGuid);
+#endif
+
 };

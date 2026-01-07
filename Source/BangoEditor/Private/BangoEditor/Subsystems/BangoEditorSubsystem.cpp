@@ -318,6 +318,7 @@ void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
 
 void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
 {
+	// TODO I need a way to hook in other types more nicely. What if a user wants a custom type?
 	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
 	{
 		if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject))
@@ -327,8 +328,20 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 		
 		if (Bango::IsComponentInEditedLevel(ScriptComponent))
 		{
-			ScriptComponent->OnRename();
-			OnScriptGenerated.Broadcast();
+			UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptComponent->Script.GetScriptClass());
+
+			if (Blueprint)
+			{
+				FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+				
+				FAssetRenameData RenameData(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), ScriptComponent->GetName());
+				AssetToolsModule.Get().RenameAssets( {RenameData} );
+				
+ 				FString NewPrivateName = Bango::Editor::GetLocalScriptAssetName(ScriptComponent->GetName());
+				Blueprint->Rename(*NewPrivateName);
+				
+				OnScriptGenerated.Broadcast();
+			}
 		}
 	}
 	
@@ -374,6 +387,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		
 		if (ScriptContainer->GetGuid().IsValid())
 		{
+			checkNoEntry();
 			/*
 			if (!Outer->HasAnyFlags(RF_WasLoaded))
 			{
@@ -403,21 +417,20 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 			// This creation is from a new addition
 			Outer->Modify();
 			
-			ScriptContainer->GenerateGuid();
-			
-	#if 1
 			// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
 			// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
 			AActor* Actor = Outer->GetTypedOuter<AActor>();
-			ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewBlueprintName, ScriptContainer->GetGuid());
 			
-			FString ShortPackageName = FPackageName::GetShortName(ScriptPackage);
-
-			Blueprint = Bango::Editor::MakeScriptAsset(ScriptPackage, ShortPackageName, ScriptContainer->GetGuid());
+			FGuid NewScriptGuid = FGuid::NewGuid(); 
+			ScriptContainer->SetGuid(NewScriptGuid);
+			
+			ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewBlueprintName, NewScriptGuid);
+			
+			FString BlueprintName = FPackageName::GetShortName(ScriptPackage);
+			Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, BlueprintName, NewScriptGuid);
 			
 			Blueprint->Modify();
 			Blueprint->Actor = Actor;
-	#endif
 			
 			if (Blueprint)
 			{
@@ -435,18 +448,15 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 						BangoScript->SetThis_ClassType(Actor->GetClass());
 					}
 				}
+			
+				ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
+			
+				FAssetRegistryModule::AssetCreated(Blueprint);
+				(void)ScriptPackage->MarkPackageDirty();
+			
+				// Tells FBangoScript property type customizations to regenerate
+				This->OnScriptGenerated.Broadcast();	
 			}
-		}
-
-		if (Blueprint)
-		{
-			ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
-		
-			FAssetRegistryModule::AssetCreated(Blueprint);
-			(void)ScriptPackage->MarkPackageDirty();
-		
-			// Tells FBangoScript property type customizations to regenerate
-			This->OnScriptGenerated.Broadcast();	
 		}
 	});
 	
@@ -459,180 +469,6 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		Delayed.Execute();
 	}
 }
-
-#pragma region FBlueprintUnloader
-struct FBlueprintUnloader
-{
-public:
-	FBlueprintUnloader(UBlueprint* OldBlueprint);
-
-	/** 
-	 * Unloads the specified Blueprint (marking it pending-kill, and removing it 
-	 * from its outer package). Optionally, will unload the package as well.
-	 *
-	 * @param  bResetPackage	Whether or not this should unload the entire package.
-	 */
-	void UnloadBlueprint(const bool bResetPackage);
-	
-	/** 
-	 * Replaces all old references to the original blueprints (its class/CDO/etc.)
-	 * @param  NewBlueprint	The blueprint to replace old references with
-	 */
-	void ReplaceStaleRefs(UBlueprint* NewBlueprint);
-
-private:
-	TWeakObjectPtr<UBlueprint> OldBlueprint;
-	UClass*  OldGeneratedClass;
-	UObject* OldCDO;
-	UClass*  OldSkeletonClass;
-	UObject* OldSkelCDO;
-};
-
-
-FBlueprintUnloader::FBlueprintUnloader(UBlueprint* OldBlueprintIn)
-	: OldBlueprint(OldBlueprintIn)
-	, OldGeneratedClass(OldBlueprint->GeneratedClass)
-	, OldCDO(nullptr)
-	, OldSkeletonClass(OldBlueprint->SkeletonGeneratedClass)
-	, OldSkelCDO(nullptr)
-{
-	if (OldGeneratedClass != nullptr)
-	{
-		OldCDO = OldGeneratedClass->GetDefaultObject(/*bCreateIfNeeded =*/false);
-	}
-	if (OldSkeletonClass != nullptr)
-	{
-		OldSkelCDO = OldSkeletonClass->GetDefaultObject(/*bCreateIfNeeded =*/false);
-	}
-	OldBlueprint = OldBlueprintIn;
-}
-
-void FBlueprintUnloader::UnloadBlueprint(const bool bResetPackage)
-{
-	if (OldBlueprint.IsValid())
-	{
-		UBlueprint* UnloadingBp = OldBlueprint.Get();
-
-		UPackage* const OldPackage = UnloadingBp->GetOutermost();
-		bool const bIsDirty = OldPackage->IsDirty();
-
-		UPackage* const TransientPackage = GetTransientPackage();
-		check(OldPackage != TransientPackage); // is the blueprint already unloaded?
-		
-		FName const BlueprintName = UnloadingBp->GetFName();
-		// move the blueprint to the transient package (to be picked up by garbage collection later)
-		FName UnloadedName = MakeUniqueObjectName(TransientPackage, UBlueprint::StaticClass(), BlueprintName);
-		UnloadingBp->Rename(*UnloadedName.ToString(), TransientPackage, REN_DontCreateRedirectors | REN_DoNotDirty);
-		// @TODO: currently, REN_DoNotDirty does not guarantee that the package 
-		//        will not be marked dirty
-		OldPackage->SetDirtyFlag(bIsDirty);
-
-		// make sure the blueprint is properly trashed (remove it from the package)
-		UnloadingBp->SetFlags(RF_Transient);
-		UnloadingBp->ClearFlags(RF_Standalone | RF_Transactional);
-		UnloadingBp->RemoveFromRoot();
-		UnloadingBp->MarkAsGarbage();
-		// if it's in the undo buffer, then we have to clear that...
-		if (FKismetEditorUtilities::IsReferencedByUndoBuffer(UnloadingBp))
-		{
-			GEditor->Trans->Reset(LOCTEXT("UnloadedBlueprint", "Unloaded Blueprint"));
-		}
-
-		if (bResetPackage)
-		{
-			TArray<UPackage*> PackagesToUnload;
-			PackagesToUnload.Add(OldPackage);
-
-			FText PackageUnloadError;
-			UPackageTools::UnloadPackages(PackagesToUnload, PackageUnloadError);
-
-			if (!PackageUnloadError.IsEmpty())
-			{
-				const FText ErrorMessage = FText::Format(LOCTEXT("UnloadBpPackageError", "Failed to unload Bluprint '{0}': {1}"),
-					FText::FromName(BlueprintName), PackageUnloadError);
-				FSlateNotificationManager::Get().AddNotification(FNotificationInfo(ErrorMessage));
-
-				// fallback to manually setting up the package so it can reload 
-				// the blueprint 
-				ResetLoaders(OldPackage);
-				OldPackage->ClearFlags(RF_WasLoaded);
-				OldPackage->bHasBeenFullyLoaded = false;
-				OldPackage->GetMetaData().RemoveMetaDataOutsidePackage(OldPackage);
-			}
-		}
-
-		UnloadingBp->ClearEditorReferences();
-
-		// handled in FBlueprintEditor (from the OnBlueprintUnloaded event)
-// 		IAssetEditorInstance* EditorInst = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->FindEditorForAsset(UnloadingBp, /*bFocusIfOpen =*/false);
-// 		if (EditorInst != nullptr)
-// 		{
-// 			EditorInst->CloseWindow();
-// 		}
-	}
-}
-
-void FBlueprintUnloader::ReplaceStaleRefs(UBlueprint* NewBlueprint)
-{
-	//--------------------------------------
-	// Construct redirects
-	//--------------------------------------
-
-	TMap<UObject*, UObject*> Redirects;
-	TArray<UObject*> OldObjsNeedingReplacing;
-
-	if (OldBlueprint.IsValid(/*bEvenIfPendingKill =*/true))
-	{
-		UBlueprint* ToBeReplaced = OldBlueprint.Get(/*bEvenIfPendingKill =*/true);
-		if (OldGeneratedClass != nullptr)
-		{
-			OldObjsNeedingReplacing.Add(OldGeneratedClass);
-			Redirects.Add(OldGeneratedClass, NewBlueprint->GeneratedClass);
-		}
-		if (OldCDO != nullptr)
-		{
-			OldObjsNeedingReplacing.Add(OldCDO);
-			Redirects.Add(OldCDO, NewBlueprint->GeneratedClass->GetDefaultObject());
-		}
-		if (OldSkeletonClass != nullptr)
-		{
-			OldObjsNeedingReplacing.Add(OldSkeletonClass);
-			Redirects.Add(OldSkeletonClass, NewBlueprint->SkeletonGeneratedClass);
-		}
-		if (OldSkelCDO != nullptr)
-		{
-			OldObjsNeedingReplacing.Add(OldSkelCDO);
-			Redirects.Add(OldSkelCDO, NewBlueprint->SkeletonGeneratedClass->GetDefaultObject());
-		}
-
-		OldObjsNeedingReplacing.Add(ToBeReplaced);
-		Redirects.Add(ToBeReplaced, NewBlueprint);
-
-		// clear the object being debugged; otherwise ReplaceInstancesOfClass()  
-		// trys to reset it with a new level instance, and OldBlueprint won't 
-		// match the new instance's type (it's now a NewBlueprint)
-		ToBeReplaced->SetObjectBeingDebugged(nullptr);
-	}
-
-	//--------------------------------------
-	// Replace old references
-	//--------------------------------------
-
-	TArray<UObject*> Referencers;
-	// find all objects, still referencing the old blueprint/class/cdo/etc.
-	for (auto Referencer : TFindObjectReferencers<UObject>(OldObjsNeedingReplacing, /*PackageToCheck =*/nullptr, /*bIgnoreTemplates =*/false))
-	{
-		Referencers.Add(Referencer.Value);
-	}
-
-	FBlueprintCompileReinstancer::ReplaceInstancesOfClass(OldGeneratedClass, NewBlueprint->GeneratedClass, FReplaceInstancesOfClassParameters());
-
-	for (UObject* Referencer : Referencers)
-	{
-		FArchiveReplaceObjectRef<UObject>(Referencer, Redirects);
-	}
-}
-#pragma endregion 
 
 void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
 {
@@ -903,43 +739,42 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		
 		if (!ScriptContainer->GetScriptClass())
 		{
-			// Switch over to the created path; this path happens when you drag a content blueprint into the scene as it "duplicates" the content asset
+			// Switch over to the >OnScriptContainerCreated path; this code path occurs when you drag a content blueprint into the scene as it "duplicates" the CDO component
 			This->OnScriptContainerCreated(Outer, ScriptContainer, Name, true);
 			return;
 		}
 		
-		// Stash the referenced blueprint
-		UBangoScriptBlueprint* OldBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
+		UBangoScriptBlueprint* SourceBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
 		
-		// Set up this new duplicated script container
+		// Prepare the newly duplicated script container
 		ScriptContainer->Unset();
-		ScriptContainer->GenerateGuid();		
 		
-		// Dupe the blueprint
+		// Duplicate the blueprint
 		FString BPName = Name;
 		UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, BPName, ScriptContainer->GetGuid());
-	
+
 		if (!NewScriptPackage)
 		{
 			UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
 			return;
 		}
 		
-		UBangoScriptBlueprint* Blueprint = nullptr;
+		UBangoScriptBlueprint* NewBlueprint = nullptr;
 			
-		if (OldBlueprint)
+		if (SourceBlueprint)
 		{
-			Blueprint = DuplicateObject(OldBlueprint, NewScriptPackage, FName(FPackageName::GetShortName(NewScriptPackage)));
-			//FString BPName = UBangoScriptBlueprint::GetAutomaticName(Outer);
-			//Blueprint->Rename(*BPName, nullptr, REN_NonTransactional | REN_DontCreateRedirectors);
-			Blueprint->Actor = Outer->GetTypedOuter<AActor>();	
+			FGuid NewGuid = FGuid::NewGuid();
+			ScriptContainer->SetGuid(NewGuid);
+			
+			NewBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, NewGuid);
+			NewBlueprint->Actor = Outer->GetTypedOuter<AActor>();	
 		}
 
-		if (Blueprint)
+		if (NewBlueprint)
 		{
-			ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
+			ScriptContainer->SetScriptClass(NewBlueprint->GeneratedClass);
 	
-			FAssetRegistryModule::AssetCreated(Blueprint);
+			FAssetRegistryModule::AssetCreated(NewBlueprint);
 			(void)NewScriptPackage->MarkPackageDirty();
 	
 			// Tells FBangoScript property type customizations to regenerate

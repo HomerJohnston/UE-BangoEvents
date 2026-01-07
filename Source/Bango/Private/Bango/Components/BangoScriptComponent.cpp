@@ -238,6 +238,7 @@ void UBangoScriptComponent::UnsetScript()
 	}
 }
 
+/*
 void UBangoScriptComponent::OnRename()
 {
 	if (HasAnyFlags(RF_MirroredGarbage))
@@ -249,8 +250,7 @@ void UBangoScriptComponent::OnRename()
 
 	if (Blueprint)
 	{
-		FAssetToolsModule& AssetToolsModule =
-		FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
 		TArray<FAssetRenameData> Renames;
 		Renames.Emplace(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), GetName());
@@ -260,6 +260,7 @@ void UBangoScriptComponent::OnRename()
 		//Blueprint->UpdateAutoName(this);
 	}
 }
+*/
 #endif
 
 void UBangoScriptComponent::Run()

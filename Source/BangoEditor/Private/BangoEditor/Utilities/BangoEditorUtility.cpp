@@ -118,41 +118,37 @@ UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Oute
 	return NewPackage;
 }
 
-UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const FString& Name, FGuid Guid)
+UBangoScriptBlueprint* Bango::Editor::GetDeletedLevelScript(const FGuid& Guid)
+{
+	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveDeletedScript(Guid);
+
+	//ScriptBlueprint->Rename(*ScriptBlueprint->RetrieveDeletedName(), InPackage, REN_DontCreateRedirectors);
+	
+	return ScriptBlueprint;
+}
+
+UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const FString& InName, const FGuid& InScriptGuid)
 {
 	if (!InPackage)
 	{
 		return nullptr;
 	}
 	
-	if (Name.IsEmpty())
+	if (InName.IsEmpty())
 	{
 		return nullptr;
 	}
 	
-	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveDeletedScript(Guid);
+	FString AssetName = GetLocalScriptAssetName(InName);
+	UBangoScriptBlueprint* ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(AssetName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
+	ScriptBlueprint->SetScriptGuid(InScriptGuid);
 	
-	if (ScriptBlueprint)
-	{
-		ScriptBlueprint->Rename(*ScriptBlueprint->RetrieveDeletedName(), InPackage, REN_DontCreateRedirectors);
-	}
-	else
-	{
-		// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.  \U0001F9FE is the "receipt" char. 
-		// \U0001F4DC Manuscript / Scroll
-		// \U0001F9FE Receipt
-		// \U0001F4A5 Explosion
-		// \U0001F4CD Pushpin
-		// \U0000FE6B Small Form @
-		// \U0000FF5E Halfwidth Forms ~
-		ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(TEXT("~") + Name), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
-	}
-	
-	InPackage->GetOutermost()->MarkPackageDirty();
+//	InPackage->GetOutermost()->MarkPackageDirty();
 	FAssetRegistryModule::AssetCreated(ScriptBlueprint);
 
 	FKismetEditorUtilities::CompileBlueprint(ScriptBlueprint);
 	
+	/*
 	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([ScriptBlueprint]()
 	{
 		ScriptBlueprint->Modify();
@@ -160,8 +156,18 @@ UBangoScriptBlueprint* Bango::Editor::MakeScriptAsset(UPackage* InPackage, const
 		ScriptBlueprint->GeneratedClass->Modify();
 		ScriptBlueprint->GeneratedClass->MarkPackageDirty();
 	}));
+	*/
 	
 	return ScriptBlueprint;
+}
+
+UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FGuid& NewGuid)
+{
+	FString AssetName = GetLocalScriptAssetName( FPackageName::GetShortName(NewScriptPackage) );
+	UBangoScriptBlueprint* DuplicateScript = DuplicateObject(SourceBlueprint, NewScriptPackage, FName(AssetName));
+	DuplicateScript->SetScriptGuid(NewGuid);
+	
+	return DuplicateScript;
 }
 
 #if 0
@@ -249,4 +255,16 @@ bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
 	}
 
 	return false;
+}
+
+FString Bango::Editor::GetLocalScriptAssetName(FString PackageName)
+{
+	// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.
+	// \U0001F4DC Manuscript / Scroll
+	// \U0001F9FE Receipt
+	// \U0001F4A5 Explosion
+	// \U0001F4CD Pushpin
+	// \U0000FE6B Small Form @
+	// \U0000FF5E Halfwidth Forms ~
+	return TEXT("~") + PackageName;
 }

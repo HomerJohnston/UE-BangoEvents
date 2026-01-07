@@ -67,6 +67,13 @@ FSoftObjectPath FBangoScriptContainer::GetSanitizedScriptClass() const
 }
 
 #if WITH_EDITOR
+void FBangoScriptContainer::SetGuid(const FGuid& InGuid)
+{
+	check(!Guid.IsValid());
+	
+	Guid = InGuid;
+}
+
 void FBangoScriptContainer::Unset()
 {
 	Guid.Invalidate();

@@ -52,7 +52,7 @@ public:
 	
 	void UnsetScript();
 	
-	void OnRename();
+	//void OnRename();
 #endif
 	
 protected:

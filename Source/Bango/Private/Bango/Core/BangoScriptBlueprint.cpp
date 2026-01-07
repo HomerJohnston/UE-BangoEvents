@@ -13,7 +13,6 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
 #if WITH_EDITORONLY_DATA
 	bForceFullEditor = true;
-	OverriddenName = NAME_None;
 #endif
 }
 
@@ -24,6 +23,19 @@ const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 {
 	return Actor;
 }
+
+const FGuid& UBangoScriptBlueprint::GetScriptGuid()
+{
+	check(ScriptGuid.IsValid()); 
+	return ScriptGuid;
+}
+
+void UBangoScriptBlueprint::SetScriptGuid(FGuid InGuid)
+{
+	check(!ScriptGuid.IsValid()); 
+	ScriptGuid = InGuid;
+}
+
 
 void UBangoScriptBlueprint::SoftDelete()
 {

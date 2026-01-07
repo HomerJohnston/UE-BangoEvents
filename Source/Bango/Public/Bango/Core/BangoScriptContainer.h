@@ -43,7 +43,7 @@ private:
 public:
 	const FGuid& GetGuid() const { return Guid; }
 	
-	void GenerateGuid() { Guid = FGuid::NewGuid(); }
+	void SetGuid(const FGuid& InGuid);
 #endif
 	
 public:
