@@ -26,7 +26,7 @@ public class BangoUncooked : ModuleRules
                 "BlueprintGraph",
                 "UnrealEd",
                 "KismetCompiler",
-                "KISMET",
+                "Kismet",
                 "EditorSubsystem",
                 "GraphEditor"
             }

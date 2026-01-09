@@ -52,8 +52,6 @@ FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
 		Subsystem->OnScriptGenerated.RemoveAll(this);
 	}
 	
-	UBangoScript::SelectedScript.Reset();
-	
 	FWorldDelegates::OnWorldBeginTearDown.RemoveAll(this);
 }
 
@@ -582,12 +580,16 @@ void FBangoScriptContainerCustomization::UpdateBox()
 {
 	SGraphEditor::FGraphEditorEvents Events;
 	
-	UBangoScript::SelectedScript = GetScriptClass()->GetPathName();
-	
 	Box->ClearChildren();
 	
 	if (CurrentGraph.IsValid())
 	{
+		TSharedRef<SGraphEditor> GraphEditor = SNew(SGraphEditor)
+		.GraphToEdit(GetPrimaryEventGraph())
+		.IsEditable(false)
+		.GraphEvents(Events)
+		.ShowGraphStateOverlay(false);
+		
 		Box->AddSlot()
 		.AutoHeight()
 		[
@@ -597,11 +599,7 @@ void FBangoScriptContainerCustomization::UpdateBox()
 				SNew(SBox)
 				.HeightOverride(300)
 				[
-					SNew(SGraphEditor)
-					.GraphToEdit(GetPrimaryEventGraph())
-					.IsEditable(false)
-					.GraphEvents(Events)
-					.ShowGraphStateOverlay(false)
+					GraphEditor
 				]
 			]
 			+ SOverlay::Slot()

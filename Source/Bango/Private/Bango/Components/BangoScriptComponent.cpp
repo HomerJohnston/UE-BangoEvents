@@ -287,9 +287,28 @@ FGuid UBangoScriptComponent::GetScriptGuid() const
 #endif
 
 #if WITH_EDITOR
-UBangoScriptBlueprint* UBangoScriptComponent::GetScriptBlueprint() const
+UBangoScriptBlueprint* UBangoScriptComponent::GetScriptBlueprint(bool bForceLoad) const
 {
-	return Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(Script.GetScriptClass().LoadSynchronous()));
+	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
+	
+	if (ScriptClass.IsNull())
+	{
+		return nullptr;
+	}
+	
+	if (ScriptClass.IsValid())
+	{
+		TSubclassOf<UBangoScript> LoadedScriptClass = ScriptClass.Get();
+		return Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(LoadedScriptClass));
+	}
+	
+	if (ScriptClass.IsPending() && bForceLoad)
+	{
+		TSubclassOf<UBangoScript> LoadedScriptClass = ScriptClass.Get();
+		return Cast<UBangoScriptBlueprint>(UBlueprint::GetBlueprintFromClass(LoadedScriptClass));
+	}
+
+	return nullptr;
 }
 #endif
 

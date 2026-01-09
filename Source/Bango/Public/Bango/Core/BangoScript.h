@@ -131,10 +131,6 @@ protected:
     
 protected:
     static DataValidationDelegate OnScriptRequestValidation;
-    
-public:
-	static FSoftClassPath SelectedScript;
-    
 #endif
 };
 

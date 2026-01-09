@@ -57,6 +57,13 @@ void UK2Node_BangoFindActor::PostEditChangeProperty(struct FPropertyChangedEvent
 	}
 }
 
+void UK2Node_BangoFindActor::PostPlacedNewNode()
+{
+	Super::PostPlacedNewNode();
+	
+	Color = FLinearColor::MakeRandomColor();
+}
+
 void UK2Node_BangoFindActor::AllocateDefaultPins()
 {
 	auto* SoftActorPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_SoftObject, FName("SoftActor"));

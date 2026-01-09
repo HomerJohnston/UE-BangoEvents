@@ -4,6 +4,7 @@
 #include "Bango/Components/BangoScriptComponent.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 
+#if 0
 void UBangoScriptReferenceDrawerSubsystem::Tick(float DeltaTime)
 {
 	AActor* SelectedActor;
@@ -112,3 +113,4 @@ bool UBangoScriptReferenceDrawerSubsystem::GetBlueprintAndActor(UBangoScriptBlue
 	
 	return true;
 }
+#endif

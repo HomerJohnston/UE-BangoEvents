@@ -562,6 +562,14 @@ FText SGraphNode_BangoFindActor::Text_BangoNameIndicator() const
 	}
 }
 
+void SGraphNode_BangoFindActor::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SGraphNodeK2Base::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+	
+	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
+	Node->bIsSelected = IsSelectedExclusively();
+}
+
 /*
 FText SGraphNode_BangoFindActor::Text_GuidStatusWidget() const
 {

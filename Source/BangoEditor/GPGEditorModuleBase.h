@@ -9,6 +9,9 @@
 
 #include "AssetToolsModule.h"
 #include "AssetTypeCategories.h"
+#include "UnrealEdGlobals.h"
+#include "../../../RTMSDF/Source/ChlumskyMSDFGen/Private/3rdParty/dropXML.hpp"
+#include "Editor/UnrealEdEngine.h"
 
 #if WITH_EDITOR
 #include "PropertyEditorModule.h"
@@ -18,15 +21,16 @@ class UObject;
 class UThumbnailRenderer;
 class IAssetTypeActions;
 class IAssetTools;
+class FComponentVisualizer;
 
 using UAssetClass = TSubclassOf<UObject>;
 using UThumbnailClass = TSubclassOf<UThumbnailRenderer>;
 
-#define REGISTER_ASSET_TYPE_ACTION(NAME) AssetTypeActions.Add(MakeShared<NAME>()) // Obsolete, use UAssetDefinition for your assets instead
+#define REGISTER_ASSET_TYPE_ACTION(NAME) AssetTypeActions.Add(MakeShared<NAME>()) // TODO: Obsolete, use UAssetDefinition for your assets instead
 #define REGISTER_DETAIL_CUSTOMIZATION(CLASSNAME, CUSTOMIZATIONNAME) DetailCustomizations.Append({{ CLASSNAME::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&CUSTOMIZATIONNAME::MakeInstance)}})
 #define REGISTER_PROPERTY_CUSTOMIZATION(CLASSNAME, CUSTOMIZATIONNAME) PropertyCustomizations.Append({{ *CLASSNAME::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&CUSTOMIZATIONNAME::MakeInstance) }});
 #define REGISTER_THUMBNAIL_RENDERER(CLASSNAME, THUMBNAILRENDERERNAME) ClassThumbnailRenderers.Append({{ CLASSNAME::StaticClass(), THUMBNAILRENDERERNAME::StaticClass() }});
-
+#define REGISTER_COMPONENT_VISUALIZER(CLASSNAME, VISUALIZERCLASSNAME) ComponentVisualizers.Add( { CLASSNAME::StaticClass()->GetFName(), MakeShared<VISUALIZERCLASSNAME>() } )
 /*
  * Inherit your editor module class from this, and then register customizations per the example below. You must call StartupModuleBase() in your StartupModule() and ShutdownModuleBase() in your ShutdownModule().
  * Example:
@@ -62,7 +66,7 @@ protected:
 	TArray<TPair<TSubclassOf<UObject>, const FOnGetDetailCustomizationInstance>> DetailCustomizations;
 	TArray<TPair<const UScriptStruct&, const FOnGetPropertyTypeCustomizationInstance>> PropertyCustomizations;
 	TArray<TPair<UAssetClass, UThumbnailClass>> ClassThumbnailRenderers;
-
+	TArray<TPair<FName, TSharedPtr<FComponentVisualizer>>> ComponentVisualizers;
 
 	// ============================================================================================
 	// STATE
@@ -71,6 +75,7 @@ private:
 	TSet<FName> RegisteredCustomClassLayouts;
 	TSet<FName> RegisteredCustomStructLayouts;
 	static inline EAssetTypeCategories::Type RegisteredAssetCategory;
+	TArray<FName> RegisteredComponentVisualizerClassNames;	
 
 public: 
     static EAssetTypeCategories::Type GetAssetCategory()
@@ -78,8 +83,8 @@ public:
 	    return RegisteredAssetCategory;
     };
 	
-protected:
-	void StartupModuleBase()
+private:
+	void InitializeAll()
 	{
 		if (AssetCategory.Key != NAME_None && !AssetCategory.Value.IsEmpty())
 		{
@@ -90,11 +95,26 @@ protected:
 		RegisterDetailCustomizations();
 		RegisterPropertyCustomizations();
 		RegisterThumbnailRenderers();
+		RegisterComponentVisualizers();
 		
 		if (FPropertyEditorModule* PropertyEditorModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
 		{
 			PropertyEditorModule->NotifyCustomizationModuleChanged();
 		}
+		
+		FCoreDelegates::OnPostEngineInit.RemoveAll(this);
+	}
+	
+protected:
+	void StartupModuleBase()
+	{
+		if (!GEditor || !GUnrealEd)
+		{
+			FCoreDelegates::OnPostEngineInit.AddRaw(this, &FGPGEditorModuleBase::InitializeAll);
+			return;
+		}
+		
+		InitializeAll();
 	}
 	
 	void ShutdownModuleBase()
@@ -102,7 +122,8 @@ protected:
 		UnregisterAssetTypeActions();
 		UnregisterDetailCustomizations();
 		UnregisterPropertyCustomizations();
-		UnregisterThumbnailRenderers();		
+		UnregisterThumbnailRenderers();
+		UnregisterComponentVisualizers();
 	}
 	
 	// ========================================== 
@@ -159,6 +180,7 @@ private:
 		}
 	}
 
+	// ------------------------------------------
 	void RegisterCustomClassLayout(const TSubclassOf<UObject> Class, const FOnGetDetailCustomizationInstance DetailLayout)
 	{
 		if (!Class)
@@ -187,6 +209,7 @@ private:
 		}
 	}
 
+	// ------------------------------------------
 	void RegisterCustomStructLayout(const UScriptStruct& Struct, const FOnGetPropertyTypeCustomizationInstance DetailLayout)
 	{
 		if (FPropertyEditorModule* PropertyEditorModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor"))
@@ -204,6 +227,22 @@ private:
 		for (TPair<UAssetClass, UThumbnailClass>& Pair : ClassThumbnailRenderers)
 		{
 			ThumbnailManager.RegisterCustomRenderer(Pair.Key, Pair.Value);
+		}
+	}
+	
+	// ------------------------------------------
+	void RegisterComponentVisualizers()
+	{
+		if(!GUnrealEd)
+		{
+			//checkNoEntry();
+			return;
+		}
+		
+		for (TPair<FName, TSharedPtr<FComponentVisualizer>>& ComponentVisualizer : ComponentVisualizers)
+		{
+			RegisteredComponentVisualizerClassNames.Add(ComponentVisualizer.Key);
+			GUnrealEd->RegisterComponentVisualizer(ComponentVisualizer.Key, ComponentVisualizer.Value);
 		}
 	}
 	
@@ -268,6 +307,21 @@ private:
 			{
 				ThumbnailManager.RegisterCustomRenderer(Pair.Key, Pair.Value);
 			}
+		}
+	}
+	
+	// ------------------------------------------
+	void UnregisterComponentVisualizers()
+	{
+		if(!GUnrealEd)
+		{
+			//checkNoEntry();
+			return;
+		}
+		
+		for (FName Name : RegisteredComponentVisualizerClassNames)
+		{
+			GUnrealEd->UnregisterComponentVisualizer(Name);
 		}
 	}
 };

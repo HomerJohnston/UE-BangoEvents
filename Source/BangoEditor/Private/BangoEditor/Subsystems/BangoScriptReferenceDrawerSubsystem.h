@@ -1,7 +1,8 @@
 ﻿#pragma once
 
-#include "BangoScriptReferenceDrawerSubsystem.generated.h"
+//#include "BangoScriptReferenceDrawerSubsystem.generated.h"
 
+/*
 // TODO I would rather do this via a component visualizer, this was a quick test.
 UCLASS()
 class UBangoScriptReferenceDrawerSubsystem : public UEditorSubsystem, public FTickableEditorObject
@@ -16,3 +17,4 @@ class UBangoScriptReferenceDrawerSubsystem : public UEditorSubsystem, public FTi
 	
 	bool GetBlueprintAndActor(UBangoScriptBlueprint*& Blueprint, AActor*& SelectedActor);
 };
+*/

@@ -89,7 +89,7 @@ public:
 	
 	FGuid GetScriptGuid() const;
 	
-	UBangoScriptBlueprint* GetScriptBlueprint() const;
+	UBangoScriptBlueprint* GetScriptBlueprint(bool bForceLoad = false) const;
 	
 	void SetScriptBlueprint(UBangoScriptBlueprint* Blueprint); 
 	

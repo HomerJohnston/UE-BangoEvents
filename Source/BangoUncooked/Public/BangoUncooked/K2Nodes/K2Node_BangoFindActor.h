@@ -39,11 +39,16 @@ protected:
 	
 	/** Used by the slate widget to highlight the node. */
 	EBangoFindActorNode_ErrorState ErrorState;
+
+	UPROPERTY(EditAnywhere, DuplicateTransient)
+	FLinearColor Color;
 	
 public:
 	TSubclassOf<AActor> GetCastTo() const { return CastTo; }
 	
 	TSoftObjectPtr<AActor> GetTargetActor() const { return TargetActor; } 
+	
+	const FLinearColor& GetColor() const { return Color; }
 	
 	bool ShouldDrawCompact() const override;
 	
@@ -60,6 +65,8 @@ public:
 public:
 	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	
+	virtual void PostPlacedNewNode() override;
+	
 	void AllocateDefaultPins() override;
 	
 	FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
@@ -75,6 +82,11 @@ public:
 	BANGOUNCOOKED_API void SetActor(AActor* Actor);
 	
 	AActor* GetReferencedLevelActor() const override;
+	
+	//
+	
+	// Intentionally unreflected
+	bool bIsSelected;
 };
 
 using namespace BangoNodeBuilder;

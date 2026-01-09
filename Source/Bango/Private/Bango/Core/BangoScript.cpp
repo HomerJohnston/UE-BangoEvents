@@ -12,7 +12,6 @@
 
 #if WITH_EDITOR
 DataValidationDelegate UBangoScript::OnScriptRequestValidation;
-FSoftClassPath UBangoScript::SelectedScript;
 #endif
 
 /*

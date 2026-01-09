@@ -1,7 +1,9 @@
 ﻿#include "BangoEditor.h"
 
+#include "BangoEditor/Private/BangoEditor/ComponentVisualizers/BangoScriptComponentVisualizer.h"
 #include "ClassViewerModule.h"
 #include "IContentBrowserSingleton.h"
+#include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Core/BangoScript.h"
 #include "BangoEditor/BangoColor.h"
 #include "BangoEditor/BangoEditorStyle.h"
@@ -25,6 +27,7 @@
 TSharedPtr<FSlateStyleSet> FBangoEditorModule::StyleSet = nullptr;
 TSharedPtr<FBangoClassViewerFilter> FBangoEditorModule::BangoClassViewerFilter = nullptr;
 
+// TODO clean this up
 void FBangoEditorModule::StartupModule()
 {
 	AssetCategory = { "Bango", LOCTEXT("Bango", "Bango") };
@@ -32,6 +35,7 @@ void FBangoEditorModule::StartupModule()
 	
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
 
+	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	{
@@ -87,6 +91,7 @@ void FBangoEditorModule::StartupModule()
 	
 	//////////////////
 	REGISTER_PROPERTY_CUSTOMIZATION(FBangoScriptContainer, FBangoScriptContainerCustomization);
+	REGISTER_COMPONENT_VISUALIZER(UBangoScriptComponent, FBangoScriptComponentVisualizer);
 	
 	LateRegisterClassFilter();
 	
