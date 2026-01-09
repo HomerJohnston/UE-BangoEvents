@@ -831,32 +831,40 @@ void UBangoEditorSubsystem::OnRequestNewID(AActor* Actor) const
 
 void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass)
 {
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
+	// I have to delay this by one frame or else I get really weird editor crashes, 
+	// something about running ObjectTools::ForceDeleteObjects from my component's OnComponentDestroy causes the garbage collector to freak out.
 	
-	UPackage* OldPackage = Blueprint->GetPackage();
-	
-	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
-
-	Blueprint->ClearEditorReferences();
-	
-	// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
-	// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
-	Blueprint->DeletedName = Blueprint->GetName();
-	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
-	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
-	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-		
-	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
-		
-	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
-				
-	if (NumDelete == 0)
+	auto DelayedDelete = [ScriptClass] ()
 	{
-		ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
-	}
+		UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
+	
+		UPackage* OldPackage = Blueprint->GetPackage();
+	
+		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
 
-	Bango::Editor::DeleteEmptyScriptFolders();
+		Blueprint->ClearEditorReferences();
+	
+		// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
+		// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
+		Blueprint->DeletedName = Blueprint->GetName();
+		Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
+		Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
+		Blueprint->DeletedPackageId = OldPackage->GetPackageId();
+		Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+		
+		UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
+		
+		int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
+				
+		if (NumDelete == 0)
+		{
+			ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
+		}
+
+		Bango::Editor::DeleteEmptyScriptFolders();
+	};
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayedDelete);
 }
 
 UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
