@@ -10,7 +10,6 @@
 #include "AssetToolsModule.h"
 #include "AssetTypeCategories.h"
 #include "UnrealEdGlobals.h"
-#include "../../../RTMSDF/Source/ChlumskyMSDFGen/Private/3rdParty/dropXML.hpp"
 #include "Editor/UnrealEdEngine.h"
 
 #if WITH_EDITOR
