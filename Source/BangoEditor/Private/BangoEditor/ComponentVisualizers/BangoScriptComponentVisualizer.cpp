@@ -96,7 +96,7 @@ void FBangoScriptComponentVisualizer::DrawVisualization(const UActorComponent* C
 
 struct FBangoActorNodeDraw
 {
-	const AActor* Actor = nullptr;
+	TSoftObjectPtr<const AActor> Actor = nullptr;
 	bool bFocused = false;
 	
 	bool operator==(const FBangoActorNodeDraw& Other) const { return Other.Actor == this->Actor; }
@@ -160,26 +160,26 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				if (const AActor* Actor = TargetActor.Get())
 				{
 					FBangoActorNodeDraw DrawRecord;
-					DrawRecord.Actor = Actor;
+					DrawRecord.Actor = TargetActor;
 					
 					bool bAlreadyInSet;
 					FBangoActorNodeDraw& Draw = VisitedActors.FindOrAddByHash(GetTypeHash(Actor), DrawRecord, &bAlreadyInSet);
-					Draw.bFocused = Draw.bFocused || Node->bIsSelected;
+					Draw.bFocused = Draw.bFocused || (GFrameCounter - Node->LastSelectedFrame < 3);
 				}
 			}
 			
 			// Now we draw
 			for (const FBangoActorNodeDraw& DrawInfo : VisitedActors)// int32 i = 0; i < VisitedActors FindActorNodes.Num(); ++i)
 			{
-				float Saturation = DrawInfo.bFocused ? 1.0f : 0.75f;
-				float Luminosity = DrawInfo.bFocused ? 1.0f : 0.75f;
-				float Thickness = DrawInfo.bFocused ? 3.0f : 1.0f;
+				float Saturation = DrawInfo.bFocused ? 1.0f : 0.8f;
+				float Luminosity = DrawInfo.bFocused ? 1.0f : 0.8f;
+				float Thickness = DrawInfo.bFocused ? 3.0f : 1.5f;
 				FLinearColor Color = Bango::Editor::Color::GetHashedColor(GetTypeHash(DrawInfo.Actor), Saturation, Luminosity);
 				
 				// Draw circle
 				FVector ScreenPos;
 				float Radius;
-				if (!GetActorScreenPosAndSize(View, Canvas, DrawInfo.Actor, ScreenPos, Radius))
+				if (!GetActorScreenPosAndSize(View, Canvas, DrawInfo.Actor.Get(), ScreenPos, Radius))
 				{
 					return;
 				}

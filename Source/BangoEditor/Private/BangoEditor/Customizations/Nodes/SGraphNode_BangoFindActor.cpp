@@ -3,12 +3,15 @@
 #include "GraphEditorSettings.h"
 #include "IDocumentation.h"
 #include "SCommentBubble.h"
+#include "SGraphPanel.h"
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Components/BangoActorIDComponent.h"
+#include "Bango/Utility/BangoEditorUtility.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "BangoEditor/BangoColor.h"
 #include "BangoEditor/BangoEditorStyle.h"
+#include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "Styling/SlateIconFinder.h"
 #include "WorldPartition/WorldPartition.h"
@@ -126,6 +129,27 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoFindActor::GetOverlayWidgets(bool bSe
 {
 	TArray<FOverlayWidgetInfo> Widgets = SGraphNode::GetOverlayWidgets(bSelected, WidgetSize);
 	
+	TSoftObjectPtr<AActor> TargetActor = GetTargetActorSoft();
+	
+	if (!TargetActor.IsNull())
+	{
+		FOverlayWidgetInfo& HashColorInfo = Widgets.Add_GetRef(FOverlayWidgetInfo());
+	
+		uint32 Hash = GetTypeHash(TargetActor);
+		
+		const float Size = 12.0f;
+		const float HPadding = 10.0f;
+		const float VPadding = 6.0f;
+		
+		HashColorInfo.Widget = SNew(SImage)
+		.Image(FAppStyle::Get().GetBrush("Icons.FilledCircle"))
+		.DesiredSizeOverride(FVector2D(Size))
+		.ColorAndOpacity(Bango::Editor::Color::GetHashedColor(Hash, 1.0f, 1.0f));
+	
+		HashColorInfo.OverlayOffset = FVector2f(HPadding, WidgetSize.Y - Size - VPadding);
+	}
+	
+#if 0
 	if (!GetBangoFindActorNode()->GetTargetActor().IsNull())
 	{
 		return Widgets;
@@ -169,6 +193,7 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoFindActor::GetOverlayWidgets(bool bSe
 		
 		CastInfo.OverlayOffset = FVector2f((WidgetSize.X + 6), 14);
 	}
+#endif
 	
 	return Widgets;
 }
@@ -567,35 +592,18 @@ void SGraphNode_BangoFindActor::Tick(const FGeometry& AllottedGeometry, const do
 	SGraphNodeK2Base::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 	
 	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
-	Node->bIsSelected = IsSelectedExclusively();
+	
+	TSharedPtr<SGraphPanel> OwnerPanel = OwnerGraphPanelPtr.Pin();
+	
+	if (OwnerPanel.IsValid() && OwnerPanel->SelectionManager.IsNodeSelected(GraphNode))
+	{
+		Node->LastSelectedFrame = GFrameCounter;
+	}
 }
 
-/*
-FText SGraphNode_BangoFindActor::Text_GuidStatusWidget() const
+const TSoftObjectPtr<AActor> SGraphNode_BangoFindActor::GetTargetActorSoft() const
 {
-	UK2Node_BangoFindActor* Node = GetBangoFindActorNode();
-	TSoftObjectPtr<AActor> ActorSoft = Node->GetTargetActor();
-	
-	if (ActorSoft.IsNull())
-	{
-		return LOCTEXT("Text_GuidStatusWidget_NullActor", "Error: Null Actor!");
-	}
-	
-	if (ActorSoft.IsPending())
-	{
-		return LOCTEXT("Text_GuidStatusWidget_UnloadedActor", "UNLOADED");
-	}
-	
-	UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(ActorSoft.Get());
-	
-	if (IDComponent)
-	{
-		//return FText::FromString(GetBangoFindActorNode()->GetTargetActorGuid().ToString());
-		return FText::FromString(IDComponent->GetBangoGuid().ToString());
-	}
-	
-	return LOCTEXT("Text_GuidStatusWidget_MissingIdComponent", "MISSING ID COMPONENT");
+	return GetBangoFindActorNode()->GetTargetActor();
 }
-*/
 
 #undef LOCTEXT_NAMESPACE

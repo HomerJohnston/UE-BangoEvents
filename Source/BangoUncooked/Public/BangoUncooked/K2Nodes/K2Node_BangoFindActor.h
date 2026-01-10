@@ -83,10 +83,8 @@ public:
 	
 	AActor* GetReferencedLevelActor() const override;
 	
-	//
-	
-	// Intentionally unreflected
-	bool bIsSelected;
+	// Intentionally unreflected; slate widgets will update this whenever the node is selected. The ScriptComponent visualizer will use it to highlight recently selected connections.
+	uint64 LastSelectedFrame = 0;
 };
 
 using namespace BangoNodeBuilder;

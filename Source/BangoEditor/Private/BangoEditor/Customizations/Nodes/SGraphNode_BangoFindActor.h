@@ -47,5 +47,6 @@ public:
 	FText Text_BangoNameIndicator() const;
 	
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
-	//FText Text_GuidStatusWidget() const;
+	
+	const TSoftObjectPtr<AActor> GetTargetActorSoft() const;
 };
