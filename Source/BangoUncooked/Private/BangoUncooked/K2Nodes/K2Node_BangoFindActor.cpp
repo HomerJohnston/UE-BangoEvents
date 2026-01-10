@@ -1,12 +1,15 @@
 ﻿#include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 
 #include "K2Node_DynamicCast.h"
+#include "Selection.h"
+#include "UnrealEdGlobals.h"
 #include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
 #include "Bango/Utility/BangoColor.h"
 #include "Bango/Utility/BangoHelpers.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
+#include "Editor/UnrealEdEngine.h"
 #include "WorldPartition/ActorDescContainerInstance.h"
 #include "WorldPartition/WorldPartition.h"
 
@@ -313,7 +316,7 @@ AActor* UK2Node_BangoFindActor::GetReferencedLevelActor() const
 {
 	if (TargetActor.IsPending())
 	{
-		UE_LOG(LogBango, Warning, TEXT("Actor's level is unloaded; can't jump to it!"));
+		UE_LOG(LogBango, Warning, TEXT("Actor is unloaded, can't jump!"));
 	}
 	
 	else if (TargetActor.IsValid())
@@ -322,6 +325,24 @@ AActor* UK2Node_BangoFindActor::GetReferencedLevelActor() const
 	}
 	
 	return nullptr;
+}
+
+void UK2Node_BangoFindActor::JumpToDefinition() const
+{
+	AActor* Actor = TargetActor.Get();
+	
+	if (!Actor)
+	{
+		return;
+	}
+
+	// First clear the previous selection
+	GEditor->GetSelectedActors()->Modify();
+	GEditor->SelectNone( false, true );
+	GEditor->SelectActor(Actor, true, true, false);
+
+	// Execute the command to move camera to the object(s).
+	GUnrealEd->Exec_Camera( TEXT("ALIGN ACTIVEVIEWPORTONLY"),*GLog); 
 }
 
 #undef LOCTEXT_NAMESPACE
