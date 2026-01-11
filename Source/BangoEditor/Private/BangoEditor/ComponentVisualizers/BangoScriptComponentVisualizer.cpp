@@ -13,9 +13,9 @@ void FBangoScriptComponentVisualizer::OnRegister()
 
 void FBangoScriptComponentVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {	
-	if (!Component)
+	if (!IsValid(Component))
 	{
-		// This can happen if you delete the actor
+		// This can happen if you delete or undo creation of the component or actor
 		return;
 	}
 	
@@ -118,6 +118,12 @@ struct FBangoActorNodeDraw
 
 void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport,	const FSceneView* View, FCanvas* Canvas)
 {
+	if (!IsValid(Component))
+	{
+		// This can happen if you delete or undo creation of the component or actor
+		return;
+	}
+	
 	const AActor* ComponentActor = Component->GetOwner();
 	const UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(Component);
 	const UBangoScriptBlueprint* Blueprint;

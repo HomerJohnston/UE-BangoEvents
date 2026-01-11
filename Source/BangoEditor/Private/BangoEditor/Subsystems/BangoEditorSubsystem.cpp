@@ -117,7 +117,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 	// TODO dismantle mount everest below
 	if (Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
 	{
-		// This was an undo-delete event; we will want to restore a script from Transient
+		// This was undoing a deletion event; we will want to restore a script from the transient package
 		
 		// Find a script container on this thing and make it do stuff
 		for (TFieldIterator<FProperty> It(UBangoScriptComponent::StaticClass()); It; ++It)
@@ -153,7 +153,6 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 								
 									if (ISourceControlModule::Get().IsEnabled())
 									{
-										// TODO source control implementation for undo/redo
 										/*
 										ISourceControlProvider& SourceControlProvider = ISourceControlModule::Get().GetProvider();
 
@@ -221,15 +220,23 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 	}
 	else
 	{
-		TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->Script.GetScriptClass();
+		// This was undoing a creation event; we will want to delete the blueprint asset
 		
-		if (!ScriptClass)
+		if (ISourceControlModule::Get().IsEnabled())
 		{
-			ScriptClass = ScriptComponent->__UNDO_Script.GetScriptClass();
+			
 		}
+		else
+		{
+			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->Script.GetScriptClass();
 		
-		// This was a redo-delete event; we will want to re-delete the blueprint asset
-		OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);
+			if (!ScriptClass)
+			{
+				ScriptClass = ScriptComponent->__UNDO_Script.GetScriptClass();
+			}
+		
+			OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);	
+		}
 	}
 }
 

@@ -37,8 +37,9 @@ FString FBangoPackageHelper::GetRegularLevelLocalScriptsPath(const FString& Leve
 	return Bango::Editor::ScriptRootFolder / LevelName;
 }
 
-FString FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName)
+FString FBangoPackageHelper::GetWorldPartitionActorPath(const FString& InOuterPackageName, const FString& InPackageShortName)
 {
+	/*
 	FString ExternalObjectsPath;
 
 	auto TrySplitLongPackageName = [&InPackageShortName](const FString& InOuterPackageName, FString& OutExternalObjectsPath)
@@ -53,7 +54,7 @@ FString FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(const FString& In
 				PackagePath.RightChopInline(ExternalActorsPrefix.Len());
 			}
 			
-			OutExternalObjectsPath = FString::Printf(TEXT("%s%s%s%s"), *MountPoint, *Bango::Editor::ScriptRootFolder, *PackagePath, InPackageShortName.IsEmpty() ? *ShortName : *InPackageShortName);
+			OutExternalObjectsPath = FString::Printf(TEXT("%s%s"), *PackagePath, InPackageShortName.IsEmpty() ? *ShortName : *InPackageShortName);
 			
 			return true;
 		}
@@ -64,7 +65,7 @@ FString FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(const FString& In
 	{
 		return ExternalObjectsPath;
 	}
-
+*/
 	return FString();
 }
 
@@ -97,7 +98,7 @@ FString FBangoPackageHelper::GetScriptPackagePath(const FString& InOuterPackageN
 	GuidBase36 = PackageGuid.ToString(EGuidFormats::Base36Encoded);
 	check(GuidBase36.Len());
 
-	FString BaseDir = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(InOuterPackageName);
+	FString BaseDir = FBangoPackageHelper::GetWorldPartitionActorPath(InOuterPackageName);
 
 	// I do not expect every actor to have even hundreds of scripts. I do not need to use the extra subfolders that UE uses.
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;

@@ -68,7 +68,7 @@ public:
 	 * @param InPackageShortName Optional short name to use instead of the package short name
 	 * @return the path
 	 */
-	static BANGOEDITOR_API FString GetWorldPartitionLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName = FString());
+	static BANGOEDITOR_API FString GetWorldPartitionActorPath(const FString& InOuterPackageName, const FString& InPackageShortName = FString());
 
 	/**
 	 * Get the path containing the external objects for this Outer
@@ -152,7 +152,7 @@ void FBangoPackageHelper::LoadObjectsFromBangoPackages(UObject* InOuter, TFuncti
 	const IDataLayerInstanceProvider* DataLayerInstanceProvider = Cast<IDataLayerInstanceProvider>(InOuter);
 	const UExternalDataLayerAsset* ExternalDataLayerAsset = DataLayerInstanceProvider ? DataLayerInstanceProvider->GetRootExternalDataLayerAsset() : nullptr;
 	const FString RootPath = ExternalDataLayerAsset ? FExternalDataLayerHelper::GetExternalDataLayerLevelRootPath(ExternalDataLayerAsset, OutermostPackageName) : OutermostPackageName;
-	const FString ExternalObjectsPath = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(RootPath);
+	const FString ExternalObjectsPath = FBangoPackageHelper::GetWorldPartitionActorPath(RootPath);
 	TArray<FString> ObjectPackageNames;
 
 	// Do a synchronous scan of the world external objects path.			

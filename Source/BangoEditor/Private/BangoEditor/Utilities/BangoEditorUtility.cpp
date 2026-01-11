@@ -1,5 +1,7 @@
 ﻿#include "BangoEditor/Utilities/BangoEditorUtility.h"
 
+#include "AssetToolsModule.h"
+#include "ExternalPackageHelper.h"
 #include "ObjectTools.h"
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
@@ -7,6 +9,7 @@
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
+#include "BangoEditorTooling/BangoEditorLog.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
 #include "WorldPartition/WorldPartition.h"
@@ -104,42 +107,54 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 	check(Actor && Outer && Guid.IsValid());
 	
 	// The goal here is a file path like this
-	// /Game/__BangoScripts__/LevelName/ActorPath/UniqueScriptID/Script.uasset
+	// /Game/__BangoScripts__/LevelName/ActorPath/UniqueScriptID.uasset
 
-	FString FinalPath;
-
-	// Not sure which of these I need yet
-	//FString BaseDir = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath();
 	FString LevelName = FPackageName::GetShortName(Actor->GetLevel()->GetPackage());
-	FString ActorPath = Actor->GetPathName();
-	FString ActorName = Actor->GetName();
-	FString ScriptID = Guid.ToString();
-	FString ScriptID1 = Guid.ToString(EGuidFormats::Base36Encoded);
-	FString ScriptID2 = Guid.ToString(EGuidFormats::Digits);
-	FString ScriptID3 = Guid.ToString(EGuidFormats::DigitsLower);
-	FString ScriptID4 = Guid.ToString(EGuidFormats::HexValuesInBraces);
-	FString ScriptID5 = Guid.ToString(EGuidFormats::Short);
-	FString ScriptID6 = Guid.ToString(EGuidFormats::UniqueObjectGuid);
 	
-	// TODO I do want to actually test a collision and make sure the plugin handles it somewhat gracefully
 	// I am not concerned with collisions; most actors in a game will have one script. Might as well reduce the path length to make it nicer.
 	uint32 GuidHash = GetTypeHash(Guid);
 	FString GuidHashBase36 = UInt32ToBase36(GuidHash);
 	
-	FArchiveMD5 MD5;
-	MD5 << Guid;
+	FString ActorFolderPath;
 	
-	FName ActorFName = Actor->GetFName();
+	UWorld* World = Actor->GetWorld();
+	check(World);
 	
-	FString ActorFNameString = ActorFName.ToString();
+	if (World->GetWorldPartition())
+	{
+		// We'll build a subfolder hierarchy that contains the same folders as __ExternalActors__ for world partition. This may make it easier to match up script files to actors e.g. using the revision control window.
+		FString ObjectPath = Actor->GetPathName().ToLower();
+		FString BaseDir = FExternalPackageHelper::GetExternalObjectsPath(Actor->GetPackage()->GetPathName());
 	
-	FString ActorClass = Actor->GetClass()->GetFName().ToString();
+		FString ExternalPackageName = FExternalPackageHelper::GetExternalPackageName(Actor->GetPackage()->GetPathName(), ObjectPath);
+		ExternalPackageName.RemoveFromStart(BaseDir);
+		
+		FString ActorClass = Actor->GetClass()->GetFName().ToString();
+		ActorFolderPath = ActorClass / ExternalPackageName;
+	}
+	else
+	{
+		FString ActorFName = Actor->GetFName().ToString();
+		
+		ActorFolderPath = ActorFName;
+		//ActorFolderPath.RemoveFromStart(ActorClass);
+	}
 	
-	ActorFNameString.RemoveFromStart(ActorClass);
-	ActorFNameString.RemoveFromStart(TEXT("_"));
+	check(!ActorFolderPath.IsEmpty());
+
+	// Generate the preferred final path name
+	FString FinalPath = "/Game" / Bango::Editor::ScriptRootFolder / LevelName / ActorFolderPath / GuidHashBase36;
 	
-	FinalPath = "/Game" / Bango::Editor::ScriptRootFolder / LevelName / ActorClass / ActorFNameString / GuidHashBase36;
+	// Ensure we have a unique pathname
+	uint32 Suffix = 0;
+	FString OriginalFinalPath = FinalPath;
+	while (FPackageName::DoesPackageExist(FinalPath))
+	{
+		UE_LOG(LogBangoEditor, Warning, TEXT("A level script package already existed, this should not happen! Existing path: %s"), *FinalPath);
+		FinalPath = FString::Format(TEXT("{0}_{1}"), { OriginalFinalPath, ++Suffix} );
+	}
 	
+	// Make the package
 	UPackage* NewPackage = CreatePackage(*FinalPath);
 	NewPackage->SetFlags(RF_Public);
 	NewPackage->SetPackageFlags(PKG_NewlyCreated);

@@ -2,7 +2,7 @@
 // This file is public domain.
 
 // This is a drop-in header to assist with basic module definition, customization registration/deregistration, etc.
-// It is intended to be copy/pasted in any module that wishes to use it.
+// It is intended to be copy/pasted in any editor module.
 // For usage, see additional comments below.
 
 #pragma once
@@ -25,30 +25,35 @@ class FComponentVisualizer;
 using UAssetClass = TSubclassOf<UObject>;
 using UThumbnailClass = TSubclassOf<UThumbnailRenderer>;
 
-#define REGISTER_ASSET_TYPE_ACTION(NAME) AssetTypeActions.Add(MakeShared<NAME>()) // TODO: Obsolete, use UAssetDefinition for your assets instead
+#define REGISTER_ASSET_TYPE_ACTION(NAME) AssetTypeActions.Add(MakeShared<NAME>()) // This is OBSOLETE - use UAssetDefinition for your assets instead
 #define REGISTER_DETAIL_CUSTOMIZATION(CLASSNAME, CUSTOMIZATIONNAME) DetailCustomizations.Append({{ CLASSNAME::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&CUSTOMIZATIONNAME::MakeInstance)}})
 #define REGISTER_PROPERTY_CUSTOMIZATION(CLASSNAME, CUSTOMIZATIONNAME) PropertyCustomizations.Append({{ *CLASSNAME::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&CUSTOMIZATIONNAME::MakeInstance) }});
 #define REGISTER_THUMBNAIL_RENDERER(CLASSNAME, THUMBNAILRENDERERNAME) ClassThumbnailRenderers.Append({{ CLASSNAME::StaticClass(), THUMBNAILRENDERERNAME::StaticClass() }});
 #define REGISTER_COMPONENT_VISUALIZER(CLASSNAME, VISUALIZERCLASSNAME) ComponentVisualizers.Add( { CLASSNAME::StaticClass()->GetFName(), MakeShared<VISUALIZERCLASSNAME>() } )
+
 /*
  * Inherit your editor module class from this, and then register customizations per the example below. You must call StartupModuleBase() in your StartupModule() and ShutdownModuleBase() in your ShutdownModule().
  * Example:
  *
  *	StartupModule()
  *	{
- *		AssetCategory = { "Yap", LOCTEXT("Yap", "Yap") };
+ *		// Optionally set an asset category for your plugin --- you can use it via UYourModule::GetAssetCategory
+ *		AssetCategory = { FName("Yap"), LOCTEXT("Yap", "Yap") };
  *
+ *		// Setup editor customizations, assets, visualizers, etc.
  *		REGISTER_DETAIL_CUSTOMIZATION(UYapProjectSettings, FDetailCustomization_YapProjectSettings);
  *		REGISTER_PROPERTY_CUSTOMIZATION(FYapCharacterDefinition, FPropertyCustomization_YapCharacterDefinition);
  *		REGISTER_THUMBNAIL_RENDERER(UYapCharacterAsset, UYapCharacterThumbnailRenderer);
  * 
+ * 		// You must call this manually, after setting up all registrations!
  *		StartupModuleBase(); <--- this actually registers everything and stashes the registrations
  *
- *		... other startup code of your own ...
+ *		...
  *	}
  *
  *	ShutdownModule()
  *	{
+ *		// You must call this manually!
  *		ShutdownModuleBase(); <--- this actually unregisters everything
  *
  *		... other shutdown code of your own ...
