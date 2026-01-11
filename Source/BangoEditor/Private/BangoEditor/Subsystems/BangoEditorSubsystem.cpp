@@ -146,6 +146,22 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 								
 									if (ISourceControlModule::Get().IsEnabled())
 									{
+										// No source control, just restore the transient copy we made on destroy into a new package. NOTE: The new package will have a few bytes different.
+										UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
+										RestoredPackage->SetFlags(RF_Public);
+										RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+										RestoredPackage->SetPersistentGuid(ScriptBlueprint->DeletedPackagePersistentGuid);
+										RestoredPackage->SetPackageId(ScriptBlueprint->DeletedPackageId);
+									
+										ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+										ScriptBlueprint->Modify();
+										ScriptBlueprint->ClearFlags(RF_Transient);
+									
+										FAssetRegistryModule::AssetCreated(ScriptBlueprint);
+										(void)ScriptBlueprint->MarkPackageDirty();
+										//										RestoredPackage->FullyLoad();
+									
+										GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
 										/*
 										ISourceControlProvider& SourceControlProvider = ISourceControlModule::Get().GetProvider();
 
