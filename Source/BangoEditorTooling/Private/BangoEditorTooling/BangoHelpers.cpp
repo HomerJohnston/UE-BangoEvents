@@ -6,9 +6,9 @@
 #include "BangoEditorTooling/BangoEditorLog.h"
 
 #if WITH_EDITOR
-TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)> FBangoEditorDelegates::OnScriptContainerCreated;
-TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> FBangoEditorDelegates::OnScriptContainerDestroyed;
+TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> FBangoEditorDelegates::OnScriptContainerCreated;
 TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> FBangoEditorDelegates::OnScriptContainerDuplicated;
+TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> FBangoEditorDelegates::OnScriptContainerDestroyed;
 TMulticastDelegate<void(FGuid ScriptID, UBangoScriptBlueprint*& FoundBlueprint)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
 TMulticastDelegate<void(AActor* Actor)> FBangoEditorDelegates::RequestNewID;
 TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDelegates::OnScriptComponentClicked;
@@ -17,12 +17,6 @@ TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDel
 #if WITH_EDITOR
 bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
 {
-	check(Component);
-	
-	TMap<int, int> asdf;
-	
-	int& NewValue = asdf.Add(1, 2);
-	
 	if (!GEditor)
 		return false;
 		
@@ -34,17 +28,17 @@ bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
 	if (!World)
 		return false;
 
+	if (World->IsGameWorld())
+		return false;
+
 	if (World->bIsTearingDown)
 		return false;
-	
+
 	if (Component->HasAnyFlags(RF_Transient | RF_ClassDefaultObject | RF_DefaultSubObject))
 		return false;
 	
 	if (Component->HasAnyFlags(RF_MirroredGarbage | RF_BeginDestroyed | RF_FinishDestroyed))
 		return false;
-	
-	//if (Component->HasAnyFlags(RF_NeedPostLoad))
-	//	return false;
 	
 	if (Component->GetPackage() == GetTransientPackage())
 		return false;
@@ -81,7 +75,8 @@ bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
 	}
 }
 
-bool Bango::Editor::IsBeingEditorDeleted(UActorComponent* Component)
+/*
+bool Bango::Editor::IsComponentBeingDeleted(UActorComponent* Component)
 {
 	// 1. Must be in editor world
 	if (GIsPlayInEditorWorld || Component->GetWorld() == nullptr || Component->GetWorld()->IsGameWorld())
@@ -101,6 +96,7 @@ bool Bango::Editor::IsBeingEditorDeleted(UActorComponent* Component)
 
 	return false;
 }
+*/
 
 /*
 FName Bango::Editor::GetBangoName(AActor* Actor)

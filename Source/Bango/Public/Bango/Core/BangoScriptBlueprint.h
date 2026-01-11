@@ -34,7 +34,7 @@ public:
 	
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
 
-	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass);
+	static UBangoScriptBlueprint* GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> ScriptClass);
 	
 	void OnBangoActorComponentUndoDelete(FGuid Guid, UBangoScriptBlueprint*& FoundBlueprint);
 	

@@ -99,7 +99,7 @@ FString UInt32ToBase36(uint32 Value)
 	return Result;
 }
 
-UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject* Outer, /*FString& InOutBPName, */FGuid Guid)
+UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject* Outer, FGuid Guid)
 {
 	check(Actor && Outer && Guid.IsValid());
 	
@@ -140,40 +140,6 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 	
 	FinalPath = "/Game" / Bango::Editor::ScriptRootFolder / LevelName / ActorClass / ActorFNameString / GuidHashBase36;
 	
-#if 0
-	if (UWorldPartition* WorldPartition = Actor->GetWorld()->GetWorldPartition())
-	{
-		FWorldPartitionActorDescInstance* ActorDescInstance = WorldPartition->GetActorDescContainerInstance()->GetActorDescInstance(Actor->GetActorGuid());
-		
-		const FGuid& ActorDescGuid = ActorDescInstance->GetGuid();
-		
-		FString ActorWPGuid = ActorDescGuid.ToString();
-		
-		//return 
-		FString FinalPathNew = FString::Printf(TEXT("/Game/__BangoScripts__/%s/%s_%s"),
-			*Actor->GetLevel()->GetOutermost()->GetName(),
-			*Actor->GetClass()->GetName(),
-			*Actor->GetActorGuid().ToString(EGuidFormats::Digits)
-		);
-	}
-	else
-	{
-		// No world partition, slightly different logic
-	}
-#endif
-	
-	
-#if 0	
-	FString FolderShortName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + Guid.ToString(EGuidFormats::UniqueObjectGuid);
-	
-	const UPackage* OutermostPackage = Outer->IsA<UPackage>() ? CastChecked<UPackage>(Outer) : Outer->GetOutermostObject()->GetPackage();
-	const FString RootPath = OutermostPackage->GetName();
-	FString GuidHashString;
-	FString ScriptPackagePath = FBangoPackageHelper::GetScriptPackagePath(RootPath, FolderShortName, GuidHashString);
-
-	FName Name = "Script"; // Creates filename "/Game/.../Path/Script.uasset"
-	//FinalPath = ScriptPackagePath / Name.ToString();
-#endif
 	UPackage* NewPackage = CreatePackage(*FinalPath);
 	NewPackage->SetFlags(RF_Public);
 	NewPackage->SetPackageFlags(PKG_NewlyCreated);
@@ -185,7 +151,7 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 
 UBangoScriptBlueprint* Bango::Editor::GetDeletedLevelScript(const FGuid& Guid)
 {
-	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>()->RetrieveDeletedScript(Guid);
+	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>()->RetrieveDeletedLevelScript(Guid);
 
 	//ScriptBlueprint->Rename(*ScriptBlueprint->RetrieveDeletedName(), InPackage, REN_DontCreateRedirectors);
 	
@@ -204,7 +170,7 @@ UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const
 		return nullptr;
 	}
 	
-	FString AssetName = GetLocalScriptAssetName(InName);
+	FString AssetName = GetLocalScriptName(InName);
 	UBangoScriptBlueprint* ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(AssetName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
 	ScriptBlueprint->SetScriptGuid(InScriptGuid);
 	
@@ -226,9 +192,17 @@ UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const
 	return ScriptBlueprint;
 }
 
-UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FGuid& NewGuid)
+UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FString& InName, const FGuid& NewGuid)
 {
-	FString AssetName = GetLocalScriptAssetName( FPackageName::GetShortName(NewScriptPackage) );
+	FString ScriptName = InName;
+	
+	if (ScriptName.IsEmpty())
+	{
+		ScriptName = FPackageName::GetShortName(NewScriptPackage);
+	}
+	
+	FString AssetName = GetLocalScriptName(ScriptName);
+	
 	UBangoScriptBlueprint* DuplicateScript = DuplicateObject(SourceBlueprint, NewScriptPackage, FName(AssetName));
 	DuplicateScript->SetScriptGuid(NewGuid);
 	
@@ -322,14 +296,15 @@ bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
 	return false;
 }
 
-FString Bango::Editor::GetLocalScriptAssetName(FString PackageName)
+FString Bango::Editor::GetLocalScriptName(FString InName)
 {
 	// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.
+	return TEXT("~") + InName;
+	
 	// \U0001F4DC Manuscript / Scroll
 	// \U0001F9FE Receipt
 	// \U0001F4A5 Explosion
 	// \U0001F4CD Pushpin
 	// \U0000FE6B Small Form @
 	// \U0000FF5E Halfwidth Forms ~
-	return TEXT("~") + PackageName;
 }

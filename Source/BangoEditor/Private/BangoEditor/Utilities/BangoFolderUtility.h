@@ -2,7 +2,7 @@
 
 namespace Bango::Editor
 {
-	static void DeleteEmptyScriptFolders();
+	static void DeleteEmptyLevelScriptFolders();
 	static void DeleteEmptyFolders(const FString& RootPath, bool bShowSlowTask = false);
 	
 	static void GetFolders(const FString& RootPath, TArray<FString>& OutFolders, bool bSearchRecursive = true);

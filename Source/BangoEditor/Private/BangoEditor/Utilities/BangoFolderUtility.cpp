@@ -9,7 +9,7 @@
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
 
-void Bango::Editor::DeleteEmptyScriptFolders()
+void Bango::Editor::DeleteEmptyLevelScriptFolders()
 {
 	DeleteEmptyFolders(Bango::Editor::GetAbsoluteScriptRootFolder());
 }

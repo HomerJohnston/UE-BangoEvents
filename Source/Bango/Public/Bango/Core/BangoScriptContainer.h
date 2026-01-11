@@ -50,6 +50,8 @@ public:
 #if WITH_EDITOR
 	void Unset();
 	
+	void Reset();
+	
 	void SetScriptClass(TSubclassOf<UObject> NewScriptClass)
 	{
 		ScriptClass = NewScriptClass;

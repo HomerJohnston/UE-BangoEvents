@@ -65,6 +65,7 @@ void UBangoScriptComponent::OnRegister()
 {
 	Super::OnRegister();
 	
+#if 0
 	if (!Billboard && GetOwner() && !GetWorld()->IsGameWorld())
 	{
 		{
@@ -94,44 +95,14 @@ void UBangoScriptComponent::OnRegister()
 		
 		Billboard->RegisterComponent();
 	}
-	/*
-	if (bVisualizeComponent && SpriteComponent == nullptr && GetOwner() && !GetWorld()->IsGameWorld())
-	{
-		// Create a new billboard component to serve as a visualization of the actor until there is another primitive component
-		{
-			FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
-			const EObjectFlags TransactionalFlag = GetFlags() & RF_Transactional;
-			SpriteComponent = NewObject<UBillboardComponent>(GetOwner(), NAME_None, TransactionalFlag | RF_Transient | RF_TextExportTransient);
-			SpriteComponent->Sprite = SpriteTexture ? SpriteTexture : LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/EmptyActor.EmptyActor"));
-		}
-
-		SpriteComponent->SetRelativeScale3D_Direct(FVector(0.5f, 0.5f, 0.5f));
-		SpriteComponent->Mobility = EComponentMobility::Movable;
-		SpriteComponent->AlwaysLoadOnClient = false;
-		SpriteComponent->SetIsVisualizationComponent(true);
-		SpriteComponent->SpriteInfo.Category = TEXT("Misc");
-		SpriteComponent->SpriteInfo.DisplayName = NSLOCTEXT("SpriteCategory", "Misc", "Misc");
-		SpriteComponent->CreationMethod = CreationMethod;
-		SpriteComponent->bIsScreenSizeScaled = true;
-		SpriteComponent->bUseInEditorScaling = true;
-		SpriteComponent->OpacityMaskRefVal = .3f;
-
-		SpriteComponent->SetupAttachment(this);
-
-		if (bRegister)
-		{
-			SpriteComponent->RegisterComponent();
-		}
-	}
-	*/
-	//BangoDebugDraw_Register<ThisClass>(this);
+#endif
 }
 #endif
 
 #if WITH_EDITOR
 void UBangoScriptComponent::OnUnregister()
 {
-	//BangoDebugDraw_Unregister(this);
+	BangoDebugDraw_Unregister(this);
 
 	Super::OnUnregister();
 }
@@ -147,47 +118,23 @@ void UBangoScriptComponent::OnComponentCreated()
 		return;
 	}
 	
-	// PrintState("OnComponentCreated");
-	
 	// With RF_LoadCompleted this is a default actor component. We rely on PostDuplicated instead.
 	if (HasAllFlags(RF_LoadCompleted))
 	{
-		/*
-		TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
-		
-		auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
-		{
-			if (!WeakThis.IsValid())
-			{
-				return;
-			}
-			
-			UBangoScriptComponent* Component = WeakThis.Get();
-			
-			if (!Bango::Editor::IsComponentInEditedLevel(Component))
-			{
-				return;
-			}
-			
-			BangoUtility::Debug::PrintComponentState(Component, "Created (next frame)...");
-			// FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Component, &Script);
-		});
-	
-		this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
-		*/
 		return;
 	}
+	
+	FString ScriptName = GetName(); // We will use the component name for the script name
 	
 	// TODO how do we handle copy-paste? PostEditImport?
 	// If it already has a Guid, it was a duplicate or a copy paste, let PostDuplicate handle it for duplicate
 	if (Script.GetGuid().IsValid())
 	{
-		//FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, ScriptName);
 	}
 	else
 	{
-		FString ScriptName = GetName(); // We will use the component name for the script name
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, ScriptName, false);
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, ScriptName);
 	}
 }
 #endif
@@ -196,31 +143,31 @@ void UBangoScriptComponent::OnComponentCreated()
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
-	bool bInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
+	bool bIsComponentInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
 	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 		
+	if (!bIsComponentInEditedLevel)
+	{
+		return;
+	}
+	
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
-		//Super::OnComponentDestroyed(bDestroyingHierarchy);
 		return;
 	}
-		
+	
 	// If we are a default actor component, we will always exist on the actor and the only time we'll be truly deleted is when the whole actor hierachy is being deleted
 	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
 	{
-		//Super::OnComponentDestroyed(bDestroyingHierarchy);
 		return;
 	}
 
-	if (bInEditedLevel)
+	if (!ScriptClass.IsNull())
 	{
-		if (!ScriptClass.IsNull())
-		{
-			// Moves handling over to an editor module to handle more complicated package deletion/undo management
-			FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
-		}
+		// Moves handling over to an editor module to handle more complicated package deletion/undo management
+		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
 	}
 }
 #endif

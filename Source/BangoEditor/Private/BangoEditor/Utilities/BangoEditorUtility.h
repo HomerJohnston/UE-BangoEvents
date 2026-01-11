@@ -37,12 +37,12 @@ namespace Bango::Editor
 	UBangoScriptBlueprint* MakeLevelScript(UPackage* InPackage, const FString& InName, const FGuid& InGuid);
 
 	//
-	UBangoScriptBlueprint* DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FGuid& NewGuid);
+	UBangoScriptBlueprint* DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FString& InName, const FGuid& NewGuid);
 	
 	// I can't find any existing PUBLIC code in this retarded engine to do this, so now I have to copy code from AssetViewUtils
 	bool DeleteEmptyFolderFromDisk(const FString& InPathToDelete);
 	
 	//void NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid = FGuid());
 	
-	FString GetLocalScriptAssetName(FString PackageName);
+	FString GetLocalScriptName(FString InName);
 }

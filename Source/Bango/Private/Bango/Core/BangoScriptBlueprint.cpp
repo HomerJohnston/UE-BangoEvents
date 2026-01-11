@@ -117,16 +117,33 @@ void UBangoScriptBlueprint::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 // ----------------------------------------------
 
 #if WITH_EDITOR
-UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> InClass)
+UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(const TSoftClassPtr<UBangoScript> ScriptClass)
 {
-	UBangoScriptBlueprint* BP = NULL;
+	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
 	
-	if (InClass != NULL)
+	if (ScriptClassPath.IsNull())
 	{
-		BP = Cast<UBangoScriptBlueprint>(InClass.LoadSynchronous()->ClassGeneratedBy);
+		return nullptr;
 	}
 	
-	return BP;
+	if (!FPackageName::DoesPackageExist(ScriptClassPath.GetLongPackageName()))
+	{
+		return nullptr;	
+	}
+	
+	UClass* Class = ScriptClass.LoadSynchronous();
+	
+	if (!Class)
+	{
+		return nullptr;
+	}
+	
+	if (!Class->ClassGeneratedBy)
+	{
+		return nullptr;
+	}
+	
+	return Cast<UBangoScriptBlueprint>(Class->ClassGeneratedBy);
 }
 #endif
 
