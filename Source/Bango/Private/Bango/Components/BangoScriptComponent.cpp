@@ -122,7 +122,8 @@ void UBangoScriptComponent::OnComponentCreated()
 	}
 	else
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, GetName(), false);
+		FString ScriptName = GetName(); // We will use the component name for the script name
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, ScriptName, false);
 	}
 }
 #endif

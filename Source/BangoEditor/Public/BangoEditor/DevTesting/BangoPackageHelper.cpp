@@ -14,7 +14,30 @@
 
 FBangoPackageHelper::FOnObjectPackagingModeChanged FBangoPackageHelper::OnObjectPackagingModeChanged;
 
-FString FBangoPackageHelper::GetLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName)
+
+FString FBangoPackageHelper::GetLevelScriptsPath(ULevel* Level)
+{
+	check(Level);
+	
+	UWorld* World = Level->GetWorld();
+	
+	if (UWorldPartition* WorldPartition = World->GetWorldPartition())
+	{
+		return "";
+	}
+	else
+	{
+		FString LevelName = FPackageName::GetShortName(Level->GetPackage());
+		return GetRegularLevelLocalScriptsPath(LevelName);
+	}
+}
+
+FString FBangoPackageHelper::GetRegularLevelLocalScriptsPath(const FString& LevelName)
+{
+	return Bango::Editor::ScriptRootFolder / LevelName;
+}
+
+FString FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName)
 {
 	FString ExternalObjectsPath;
 
@@ -60,7 +83,7 @@ FString FBangoPackageHelper::GetLocalScriptsPath(UPackage* InPackage, const FStr
 }
 */
 
-FString FBangoPackageHelper::GetScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& GuidBase36)
+FString FBangoPackageHelper::GetScriptPackagePath(const FString& InOuterPackageName, const FString& InObjectPath, FString& GuidBase36)
 {
 	// Convert the object path to lowercase to make sure we get the same hash for case insensitive file systems
 	FString ObjectPath = InObjectPath.ToLower();
@@ -74,18 +97,16 @@ FString FBangoPackageHelper::GetScriptPackageName(const FString& InOuterPackageN
 	GuidBase36 = PackageGuid.ToString(EGuidFormats::Base36Encoded);
 	check(GuidBase36.Len());
 
-	FString BaseDir = FBangoPackageHelper::GetLocalScriptsPath(InOuterPackageName);
+	FString BaseDir = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(InOuterPackageName);
 
-	/*
+	// I do not expect every actor to have even hundreds of scripts. I do not need to use the extra subfolders that UE uses.
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;
 	ObjectPackageName.Append(BaseDir);
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36);
 	return ObjectPackageName.ToString();
-	*/
-	
-	// TODO for some reason this is necessary to hide assets from the Content view. I'd really rather use the format above.
-	// !!! I think assets are simply hidden from view if they contain invalid characters like ~ ...
+
+	/*
 	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> ObjectPackageName;
 	ObjectPackageName.Append(BaseDir);
 	ObjectPackageName.Append(TEXT("/"));
@@ -95,6 +116,7 @@ FString FBangoPackageHelper::GetScriptPackageName(const FString& InOuterPackageN
 	ObjectPackageName.Append(TEXT("/"));
 	ObjectPackageName.Append(*GuidBase36 + 3);
 	return ObjectPackageName.ToString();
+	*/
 }
 
 FString FBangoPackageHelper::GetLocalScriptPackageInstanceName(const FString& OuterPackageName, const FString& ObjectPackageName)

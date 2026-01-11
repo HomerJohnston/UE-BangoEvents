@@ -72,9 +72,9 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
 	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 	
-	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnScriptContainerCreated);
-	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnScriptContainerDestroyed);
-	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnScriptContainerDuplicated);
+	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnLevelScriptContainerCreated);
+	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnLevelScriptContainerDestroyed);
+	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnLevelScriptContainerDuplicated);
 	
 	FBangoEditorDelegates::RequestNewID.AddUObject(this, &ThisClass::OnRequestNewID);
 	
@@ -232,7 +232,7 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 		}
 		
 		// This was a redo-delete event; we will want to re-delete the blueprint asset
-		OnScriptContainerDestroyed(ScriptComponent, ScriptClass);
+		OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);
 	}
 }
 
@@ -345,33 +345,85 @@ void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
 
 void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
 {
-	// TODO I need a way to hook in other types more nicely. What if a user wants a custom type?
-	if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
+	TWeakObjectPtr<UObject> WeakRenamedObject = RenamedObject;
+	TWeakObjectPtr<UObject> WeakRenamedObjectOuter = RenamedObjectOuter;
+	TWeakObjectPtr<const UBangoEditorSubsystem> WeakThis = this;
+	
+	auto DelayedScriptRename = [WeakRenamedObject, WeakRenamedObjectOuter, WeakThis] ()
 	{
-		if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject))
+		UObject* RenamedObject = WeakRenamedObject.Get();
+		UObject* RenamedObjectOuter = WeakRenamedObjectOuter.Get();
+		const UBangoEditorSubsystem* This = WeakThis.Get();
+		
+		if (!RenamedObject || !RenamedObjectOuter || !This)
 		{
 			return;
 		}
 		
-		if (Bango::IsComponentInEditedLevel(ScriptComponent))
+		// TODO I need a way to allow hooking in other types more nicely. What if a user wants a custom type and not just UBangoScriptComponent?
+		if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
 		{
+			if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject) || !Bango::IsComponentInEditedLevel(ScriptComponent))
+			{
+				return;
+			}
+	
 			UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptComponent->Script.GetScriptClass());
 
 			if (Blueprint)
 			{
-				FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+				// This is creating rediretors to my script assets below. Do I want it to? They're hard to get rid of for some stupid reason. Seems like it'd be easier to just rename & fixup always.
+				//FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+				//FAssetRenameData RenameData(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), ScriptComponent->GetName());
+				//AssetToolsModule.Get().RenameAssets( {RenameData} );
+			
+				(void)Blueprint->MarkPackageDirty();
 				
-				FAssetRenameData RenameData(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), ScriptComponent->GetName());
-				AssetToolsModule.Get().RenameAssets( {RenameData} );
+				FString NewPrivateName = Bango::Editor::GetLocalScriptAssetName(ScriptComponent->GetName());
+				Blueprint->Rename(*NewPrivateName, nullptr, REN_DontCreateRedirectors | REN_NonTransactional);
+
+				Blueprint->Modify();
+				FKismetEditorUtilities::CompileBlueprint(Blueprint);
 				
- 				FString NewPrivateName = Bango::Editor::GetLocalScriptAssetName(ScriptComponent->GetName());
-				Blueprint->Rename(*NewPrivateName);
+				ScriptComponent->Modify();
+				ScriptComponent->Script.SetScriptClass(Blueprint->GeneratedClass);
 				
-				OnScriptGenerated.Broadcast();
+				// Tell details panels / script component customization to refresh
+				This->OnScriptGenerated.Broadcast();
 			}
 		}
-	}
+	};
 	
+#if 0
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
+	
+	UPackage* OldPackage = Blueprint->GetPackage();
+	
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
+
+	Blueprint->ClearEditorReferences();
+	
+	// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
+	// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
+	Blueprint->DeletedName = Blueprint->GetName();
+	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
+	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
+	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
+	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+		
+	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
+		
+	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
+				
+	if (NumDelete == 0)
+	{
+		ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
+	}
+
+	Bango::Editor::DeleteEmptyScriptFolders();
+#endif
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayedScriptRename);
 	//UE_LOG(LogBango, Display, TEXT("OnObjectRenamed: %s  %s  %s --- %s"), *OuterString, *ObjectString, *OldName.ToString(), *GetState(RenamedObjectOuter));
 }
 
@@ -387,10 +439,11 @@ void UBangoEditorSubsystem::OnObjectModified(UObject* Object) const
 	//UE_LOG(LogBango, Display, TEXT("OnObjectModified: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
-void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)
+void UBangoEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)
 {
 	if (bDuplicateActorsActive)
 	{
+		// TODO
 		//OnScriptContainerDuplicated(Outer, ScriptContainer);
 		return;
 	}
@@ -408,9 +461,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 		UBangoEditorSubsystem* This = WeakThis.Get();
 		UObject* Outer = WeakOuter.Get();
 		
-		FString NewBlueprintName = Name;
-		UPackage* ScriptPackage = nullptr;
-		UBangoScriptBlueprint* Blueprint = nullptr;
+		FString BlueprintName = Name;
 		
 		if (ScriptContainer->GetGuid().IsValid())
 		{
@@ -451,10 +502,14 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 			FGuid NewScriptGuid = FGuid::NewGuid(); 
 			ScriptContainer->SetGuid(NewScriptGuid);
 			
-			ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewBlueprintName, NewScriptGuid);
+			UPackage* ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, /*NewBlueprintName, */NewScriptGuid);
 			
-			FString BlueprintName = FPackageName::GetShortName(ScriptPackage);
-			Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, BlueprintName, NewScriptGuid);
+			if (BlueprintName.IsEmpty())
+			{
+				BlueprintName = FPackageName::GetShortName(ScriptPackage);
+			}
+			
+			UBangoScriptBlueprint* Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, BlueprintName, NewScriptGuid);
 			
 			Blueprint->Modify();
 			Blueprint->Actor = Actor;
@@ -498,7 +553,7 @@ void UBangoEditorSubsystem::OnScriptContainerCreated(UObject* Outer, FBangoScrip
 }
 
 // TODO - find path for 1) add new component, 2) save, 3) undo add new component --- it leaves the script .uasset file in place instead of deleting it. Undoing an add is not detected as a destroy?
-void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
+void UBangoEditorSubsystem::OnLevelScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
 	
@@ -515,237 +570,7 @@ void UBangoEditorSubsystem::OnScriptContainerDestroyed(UObject* Outer, TSoftClas
 	}
 	
 	SoftDeleteScriptPackage(ScriptClass);
-	
-#if 0
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
-	check(Blueprint);
-	
-	Outer->Modify();
-	
-	UPackage* OldPackage = Blueprint->GetPackage();
-	
-	Blueprint->ClearEditorReferences();
-	
-	// TODO make sure i don't leave any raw pointer delay lambda crash dumbassery in my code, i've rewritten this thing a million different ways 
-	// We will delay our action by one frame to allow other things to prepare for this. The property type customization needs time to clean itself up.
-	auto Fuck = FTimerDelegate::CreateLambda([OldPackage, Blueprint] ()
-	{
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
-
-		// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
-		// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
-		Blueprint->DeletedName = Blueprint->GetName();
-		Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
-		Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
-		Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-		Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-		
-		UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
-		
-		int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
-				
-		if (NumDelete == 0)
-		{
-			ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
-		}
-
-		Bango::Editor::DeleteEmptyScriptFolders(); // TODO maybe this should be removed. I might only want this to run on editor shutdown or a manual run.
-	});
-
-	//GEditor->GetTimerManager()->SetTimerForNextTick(Fuck);
-	Fuck.Execute();
-#endif
 }
-
-#if 0
-void /*UBangoEditorSubsystem::*/OnScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer)
-{
-	if (!IsExistingScriptContainerValid(Outer, ScriptContainer))
-	{
-		return;
-	}
-	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass()); 
-	check(Blueprint);
-	
-	UPackage* ScriptPackage = Blueprint->GetPackage();
-	check(ScriptPackage);
-	
-	UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-	check(Subsystem);
-
-	Subsystem->CloseAllEditorsForAsset(Blueprint);
-
- 	// ******************************************
-	
-	// Verify the source object
-	if (Blueprint)
-	{
-		UPackage* Package = GetTransientPackage();
-		
-		ObjectTools::FPackageGroupName PGN;
-		PGN.PackageName = Package->GetName();
-		PGN.GroupName = TEXT("");
-		PGN.ObjectName = Blueprint->ScriptGuid.ToString();
-
-		TSet<UPackage*> ObjectsUserRefusedToFullyLoad;
-		
-		TArray<UObject*> InternalObjects;
-		GetObjectsWithOuter(Blueprint, InternalObjects);
-		
-		bool bPromptToOverwrite = false;
-		
-		IAssetTools* AssetTools = &FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-		
-		//UObject* NewObject = AssetTools->DuplicateAsset(Blueprint->ScriptGuid.ToString(), GetTransientPackage()->GetPathName(), Blueprint);
-		
-		//UObject* NewObject = ObjectTools::DuplicateSingleObject(Blueprint, PGN, ObjectsUserRefusedToFullyLoad, bPromptToOverwrite);
-		if(NewObject != nullptr)
-		{
-			// Assets must have RF_Public and RF_Standalone
-			const bool bIsAsset = NewObject->IsAsset();
-			NewObject->SetFlags(RF_Public | RF_Standalone);
-
-			if (!bIsAsset && NewObject->IsAsset())
-			{
-				// Notify the asset registry
-				// We won't do this because we don't actually want to save this as an asset, it's a temp copy for undo support
-				//FAssetRegistryModule::AssetCreated(NewObject);
-			}
-
-			/*
-			if ( ISourceControlModule::Get().IsEnabled() )
-			{
-				// Save package here if SCC is enabled because the user can use SCC to revert a change
-				TArray<UPackage*> OutermostPackagesToSave;
-				OutermostPackagesToSave.Add(NewObject->GetOutermost());
-
-				const bool bCheckDirty = false;
-				const bool bPromptToSave = false;
-				FEditorFileUtils::PromptForCheckoutAndSave(OutermostPackagesToSave, bCheckDirty, bPromptToSave);
-
-				// now attempt to branch, we can do this now as we should have a file on disk
-				SourceControlHelpers::CopyPackage(NewObject->GetOutermost(), OriginalObject->GetOutermost());
-			}
-			*/
-			// analytics create record
-			//UAssetToolsImpl::OnNewCreateRecord(NewObject->GetClass(), true);
-		}
-	}
-
-	
-	/*
-	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-							
-	FString TargetName;
-	FString TargetPackageName;
-	IAssetTools::Get().CreateUniqueAssetName(SelectedAssetObject->GetOutermost()->GetName(), TEXT("_Copy"), TargetPackageName, TargetName);
-
-	// Duplicate the asset.
-	UObject* NewAsset = AssetTools.DuplicateAsset(TargetName, FPackageName::GetLongPackagePath(TargetPackageName), SelectedAssetObject.Get());
-	*/
-	
-	
-	// ******************************************
-	
-	Blueprint->ClearEditorReferences();
-		
-	ScriptContainer->Unset();
-	
-//#if 1
-	(void)ScriptPackage->MarkPackageDirty();
-
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	
-	// I don't know if this helps anything. Probably not.
-//#if 0	
-	ScriptPackage->SetDirtyFlag(true);
-	
-	// Re-scan the asset file on disk to ensure that the updated entry will be based on the serialized FiB tag.
-	const FString PackageName = ScriptPackage->GetPathName();
-	if (FPackageName::IsValidLongPackageName(PackageName))
-	{
-		FPackagePath PackagePath;
-		if (FPackagePath::TryFromPackageName(PackageName, PackagePath))
-		{
-			FPackagePath OutPackagePath;
-			const FPackageName::EPackageLocationFilter PackageLocation = FPackageName::DoesPackageExistEx(PackagePath, FPackageName::EPackageLocationFilter::Any, /*bMatchCaseOnDisk*/ false, &OutPackagePath);
-			if (PackageLocation != FPackageName::EPackageLocationFilter::None)
-			{
-				if (PackageLocation == FPackageName::EPackageLocationFilter::FileSystem && OutPackagePath.HasLocalPath())
-				{
-					TArray<FString> FilesToScan = { OutPackagePath.GetLocalFullPath() };
-					AssetRegistryModule.Get().ScanModifiedAssetFiles(FilesToScan, UE::AssetRegistry::EScanFlags::ForceRescan);
-				}
-			}
-		}
-	}
-	
-	AActor* Actor = Outer->GetTypedOuter<AActor>();
-	
-	if (Actor)
-	{
-		TSet<UPackage*> PackagesToSave { Actor->GetPackage() };
-
-		if (PackagesToSave.Num())
-		{
-			FEditorFileUtils::FPromptForCheckoutAndSaveParams SaveParams;
-			SaveParams.bCheckDirty = false;
-			SaveParams.bPromptToSave = false;
-			SaveParams.bIsExplicitSave = true;
-
-			FEditorFileUtils::PromptForCheckoutAndSave(PackagesToSave.Array(), SaveParams);
-		}
-	}
-	
-	(void)ScriptPackage->MarkPackageDirty();
-//#endif
-	
-	auto Lambda = FTimerDelegate::CreateLambda([Blueprint, ScriptPackage, ScriptContainer] ()
-	{		
-		if (ScriptPackage->IsValidLowLevel())
-		{
-			ScriptPackage->RemoveFromRoot();
-			
-			//int32 Deleted = ObjectTools::DeleteObjects( { Blueprint }, false );
-			//FEditorFileUtils::FPromptForCheckoutAndSaveParams Params;
-			//Params.bPromptToSave = false;
-		
-			/*
-			EAppReturnType::Type Return = FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("DeleteScriptPackage_ConfirmYesNo", "Delete script package? This will clear your undo history. If you press no, you will be prompted to save the empty script package on level change or shutdown."));
-		
-			switch (Return)
-			{
-				case EAppReturnType::Yes:
-				{
-					//ObjectTools::ForceDeleteObjects( { ScriptPackage }, false);				
-					//ObjectTools::CleanupAfterSuccessfulDelete( { ScriptPackage }, true);
-					FEditorFileUtils::PromptForCheckoutAndSave( { ScriptPackage }, Params);
-
-					break;
-				}
-				case EAppReturnType::No:
-				{
-					break;
-				}
-				default:
-				{
-					checkNoEntry();
-				}
-			}
-			*/
-		}
-		
-		Bango::Editor::DeleteEmptyScriptFolders(); // TODO maybe this should be removed. I might only want this to run on editor shutdown or a manual run.
-	});
-	
-	//if (ScriptPackage != GetTransientPackage() && !Outer->HasAnyFlags(RF_WasLoaded))
-	//{
-		// TODO I can't figure out how to get the stupid asset manager to update IMMEDIATELY. I can't delete the package on the same frame.
-		GEditor->GetTimerManager()->SetTimerForNextTick(Lambda);
-	//}
-}
-#endif
 
 bool UBangoEditorSubsystem::IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
@@ -760,7 +585,7 @@ bool UBangoEditorSubsystem::IsExistingScriptContainerValid(UObject* Outer, FBang
 	return true;
 }
 
-void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)
+void UBangoEditorSubsystem::OnLevelScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)
 {
 	// When an actor is added to the world containing a CDO ScriptComponent, this function might be called. 
 	TWeakObjectPtr<UObject> WeakOuter = Outer;
@@ -779,7 +604,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		if (!ScriptContainer->GetScriptClass())
 		{
 			// Switch over to the >OnScriptContainerCreated path; this code path occurs when you drag a content blueprint into the scene as it "duplicates" the CDO component
-			This->OnScriptContainerCreated(Outer, ScriptContainer, Name, true);
+			This->OnLevelScriptContainerCreated(Outer, ScriptContainer, Name, true);
 			return;
 		}
 		
@@ -790,7 +615,7 @@ void UBangoEditorSubsystem::OnScriptContainerDuplicated(UObject* Outer, FBangoSc
 		
 		// Duplicate the blueprint
 		FString BPName = Name;
-		UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, BPName, ScriptContainer->GetGuid());
+		UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, /*BPName, */ScriptContainer->GetGuid());
 
 		if (!NewScriptPackage)
 		{

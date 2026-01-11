@@ -9,6 +9,8 @@
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UObject/SavePackage.h"
+#include "WorldPartition/WorldPartition.h"
+#include "WorldPartition/WorldPartitionSubsystem.h"
 
 FString Bango::Editor::GetGameScriptRootFolder()
 {
@@ -40,7 +42,7 @@ AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
 	return nullptr;
 }
 
-UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, FString& InOutBPName, FGuid Guid)
+UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, /*FString& InOutBPName, */FGuid Guid)
 {
 	if (!IsValid(Outer) || Outer->GetFlags() == RF_NoFlags || Outer->HasAnyFlags(RF_BeingRegenerated))
 	{
@@ -64,9 +66,11 @@ UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, FString& InOutBP
 		return nullptr;
 	}
 	
-	return MakeScriptPackage_Internal(Actor, OuterPackage, InOutBPName, Guid);
+	return MakeLevelScriptPackage_Internal(Actor, OuterPackage, /*InOutBPName, */Guid);
 }
 
+// I may later need this for manually creating scripts on FBangoScriptContainers manually
+/*
 UPackage* Bango::Editor::MakeLevelScriptPackage(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& InOutBPName, FGuid Guid)
 {
 	AActor* Actor = GetActorOwner(ScriptProperty);
@@ -78,42 +82,103 @@ UPackage* Bango::Editor::MakeLevelScriptPackage(TSharedPtr<IPropertyHandle> Scri
 	
 	return MakeScriptPackage_Internal(Actor, Outer, InOutBPName, Guid);
 }
+*/
 
-UPackage* Bango::Editor::MakeScriptPackage_Internal(AActor* Actor, UObject* Outer, FString& InOutBPName, FGuid Guid)
+FString UInt32ToBase36(uint32 Value)
 {
+	static const TCHAR Alphabet[] = TEXT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+	FString Result;
+	do
+	{
+		Result.InsertAt(0, Alphabet[Value % 36]);
+		Value /= 36;
+	}
+	while (Value > 0);
+
+	return Result;
+}
+
+UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject* Outer, /*FString& InOutBPName, */FGuid Guid)
+{
+	check(Actor && Outer && Guid.IsValid());
+	
+	// The goal here is a file path like this
+	// /Game/__BangoScripts__/LevelName/ActorPath/UniqueScriptID/Script.uasset
+
+	FString FinalPath;
+
+	// Not sure which of these I need yet
+	//FString BaseDir = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath();
+	FString LevelName = FPackageName::GetShortName(Actor->GetLevel()->GetPackage());
+	FString ActorPath = Actor->GetPathName();
+	FString ActorName = Actor->GetName();
+	FString ScriptID = Guid.ToString();
+	FString ScriptID1 = Guid.ToString(EGuidFormats::Base36Encoded);
+	FString ScriptID2 = Guid.ToString(EGuidFormats::Digits);
+	FString ScriptID3 = Guid.ToString(EGuidFormats::DigitsLower);
+	FString ScriptID4 = Guid.ToString(EGuidFormats::HexValuesInBraces);
+	FString ScriptID5 = Guid.ToString(EGuidFormats::Short);
+	FString ScriptID6 = Guid.ToString(EGuidFormats::UniqueObjectGuid);
+	
+	// TODO I do want to actually test a collision and make sure the plugin handles it somewhat gracefully
+	// I am not concerned with collisions; most actors in a game will have one script. Might as well reduce the path length to make it nicer.
+	uint32 GuidHash = GetTypeHash(Guid);
+	FString GuidHashBase36 = UInt32ToBase36(GuidHash);
+	
+	FArchiveMD5 MD5;
+	MD5 << Guid;
+	
+	FName ActorFName = Actor->GetFName();
+	
+	FString ActorFNameString = ActorFName.ToString();
+	
+	FString ActorClass = Actor->GetClass()->GetFName().ToString();
+	
+	ActorFNameString.RemoveFromStart(ActorClass);
+	ActorFNameString.RemoveFromStart(TEXT("_"));
+	
+	FinalPath = "/Game" / Bango::Editor::ScriptRootFolder / LevelName / ActorClass / ActorFNameString / GuidHashBase36;
+	
+#if 0
+	if (UWorldPartition* WorldPartition = Actor->GetWorld()->GetWorldPartition())
+	{
+		FWorldPartitionActorDescInstance* ActorDescInstance = WorldPartition->GetActorDescContainerInstance()->GetActorDescInstance(Actor->GetActorGuid());
+		
+		const FGuid& ActorDescGuid = ActorDescInstance->GetGuid();
+		
+		FString ActorWPGuid = ActorDescGuid.ToString();
+		
+		//return 
+		FString FinalPathNew = FString::Printf(TEXT("/Game/__BangoScripts__/%s/%s_%s"),
+			*Actor->GetLevel()->GetOutermost()->GetName(),
+			*Actor->GetClass()->GetName(),
+			*Actor->GetActorGuid().ToString(EGuidFormats::Digits)
+		);
+	}
+	else
+	{
+		// No world partition, slightly different logic
+	}
+#endif
+	
+	
+#if 0	
 	FString FolderShortName = FString("BangoScript__") + Actor->StaticClass()->GetName() + TEXT("__") + Guid.ToString(EGuidFormats::UniqueObjectGuid);
-	TStringBuilderWithBuffer<TCHAR, NAME_SIZE> GloballyUniqueObjectPath;
-	GloballyUniqueObjectPath += Actor->GetLevel()->GetPathName();
-	GloballyUniqueObjectPath += TEXT(".");
-	GloballyUniqueObjectPath += FolderShortName;
 	
 	const UPackage* OutermostPackage = Outer->IsA<UPackage>() ? CastChecked<UPackage>(Outer) : Outer->GetOutermostObject()->GetPackage();
 	const FString RootPath = OutermostPackage->GetName();
 	FString GuidHashString;
-	FString ExternalObjectPackageName = FBangoPackageHelper::GetScriptPackageName(RootPath, FolderShortName, GuidHashString);
+	FString ScriptPackagePath = FBangoPackageHelper::GetScriptPackagePath(RootPath, FolderShortName, GuidHashString);
 
-	FString FinalPath;
-	
-	if (InOutBPName.IsEmpty())
-	{
-		FName Name = "BangoScript"; //Outer->GetFName();
-		Name = MakeUniqueObjectName(Outer, UBangoScript::StaticClass(), Name);
-		FinalPath = ExternalObjectPackageName / Name.ToString();// + FPackageName::GetAssetPackageExtension();
-	}
-	else
-	{
-		FinalPath = ExternalObjectPackageName / InOutBPName;
-	}
-	
+	FName Name = "Script"; // Creates filename "/Game/.../Path/Script.uasset"
+	//FinalPath = ScriptPackagePath / Name.ToString();
+#endif
 	UPackage* NewPackage = CreatePackage(*FinalPath);
 	NewPackage->SetFlags(RF_Public);
 	NewPackage->SetPackageFlags(PKG_NewlyCreated);
 	
 	FString PackageName = FPackageName::LongPackageNameToFilename(NewPackage->GetName());
-	if (InOutBPName != PackageName)
-	{
-		InOutBPName = PackageName;
-	}
 	
 	return NewPackage;
 }

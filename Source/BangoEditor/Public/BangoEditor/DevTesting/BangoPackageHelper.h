@@ -21,6 +21,8 @@
 #include "Engine/Level.h"
 #include "UObject/CoreRedirects.h"
 
+// TODO this was copied from external actors helpers, I need to cull all the stuff unused
+
 class FBangoPackageHelper
 {
 public:
@@ -56,13 +58,17 @@ public:
 	 */
 	static BANGOEDITOR_API void SetPackagingMode(UObject* InObject, const UObject* InObjectOuter, bool bInIsPackageExternal, bool bInShouldDirty = true, EPackageFlags InBangoPackageFlags = FBangoPackageHelper::GetDefaultBangoPackageFlags());
 
+	static FString GetLevelScriptsPath(ULevel* Level);
+	
+	static BANGOEDITOR_API FString GetRegularLevelLocalScriptsPath(const FString& LevelName);
+	
 	/**
 	 * Get the path containing the external objects for this path
 	 * @param InOuterPackageName The package name to get the external objects path of
 	 * @param InPackageShortName Optional short name to use instead of the package short name
 	 * @return the path
 	 */
-	static BANGOEDITOR_API FString GetLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName = FString());
+	static BANGOEDITOR_API FString GetWorldPartitionLocalScriptsPath(const FString& InOuterPackageName, const FString& InPackageShortName = FString());
 
 	/**
 	 * Get the path containing the external objects for this Outer
@@ -79,7 +85,7 @@ public:
 	 * @param InObjectPath the fully qualified object path, in the format: 'Outermost.Outer.Name'
 	 * @return the package name
 	 */
-	static BANGOEDITOR_API FString GetScriptPackageName(const FString& InOuterPackageName, const FString& InObjectPath, FString& OutGuidHash);
+	static BANGOEDITOR_API FString GetScriptPackagePath(const FString& InOuterPackageName, const FString& InObjectPath, FString& OutGuidHash);
 
 	/**
 	 * Loads objects from an external package
@@ -146,7 +152,7 @@ void FBangoPackageHelper::LoadObjectsFromBangoPackages(UObject* InOuter, TFuncti
 	const IDataLayerInstanceProvider* DataLayerInstanceProvider = Cast<IDataLayerInstanceProvider>(InOuter);
 	const UExternalDataLayerAsset* ExternalDataLayerAsset = DataLayerInstanceProvider ? DataLayerInstanceProvider->GetRootExternalDataLayerAsset() : nullptr;
 	const FString RootPath = ExternalDataLayerAsset ? FExternalDataLayerHelper::GetExternalDataLayerLevelRootPath(ExternalDataLayerAsset, OutermostPackageName) : OutermostPackageName;
-	const FString ExternalObjectsPath = FBangoPackageHelper::GetLocalScriptsPath(RootPath);
+	const FString ExternalObjectsPath = FBangoPackageHelper::GetWorldPartitionLocalScriptsPath(RootPath);
 	TArray<FString> ObjectPackageNames;
 
 	// Do a synchronous scan of the world external objects path.			

@@ -12,6 +12,12 @@ void FBangoScriptComponentVisualizer::OnRegister()
 
 void FBangoScriptComponentVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {	
+	if (!Component)
+	{
+		// This can happen if you delete the actor
+		return;
+	}
+	
 	const AActor* ComponentActor = Component->GetOwner();
 	const UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(Component);
 	const UBangoScriptBlueprint* Blueprint;
