@@ -15,7 +15,7 @@ TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDel
 #endif
 
 #if WITH_EDITOR
-bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
+bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component, EBangoAllowInvalid AllowInvalid)
 {
 	if (!GEditor)
 		return false;
@@ -37,8 +37,11 @@ bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
 	if (Component->HasAnyFlags(RF_Transient | RF_ClassDefaultObject | RF_DefaultSubObject))
 		return false;
 	
-	if (Component->HasAnyFlags(RF_MirroredGarbage | RF_BeginDestroyed | RF_FinishDestroyed))
-		return false;
+	if (AllowInvalid == RequireValid)
+	{
+		if (Component->HasAnyFlags(RF_MirroredGarbage | RF_BeginDestroyed | RF_FinishDestroyed))
+			return false;
+	}
 	
 	if (Component->GetPackage() == GetTransientPackage())
 		return false;

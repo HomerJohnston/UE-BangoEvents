@@ -105,14 +105,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 		return;
 	}
 	
-	if (!Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
-	{
-		return;
-	}
-	
 	UE_LOG(LogBangoEditor, Verbose, TEXT("OnObjectTransacted: %s, %i"), *Object->GetName(), (uint8)TransactionEvent.GetEventType());
-	
-	TSoftObjectPtr<UObject> Test = Object;
 	
 	// TODO dismantle mount everest below
 	if (Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
@@ -224,7 +217,14 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 		
 		if (ISourceControlModule::Get().IsEnabled())
 		{
-			
+			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->Script.GetScriptClass();
+		
+			if (!ScriptClass)
+			{
+				ScriptClass = ScriptComponent->__UNDO_Script.GetScriptClass();
+			}
+		
+			OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);	
 		}
 		else
 		{
