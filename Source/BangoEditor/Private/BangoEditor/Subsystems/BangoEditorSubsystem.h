@@ -11,12 +11,12 @@
 class IContentBrowserHideFolderIfEmptyFilter;
 
 UCLASS()
-class UBangoEditorSubsystem : public UEditorSubsystem
+class UBangoLevelScriptsEditorSubsystem : public UEditorSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	static UBangoEditorSubsystem* Get();
+	static UBangoLevelScriptsEditorSubsystem* Get();
 	
 protected:
 	bool bDuplicateActorsActive = false;
@@ -67,6 +67,4 @@ public:
 	
 	void SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass);
 	static UBangoScriptBlueprint* RetrieveDeletedScript(FGuid Guid);
-
-	void OnBlueprintDeleted(UBangoScriptBlueprint* Blueprint);
 };

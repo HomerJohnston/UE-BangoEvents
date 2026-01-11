@@ -9,7 +9,7 @@ class UBangoScriptComponent;
 
 #if WITH_EDITOR
 UCLASS()
-class BANGO_API UBangoScriptHelperSubsystem : public UEditorSubsystem
+class BANGOEDITORTOOLING_API UBangoScriptHelperSubsystem : public UEditorSubsystem
 {
 	GENERATED_BODY()
 	

@@ -1,4 +1,4 @@
-﻿#include "Bango/Editor/BangoScriptHelperSubsystem.h"
+﻿#include "BangoEditorTooling/BangoScriptHelperSubsystem.h"
 
 /*
 TMulticastDelegate<void(UBangoScriptComponent*)> UBangoScriptHelperSubsystem::OnScriptComponentCreated;

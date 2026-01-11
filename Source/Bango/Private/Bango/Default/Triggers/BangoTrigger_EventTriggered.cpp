@@ -4,8 +4,8 @@
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoEventComponent.h"
-#include "Bango/Editor/BangoDebugUtility.h"
-#include "Bango/Utility/BangoColor.h"
+#include "BangoEditorTooling/BangoDebugUtility.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Utility/BangoLog.h"
 
 UBangoTrigger_EventTriggered::UBangoTrigger_EventTriggered()
@@ -166,7 +166,7 @@ void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APl
 
 			FVector End = EventComponent->GetComponentLocation();
 
-			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, BangoColor::TriggerDebugColor);
+			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
 		}
 	
 	}
@@ -181,7 +181,7 @@ void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APl
 
 			FVector End = Actor->GetActorLocation();
 
-			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, BangoColor::TriggerDebugColor);
+			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
 		}
 	}
 }

@@ -3,10 +3,8 @@
 #include "K2Node_DynamicCast.h"
 #include "Selection.h"
 #include "UnrealEdGlobals.h"
-#include "Bango/Components/BangoActorIDComponent.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
-#include "Bango/Utility/BangoColor.h"
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder_Macros.h"
 #include "Editor/UnrealEdEngine.h"
@@ -27,7 +25,7 @@ bool UK2Node_BangoFindActor::ShouldDrawCompact() const
 
 FLinearColor UK2Node_BangoFindActor::GetNodeBodyTintColor() const
 {
-	return BangoColor::LightBlue;
+	return Bango::Colors::LightBlue;
 }
 
 FLinearColor UK2Node_BangoFindActor::GetNodeTitleColor() const
@@ -37,7 +35,7 @@ FLinearColor UK2Node_BangoFindActor::GetNodeTitleColor() const
 
 FLinearColor UK2Node_BangoFindActor::GetNodeTitleTextColor() const
 {
-	return BangoColor::Orange;
+	return Bango::Colors::Orange;
 }
 
 FText UK2Node_BangoFindActor::GetTooltipText() const

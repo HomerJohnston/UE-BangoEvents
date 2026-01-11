@@ -5,7 +5,7 @@
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEventComponent.h"
-#include "Bango/Editor/BangoDebugUtility.h"
+#include "BangoEditorTooling/BangoDebugUtility.h"
 
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()

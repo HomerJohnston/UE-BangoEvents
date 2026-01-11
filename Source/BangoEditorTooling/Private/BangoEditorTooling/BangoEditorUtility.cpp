@@ -1,23 +1,22 @@
-﻿#include "Bango/Utility/BangoEditorUtility.h"
-
-#include "Bango/Utility/BangoColor.h"
+﻿/*
+#include "Bango/Utility/BangoEditorUtility.h"
 
 FLinearColor Bango::Editor::Color::GetHashedColor(uint32 Hash, float Saturation, float Luminosity)
 {
 	static const TArray<FLinearColor> RainbowColors =
 	{
-	FLinearColor(0.90f, 0.20f, 0.20f), // Red
-	FLinearColor(0.95f, 0.45f, 0.15f), // Orange
-	FLinearColor(0.95f, 0.80f, 0.20f), // Yellow
-	FLinearColor(0.55f, 0.85f, 0.25f), // Yellow-Green
-	FLinearColor(0.25f, 0.80f, 0.45f), // Green
-	FLinearColor(0.20f, 0.85f, 0.75f), // Green-Cyan
-	FLinearColor(0.25f, 0.70f, 0.95f), // Cyan
-	FLinearColor(0.25f, 0.45f, 0.95f), // Blue
-	FLinearColor(0.40f, 0.35f, 0.90f), // Blue-Purple
-	FLinearColor(0.65f, 0.35f, 0.85f), // Purple
-	FLinearColor(0.85f, 0.35f, 0.65f), // Magenta
-	FLinearColor(0.95f, 0.35f, 0.45f)  // Red-Magenta
+		FLinearColor(0.90f, 0.20f, 0.20f), // Red
+		FLinearColor(0.95f, 0.45f, 0.15f), // Orange
+		FLinearColor(0.95f, 0.80f, 0.20f), // Yellow
+		FLinearColor(0.55f, 0.85f, 0.25f), // Yellow-Green
+		FLinearColor(0.25f, 0.80f, 0.45f), // Green
+		FLinearColor(0.20f, 0.85f, 0.75f), // Green-Cyan
+		FLinearColor(0.25f, 0.70f, 0.95f), // Cyan
+		FLinearColor(0.25f, 0.45f, 0.95f), // Blue
+		FLinearColor(0.40f, 0.35f, 0.90f), // Blue-Purple
+		FLinearColor(0.65f, 0.35f, 0.85f), // Purple
+		FLinearColor(0.85f, 0.35f, 0.65f), // Magenta
+		FLinearColor(0.95f, 0.35f, 0.45f)  // Red-Magenta
 	};	
 		
 	uint32 ColorIndex = Hash % RainbowColors.Num();
@@ -46,3 +45,4 @@ FLinearColor Bango::Editor::Color::Darken(FLinearColor InColor, float Darken)
 	
 	return FLinearColor(Darken * Darken * InColor.R, Darken * Darken * InColor.G, Darken * Darken * InColor.B, InColor.A);
 }
+*/

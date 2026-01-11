@@ -1,6 +1,6 @@
 ﻿#include "Bango/Core/BangoEvent.h"
 
-#include "Bango/Utility/BangoColor.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Bango/BangoAction.h"
 #include "Bango/Core/BangoEventComponent.h"
 #include "Bango/Core/BangoTriggerSignal.h"
@@ -335,7 +335,7 @@ void UBangoEvent::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
 
 			if (TimeLeft > 0)
 			{
-				Data.Add(FBangoDebugTextEntry("Activation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), BangoColor::GreenBase));
+				Data.Add(FBangoDebugTextEntry("Activation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), Bango::Colors::GreenBase));
 			}
 		}
 
@@ -345,7 +345,7 @@ void UBangoEvent::AppendDebugDataString_Game(TArray<FBangoDebugTextEntry>& Data)
 
 			if (TimeLeft > 0)
 			{
-				Data.Add(FBangoDebugTextEntry("Deactivation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), BangoColor::GreenBase));
+				Data.Add(FBangoDebugTextEntry("Deactivation delay:", FString::Printf(TEXT("%.1f"), TimeLeft), Bango::Colors::GreenBase));
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 ﻿#include "Bango/Core/BangoEventComponent.h"
 
 #include "CanvasItem.h"
-#include "Bango/Editor/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/Utility/BangoColor.h"
-#include "Bango/Editor/BangoPlungerComponent.h"
+#include "BangoEditorTooling/BangoColors.h"
+#include "Bango/Components/BangoPlungerComponent.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
@@ -238,12 +238,12 @@ FLinearColor UBangoEventComponent::GetDisplayColor() const
 {
 	if (!IsValid(Event) || !IsValid(GetWorld()))
 	{
-		return BangoColor::Error;
+		return Bango::Colors::Error;
 	}
 
 	if (bDisable)
 	{
-		return BangoColor::DarkGrey;
+		return Bango::Colors::DarkGrey;
 	}
 
 	FLinearColor Color = (bUseCustomColor) ? CustomColor : Event->GetDisplayBaseColor();
@@ -529,13 +529,13 @@ FCanvasTextItem UBangoEventComponent::GetDebugHeaderText(const FVector& ScreenLo
 	float ColorAlpha = FMath::Lerp(0.0, 1.0, LerpAlpha);
 	float OutlineAlpha = FMath::Lerp(0.0, 1.0, FMath::Square(LerpAlpha));
 
-	FLinearColor HeaderBaseColor = HasInvalidData() ? BangoColor::Orange : FLinearColor::White;
+	FLinearColor HeaderBaseColor = HasInvalidData() ? Bango::Colors::Orange : FLinearColor::White;
 	FLinearColor HeaderColor = HeaderBaseColor;
 	FLinearColor OutlineColor = FLinearColor(0.0, 0.0, 0.0, OutlineAlpha);
 
 	if (bUseDisplayName)
 	{
-		HeaderColor = BangoColor::LightBlue * HeaderBaseColor;
+		HeaderColor = Bango::Colors::LightBlue * HeaderBaseColor;
 	}
 
 	HeaderColor.A = ColorAlpha;
@@ -616,8 +616,8 @@ TArray<FBangoDebugTextEntry> UBangoEventComponent::GetDebugDataString_Editor() c
 {
 	TArray<FBangoDebugTextEntry> Data;
 
-	FLinearColor NormalTextColor = BangoColor::White;
-	FLinearColor ErrorTextColor = BangoColor::Orange;
+	FLinearColor NormalTextColor = Bango::Colors::White;
+	FLinearColor ErrorTextColor = Bango::Colors::Orange;
 	
 	if (!IsValid(Event))
 	{
@@ -701,7 +701,7 @@ TArray<FBangoDebugTextEntry> UBangoEventComponent::GetDebugDataString_Game() con
 	{
 		if (!IsValid(Trigger))
 		{			
-			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", BangoColor::Orange));
+			Data.Add(FBangoDebugTextEntry("Trigger:", "NULL TRIGGER", Bango::Colors::Orange));
 		}
 		else
 		{

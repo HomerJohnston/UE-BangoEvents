@@ -10,7 +10,7 @@ class BANGO_API UBangoScriptBlueprint : public UBlueprint
 	GENERATED_BODY()
 
 #if WITH_EDITOR
-	friend class UBangoEditorSubsystem;
+	friend class UBangoLevelScriptsEditorSubsystem;
 	friend struct FBangoScriptContainer;
 	
 public:

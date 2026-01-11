@@ -43,6 +43,7 @@ public class Bango : ModuleRules
 				"DeveloperSettings",
 				"RHI",
 				"RenderCore",
+				"InputCore"
 
 				// ... add private dependencies that you statically link with here ...
 			}
@@ -55,6 +56,7 @@ public class Bango : ModuleRules
 				{
 					"UnrealEd",
 					"EditorSubsystem",
+					"BangoEditorTooling"
 				}
 			);
 		}

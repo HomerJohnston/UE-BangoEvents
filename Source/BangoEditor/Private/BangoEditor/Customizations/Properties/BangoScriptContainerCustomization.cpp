@@ -4,23 +4,13 @@
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "SEditorViewport.h"
-#include "WidgetBlueprintEditor.h"
 #include "Bango/Core/BangoScript.h"
-#include "BangoEditor/BangoColor.h"
+#include "BangoEditorTooling/BangoColors.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
 #include "BangoEditor/BangoEditorStyle.h"
-#include "BangoEditor/DevTesting/BangoPackageHelper.h"
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
-#include "BangoEditor/Utilities/BangoEditorUtility.h"
-#include "Kismet2/KismetEditorUtilities.h"
-#include "Misc/DefinePrivateMemberPtr.h"
-#include "UObject/SavePackage.h"
-#include "Widgets/Layout/SWidgetSwitcher.h"
-
-#include "Bango/Private/Bango/ThirdParty/BMPrivateAccess.h"
-#include "Bango/Utility/BangoHelpers.h"
 #include "BangoEditor/BlueprintEditor/BangoBlueprintEditor.h"
 #include "BangoEditor/Widgets/SBangoGraphEditor.h"
-#include "Editor/UMGEditor/Public/WidgetBlueprintEditor.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -33,7 +23,7 @@ FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 	PostScriptCreated.AddRaw(this, &FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed);
 	PreScriptDeleted.AddRaw(this, &FBangoScriptContainerCustomization::OnPreScriptDeleted);
 	
-	UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
+	UBangoLevelScriptsEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>();
 	
 	if (Subsystem)
 	{
@@ -45,7 +35,7 @@ FBangoScriptContainerCustomization::FBangoScriptContainerCustomization()
 
 FBangoScriptContainerCustomization::~FBangoScriptContainerCustomization()
 {
-	UBangoEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
+	UBangoLevelScriptsEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>();
 	
 	if (Subsystem)
 	{
@@ -114,7 +104,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 			SNew(SBorder)
 			.Padding(2)
 			.BorderImage(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Border_InlineBlueprintGraph))
-			.BorderBackgroundColor(BangoColor::Noir)
+			.BorderBackgroundColor(Bango::Colors::Noir)
 			[
 				Box.ToSharedRef()
 			]			
@@ -463,19 +453,19 @@ FSlateColor FBangoScriptContainerCustomization::FocusedForegroundColor_ScriptNam
 	{
 		case EBangoScriptRenameStatus::MatchesCurrent:
 		{
-			return BangoColor::Gray;
+			return Bango::Colors::Gray;
 		}
 		case EBangoScriptRenameStatus::MatchesOther:
 		{
-			return BangoColor::LightRed;
+			return Bango::Colors::LightRed;
 		}
 		case EBangoScriptRenameStatus::ValidNewName:
 		{
-			return BangoColor::LightGreen;
+			return Bango::Colors::LightGreen;
 		}
 		default:
 		{
-			return BangoColor::Error;
+			return Bango::Colors::Error;
 		}
 	}
 }
@@ -628,7 +618,7 @@ void FBangoScriptContainerCustomization::UpdateBox()
 						FText::FromString( GetBlueprint()->GetPackage()->ContainsMap() ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension())
 					))
 				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
-				.ColorAndOpacity(BangoColor::Gray)
+				.ColorAndOpacity(Bango::Colors::Gray)
 			]
 		];
 	}

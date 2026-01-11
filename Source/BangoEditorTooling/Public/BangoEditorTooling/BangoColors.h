@@ -36,7 +36,7 @@ inline FLinearColor Name##Pressed_SuperGlass = FLinearColor(PRESS * RR, PRESS * 
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-namespace BangoColor
+namespace Bango::Colors
 {
 	DECLARE_COLOR(LightOrange,		0.850, 0.550, 0.150);
 	DECLARE_COLOR(BrightOrange,		1.000, 0.650, 0.050);
@@ -88,21 +88,39 @@ namespace BangoColor
 	DECLARE_COLOR_TRAN(Transparent,	1.000, 1.000, 1.000, 0.0);
 	DECLARE_COLOR(Error,		1.000, 0.000, 1.000);
 
+	namespace Funcs
+	{
+		BANGOEDITORTOOLING_API FLinearColor BrightenColor(FLinearColor C);
+		BANGOEDITORTOOLING_API FLinearColor EnhanceColor(FLinearColor C);
+		BANGOEDITORTOOLING_API FLinearColor LightDesatColor(FLinearColor C);
+		BANGOEDITORTOOLING_API FLinearColor DarkDesatColor(FLinearColor C);
+		BANGOEDITORTOOLING_API FLinearColor VeryDarkDesatColor(FLinearColor C);
+		BANGOEDITORTOOLING_API FLinearColor GetHashedColor(uint32 Hash, float Saturation, float Luminosity);
+		BANGOEDITORTOOLING_API FLinearColor Desaturate(FLinearColor InColor, float Desaturation);
+		BANGOEDITORTOOLING_API FLinearColor Darken(FLinearColor InColor, float Darken);
+	};
 	
-	/** FLinearColor::Desaturate also lerps alpha towards zero for some reason... use my own instead. */
-//	FLinearColor Desaturate(FLinearColor InColor, float Desaturation );
+	// TODO Legacy stuff cleanup 
+	inline FLinearColor LightGrey			(0.50,	0.50,	0.50);
+	inline FLinearColor DarkGrey			(0.02,	0.02,	0.02);
 
-//	FLinearColor Darken(FLinearColor InColor, float Darken);
+	//inline FLinearColor Error				(1.00,	0.00,	1.00);
 
+	//inline FLinearColor Red					(1.20,	0.10,	0.10);
+	inline FLinearColor RedBase				(0.80,	0.10,	0.10);
+	inline FLinearColor OrangeBase			(0.70,	0.40,	0.00);
+	inline FLinearColor YellowBase			(0.60,	0.60,	0.00);
+	inline FLinearColor GreenBase			(0.20,	0.90,	0.10);
+	//inline FLinearColor Green				(0.10,	1.20,	0.10);
+	inline FLinearColor BlueBase			(0.15,	0.25,	0.80);
+	//inline FLinearColor LightBlue			(0.45,	0.55,	1.20);
 
-	// Other hardcoded values
-	const FLinearColor WarningText = Yellow;
-	
-	inline const FLinearColor Button_Unset() { return DarkGray; }
+	//inline FLinearColor Orange			(0.95,	0.60,	0.07);
+	//inline FLinearColor Orange				(1.50,	0.50,	0.10);
+	//inline FLinearColor White				(1.00,	1.00,	1.00);
 
-	// Functions
-
-	const FLinearColor GetNominalFontColor(FLinearColor NodeColor, FLinearColor DarkNodeFontColor, FLinearColor LightNodeFontColor); 
-}
+	inline FColor TriggerDebugColor			(38,	64,		205	);
+	inline FColor ActionDebugColor			(205,	26,		26	);
+};
 
 #undef LOCTEXT_NAMESPACE

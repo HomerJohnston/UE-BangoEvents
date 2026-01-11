@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Bango/Private/Bango/Editor/BangoDebugDrawServiceBase.h"
+#include "BangoEditorTooling/BangoDebugDrawServiceBase.h"
 
 #include "BangoActorIDComponent.generated.h"
 

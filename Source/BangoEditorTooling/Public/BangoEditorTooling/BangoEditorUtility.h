@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+/*
 // TODO consolidate my utility namespaces better organized
 namespace Bango::Editor
 {
@@ -12,3 +13,4 @@ namespace Bango::Editor
 		BANGO_API FLinearColor Darken(FLinearColor InColor, float Darken);
 	}
 }
+*/

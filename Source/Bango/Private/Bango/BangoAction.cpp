@@ -3,7 +3,7 @@
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Core/BangoEventComponent.h"
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
 #include "Bango/Utility/BangoLog.h"
 
 #if DO_CHECK

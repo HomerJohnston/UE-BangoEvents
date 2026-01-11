@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Core/BangoActionFunctionRecord.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
 #include "BangoAction.generated.h"
 
 enum class EBangoEventSignalType : uint8;

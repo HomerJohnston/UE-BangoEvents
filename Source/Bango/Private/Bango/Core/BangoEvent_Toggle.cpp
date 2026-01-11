@@ -1,7 +1,7 @@
 ﻿#include "Bango/Core/BangoEvent_Toggle.h"
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Utility/BangoColor.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoTriggerSignal.h"
 
@@ -164,7 +164,7 @@ bool UBangoEvent_Toggle::ShouldRespondToTrigger(EBangoTriggerSignalType TriggerS
 #if WITH_EDITOR
 FLinearColor UBangoEvent_Toggle::GetDisplayBaseColor()
 {
-	return BangoColor::GreenBase;
+	return Bango::Colors::GreenBase;
 }
 #endif
 
@@ -178,7 +178,7 @@ void UBangoEvent_Toggle::ApplyColorEffects(FLinearColor& Color)
 	
 	if (ToggleState == EBangoEvent_ToggleState::Activated)
 	{
-		Color = BangoColorOps::BrightenColor(Color);
+		Color = Bango::Colors::Funcs::BrightenColor(Color);
 	}
 }
 #endif

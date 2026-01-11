@@ -7,14 +7,11 @@
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Components/BangoActorIDComponent.h"
-#include "Bango/Utility/BangoEditorUtility.h"
-#include "Bango/Utility/BangoHelpers.h"
-#include "BangoEditor/BangoColor.h"
-#include "BangoEditor/BangoEditorStyle.h"
-#include "BangoEditor/Utilities/BangoEditorUtility.h"
+#include "Bango/Utility/BangoUtility.h"
+#include "BangoEditorTooling/BangoEditorUtility.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "Styling/SlateIconFinder.h"
-#include "WorldPartition/WorldPartition.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 
@@ -144,7 +141,7 @@ TArray<FOverlayWidgetInfo> SGraphNode_BangoFindActor::GetOverlayWidgets(bool bSe
 		HashColorInfo.Widget = SNew(SImage)
 		.Image(FAppStyle::Get().GetBrush("Icons.FilledCircle"))
 		.DesiredSizeOverride(FVector2D(Size))
-		.ColorAndOpacity(Bango::Editor::Color::GetHashedColor(Hash, 1.0f, 1.0f));
+		.ColorAndOpacity(Bango::Colors::Funcs::GetHashedColor(Hash, 1.0f, 1.0f));
 	
 		HashColorInfo.OverlayOffset = FVector2f(HPadding, WidgetSize.Y - Size - VPadding);
 	}
@@ -400,7 +397,7 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 			[
 				SNew(SImage)
 				.Image( GetStyleSet().GetBrush("Graph.VarNode.Body") )
-				.ColorAndOpacity(BangoColor::White)
+				.ColorAndOpacity(Bango::Colors::White)
 			]
 			+ SOverlay::Slot()
 			[
@@ -509,15 +506,15 @@ FSlateColor SGraphNode_BangoFindActor::ColorAndOpacity_ActorLabel() const
 	
 	if (Node->GetTargetActor().IsPending())
 	{
-		return BangoColor::LightOrange;
+		return Bango::Colors::LightOrange;
 	}
 	
 	if (Node->GetErrorState() != EBangoFindActorNode_ErrorState::OK)
 	{
-		return BangoColor::OrangeRed;
+		return Bango::Colors::OrangeRed;
 	}
 	
-	return BangoColor::White;
+	return Bango::Colors::White;
 }
 
 EVisibility SGraphNode_BangoFindActor::Visibility_BangoNameIndicator() const
@@ -565,7 +562,7 @@ FText SGraphNode_BangoFindActor::Text_BangoNameIndicator() const
 	}
 	else
 	{
-		UBangoActorIDComponent* IDComponent = Bango::GetActorIDComponent(ActorSoft.Get());
+		UBangoActorIDComponent* IDComponent = Bango::Utilities::GetActorIDComponent(ActorSoft.Get());
 							
 		if (IDComponent)
 		{

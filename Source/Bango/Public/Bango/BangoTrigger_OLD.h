@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
 #include "Bango/Core/BangoTriggerSignal.h"
 
 #include "BangoTrigger_OLD.generated.h"

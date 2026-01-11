@@ -1,13 +1,12 @@
 ﻿using UnrealBuildTool;
 
-public class BangoUncooked : ModuleRules
+// This module contains shared info for all other modules, such as editor colors and editor functions.
+public class BangoEditorTooling : ModuleRules
 {
-    public BangoUncooked(ReadOnlyTargetRules Target) : base(Target)
+    public BangoEditorTooling(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        bUseUnity = false;
-        
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
@@ -18,18 +17,12 @@ public class BangoUncooked : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
+				"Core",
                 "CoreUObject",
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "Bango",
-                "BlueprintGraph",
-                "UnrealEd",
-                "KismetCompiler",
-                "Kismet",
-                "EditorSubsystem",
-                "GraphEditor",
-                "BangoEditorTooling"
+				"UnrealEd"
             }
         );
     }

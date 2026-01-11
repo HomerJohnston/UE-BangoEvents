@@ -1,7 +1,7 @@
 ﻿#include "Bango/Core/BangoEvent_Bang.h"
 
-#include "Bango/Editor/BangoDebugTextEntry.h"
-#include "Bango/Utility/BangoColor.h"
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoTriggerSignal.h"
 
@@ -61,7 +61,7 @@ EBangoEventSignalType UBangoEvent_Bang::RespondToTriggerSignal_Impl(UBangoTrigge
 #if WITH_EDITOR
 FLinearColor UBangoEvent_Bang::GetDisplayBaseColor()
 {
-	return BangoColor::RedBase;
+	return Bango::Colors::RedBase;
 }
 #endif
 
@@ -78,7 +78,7 @@ void UBangoEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 			
 	if (ActivationAlpha > 0)
 	{
-		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
+		FLinearColor ActivationColor = Bango::Colors::Funcs::BrightenColor(Color);
 		Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
 	}
 	
@@ -89,7 +89,7 @@ void UBangoEvent_Bang::ApplyColorEffects(FLinearColor& Color)
 
 		if (DeactivationAlpha > 0)
 		{
-			FLinearColor DeactivationColor = BangoColorOps::DarkDesatColor(Color);
+			FLinearColor DeactivationColor = Bango::Colors::Funcs::DarkDesatColor(Color);
 			Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
 		}
 	}

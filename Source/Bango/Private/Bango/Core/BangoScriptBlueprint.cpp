@@ -1,7 +1,7 @@
 ﻿#include "Bango/Core/BangoScriptBlueprint.h"
 
 #include "Bango/Components/BangoScriptComponent.h"
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
 #include "Bango/Utility/BangoLog.h"
 #include "UObject/SavePackage.h"
 

@@ -5,7 +5,7 @@
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
-#include "BangoEditor/BangoColor.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoThis.h"
 #include "Styling/SlateIconFinder.h"
 
@@ -247,7 +247,7 @@ void SGraphNode_BangoThis::UpdateCompactNode()
 			[
 				SNew(SImage)
 				.Image( GetStyleSet().GetBrush("Graph.VarNode.Body") )
-				.ColorAndOpacity(BangoColor::White)
+				.ColorAndOpacity(Bango::Colors::White)
 			]
 			+ SOverlay::Slot()
 			[
@@ -366,7 +366,7 @@ FText SGraphNode_BangoThis::Text_ActorLabel() const
 
 FSlateColor SGraphNode_BangoThis::ColorAndOpacity_NodeTitle() const
 {
-	return BangoColor::White;
+	return Bango::Colors::White;
 }
 
 FSlateColor SGraphNode_BangoThis::ColorAndOpacity_ActorLabel() const
@@ -377,11 +377,11 @@ FSlateColor SGraphNode_BangoThis::ColorAndOpacity_ActorLabel() const
 	
 	if (Blueprint && Blueprint->GetActor().IsValid())
 	{
-		return BangoColor::Gray;
+		return Bango::Colors::Gray;
 	}
 	else
 	{
-		return BangoColor::Red;
+		return Bango::Colors::Red;
 	}
 }
 

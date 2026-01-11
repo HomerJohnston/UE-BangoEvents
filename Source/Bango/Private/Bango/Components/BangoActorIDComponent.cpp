@@ -1,12 +1,11 @@
 ﻿#include "Bango/Components/BangoActorIDComponent.h"
 
 #include "CanvasItem.h"
-#include "Bango/Editor/BangoDebugUtility.h"
+#include "BangoEditorTooling/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
-#include "Bango/Utility/BangoColor.h"
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoColors.h"
+#include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
-#include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "Fonts/FontMeasure.h"
 
@@ -55,7 +54,7 @@ void UBangoActorIDComponent::PostDuplicate(bool bDuplicateForPIE)
 	Super::PostDuplicate(bDuplicateForPIE);
 	
 	// Manual names should normally only be assigned at edit-time; if duplicating at game time, don't use a name
-	if (!Bango::IsComponentInEditedLevel(this))
+	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		BangoName = NAME_None;
 	}
@@ -182,7 +181,7 @@ void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UBangoActorIDComponent::PrintGuid(const FString& FuncName)
 {
-	if (!Bango::IsComponentInEditedLevel(this))
+	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		return;
 	}
@@ -218,7 +217,7 @@ void UBangoActorIDComponent::OnRegister()
 #endif
 	
 #if WITH_EDITOR
-	if (Bango::IsComponentInEditedLevel(this))
+	if (Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		TWeakObjectPtr<UBangoActorIDComponent> WeakThis = this;
 		
@@ -234,7 +233,7 @@ void UBangoActorIDComponent::OnRegister()
 		
 		GEditor->GetTimerManager()->SetTimerForNextTick(FuckYouBostonStrangler);
 	}
-	BangoDebugDraw_Register<UBangoActorIDComponent>(this);
+	//BangoDebugDraw_Register<UBangoActorIDComponent>(this);
 #endif
 	
 }
@@ -243,7 +242,7 @@ void UBangoActorIDComponent::OnRegister()
 #if WITH_EDITOR
 void UBangoActorIDComponent::OnUnregister()
 {
-	BangoDebugDraw_Unregister(this);
+	//BangoDebugDraw_Unregister(this);
 	
 	Super::OnUnregister();
 }
@@ -264,7 +263,7 @@ void UBangoActorIDComponent::OnComponentCreated()
 void UBangoActorIDComponent::EnsureValidGuid()
 {
 #if 1
-	if (Bango::IsComponentInEditedLevel(this))
+	if (Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		if (!BangoGuid.IsValid() || BangoGuid == FGuid(0, 0, 0, 1))
 		{
@@ -287,7 +286,7 @@ void UBangoActorIDComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLoca
 	const TSharedRef<FSlateFontMeasure> FontMeasureService = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 	FVector2D TextSize = FontMeasureService->Measure(BangoName.ToString(), Font->GetLegacySlateFontInfo());
 	
-	FLinearColor TagColor = BangoColor::White;
+	FLinearColor TagColor = Bango::Colors::White;
 	TagColor.A *= Alpha;
 	
 	float IconRawSize = 32.0f;

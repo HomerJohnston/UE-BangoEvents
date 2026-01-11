@@ -1,6 +1,6 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Editor/BangoDebugUtility.h"
+#include "BangoEditorTooling/BangoDebugUtility.h"
 
 void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, float DashLength, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
 {

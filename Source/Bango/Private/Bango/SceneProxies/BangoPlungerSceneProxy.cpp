@@ -1,11 +1,11 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "Bango/Editor/BangoPlungerSceneProxy.h"
-#include "Bango/Editor/BangoPlungerComponent.h"
+#include "Bango/SceneProxies/BangoPlungerSceneProxy.h"
+#include "Bango/Components/BangoPlungerComponent.h"
 #include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "Bango/Utility/BangoColor.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Materials/MaterialRenderProxy.h"
 
 // Forward declarations
@@ -79,11 +79,11 @@ FLinearColor FBangoPlungerSceneProxy::DetermineColor() const
 	
 	if (bIsExpired)
 	{
-		Color = BangoColorOps::DarkDesatColor(Color);
+		Color = Bango::Colors::Funcs::DarkDesatColor(Color);
 	}
 	if (bIsFrozen)
 	{
-		Color = BangoColorOps::LightDesatColor(Color);
+		Color = Bango::Colors::Funcs::LightDesatColor(Color);
 	}
 
 	double ElapsedSinceActivation = FPlatformTime::Seconds() - ActivationTime; 
@@ -93,7 +93,7 @@ FLinearColor FBangoPlungerSceneProxy::DetermineColor() const
 
 	if (ActivationAlpha < 1)
 	{
-		FLinearColor ActivationColor = BangoColorOps::BrightenColor(Color);
+		FLinearColor ActivationColor = Bango::Colors::Funcs::BrightenColor(Color);
 		Color = FMath::Lerp(ActivationColor, Color, ActivationAlpha);
 	}
 
@@ -102,7 +102,7 @@ FLinearColor FBangoPlungerSceneProxy::DetermineColor() const
 
 	if (DeactivationAlpha < 1)
 	{
-		FLinearColor DeactivationColor = BangoColorOps::DarkDesatColor(Color);
+		FLinearColor DeactivationColor = Bango::Colors::Funcs::DarkDesatColor(Color);
 		Color = FMath::Lerp(DeactivationColor, Color, DeactivationAlpha);
 	}
 

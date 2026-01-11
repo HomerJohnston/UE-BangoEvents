@@ -185,7 +185,7 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 
 UBangoScriptBlueprint* Bango::Editor::GetDeletedLevelScript(const FGuid& Guid)
 {
-	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoEditorSubsystem>()->RetrieveDeletedScript(Guid);
+	UBangoScriptBlueprint* ScriptBlueprint = GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>()->RetrieveDeletedScript(Guid);
 
 	//ScriptBlueprint->Rename(*ScriptBlueprint->RetrieveDeletedName(), InPackage, REN_DontCreateRedirectors);
 	

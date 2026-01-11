@@ -2,8 +2,9 @@
 
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
-#include "Bango/Utility/BangoEditorUtility.h"
+#include "BangoEditorTooling/BangoEditorUtility.h"
 
 void FBangoScriptComponentVisualizer::OnRegister()
 {
@@ -180,7 +181,7 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				float Saturation = DrawInfo.bFocused ? 1.0f : 0.8f;
 				float Luminosity = DrawInfo.bFocused ? 1.0f : 0.8f;
 				float Thickness = DrawInfo.bFocused ? 3.0f : 1.5f;
-				FLinearColor Color = Bango::Editor::Color::GetHashedColor(GetTypeHash(DrawInfo.Actor), Saturation, Luminosity);
+				FLinearColor Color = Bango::Colors::Funcs::GetHashedColor(GetTypeHash(DrawInfo.Actor), Saturation, Luminosity);
 				
 				// Draw circle
 				FVector ScreenPos;

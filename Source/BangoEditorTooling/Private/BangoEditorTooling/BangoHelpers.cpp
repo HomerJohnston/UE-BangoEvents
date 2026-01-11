@@ -1,24 +1,21 @@
-﻿#include "Bango/Utility/BangoHelpers.h"
+﻿#include "BangoEditorTooling/BangoHelpers.h"
 
-#include "Bango/Components/BangoActorIDComponent.h"
-#include "Bango/Core/BangoScriptBlueprint.h"
-#include "Bango/Core/BangoScriptContainer.h"
-#include "Bango/Utility/BangoLog.h"
 #include "Components/ActorComponent.h"
 #include "UObject/Package.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
+#include "BangoEditorTooling/BangoEditorLog.h"
 
 #if WITH_EDITOR
-TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/, bool /*bImmediate*/)> FBangoEditorDelegates::OnScriptContainerCreated;
-TMulticastDelegate<void(UObject* /*Outer*/, TSoftClassPtr<UBangoScript> /*Script Container*/)> FBangoEditorDelegates::OnScriptContainerDestroyed;
-TMulticastDelegate<void(UObject* /*Outer*/, FBangoScriptContainer* /*Script Container*/, FString /*Name*/)> FBangoEditorDelegates::OnScriptContainerDuplicated;
-
-TMulticastDelegate<void(FGuid /* Script ID */, UBangoScriptBlueprint*& /* Found Blueprint */)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
-
+TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)> FBangoEditorDelegates::OnScriptContainerCreated;
+TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> FBangoEditorDelegates::OnScriptContainerDestroyed;
+TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> FBangoEditorDelegates::OnScriptContainerDuplicated;
+TMulticastDelegate<void(FGuid ScriptID, UBangoScriptBlueprint*& FoundBlueprint)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
 TMulticastDelegate<void(AActor* Actor)> FBangoEditorDelegates::RequestNewID;
+TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDelegates::OnScriptComponentClicked;
 #endif
 
 #if WITH_EDITOR
-bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
+bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component)
 {
 	check(Component);
 	
@@ -84,7 +81,7 @@ bool Bango::IsComponentInEditedLevel(UActorComponent* Component)
 	}
 }
 
-bool Bango::IsBeingEditorDeleted(UActorComponent* Component)
+bool Bango::Editor::IsBeingEditorDeleted(UActorComponent* Component)
 {
 	// 1. Must be in editor world
 	if (GIsPlayInEditorWorld || Component->GetWorld() == nullptr || Component->GetWorld()->IsGameWorld())
@@ -105,47 +102,12 @@ bool Bango::IsBeingEditorDeleted(UActorComponent* Component)
 	return false;
 }
 
-UBangoActorIDComponent* Bango::GetActorIDComponent(AActor* Actor, bool bForceCreate)
-{
-	if (!Actor)
-	{
-		return nullptr;
-	}
-	
-	UBangoActorIDComponent* IDComponent = nullptr;
-	
-	TArray<UBangoActorIDComponent*> IDComponents;
-	Actor->GetComponents<UBangoActorIDComponent>(IDComponents);
-	
-	if (IDComponents.Num() == 0)
-	{
-		if (bForceCreate)
-		{
-			FBangoEditorDelegates::RequestNewID.Broadcast(Actor);
-			Actor->GetComponents<UBangoActorIDComponent>(IDComponents);	
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	if (IDComponents.Num() == 1)
-	{
-		IDComponent = IDComponents[0];
-	}
-	else
-	{
-		UE_LOG(LogBango, Error, TEXT("Actor has more than one ID component!"));
-	}
-	
-	return IDComponent;
-}
-
-FName Bango::GetBangoName(AActor* Actor)
+/*
+FName Bango::Editor::GetBangoName(AActor* Actor)
 {
 	UBangoActorIDComponent* IDComponent = GetActorIDComponent(Actor);
 	
 	return IDComponent ? IDComponent->GetBangoName() : NAME_None;
 }
+*/
 #endif

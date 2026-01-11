@@ -1,7 +1,7 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
-#include "Bango/Utility/BangoLog.h"
+#include "BangoEditorTooling/BangoEditorLog.h"
 
 namespace BangoUtility
 {
@@ -9,7 +9,7 @@ namespace BangoUtility
 	{
 		static void PrintComponentState(UActorComponent* Component, FString Msg)
 		{
-			UE_LOG(LogBango, Display, TEXT("Owner Actor: %s, package: %s"), *Component->GetOwner()->GetActorLabel(), *Component->GetOwner()->GetPackage()->GetName());
+			UE_LOG(LogBangoEditor, Display, TEXT("Owner Actor: %s, package: %s"), *Component->GetOwner()->GetActorLabel(), *Component->GetOwner()->GetPackage()->GetName());
 			
 			uint32 Flags = (uint32)Component->GetFlags();
 			uint32 IntFlags = (uint32)Component->GetInternalFlags();
@@ -30,7 +30,7 @@ namespace BangoUtility
 				BitString2.AppendChar(((IntFlags >> i) & 1) ? TEXT('1') : TEXT('0'));
 			}
 	
-			UE_LOG(LogBango, Display, TEXT("%s: %s"), *Component->GetName(), *FString::Format(TEXT("{0} --- Flags: {1}                          --- Internal Flags: {2}"), { Msg, *BitString1, *BitString2 } ));
+			UE_LOG(LogBangoEditor, Display, TEXT("%s: %s"), *Component->GetName(), *FString::Format(TEXT("{0} --- Flags: {1}                          --- Internal Flags: {2}"), { Msg, *BitString1, *BitString2 } ));
 		}
 		
 		static void PrintFlagNames()
@@ -111,17 +111,17 @@ namespace BangoUtility
 					FinalPrint += "NONE";
 				}
 			
-				UE_LOG(LogBango, Display, TEXT("%s"), *FinalPrint);
+				UE_LOG(LogBangoEditor, Display, TEXT("%s"), *FinalPrint);
 			}
 		}
 	}
 	
 	namespace DebugDraw
 	{		
-		BANGO_API void DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, float DashLength, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
+		BANGOEDITORTOOLING_API void DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, float DashLength, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
 		
-		BANGO_API void DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, int32 NumDashes, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
+		BANGOEDITORTOOLING_API void DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, int32 NumDashes, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
 
-		BANGO_API void DebugDrawDashedLine(UWorld* World, const FRay& Ray, float Distance, float DashLength, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
+		BANGOEDITORTOOLING_API void DebugDrawDashedLine(UWorld* World, const FRay& Ray, float Distance, float DashLength, const FColor& Color, bool bPersistentLines = false, float Lifetime = 0, uint8 DepthPriority = 0, float Thickness = 0.0f);
 	}
 }

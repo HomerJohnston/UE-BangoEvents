@@ -1,22 +1,27 @@
 ﻿#include "Bango/Components/BangoScriptComponent.h"
 
-#include "AssetToolsModule.h"
 #include "Bango/Core/BangoScript.h"
-#include "Bango/Editor/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoScriptSubsystem.h"
-#include "Bango/Utility/BangoColor.h"
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoColors.h"
+#include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Components/BillboardComponent.h"
 #include "Fonts/FontMeasure.h"
+#include "UObject/ICookInfo.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 
 UBangoScriptComponent::UBangoScriptComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	
+
 #if WITH_EDITORONLY_DATA 
-	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+	{
+		FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
+		IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+	}
+	
 	LabelOffset = -48.0f;
 #endif
 }
@@ -60,14 +65,73 @@ void UBangoScriptComponent::OnRegister()
 {
 	Super::OnRegister();
 	
-	BangoDebugDraw_Register<ThisClass>(this);
+	if (!Billboard && GetOwner() && !GetWorld()->IsGameWorld())
+	{
+		{
+			FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
+			const EObjectFlags TransactionalFlag = GetFlags() & RF_Transactional;
+		
+			Billboard = NewObject<UBillboardComponent>(GetOwner(), NAME_None, TransactionalFlag | RF_Transient | RF_TextExportTransient);
+			Billboard->Sprite = IconTexture;
+		}
+		
+		Billboard->SetupAttachment(GetOwner()->GetRootComponent());
+		Billboard->bHiddenInGame = true;
+		Billboard->bIsScreenSizeScaled = true;
+		Billboard->SetRelativeLocation(100.0f * FVector::UpVector);
+		
+		
+		Billboard->SetRelativeScale3D_Direct(FVector(1.0f, 1.0f, 1.0f));
+		Billboard->Mobility = EComponentMobility::Movable;
+		Billboard->AlwaysLoadOnClient = false;
+		Billboard->SetIsVisualizationComponent(true);
+		Billboard->SpriteInfo.Category = TEXT("Misc");
+		Billboard->SpriteInfo.DisplayName = NSLOCTEXT("SpriteCategory", "Misc", "Misc");
+		Billboard->CreationMethod = CreationMethod;
+		Billboard->bIsScreenSizeScaled = true;
+		Billboard->bUseInEditorScaling = true;
+		Billboard->OpacityMaskRefVal = .3f;
+		
+		Billboard->RegisterComponent();
+	}
+	/*
+	if (bVisualizeComponent && SpriteComponent == nullptr && GetOwner() && !GetWorld()->IsGameWorld())
+	{
+		// Create a new billboard component to serve as a visualization of the actor until there is another primitive component
+		{
+			FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
+			const EObjectFlags TransactionalFlag = GetFlags() & RF_Transactional;
+			SpriteComponent = NewObject<UBillboardComponent>(GetOwner(), NAME_None, TransactionalFlag | RF_Transient | RF_TextExportTransient);
+			SpriteComponent->Sprite = SpriteTexture ? SpriteTexture : LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/EmptyActor.EmptyActor"));
+		}
+
+		SpriteComponent->SetRelativeScale3D_Direct(FVector(0.5f, 0.5f, 0.5f));
+		SpriteComponent->Mobility = EComponentMobility::Movable;
+		SpriteComponent->AlwaysLoadOnClient = false;
+		SpriteComponent->SetIsVisualizationComponent(true);
+		SpriteComponent->SpriteInfo.Category = TEXT("Misc");
+		SpriteComponent->SpriteInfo.DisplayName = NSLOCTEXT("SpriteCategory", "Misc", "Misc");
+		SpriteComponent->CreationMethod = CreationMethod;
+		SpriteComponent->bIsScreenSizeScaled = true;
+		SpriteComponent->bUseInEditorScaling = true;
+		SpriteComponent->OpacityMaskRefVal = .3f;
+
+		SpriteComponent->SetupAttachment(this);
+
+		if (bRegister)
+		{
+			SpriteComponent->RegisterComponent();
+		}
+	}
+	*/
+	//BangoDebugDraw_Register<ThisClass>(this);
 }
 #endif
 
 #if WITH_EDITOR
 void UBangoScriptComponent::OnUnregister()
 {
-	BangoDebugDraw_Unregister(this);
+	//BangoDebugDraw_Unregister(this);
 
 	Super::OnUnregister();
 }
@@ -78,7 +142,7 @@ void UBangoScriptComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
 	
-	if (!Bango::IsComponentInEditedLevel(this))
+	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		return;
 	}
@@ -100,7 +164,7 @@ void UBangoScriptComponent::OnComponentCreated()
 			
 			UBangoScriptComponent* Component = WeakThis.Get();
 			
-			if (!Bango::IsComponentInEditedLevel(Component))
+			if (!Bango::Editor::IsComponentInEditedLevel(Component))
 			{
 				return;
 			}
@@ -132,7 +196,7 @@ void UBangoScriptComponent::OnComponentCreated()
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
-	bool bInEditedLevel = Bango::IsComponentInEditedLevel(this);
+	bool bInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
 	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 		
@@ -164,7 +228,7 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 #if WITH_EDITOR
 void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 {
-	if (!Bango::IsComponentInEditedLevel(this))
+	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		return;
 	}
@@ -190,7 +254,7 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 			
 				//UBangoScriptComponent* Component = WeakThis.Get();
 			
-				//if (!Bango::IsComponentInEditedLevel(Component))
+				//if (!Bango::Editor::IsComponentInEditedLevel(Component))
 				//{
 				//	return;
 				//}
@@ -342,17 +406,17 @@ void UBangoScriptComponent::OnScriptFinished(FBangoScriptHandle FinishedHandle)
 #if WITH_EDITOR
 void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
 {
-	FLinearColor TagColor = BangoColor::White;
+	FLinearColor TagColor = Bango::Colors::White;
 
 	if (GetWorld()->IsGameWorld())
 	{
 		if (RunningHandle.IsExpired())
 		{
-			TagColor = BangoColor::YellowBase;
+			TagColor = Bango::Colors::YellowBase;
 		}
 		else if (RunningHandle.IsRunning())
 		{
-			TagColor = BangoColor::LightBlue;
+			TagColor = Bango::Colors::LightBlue;
 		}
 		else if (RunningHandle.IsNull())
 		{
@@ -363,7 +427,7 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 	{
 		if (bRunOnBeginPlay)
 		{
-			TagColor = BangoColor::Green;
+			TagColor = Bango::Colors::Green;
 		}
 	}
 	
@@ -441,7 +505,7 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		float X = ScreenLocation.X - 0.5f * TotalWidth + 0.5f * IconSize + 0.5f * IconPadding;
 		float Y = ScreenLocation.Y;
 		
-		FCanvasTextItem Text(FVector2D(X + 0.5f * IconSize + IconPadding, Y), LabelText, Font, BangoColor::White);
+		FCanvasTextItem Text(FVector2D(X + 0.5f * IconSize + IconPadding, Y), LabelText, Font, Bango::Colors::White);
 		Text.bCentreY = true;
 		Canvas->DrawItem(Text);
 	}

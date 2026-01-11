@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoHelpers.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 
@@ -90,11 +90,11 @@ inline void FBangoDebugDrawServiceBase::BangoDebugDraw_Register(UActorComponent*
 	This = Component;
 	T* TypedThis = Cast<T>(This);
 	
-	if (Bango::IsComponentInEditedLevel(Component))
+	if (Bango::Editor::IsComponentInEditedLevel(Component))
 	{
 		FEditorDelegates::PrePIEEnded.AddWeakLambda(This.Get(), [this, TypedThis] (const bool PIE)
 		{
-			if (!DebugDrawServiceHandle_Editor.IsValid() && Bango::IsComponentInEditedLevel(TypedThis))
+			if (!DebugDrawServiceHandle_Editor.IsValid() && Bango::Editor::IsComponentInEditedLevel(TypedThis))
 			{
 				DebugDrawServiceHandle_Editor = UDebugDrawService::Register(TEXT("Editor"), FDebugDrawDelegate::CreateUObject(TypedThis, &T::__DebugDrawEditor));
 			}

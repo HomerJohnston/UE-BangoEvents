@@ -2,7 +2,8 @@
 
 #include "Bango/Core/BangoScriptContainer.h"
 
-#include "Bango/Private/Bango/Editor/BangoDebugDrawServiceBase.h"
+#include "BangoEditorTooling/BangoDebugDrawServiceBase.h"
+#include "InputCoreTypes.h"
 
 #include "BangoScriptComponent.generated.h"
 
@@ -24,7 +25,7 @@ class BANGO_API UBangoScriptComponent : public UActorComponent, public FBangoDeb
 {
 	GENERATED_BODY()
 	
-	friend class UBangoEditorSubsystem;
+	friend class UBangoLevelScriptsEditorSubsystem;
 	friend class UBangoScriptBlueprint;
 	
 public:
@@ -75,8 +76,11 @@ protected:
 	UPROPERTY(Transient)
 	FBangoScriptHandle RunningHandle;
 	
-	//
+	// During undo/redo, the script property is reset and can't be read. I stash it when a transaction begins in this non-serialized value so I can actually read it when the transaction finishes.
 	FBangoScriptContainer __UNDO_Script;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UBillboardComponent> Billboard;
 #endif
 	
 public:
@@ -103,5 +107,7 @@ public:
 
 	virtual void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
 	
+	//UFUNCTION()
+	//void OnClickedBillboard(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 #endif
 };

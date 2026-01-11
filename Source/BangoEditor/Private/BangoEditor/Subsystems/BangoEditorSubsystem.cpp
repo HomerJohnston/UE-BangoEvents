@@ -1,47 +1,36 @@
 ﻿#include "BangoEditorSubsystem.h"
 
-#include "AssetToolsModule.h"
 #include "ContentBrowserDataSubsystem.h"
-#include "FileHelpers.h"
-#include "IAssetTools.h"
 #include "IContentBrowserDataModule.h"
 #include "ISourceControlModule.h"
-#include "MeshPaintVisualize.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Core/BangoScriptContainer.h"
-#include "Bango/Editor/BangoScriptHelperSubsystem.h"
-#include "Bango/Utility/BangoHelpers.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
+#include "BangoEditorTooling/BangoScriptHelperSubsystem.h"
+#include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/DevTesting/BangoDummyObject.h"
 #include "BangoEditor/Menus/BangoEditorMenus.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
-#include "Developer/AssetTools/Private/AssetTools.h"
-#include "Editor/Transactor.h"
-#include "Framework/Notifications/NotificationManager.h"
-#include "Helpers/BangoHideScriptFolderFilter.h"
-#include "Kismet2/KismetReinstanceUtilities.h"
-#include "Serialization/ArchiveReplaceObjectRef.h"
-#include "Serialization/FindObjectReferencers.h"
+#include "BangoEditor/Private/BangoEditor/Unsorted/BangoHideScriptFolderFilter.h"
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "UObject/ObjectSaveContext.h"
-#include "UObject/PropertyIterator.h"
-#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
-TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> UBangoEditorSubsystem::Filter;
+TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> UBangoLevelScriptsEditorSubsystem::Filter;
 
 
-UBangoEditorSubsystem* UBangoEditorSubsystem::Get()
+UBangoLevelScriptsEditorSubsystem* UBangoLevelScriptsEditorSubsystem::Get()
 {
-	return GEditor->GetEditorSubsystem<UBangoEditorSubsystem>();
+	return GEditor->GetEditorSubsystem<UBangoLevelScriptsEditorSubsystem>();
 }
 
-void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UBangoLevelScriptsEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Collection.InitializeDependency<UContentBrowserDataSubsystem>();
 
@@ -82,7 +71,7 @@ void UBangoEditorSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnObjectTransacted);
 }
 
-FString UBangoEditorSubsystem::GetState(UObject* Object) const
+FString UBangoLevelScriptsEditorSubsystem::GetState(UObject* Object) const
 {
 	bool bIsTemplate = Object->IsTemplate();
 	bool bIsValid = IsValid(Object);
@@ -94,12 +83,12 @@ FString UBangoEditorSubsystem::GetState(UObject* Object) const
 	return FString::Format(TEXT("Duplicating: {0}, Template {1}, IsValid {2}, MirroredGarbage {3}, Garbage {4}, Unreachable {5}, PendingConstruction {6}"), { (uint8)bDuplicateActorsActive, (uint8)bIsTemplate, (uint8)bIsValid, (uint8)bMirroredGarbage, (uint8)bGarbage, (uint8)bUnreachable, (uint8)bPendingConstruction} );
 }
 
-void UBangoEditorSubsystem::OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const
+void UBangoLevelScriptsEditorSubsystem::OnObjectPreSave(UObject* Object, FObjectPreSaveContext ObjectPreSaveContext) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnObjectPreSave %s --- %s"), *Object->GetName(), *GetState(Object));	
 }
 
-void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
+void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent)
 {
 	if (TransactionEvent.GetEventType() != ETransactionObjectEventType::UndoRedo)
 	{
@@ -118,7 +107,7 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 	TSoftObjectPtr<UObject> Test = Object;
 	
 	// TODO dismantle mount everest below
-	if (Bango::IsComponentInEditedLevel(ScriptComponent))
+	if (Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
 	{
 		// This was an undo-delete event; we will want to restore a script from Transient
 		
@@ -237,7 +226,7 @@ void UBangoEditorSubsystem::OnObjectTransacted(UObject* Object, const class FTra
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object) const
+void UBangoLevelScriptsEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object) const
 {
 	FString FactoryString = Factory ? Factory->GetName() : "No Factory";
 	
@@ -247,13 +236,13 @@ void UBangoEditorSubsystem::OnAssetPostImport(UFactory* Factory, UObject* Object
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnPackageDeleted(UPackage* Package) const
+void UBangoLevelScriptsEditorSubsystem::OnPackageDeleted(UPackage* Package) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnPackageDeleted: %s"), *Package->GetName());
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnAssetsAddExtraObjectsToDelete(TArray<UObject*>& Objects) const
+void UBangoLevelScriptsEditorSubsystem::OnAssetsAddExtraObjectsToDelete(TArray<UObject*>& Objects) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnAssetsAddExtraObjectsToDelete:"));
 	
@@ -264,7 +253,7 @@ void UBangoEditorSubsystem::OnAssetsAddExtraObjectsToDelete(TArray<UObject*>& Ob
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnAssetsPreDelete(const TArray<UObject*>& Objects) const
+void UBangoLevelScriptsEditorSubsystem::OnAssetsPreDelete(const TArray<UObject*>& Objects) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnAssetsPreDelete:"));
 	
@@ -275,7 +264,7 @@ void UBangoEditorSubsystem::OnAssetsPreDelete(const TArray<UObject*>& Objects) c
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnAssetsDeleted(const TArray<UClass*>& Classes)
+void UBangoLevelScriptsEditorSubsystem::OnAssetsDeleted(const TArray<UClass*>& Classes)
 {
 	//UE_LOG(LogBango, Display, TEXT("OnAssetsDeleted:"));
 	
@@ -286,27 +275,27 @@ void UBangoEditorSubsystem::OnAssetsDeleted(const TArray<UClass*>& Classes)
 }
 
 // TODO erase??????
-void UBangoEditorSubsystem::OnDuplicateActorsBegin()
+void UBangoLevelScriptsEditorSubsystem::OnDuplicateActorsBegin()
 {
 	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsBegin"));
 	bDuplicateActorsActive = true;
 }
 
 // TODO erase??????
-void UBangoEditorSubsystem::OnDuplicateActorsEnd()
+void UBangoLevelScriptsEditorSubsystem::OnDuplicateActorsEnd()
 {
 	UE_LOG(LogBango, Display, TEXT("OnDuplicateActorsEnd"));
 	bDuplicateActorsActive = false;
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnLevelActorAdded(AActor* Actor) const
+void UBangoLevelScriptsEditorSubsystem::OnLevelActorAdded(AActor* Actor) const
 {
 	UE_LOG(LogBango, Display, TEXT("OnLevelActorAdded: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
+void UBangoLevelScriptsEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 {
 	UE_LOG(LogBango, Display, TEXT("OnLevelActorDeleted: %s --- %s"), *Actor->GetActorLabel(), *GetState(Actor));
 	
@@ -320,7 +309,7 @@ void UBangoEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 }
 
 // TODO document what this is for?
-void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
+void UBangoLevelScriptsEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
 {
 	auto DelayCollectGarbage = FTimerDelegate::CreateLambda([] ()
 	{
@@ -331,29 +320,29 @@ void UBangoEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoa
 }
 
 // TODO erase
-void UBangoEditorSubsystem::PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const
+void UBangoLevelScriptsEditorSubsystem::PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const
 {
 	//UE_LOG(LogBango, Display, TEXT("PreSaveWorldWithContext"));
 	//ObjectTools::ForceDeleteObjects( { ScriptPackage }, true);
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnObjectConstructed(UObject* Object) const
+void UBangoLevelScriptsEditorSubsystem::OnObjectConstructed(UObject* Object) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnObjectConstructed: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
-void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
+void UBangoLevelScriptsEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const
 {
 	TWeakObjectPtr<UObject> WeakRenamedObject = RenamedObject;
 	TWeakObjectPtr<UObject> WeakRenamedObjectOuter = RenamedObjectOuter;
-	TWeakObjectPtr<const UBangoEditorSubsystem> WeakThis = this;
+	TWeakObjectPtr<const UBangoLevelScriptsEditorSubsystem> WeakThis = this;
 	
 	auto DelayedScriptRename = [WeakRenamedObject, WeakRenamedObjectOuter, WeakThis] ()
 	{
 		UObject* RenamedObject = WeakRenamedObject.Get();
 		UObject* RenamedObjectOuter = WeakRenamedObjectOuter.Get();
-		const UBangoEditorSubsystem* This = WeakThis.Get();
+		const UBangoLevelScriptsEditorSubsystem* This = WeakThis.Get();
 		
 		if (!RenamedObject || !RenamedObjectOuter || !This)
 		{
@@ -363,7 +352,7 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 		// TODO I need a way to allow hooking in other types more nicely. What if a user wants a custom type and not just UBangoScriptComponent?
 		if (UBangoScriptComponent* ScriptComponent = Cast<UBangoScriptComponent>(RenamedObject))
 		{
-			if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject) || !Bango::IsComponentInEditedLevel(ScriptComponent))
+			if (!IsValid(RenamedObject) || RenamedObject->HasAnyFlags(RF_ArchetypeObject) || !Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
 			{
 				return;
 			}
@@ -428,18 +417,18 @@ void UBangoEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, UObject* Ren
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnAssetLoaded(UObject* Object) const
+void UBangoLevelScriptsEditorSubsystem::OnAssetLoaded(UObject* Object) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnAssetLoaded: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
 // TODO erase
-void UBangoEditorSubsystem::OnObjectModified(UObject* Object) const
+void UBangoLevelScriptsEditorSubsystem::OnObjectModified(UObject* Object) const
 {
 	//UE_LOG(LogBango, Display, TEXT("OnObjectModified: %s --- %s"), *Object->GetName(), *GetState(Object));
 }
 
-void UBangoEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)
+void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name, bool bImmediate)
 {
 	if (bDuplicateActorsActive)
 	{
@@ -448,7 +437,7 @@ void UBangoEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBango
 		return;
 	}
 	
-	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
+	TWeakObjectPtr<UBangoLevelScriptsEditorSubsystem> WeakThis = this;
 	TWeakObjectPtr<UObject> WeakOuter = Outer;
 	
 	auto Delayed = FTimerDelegate::CreateLambda([WeakThis, WeakOuter, ScriptContainer, Name] ()
@@ -458,7 +447,7 @@ void UBangoEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBango
 			return;
 		}
 		
-		UBangoEditorSubsystem* This = WeakThis.Get();
+		UBangoLevelScriptsEditorSubsystem* This = WeakThis.Get();
 		UObject* Outer = WeakOuter.Get();
 		
 		FString BlueprintName = Name;
@@ -553,7 +542,7 @@ void UBangoEditorSubsystem::OnLevelScriptContainerCreated(UObject* Outer, FBango
 }
 
 // TODO - find path for 1) add new component, 2) save, 3) undo add new component --- it leaves the script .uasset file in place instead of deleting it. Undoing an add is not detected as a destroy?
-void UBangoEditorSubsystem::OnLevelScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
+void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
 	
@@ -572,7 +561,7 @@ void UBangoEditorSubsystem::OnLevelScriptContainerDestroyed(UObject* Outer, TSof
 	SoftDeleteScriptPackage(ScriptClass);
 }
 
-bool UBangoEditorSubsystem::IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+bool UBangoLevelScriptsEditorSubsystem::IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
 	check(IsValid(Outer));
 	check(ScriptContainer);
@@ -585,11 +574,11 @@ bool UBangoEditorSubsystem::IsExistingScriptContainerValid(UObject* Outer, FBang
 	return true;
 }
 
-void UBangoEditorSubsystem::OnLevelScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)
+void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)
 {
 	// When an actor is added to the world containing a CDO ScriptComponent, this function might be called. 
 	TWeakObjectPtr<UObject> WeakOuter = Outer;
-	TWeakObjectPtr<UBangoEditorSubsystem> WeakThis = this;
+	TWeakObjectPtr<UBangoLevelScriptsEditorSubsystem> WeakThis = this;
 	
 	auto DelayOneFrame = [WeakThis, WeakOuter, ScriptContainer, Name] ()
 	{
@@ -599,7 +588,7 @@ void UBangoEditorSubsystem::OnLevelScriptContainerDuplicated(UObject* Outer, FBa
 		}
 				
 		UObject* Outer = WeakOuter.Get();
-		UBangoEditorSubsystem* This = WeakThis.Get();
+		UBangoLevelScriptsEditorSubsystem* This = WeakThis.Get();
 		
 		if (!ScriptContainer->GetScriptClass())
 		{
@@ -649,12 +638,12 @@ void UBangoEditorSubsystem::OnLevelScriptContainerDuplicated(UObject* Outer, FBa
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayOneFrame);
 }
 
-void UBangoEditorSubsystem::OnRequestNewID(AActor* Actor) const
+void UBangoLevelScriptsEditorSubsystem::OnRequestNewID(AActor* Actor) const
 {
 	FBangoEditorMenus::SetEditActorID(Actor, true);
 }
 
-void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass)
+void UBangoLevelScriptsEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	// I have to delay this by one frame or else I get really weird editor crashes, 
 	// something about running ObjectTools::ForceDeleteObjects from my component's OnComponentDestroy causes the garbage collector to freak out.
@@ -692,7 +681,7 @@ void UBangoEditorSubsystem::SoftDeleteScriptPackage(TSoftClassPtr<UBangoScript> 
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayedDelete);
 }
 
-UBangoScriptBlueprint* UBangoEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
+UBangoScriptBlueprint* UBangoLevelScriptsEditorSubsystem::RetrieveDeletedScript(FGuid Guid)
 {
 	TArray<UObject*> AllTransientObjects;
 	GetObjectsWithOuter(GetTransientPackage(), AllTransientObjects);

@@ -40,6 +40,7 @@ public class BangoEditor : ModuleRules
 				"TypedElementFramework",
 				"AssetTools",
 				"UMGEditor",
+				"BangoEditorTooling"
             }
         );
     }
