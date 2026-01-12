@@ -2,7 +2,9 @@
 
 #include "Bango/Core/BangoScriptContainer.h"
 #include "IPropertyTypeCustomization.h"
+#include "Input/Reply.h"
 
+class SVerticalBox;
 class FBangoBlueprintEditor;
 
 enum class EBangoScriptRenameStatus
@@ -73,7 +75,7 @@ protected:
 	
 	bool IsEnabled_RenameScriptButton() const;
 	
-	TSharedRef<SWidget> GetPopoutGraphEditor() const;
+	TSharedRef<SWidget> GetPopoutGraphEditor(FVector2D WindowSize) const;
 	
 	// ------------------------------------------
 

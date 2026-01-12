@@ -2,10 +2,12 @@
 
 #include "Bango/Default/Actions/BangoAction_FreezeThawEvent.h"
 
+#include "DrawDebugHelpers.h"
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEventComponent.h"
 #include "BangoEditorTooling/BangoDebugUtility.h"
+#include "GameFramework/Actor.h"
 
 
 UBangoAction_FreezeThawEvent::UBangoAction_FreezeThawEvent()

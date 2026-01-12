@@ -24,6 +24,10 @@ public:
 	const TSoftClassPtr<UBangoScript>& GetScriptClass() const { return ScriptClass; }
 
 private:
+	/** A brief description of the blueprint. This can be displayed in the level editor viewport. */
+	UPROPERTY(EditInstanceOnly)
+	FString Description;
+	
 	UPROPERTY(VisibleAnywhere)
 	TSoftClassPtr<UBangoScript> ScriptClass;
 	
@@ -37,7 +41,7 @@ private:
 #if WITH_EDITORONLY_DATA
 private:
 	// This will be kept in sync with the UBangoScriptObject's ScriptGuid and is used for undo/redo purposes and other sync
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	FGuid Guid;
 	
 public:
@@ -59,5 +63,6 @@ public:
 	
 	void TryRestoreScriptFromTransientPackage();
 
+	const FString& GetDescription() const { return Description; }
 #endif
 };

@@ -1,6 +1,9 @@
 ﻿#include "Bango/Subsystem/BangoFactSubsystem.h"
 
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "Bango/Utility/BangoLog.h"
 
 // ----------------------------------------------
 

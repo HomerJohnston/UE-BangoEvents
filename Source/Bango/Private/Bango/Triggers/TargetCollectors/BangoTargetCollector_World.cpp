@@ -37,8 +37,6 @@ void UBangoTargetCollector_World::UpdateCandidateActors(FBangoTargetCollectorQue
 	// Most triggers in most games will probably not have a lot of candidates.
 	CachedResult.Reserve(20);
 	
-	
-	
 	for (AActor* Actor : TActorRange<AActor>(World, Params.ActorClass))
 	{
 		if (Params.IsValidMobility(Actor))

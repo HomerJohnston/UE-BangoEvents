@@ -2,6 +2,8 @@
 
 #include "Bango/Core/BangoScript.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
+#include "Misc/PackageName.h"
+#include "UObject/Package.h"
 
 FBangoClassViewerFilter::FBangoClassViewerFilter(TSharedPtr<IClassViewerFilter> InChildFilter)
 {

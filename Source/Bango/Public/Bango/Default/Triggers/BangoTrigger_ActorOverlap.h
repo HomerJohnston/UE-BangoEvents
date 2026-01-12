@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Bango/BangoTrigger_OLD.h"
+#include "Bango/Components/BangoActorIDComponent.h"
 
 #include "BangoTrigger_ActorOverlap.generated.h"
 

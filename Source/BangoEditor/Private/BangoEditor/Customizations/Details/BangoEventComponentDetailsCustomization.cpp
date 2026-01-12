@@ -6,9 +6,11 @@
 #include "IDetailGroup.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoEventComponent.h"
+#include "Engine/World.h"
 #include "Widgets/Layout/SWrapBox.h"
 
 #include "Widgets/Colors/SColorBlock.h"
+#include "Widgets/Input/SButton.h"
 
 TSharedRef<IDetailCustomization> FBangoEventComponentDetailsCustomization::MakeInstance()
 {

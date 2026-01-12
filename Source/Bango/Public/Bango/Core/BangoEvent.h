@@ -1,8 +1,10 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #pragma once
+#include "ShowFlags.h"
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Core/BangoInstigatorRecords.h"
+#include "Engine/TimerHandle.h"
 
 #include "BangoEvent.generated.h"
 

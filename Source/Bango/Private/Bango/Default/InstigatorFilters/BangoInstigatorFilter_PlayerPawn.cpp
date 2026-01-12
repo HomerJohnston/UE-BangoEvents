@@ -1,5 +1,8 @@
 ﻿#include "Bango/Default/InstigatorFilters/BangoInstigatorFilter_PlayerPawn.h"
 
+#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
+
 bool UBangoInstigatorFilter_PlayerPawn::IsValidInstigator_Implementation(UObject* Instigator)
 {
 	UObject* Owner = Instigator;

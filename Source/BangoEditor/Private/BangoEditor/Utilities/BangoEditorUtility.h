@@ -8,6 +8,7 @@ struct FBangoScriptContainer;
 class UBangoScriptBlueprint;
 class UBangoScriptComponent;
 class UBangoScript;
+class IPropertyHandle;
 
 namespace Bango::Editor
 {

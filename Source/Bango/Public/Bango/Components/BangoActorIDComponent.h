@@ -1,11 +1,12 @@
 ﻿#pragma once
 
-#include "BangoEditorTooling/BangoDebugDrawServiceBase.h"
+#include "Bango/Debug/BangoDebugDrawServiceBase.h"
+#include "Components/ActorComponent.h"
 
 #include "BangoActorIDComponent.generated.h"
 
 UCLASS(HideCategories=("Navigation", "Tags", "Activation", "AssetUserData"), meta = (BlueprintSpawnableComponent))
-class BANGO_API UBangoActorIDComponent : public UActorComponent, public FBangoDebugDrawServiceBase
+class BANGO_API UBangoActorIDComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -26,9 +27,6 @@ protected:
 	FGuid UnusedGuid;
 	
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, meta = (UIMin = -200, UIMax = 500, Delta = 10))
-	float LabelHeight = 200.0f;
-	
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;
 #endif
@@ -77,11 +75,9 @@ public:
 
 	void OnComponentCreated() override;
 	
-	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const;
 	
-	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
-	
-	float GetLabelHeight() const override { return LabelHeight; }
+	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const;
 	
 #endif
 };

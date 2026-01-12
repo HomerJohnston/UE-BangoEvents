@@ -3,6 +3,7 @@
 #include "Bango/Settings/BangoDevSettings.h"
 
 #include "Bango/Utility/BangoLog.h"
+#include "HAL/IConsoleManager.h"
 
 static TAutoConsoleVariable<bool> CVarBangoShowEventsInGame(
 	TEXT("Bango.ShowEventsInGame"),

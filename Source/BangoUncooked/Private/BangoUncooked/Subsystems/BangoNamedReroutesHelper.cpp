@@ -1,5 +1,6 @@
 ﻿#include "BangoNamedReroutesHelper.h"
 
+#include "Editor.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 

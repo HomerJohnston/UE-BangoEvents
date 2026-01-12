@@ -1,8 +1,12 @@
 ﻿#pragma once
 
 #include "Bango/Core/BangoScript.h"
+#include "Engine/Blueprint.h"
+#include "IO/PackageId.h"
 
 #include "BangoScriptBlueprint.generated.h"
+
+struct FCanLoadMap;
 
 UCLASS()
 class BANGO_API UBangoScriptBlueprint : public UBlueprint
@@ -65,7 +69,9 @@ protected:
 	FGuid DeletedPackagePersistentGuid; // UPackage Guid
 	FPackageId DeletedPackageId; // UPackage ID
 	bool bFileReadOnly; // Whether the original .uasset file was read-only // TODO I may not need this if I just rely on version control to restore a deleted file?
-	
+#endif
+
+#if WITH_EDITOR
 public:
 	const TSoftObjectPtr<AActor> GetActor() const;
 	
@@ -73,5 +79,4 @@ public:
 
 	void SetScriptGuid(FGuid InGuid);
 #endif
-
 };

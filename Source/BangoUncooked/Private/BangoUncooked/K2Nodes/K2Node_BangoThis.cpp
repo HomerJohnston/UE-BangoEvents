@@ -1,8 +1,6 @@
 ﻿#include "BangoUncooked/K2Nodes/K2Node_BangoThis.h"
 
 #include "Bango/Core/BangoScript.h"
-#include "Bango/Core/BangoScriptBlueprint.h"
-#include "Bango/Utility/BangoLog.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 

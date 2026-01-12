@@ -5,7 +5,9 @@ public class BangoEditorTooling : ModuleRules
 {
     public BangoEditorTooling(ReadOnlyTargetRules Target) : base(Target)
     {
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+	    PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
+		
+	    bUseUnity = false;
 
         PublicDependencyModuleNames.AddRange(
             new string[]

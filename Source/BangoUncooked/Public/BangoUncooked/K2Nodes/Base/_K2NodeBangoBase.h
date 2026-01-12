@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "K2Node.h"
 
 #include "_K2NodeBangoBase.generated.h"
 

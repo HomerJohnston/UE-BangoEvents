@@ -1,5 +1,9 @@
 ﻿#include "BangoEditor/Widgets/SBangoTriggerEditorSection.h"
 
+#include "Components/VerticalBox.h"
+#include "Widgets/Layout/SSpacer.h"
+#include "Widgets/Text/STextBlock.h"
+
 void SBangoTriggerEditorSection::Construct(const FArguments& InArgs)
 {
 	ChildSlot

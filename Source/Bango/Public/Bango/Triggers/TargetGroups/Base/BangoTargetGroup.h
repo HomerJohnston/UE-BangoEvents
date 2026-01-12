@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Bango/Triggers/BangoNamedClassBase.h"
-#include "Bango/Utility/BangoLog.h"
+#include "Templates/SubclassOf.h"
+#include "Engine/EngineTypes.h"
 
 #include "BangoTargetGroup.generated.h"
 

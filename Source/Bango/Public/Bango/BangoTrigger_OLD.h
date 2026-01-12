@@ -2,8 +2,11 @@
 
 #pragma once
 
-#include "BangoEditorTooling/BangoDebugTextEntry.h"
 #include "Bango/Core/BangoTriggerSignal.h"
+
+#if WITH_EDITOR
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
+#endif
 
 #include "BangoTrigger_OLD.generated.h"
 

@@ -7,6 +7,8 @@
 #include "BangoEditorTooling/BangoDebugUtility.h"
 #include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
 
 UBangoTrigger_EventTriggered::UBangoTrigger_EventTriggered()
 {

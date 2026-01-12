@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "Bango/Core/BangoScriptContainer.h"
-
-#include "BangoEditorTooling/BangoDebugDrawServiceBase.h"
 #include "InputCoreTypes.h"
+#include "Components/ActorComponent.h"
+#include "Bango/Debug/BangoDebugDrawServiceBase.h"
 
 #include "BangoScriptComponent.generated.h"
 
@@ -21,7 +21,7 @@ enum class EBangoScriptComponent_ThisArg : uint8
 */
 
 UCLASS(meta = (BlueprintSpawnableComponent), HideCategories = ("Navigation","Activation"))
-class BANGO_API UBangoScriptComponent : public UActorComponent, public FBangoDebugDrawServiceBase
+class BANGO_API UBangoScriptComponent : public UActorComponent//, public FBangoDebugDrawServiceBase
 {
 	GENERATED_BODY()
 	
@@ -31,7 +31,7 @@ class BANGO_API UBangoScriptComponent : public UActorComponent, public FBangoDeb
 public:
 	UBangoScriptComponent();
 	
-	void PrintState(FString Msg) const;
+	//void PrintState(FString Msg) const;
 
 	void BeginPlay() override;
 	
@@ -49,8 +49,6 @@ public:
 	// This is only used to spawn script assets for CDO spawned components (actor dragged into world) as well as for duplicating any actors or any instance components
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
-	void PostApplyToComponent() override;
-	
 	void UnsetScript();
 	
 	//void OnRename();
@@ -61,13 +59,9 @@ protected:
 	UPROPERTY(EditAnywhere, DisplayName = "Autoplay")
 	bool bRunOnBeginPlay = false;
 	
-	/** Optional description text for editor usage only */
-	UPROPERTY(EditAnywhere)
-	FString Description;
-	
 	/** The actual script instance. */
-	UPROPERTY(VisibleAnywhere)
-	FBangoScriptContainer Script;
+	UPROPERTY(EditInstanceOnly)
+	FBangoScriptContainer ScriptContainer;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)
@@ -99,13 +93,15 @@ public:
 	
 	void OnScriptFinished(FBangoScriptHandle FinishedHandle);
 	
-	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+	void DebugDraw(FBangoDebugDrawCanvas& Canvas, bool bPIE) const;
 	
-	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const override;
+	void DebugDrawEditor(FBangoDebugDrawCanvas& Canvas) const;
+	
+	void DebugDrawGame(FBangoDebugDrawCanvas& Canvas) const;
+	
+	void PreEditUndo() override;
 
-	virtual void PreEditUndo() override;
-
-	virtual void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
+	void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
 	
 	//UFUNCTION()
 	//void OnClickedBillboard(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);

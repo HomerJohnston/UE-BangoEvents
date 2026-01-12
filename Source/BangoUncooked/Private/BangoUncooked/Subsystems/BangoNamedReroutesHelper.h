@@ -6,6 +6,7 @@
 
 class UK2Node_BangoGotoStart;
 class UK2Node_BangoGotoDestination;
+class UEdGraphPin;
 
 UCLASS()
 class UBangoNamedReroutesHelper : public UEditorSubsystem

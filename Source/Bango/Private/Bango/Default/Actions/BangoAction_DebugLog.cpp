@@ -6,6 +6,7 @@
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEventSignal.h"
 #include "Bango/Core/BangoEventComponent.h"
+#include "Engine/Engine.h"
 
 UBangoAction_DebugLog::UBangoAction_DebugLog()
 {

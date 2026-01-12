@@ -4,8 +4,10 @@
 #include "Bango/Triggers/TargetGroups/Base/BangoTargetGroup.h"
 #include "Bango/Triggers/TargetCollectors/Base/BangoTargetCollector.h"
 #include "BangoEditor/Widgets/SBangoTriggerEditorSection.h"
+#include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Input/SSegmentedControl.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 

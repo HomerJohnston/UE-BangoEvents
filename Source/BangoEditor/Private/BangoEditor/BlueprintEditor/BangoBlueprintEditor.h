@@ -29,6 +29,12 @@ public:
 	
 	void SetWarningText(const FText& InText);
 	
+	void InitBangoBlueprintEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost >& InitToolkitHost, const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode);
+	
+	void AddEditingObject(UObject* Object) override;
+	
+	void SetCurrentMode(FName NewMode) override;
+	
 protected:
 	void PostInitAssetEditor() override;
 	

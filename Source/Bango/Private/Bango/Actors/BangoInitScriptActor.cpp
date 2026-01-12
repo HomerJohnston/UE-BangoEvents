@@ -1,6 +1,8 @@
 ﻿#include "Bango/Actors/BangoInitScriptActor.h"
 
 #include "Bango/Utility/BangoLog.h"
+#include "Engine/Level.h"
+#include "GameFramework/WorldSettings.h"
 
 void ABangoInitScriptActor::BeginPlay()
 {

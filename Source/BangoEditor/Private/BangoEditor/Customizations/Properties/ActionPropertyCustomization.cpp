@@ -7,7 +7,8 @@
 #include "Bango/Utility/BangoLog.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
-#include "Widgets/SPanel.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Input/SComboBox.h"
 
 void FBangoActionPropertyCustomization_ActionSelectorDrawer::Draw(TSharedRef<IPropertyHandle> PropertyRef, IDetailChildrenBuilder& ChildBuilder)
 {

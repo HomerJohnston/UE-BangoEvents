@@ -1,11 +1,12 @@
 ﻿#include "BangoEditor/Commands/BangoEditorActions.h"
 
 #include "BangoEditor/BangoEditorStyle.h"
+#include "Framework/Commands/Commands.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
 FBangoEditorCommands::FBangoEditorCommands()
-	: TCommands<FBangoEditorCommands>
+	: ::TCommands<FBangoEditorCommands>
 	(
 		"Bango",
 		LOCTEXT("BangoEditor", "Bango Editor"),

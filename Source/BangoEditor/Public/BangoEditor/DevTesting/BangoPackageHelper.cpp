@@ -11,6 +11,7 @@
 #include "UObject/MetaData.h"
 #include "GameFramework/Actor.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
+#include "Engine/World.h"
 
 FBangoPackageHelper::FOnObjectPackagingModeChanged FBangoPackageHelper::OnObjectPackagingModeChanged;
 

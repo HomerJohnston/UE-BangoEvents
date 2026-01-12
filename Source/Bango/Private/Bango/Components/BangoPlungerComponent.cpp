@@ -5,6 +5,7 @@
 #include "Bango/Settings/BangoDevSettings.h"
 #include "Bango/Core/BangoEventComponent.h"
 #include "Bango/SceneProxies/BangoPlungerSceneProxy.h"
+#include "Engine/World.h"
 
 UBangoPlungerComponent::UBangoPlungerComponent()
 {

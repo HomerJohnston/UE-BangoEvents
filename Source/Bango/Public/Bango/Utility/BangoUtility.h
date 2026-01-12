@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Bango/Bango.h"
+
+class AActor;
 class UBangoActorIDComponent;
 
 namespace Bango::Utilities

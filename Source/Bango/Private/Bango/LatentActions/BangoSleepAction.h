@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "LatentActions.h"
+#include "Engine/LatentActionManager.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 

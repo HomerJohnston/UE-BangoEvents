@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "GameFramework/Actor.h"
+
 #include "BangoInitScriptActor.generated.h"
 
 /**

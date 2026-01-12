@@ -1,5 +1,6 @@
 ﻿#include "BangoScriptComponentVisualizer.h"
 
+#include "SceneView.h"
 #include "Bango/Components/BangoScriptComponent.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "BangoEditorTooling/BangoColors.h"

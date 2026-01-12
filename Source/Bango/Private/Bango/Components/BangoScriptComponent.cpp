@@ -5,12 +5,17 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
+#include "BangoEditorTooling/BangoDebugDrawCanvas.h"
 #include "Components/BillboardComponent.h"
 #include "Fonts/FontMeasure.h"
 #include "UObject/ICookInfo.h"
 #include "BangoEditorTooling/BangoEditorDelegates.h"
+#include "Engine/Texture2D.h"
+#include "Framework/Application/SlateApplication.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
+
+// ----------------------------------------------
 
 UBangoScriptComponent::UBangoScriptComponent()
 {
@@ -22,10 +27,13 @@ UBangoScriptComponent::UBangoScriptComponent()
 		IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
 	}
 	
-	LabelOffset = -48.0f;
+	// LabelOffset = -48.0f;
 #endif
 }
 
+// ----------------------------------------------
+
+/*
 void UBangoScriptComponent::PrintState(FString Msg) const
 {	
 	uint32 Flags = (uint32)GetOwner()->GetFlags();
@@ -49,6 +57,9 @@ void UBangoScriptComponent::PrintState(FString Msg) const
 	
 	UE_LOG(LogBango, Display, TEXT("%s"), *FString::Format(TEXT("{0}: {1} | {2}"), { Msg, *BitString1, *BitString2 } ));
 }
+*/
+
+// ----------------------------------------------
 
 void UBangoScriptComponent::BeginPlay()
 {
@@ -60,10 +71,19 @@ void UBangoScriptComponent::BeginPlay()
 	}
 }
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 void UBangoScriptComponent::OnRegister()
 {
 	Super::OnRegister();
+	
+	//BangoDebugDraw_Register(this);
+	
+	if (!IsTemplate())
+	{
+		FBangoEditorDelegates::BangoDebugDraw.AddUObject(this, &ThisClass::DebugDraw);
+	}
 	
 #if 0
 	if (!Billboard && GetOwner() && !GetWorld()->IsGameWorld())
@@ -99,14 +119,18 @@ void UBangoScriptComponent::OnRegister()
 }
 #endif
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 void UBangoScriptComponent::OnUnregister()
 {
-	BangoDebugDraw_Unregister(this);
+	FBangoEditorDelegates::BangoDebugDraw.RemoveAll(this);
 
 	Super::OnUnregister();
 }
 #endif
+
+// ----------------------------------------------
 
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentCreated()
@@ -128,21 +152,23 @@ void UBangoScriptComponent::OnComponentCreated()
 	
 	// TODO how do we handle copy-paste? PostEditImport?
 	// If it already has a Guid, it was a duplicate or a copy paste, let PostDuplicate handle it for duplicate
-	if (Script.GetGuid().IsValid())
+	if (ScriptContainer.GetGuid().IsValid())
 	{
-		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, ScriptName);
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &ScriptContainer, ScriptName);
 	}
 	else
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script, ScriptName);
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
 	}
 }
 #endif
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
+	TSoftClassPtr<UBangoScript> ScriptClass = ScriptContainer.GetScriptClass();
 	bool bIsComponentInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
 	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
@@ -172,6 +198,8 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 }
 #endif
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 {
@@ -183,104 +211,42 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 	if (CreationMethod == EComponentCreationMethod::Instance)
 	{
 		// Component was added to an actor in the level; this case is very easy to handle, PostDuplicate is only called on real human-initiated duplications
-		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, GetName());
+		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &ScriptContainer, GetName());
 	}
 	else
 	{
-		// Component is part of a blueprint; requires different handling, UE duplicates everything a million billion times and it's very annoying
+		// Component is part of a blueprint, only run duplication code if it's in a level already
 		if (!GetOwner()->HasAnyFlags(RF_WasLoaded))
 		{
-			//TWeakObjectPtr<UBangoScriptComponent> WeakThis = this;
-		
-			//auto Lambda = FTimerDelegate::CreateLambda([WeakThis] ()
-			//{
-				//if (!WeakThis.IsValid())
-				//{
-				//	return;
-				//}
-			
-				//UBangoScriptComponent* Component = WeakThis.Get();
-			
-				//if (!Bango::Editor::IsComponentInEditedLevel(Component))
-				//{
-				//	return;
-				//}
-			
-				//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
-				FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script, GetName());
-			//});
-	
-			//this->GetWorld()->GetTimerManager().SetTimerForNextTick(Lambda);
+			FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &ScriptContainer, GetName());
 		}
 	}
 }
-
-void UBangoScriptComponent::PostApplyToComponent()
-{
-	Super::PostApplyToComponent();
-	
-	if (CreationMethod == EComponentCreationMethod::Instance)
-	{
-		// If it already has a Guid, it must have been a copy-paste.
-		if (Script.GetGuid().IsValid())
-		{
-			//FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &Script);
-		}
-		else
-		{
-			//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &Script);
-		}
-	}
-	else
-	{
-	}
-}
-
 #endif
+
+// ----------------------------------------------
 
 #if WITH_EDITOR
 void UBangoScriptComponent::UnsetScript()
 {
 	Modify();
-	Script.Unset();
+	ScriptContainer.Unset();
 	
 	if (!MarkPackageDirty())
 	{
 		UE_LOG(LogBlueprint, Error, TEXT("Could not mark the actor package dirty?"));
 	}
 }
-
-/*
-void UBangoScriptComponent::OnRename()
-{
-	if (HasAnyFlags(RF_MirroredGarbage))
-	{
-		return;
-	}
-	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(Script.GetScriptClass());
-
-	if (Blueprint)
-	{
-		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-
-		TArray<FAssetRenameData> Renames;
-		Renames.Emplace(Blueprint, FPackageName::GetLongPackagePath(Blueprint->GetPackage()->GetPathName()), GetName());
-
-		AssetToolsModule.Get().RenameAssets(Renames);
-		
-		//Blueprint->UpdateAutoName(this);
-	}
-}
-*/
 #endif
+
+// ----------------------------------------------
 
 void UBangoScriptComponent::Run()
 {
 #if WITH_EDITOR
 	RunningHandle = 
 #endif
-	UBangoScriptSubsystem::EnqueueScript(Script.GetScriptClass(), GetOwner());
+	UBangoScriptSubsystem::EnqueueScript(ScriptContainer.GetScriptClass(), GetOwner());
 	
 #if WITH_EDITOR
 	if (RunningHandle.IsRunning())
@@ -291,17 +257,21 @@ void UBangoScriptComponent::Run()
 #endif
 }
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 FGuid UBangoScriptComponent::GetScriptGuid() const
 {
-	return Script.GetGuid();
+	return ScriptContainer.GetGuid();
 }
 #endif
+
+// ----------------------------------------------
 
 #if WITH_EDITOR
 UBangoScriptBlueprint* UBangoScriptComponent::GetScriptBlueprint(bool bForceLoad) const
 {
-	TSoftClassPtr<UBangoScript> ScriptClass = Script.GetScriptClass();
+	TSoftClassPtr<UBangoScript> ScriptClass = ScriptContainer.GetScriptClass();
 	
 	if (ScriptClass.IsNull())
 	{
@@ -324,6 +294,8 @@ UBangoScriptBlueprint* UBangoScriptComponent::GetScriptBlueprint(bool bForceLoad
 }
 #endif
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
 void UBangoScriptComponent::SetScriptBlueprint(UBangoScriptBlueprint* Blueprint)
 {
@@ -336,9 +308,13 @@ void UBangoScriptComponent::SetScriptBlueprint(UBangoScriptBlueprint* Blueprint)
 	Modify();
 	(void)MarkPackageDirty();
 	
-	Script.SetScriptClass(Cast<UClass>(Blueprint->GeneratedClass));
+	ScriptContainer.SetScriptClass(Cast<UClass>(Blueprint->GeneratedClass));
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptComponent::OnScriptFinished(FBangoScriptHandle FinishedHandle)
 {
 	if (FinishedHandle != RunningHandle)
@@ -350,11 +326,43 @@ void UBangoScriptComponent::OnScriptFinished(FBangoScriptHandle FinishedHandle)
 }
 #endif
 
+// ----------------------------------------------
+
 #if WITH_EDITOR
-void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
+void UBangoScriptComponent::DebugDraw(FBangoDebugDrawCanvas& Canvas, bool bPIE) const
+{
+	if (bPIE)
+	{
+		DebugDrawGame(Canvas);
+	}
+	else
+	{
+		DebugDrawEditor(Canvas);
+	}
+}
+#endif
+
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptComponent::DebugDrawEditor(FBangoDebugDrawCanvas& Canvas) const
 {
 	FLinearColor TagColor = Bango::Colors::White;
 
+	float Alpha = Canvas.GetAlpha(GetOwner());
+	
+	if (Alpha <= 0.0f)
+	{
+		return;
+	}
+	
+	FVector ScreenLocation = Canvas.GetNextScreenPos(GetOwner());
+	
+	if (ScreenLocation.Z <= 0.0f)
+	{
+		return;
+	}
+	
 	if (GetWorld()->IsGameWorld())
 	{
 		if (RunningHandle.IsExpired())
@@ -378,13 +386,9 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		}
 	}
 	
-	FText LabelText;
+	FText LabelText = FText::FromString(ScriptContainer.GetDescription());
 	
-	if (!Description.IsEmpty())
-	{
-		LabelText = FText::FromString(Description);
-	}
-	else
+	if (LabelText.IsEmpty())
 	{
 		LabelText = FText::FromString(GetName());
 	}
@@ -452,28 +456,42 @@ void UBangoScriptComponent::DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocat
 		float X = ScreenLocation.X - 0.5f * TotalWidth + 0.5f * IconSize + 0.5f * IconPadding;
 		float Y = ScreenLocation.Y;
 		
-		FCanvasTextItem Text(FVector2D(X + 0.5f * IconSize + IconPadding, Y), LabelText, Font, Bango::Colors::White);
+		FCanvasTextItem Text(FVector2D(X + 0.5f * IconSize + IconPadding, Y), LabelText, Font, Alpha * Bango::Colors::White);
 		Text.bCentreY = true;
 		Canvas->DrawItem(Text);
 	}
 }
+#endif
 
-void UBangoScriptComponent::DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptComponent::DebugDrawGame(FBangoDebugDrawCanvas& Canvas) const
 {
-	DebugDrawEditor(Canvas, ScreenLocation, Alpha);
+	DebugDrawEditor(Canvas);
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptComponent::PreEditUndo()
 {
 	Super::PreEditUndo();
 	
-	__UNDO_Script = Script;
+	__UNDO_Script = ScriptContainer;
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptComponent::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
 {
 	Super::Super::PostEditUndo(TransactionAnnotation);
 }
 #endif
+
+// ----------------------------------------------
 
 #undef LOCTEXT_NAMESPACE

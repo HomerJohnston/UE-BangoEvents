@@ -1,10 +1,12 @@
 ﻿#include "Bango/Core/BangoEvent.h"
 
+#include "TimerManager.h"
 #include "BangoEditorTooling/BangoColors.h"
 #include "Bango/BangoAction.h"
 #include "Bango/Core/BangoEventComponent.h"
 #include "Bango/Core/BangoTriggerSignal.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Engine/World.h"
 
 #if WITH_EDITORONLY_DATA
 // TODO FText

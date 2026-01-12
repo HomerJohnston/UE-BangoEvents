@@ -3,6 +3,7 @@
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoEventComponent.h"
+#include "GameFramework/Actor.h"
 
 UBangoAction_InstigateEvent::UBangoAction_InstigateEvent()
 {

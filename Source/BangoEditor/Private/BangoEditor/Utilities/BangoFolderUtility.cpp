@@ -1,13 +1,14 @@
 ﻿#include "BangoFolderUtility.h"
 
-#include "AssetToolsModule.h"
 #include "BangoEditorUtility.h"
 #include "IAssetTools.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Bango/Core/BangoScript.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformFileManager.h"
+#include "UObject/Package.h"
 
 void Bango::Editor::DeleteEmptyLevelScriptFolders()
 {

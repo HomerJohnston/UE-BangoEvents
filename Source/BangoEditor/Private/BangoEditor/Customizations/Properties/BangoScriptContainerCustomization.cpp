@@ -11,6 +11,9 @@
 #include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditor/BlueprintEditor/BangoBlueprintEditor.h"
 #include "BangoEditor/Widgets/SBangoGraphEditor.h"
+#include "EdGraph/EdGraph.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Widgets/Input/SEditableTextBox.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 
@@ -77,7 +80,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 {
 	if (PropertyHandle->GetNumOuterObjects() != 1)
 	{
-		HeaderRow.WholeRowContent()
+		HeaderRow.NameContent()
 		[
 			SNew(STextBlock)
 			.Text(LOCTEXT("MultipleScriptsEdited_Warning", "    <Multiple Scripts>"))
@@ -87,10 +90,8 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 		return;
 	}
 	
-	//ScriptBlueprintProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptBlueprint));
 	ScriptContainerProperty = PropertyHandle;
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
-	GuidProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, Guid));
 		
 	CurrentGraph = GetPrimaryEventGraph();
 	
@@ -125,42 +126,9 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 		SetProposedScriptName(FText::FromString(Blueprint->GetName()));
 	}
 	
+	// We kill the graph widgets immediately to avoid garbage collection and file access issues
 	FEditorDelegates::OnMapLoad.AddSP(this, &FBangoScriptContainerCustomization::OnMapLoad);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddSP(this, &FBangoScriptContainerCustomization::OnScriptContainerDestroyed);
-	
-	/*
-	HeaderRow.NameContent()
-	[
-		SNew(STextBlock)
-		.Text(LOCTEXT("BangoScriptHolder_ScriptPropertyLabel", "Bango Script"))
-		.Font(FAppStyle::GetFontStyle("PropertyWindow.NormalFont"))
-	];
-	
-	HeaderRow.ValueContent()
-	[
-		SNew(SWidgetSwitcher)
-		.WidgetIndex(this, &FBangoScriptContainerCustomization::WidgetIndex_CreateDeleteScriptButtons)
-		+ SWidgetSwitcher::Slot()
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
-			.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
-		]
-		+ SWidgetSwitcher::Slot()
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("BangoScriptHolder_DeleteScriptButtonText", "Delete"))
-				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteScript)
-			]
-		]
-	];
-	*/
-	
 }
 
 // ----------------------------------------------
@@ -186,56 +154,18 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 	
 	UObject* Outer = GetOuter();
 	
-	// TODO handle selection of multiple things
-	if (Outer && Outer->IsA(UBangoScriptComponent::StaticClass()))
+	uint32 NumChildren;
+	PropertyHandle->GetNumChildren(NumChildren);
+	
+	for (uint32 ChildIndex = 0; ChildIndex <  NumChildren; ++ChildIndex)
 	{
-		//return;
+		TSharedPtr<IPropertyHandle> ChildHandle = PropertyHandle->GetChildHandle(ChildIndex);
+		
+		if (ChildHandle->IsValidHandle() && ChildHandle->IsEditable())
+		{
+			ChildBuilder.AddProperty(ChildHandle.ToSharedRef());
+		}
 	}
-	
-	ChildBuilder.AddCustomRow(INVTEXT("ASDF"))
-	.NameContent()
-	[
-		SNew(STextBlock)
-		.Text(LOCTEXT("BangoScriptNameOverride_Label", "Name"))
-		.TextStyle(FAppStyle::Get(), "SmallText")
-	]
-	.ValueContent()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		[
-			SNew(SEditableTextBox)
-			.HintText(LOCTEXT("BangoScriptNameOverride_HintText", "Optional"))
-			.SelectAllTextWhenFocused(true)
-			.ForegroundColor(this, &FBangoScriptContainerCustomization::ForegroundColor_ScriptNameEditableText)
-			.FocusedForegroundColor(this, &FBangoScriptContainerCustomization::FocusedForegroundColor_ScriptNameEditableText)
-			.MinDesiredWidth(160)
-			.Text_Lambda( [this] () { return ScriptNameText; })
-			.OnTextChanged(this, &FBangoScriptContainerCustomization::OnTextChanged_ScriptNameEditableText)
-			//.ColorAndOpacity(this, &FBangoScriptContainerCustomization::ColorAndOpacity_ScriptNameText)
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.Padding(4, 0, 0, 0)
-		[
-			SNew(SButton)
-			.IsEnabled(this, &FBangoScriptContainerCustomization::IsEnabled_RenameScriptButton)
-			.VAlign(VAlign_Center)
-			.Text(LOCTEXT("BangoScriptNameOverride_RenameButtonLabel", "Rename"))
-			.TextStyle(FAppStyle::Get(), "SmallText")
-			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_RenameScript)
-		]
-	];
-	
-	ChildBuilder.AddCustomRow(INVTEXT("ASDF"))
-	.NameContent()
-	[
-		GuidProperty->CreatePropertyNameWidget()
-	]
-	.ValueContent()
-	[
-		GuidProperty->CreatePropertyValueWidgetWithCustomization(nullptr)
-	];
 	
 	return;
 	/*
@@ -269,7 +199,9 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 	
 	FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(ScriptContainerPtr);
 	
-	//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(GetOuter(), ScriptContainer);
+	UObject* Outer = GetOuter();
+	
+	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Outer, ScriptContainer, *Outer->GetFName().ToString());
 	
 	/*
 	ScriptClassProperty->GetOuterPackages(Packages);
@@ -325,9 +257,12 @@ FReply FBangoScriptContainerCustomization::OnClicked_EditScript() const
 
 	if (Subsystem)
 	{
-		UBlueprint* ScriptBlueprint = UBlueprint::GetBlueprintFromClass(GetScriptClass());
+		UBlueprint* ScriptBlueprint = GetBlueprint();
 		
-		Subsystem->OpenEditorForAsset(ScriptBlueprint);
+		if (ScriptBlueprint)
+		{
+			Subsystem->OpenEditorForAsset(ScriptBlueprint);
+		}
 	}
 	
 	return FReply::Handled();
@@ -337,7 +272,7 @@ FReply FBangoScriptContainerCustomization::OnClicked_EditScript() const
 
 FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 {
-//#if 0
+#if 1
 	TSharedRef<FBangoBlueprintEditor> NewBlueprintEditor(new FBangoBlueprintEditor());
 
 	const bool bShouldOpenInDefaultsMode = false;
@@ -348,25 +283,37 @@ FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 	//NewBlueprintEditor->InitWidgetBlueprintEditor(EToolkitMode::Standalone, nullptr, Blueprints, bShouldOpenInDefaultsMode);
 	
 	return FReply::Handled();
-//#endif 
+#endif 
 
 #if 0
-	//return OnClicked_EditScript();
-	
 	FViewport* Viewport = GEditor->GetActiveViewport();
 	FViewportClient* ViewportClient = Viewport->GetClient();
 	FEditorViewportClient* EditorViewportClient = static_cast<FEditorViewportClient*>(ViewportClient);
 	FDeprecateSlateVector2D VPWindowPos = EditorViewportClient->GetEditorViewportWidget().Get()->GetCachedGeometry().GetAbsolutePosition();
 
-	FVector2D ScreenPos(200, 200);
+	TSharedPtr<SWindow> UEWindow = FSlateApplication::Get().GetActiveTopLevelWindow();
+	
+	FVector2D WindowPos(0);
+	FVector2D WindowSize(400);
+	
+	if (UEWindow.IsValid())
+	{
+		FVector2D MainWindowSize = UEWindow->GetClientSizeInScreen();
+		FVector2D MainWindowPos = UEWindow->GetPositionInScreen();
 
-	TSharedRef<SWidget> Popout = GetPopoutGraphEditor();
+		float CornerInset = FMath::RoundToFloat( 0.1f * MainWindowSize.Y );
+
+		WindowPos = FVector2D(MainWindowPos.X + CornerInset, MainWindowPos.Y + CornerInset);
+		WindowSize = FVector2D(MainWindowSize.X - 2.0f * CornerInset, MainWindowSize.Y - 2.0f * CornerInset);
+	}
+
+	TSharedRef<SWidget> Popout = GetPopoutGraphEditor(WindowSize);
 	
 	FSlateApplication::Get().PushMenu(
 		FSlateApplication::Get().GetUserFocusedWidget(0).ToSharedRef(),
 		FWidgetPath(),
 		Popout,
-		FDeprecateSlateVector2D(ScreenPos.X, ScreenPos.Y),
+		FDeprecateSlateVector2D(WindowPos.X, WindowPos.Y),
 		FPopupTransitionEffect(FPopupTransitionEffect::TypeInPopup),
 		true);
 	
@@ -487,69 +434,81 @@ bool FBangoScriptContainerCustomization::IsEnabled_RenameScriptButton() const
 
 // ----------------------------------------------
 
-TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor() const
+TSharedRef<SWidget> FBangoScriptContainerCustomization::GetPopoutGraphEditor(FVector2D WindowSize) const
 {
 	SGraphEditor::FGraphEditorEvents Events;
 	
-	TSharedRef<FBangoBlueprintEditor> BlueprintEditor = MakeShared<FBangoBlueprintEditor>();
-	//BlueprintEditor->InitBlueprintEditor(EToolkitMode::Standalone, nullptr, {GetBlueprint()}, true);
-	BlueprintEditor->SetupGraphEditorEvents_Impl(GetBlueprint(), GetPrimaryEventGraph(), Events);
-	
-	//FBlueprintEditor_Private::Call_SetupGraphEditorEvents(GetPrimaryEventGraph(), lpr, Events);
-	
-	
-	//UE_DEFINE_PRIVATE_MEMBER_PTR(void (UEdGraph*, SGraphEditor::FGraphEditorEvents&), Test, FBlueprintEditor, SetupGraphEditorEvents);
-	//Test();
-	
 	const bool bShouldOpenInDefaultsMode = false;
-	TArray<UBlueprint*> Blueprints;
-	Blueprints.Add(GetBlueprint());
-
-	//NewBlueprintEditor->InitWidgetBlueprintEditor(EToolkitMode::Standalone, nullptr, Blueprints, bShouldOpenInDefaultsMode);
+	TSharedRef<FBangoBlueprintEditor> BlueprintEditor = MakeShared<FBangoBlueprintEditor>();
 	
-	FVector2D ParentWindowSize = FSlateApplication::Get().GetActiveTopLevelWindow()->GetSizeInScreen();
-	
-	const float CornerInset = 200.0f;
-	
-	ParentWindowSize.X -= 2.0f * CornerInset;
-	ParentWindowSize.Y -= 2.0f * CornerInset;
+	// Not working. 
+	BlueprintEditor->InitBlueprintEditor(EToolkitMode::Standalone, nullptr, { GetBlueprint() }, bShouldOpenInDefaultsMode);
+	// BlueprintEditor->SetupGraphEditorEvents_Impl(GetBlueprint(), GetPrimaryEventGraph(), Events);
 	
 	return SNew(SBorder)
-		.Padding(20)
+	.Padding(20)
+	[
+		SNew(SBox)
+		.WidthOverride(WindowSize.X)
+		.HeightOverride(WindowSize.Y)
 		[
-			SNew(SBox)
-			.WidthOverride(ParentWindowSize.X)
-			.HeightOverride(ParentWindowSize.Y)
+			SNew(SOverlay)
+			+ SOverlay::Slot()
 			[
-				SNew(SOverlay)
-				+ SOverlay::Slot()
-				[
-					SNew(SBangoGraphEditor)
-					.BlueprintEditor(BlueprintEditor)
-					.GraphToEdit(GetPrimaryEventGraph())
-					.IsEditable(true)
-					.GraphEvents(Events)
-					.ShowGraphStateOverlay(true)
-				]
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Right)
-				.VAlign(VAlign_Top)
-				.Padding(20)
-				[
-					SNew(SButton)
-					.OnClicked_Lambda([] ()
+				SNew(SBangoGraphEditor)
+				.BlueprintEditor(BlueprintEditor)
+				.GraphToEdit(GetPrimaryEventGraph())
+				.IsEditable(false) // (true) // Not working
+				.GraphEvents(Events)
+				.ShowGraphStateOverlay(true)
+			]
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Top)
+			.Padding(20)
+			[
+				SNew(SButton)
+				.OnClicked_Lambda([this] ()
+				{
+					UAssetEditorSubsystem* Subsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+
+					if (Subsystem)
 					{
-						FSlateApplication::Get().ClearAllUserFocus();
-						return FReply::Handled();
-					})
-					[
-						SNew(SImage)
-						.DesiredSizeOverride(FVector2D(24, 24))
-						.Image(FAppStyle::GetBrush("Icons.X"))
-					]
+						UBlueprint* ScriptBlueprint = GetBlueprint();
+						
+						if (ScriptBlueprint)
+						{
+							Subsystem->OpenEditorForAsset(ScriptBlueprint);
+						}
+					}
+	
+					return FReply::Handled();
+				})
+				[
+					SNew(SImage)
+					.DesiredSizeOverride(FVector2D(24, 24))
+					.Image(FAppStyle::GetBrush("Sequencer.AllowAllEdits")) // TODO custom icon
 				]
 			]
-		];
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Top)
+			.Padding(20)
+			[
+				SNew(SButton)
+				.OnClicked_Lambda([] ()
+				{
+					FSlateApplication::Get().ClearAllUserFocus();
+					return FReply::Handled();
+				})
+				[
+					SNew(SImage)
+					.DesiredSizeOverride(FVector2D(24, 24))
+					.Image(FAppStyle::GetBrush("Icons.X"))
+				]
+			]
+		]
+	];
 }
 
 void FBangoScriptContainerCustomization::OnPostScriptCreatedOrRenamed()

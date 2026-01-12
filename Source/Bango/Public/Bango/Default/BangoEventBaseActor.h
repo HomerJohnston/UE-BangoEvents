@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "GameFramework/Actor.h"
+
 #include "BangoEventBaseActor.generated.h"
 
 class UBangoEventComponent;

@@ -12,6 +12,8 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "Styling/SlateIconFinder.h"
+#include "Widgets/SToolTip.h"
+#include "Widgets/Images/SImage.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 
@@ -228,7 +230,7 @@ void SGraphNode_BangoFindActor::UpdateCompactNode()
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset();
 
- 	TSharedPtr< SToolTip > NodeToolTip = SNew( SToolTip );
+ 	TSharedPtr<SToolTip> NodeToolTip = SNew( SToolTip );
 	if (!GraphNode->GetTooltipText().IsEmpty())
 	{
 		NodeToolTip = IDocumentation::Get()->CreateToolTip( TAttribute< FText >( this, &SGraphNode::GetNodeTooltip ), NULL, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName() );

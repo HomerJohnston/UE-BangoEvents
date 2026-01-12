@@ -1,5 +1,6 @@
 ﻿#include "SGraphNode_BangoGotoDestination.h"
 
+#include "Editor.h"
 #include "IDocumentation.h"
 #include "SCommentBubble.h"
 #include "SGraphPanel.h"
@@ -9,7 +10,11 @@
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoDestination.h"
 #include "Engine/Font.h"
 #include "Fonts/FontMeasure.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 

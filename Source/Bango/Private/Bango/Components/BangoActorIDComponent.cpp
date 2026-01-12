@@ -1,13 +1,18 @@
 ﻿#include "Bango/Components/BangoActorIDComponent.h"
 
 #include "CanvasItem.h"
+#include "Editor.h"
+#include "TimerManager.h"
 #include "BangoEditorTooling/BangoDebugUtility.h"
 #include "Bango/Subsystem/BangoActorIDSubsystem.h"
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Engine/Canvas.h"
+#include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
 #include "Fonts/FontMeasure.h"
+#include "Framework/Application/SlateApplication.h"
 
 UBangoActorIDComponent::UBangoActorIDComponent()
 {

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "IDetailCustomization.h"
+#include "Input/Reply.h"
 
+class IPropertyHandle;
 enum class EBangoTriggerSignalType : uint8;
 class UBangoEventComponent;
 

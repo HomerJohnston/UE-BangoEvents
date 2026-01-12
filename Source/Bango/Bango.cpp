@@ -1,6 +1,7 @@
 // Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #include "Bango.h"
+#include "Modules/ModuleManager.h"
 
 #define LOCTEXT_NAMESPACE "FBangoModule"
 

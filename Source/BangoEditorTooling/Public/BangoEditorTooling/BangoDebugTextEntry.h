@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "Containers/UnrealString.h"
+#include "Math/Color.h"
+
 #if WITH_EDITOR
 struct FBangoDebugTextEntry
 {

@@ -4,7 +4,7 @@ public class BangoUncooked : ModuleRules
 {
     public BangoUncooked(ReadOnlyTargetRules Target) : base(Target)
     {
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+	    PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
 
         bUseUnity = false;
         

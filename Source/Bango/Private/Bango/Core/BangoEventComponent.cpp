@@ -1,9 +1,8 @@
 ﻿#include "Bango/Core/BangoEventComponent.h"
 
 #include "CanvasItem.h"
-#include "BangoEditorTooling/BangoDebugTextEntry.h"
+#include "SceneView.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Components/BangoPlungerComponent.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Debug/DebugDrawService.h"
@@ -12,8 +11,12 @@
 #include "Bango/BangoAction.h"
 #include "Bango/Core/BangoEvent.h"
 #include "Bango/Core/BangoEvent_Bang.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
 
 #if WITH_EDITOR
+#include "BangoEditorTooling/BangoDebugTextEntry.h"
+#include "BangoEditorTooling/BangoColors.h"
 #include "Editor.h"
 #endif
 

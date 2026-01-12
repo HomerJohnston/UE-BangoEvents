@@ -8,6 +8,7 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoThis.h"
 #include "Styling/SlateIconFinder.h"
+#include "Widgets/Images/SImage.h"
 
 #define LOCTEXT_NAMESPACE "Bango"
 

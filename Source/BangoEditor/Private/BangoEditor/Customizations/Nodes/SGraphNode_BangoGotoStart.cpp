@@ -11,7 +11,10 @@
 #include "BangoUncooked/K2Nodes/K2Node_BangoGotoStart.h"
 #include "Engine/Font.h"
 #include "Fonts/FontMeasure.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/SToolTip.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 

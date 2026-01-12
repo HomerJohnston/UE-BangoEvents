@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "UObject/UObjectIterator.h"
 
 #include "BangoNamedClassBase.generated.h"
 

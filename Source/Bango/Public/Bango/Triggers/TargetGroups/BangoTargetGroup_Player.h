@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Bango/Triggers/TargetGroups/Base/BangoTargetGroup.h"
+#include "GameFramework/Pawn.h"
 
 #include "BangoTargetGroup_Player.generated.h"
 

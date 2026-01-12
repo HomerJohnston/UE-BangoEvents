@@ -3,6 +3,7 @@
 #include "ActionTriggerPropertyCustomizationBase.h"
 #include "IPropertyTypeCustomization.h"
 
+class STextBlock;
 class IDetailGroup;
 
 class FBangoActionPropertyCustomization_ActionSelectorDrawer : public FBangoPropertyDrawer

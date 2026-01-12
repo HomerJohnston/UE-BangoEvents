@@ -9,6 +9,7 @@
 
 #include "AssetToolsModule.h"
 #include "AssetTypeCategories.h"
+#include "Editor.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
 

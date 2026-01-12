@@ -1,5 +1,7 @@
 ﻿#include "Bango/Default/InstigatorFilters/BangoInstigatorFilter_ByClasses.h"
 
+#include "Templates/SubclassOf.h"
+
 bool UBangoInstigatorFilter_ByClasses::IsValidInstigator_Implementation(UObject* Instigator)
 {
 	bool bAllow = bInvertBehavior;

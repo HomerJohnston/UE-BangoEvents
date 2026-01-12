@@ -1,18 +1,8 @@
 ﻿#include "BangoEditorTooling/BangoHelpers.h"
 
+#include "Editor.h"
 #include "Components/ActorComponent.h"
-#include "UObject/Package.h"
 #include "BangoEditorTooling/BangoEditorDelegates.h"
-#include "BangoEditorTooling/BangoEditorLog.h"
-
-#if WITH_EDITOR
-TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> FBangoEditorDelegates::OnScriptContainerCreated;
-TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> FBangoEditorDelegates::OnScriptContainerDuplicated;
-TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> FBangoEditorDelegates::OnScriptContainerDestroyed;
-TMulticastDelegate<void(FGuid ScriptID, UBangoScriptBlueprint*& FoundBlueprint)> FBangoEditorDelegates::OnBangoActorComponentUndoDelete;
-TMulticastDelegate<void(AActor* Actor)> FBangoEditorDelegates::RequestNewID;
-TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDelegates::OnScriptComponentClicked;
-#endif
 
 #if WITH_EDITOR
 bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component, EBangoAllowInvalid AllowInvalid)

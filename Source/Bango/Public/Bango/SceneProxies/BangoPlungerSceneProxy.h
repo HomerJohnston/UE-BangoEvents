@@ -5,7 +5,9 @@
 #include "DynamicMeshBuilder.h"
 #include "PrimitiveSceneProxy.h"
 #include "LocalVertexFactory.h"
+#include "StaticMeshResources.h"
 
+struct FStaticMeshVertexBuffers;
 struct FBangoEventStateFlag;
 struct FBangoPlungerDynamicData;
 class UBangoPlungerComponent;

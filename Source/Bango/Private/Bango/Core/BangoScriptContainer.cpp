@@ -1,8 +1,10 @@
 ﻿#include "Bango/Core/BangoScriptContainer.h"
 
+#include "Editor.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Engine/AssetManager.h"
+#include "Engine/Engine.h"
 
 /*
 FBangoScriptHandle FBangoScriptContainer::Run(UObject* Runner, bool bImmediate)

@@ -3,6 +3,8 @@
 #pragma once
 
 #include "BangoEventSignal.h"
+#include "ShowFlags.h"
+#include "Components/SceneComponent.h"
 #include "BangoEventComponent.generated.h"
 
 class UBangoPlungerComponent;
@@ -13,6 +15,7 @@ class UBangoAction;
 struct FBangoSignal;
 class FCanvasTextItem;
 struct FBangoDebugTextEntry;
+class UCanvas;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBangoEventTriggered, UBangoEventComponent*, Eventcomponent, EBangoEventSignalType, Signal, UObject*, Instigator);
 

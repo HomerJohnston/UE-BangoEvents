@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "EditorSubsystem.h"
 #include "EditorValidatorBase.h"
 
 #include "BangoScriptValidator.generated.h"

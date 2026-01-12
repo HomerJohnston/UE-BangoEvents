@@ -1,5 +1,11 @@
 ﻿#pragma once
 
+#include "CoreTypes.h"
+#include "Math/MathFwd.h"
+#include "Containers/Map.h"
+
+class AActor;
+class UCanvas;
 class UActorComponent;
 
 enum class EBangoAllowInvalid : uint8

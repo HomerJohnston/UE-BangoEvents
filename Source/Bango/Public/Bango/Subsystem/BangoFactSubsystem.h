@@ -3,6 +3,7 @@
 #include "StructUtils/InstancedStruct.h"
 #include "StructUtils/PropertyBag.h"
 #include "Bango/Facts/BangoFactBase.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 
 #include "BangoFactSubsystem.generated.h"
 

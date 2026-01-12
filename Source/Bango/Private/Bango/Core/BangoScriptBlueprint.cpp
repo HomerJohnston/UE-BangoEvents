@@ -1,20 +1,22 @@
 ﻿#include "Bango/Core/BangoScriptBlueprint.h"
 
+#include "Editor.h"
 #include "Bango/Components/BangoScriptComponent.h"
 #include "BangoEditorTooling/BangoEditorDelegates.h"
 #include "Bango/Utility/BangoLog.h"
+#include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BangoScriptBlueprint)
 
 // ----------------------------------------------
 
+#if WITH_EDITOR
 UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
-#if WITH_EDITORONLY_DATA
 	bForceFullEditor = true;
-#endif
 }
+#endif
 
 // ----------------------------------------------
 
@@ -23,20 +25,31 @@ const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 {
 	return Actor;
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 const FGuid& UBangoScriptBlueprint::GetScriptGuid()
 {
 	check(ScriptGuid.IsValid()); 
 	return ScriptGuid;
 }
+#endif
 
+// ----------------------------------------------
+
+#if WITH_EDITOR
 void UBangoScriptBlueprint::SetScriptGuid(FGuid InGuid)
 {
 	check(!ScriptGuid.IsValid()); 
 	ScriptGuid = InGuid;
 }
+#endif
 
+// ----------------------------------------------
 
+#if WITH_EDITOR
 void UBangoScriptBlueprint::SoftDelete()
 {
 	/*

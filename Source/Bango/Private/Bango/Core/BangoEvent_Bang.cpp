@@ -4,6 +4,7 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "Bango/Utility/BangoLog.h"
 #include "Bango/Core/BangoTriggerSignal.h"
+#include "Engine/World.h"
 
 bool UBangoEvent_Bang::GetIsExpired()
 {

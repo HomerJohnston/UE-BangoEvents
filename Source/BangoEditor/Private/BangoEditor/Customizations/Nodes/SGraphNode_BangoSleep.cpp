@@ -2,6 +2,8 @@
 
 #include "BangoKismetNodeInfoContext.h"
 #include "BlueprintEditorSettings.h"
+#include "EdGraphSchema_K2.h"
+#include "Editor.h"
 #include "GraphEditorSettings.h"
 #include "IDocumentation.h"
 #include "K2Node_TemporaryVariable.h"
@@ -9,7 +11,6 @@
 #include "SGraphPanel.h"
 #include "SGraphPin.h"
 #include "TutorialMetaData.h"
-#include "Bango/Core/BangoScript.h"
 #include "Bango/Private/Bango/LatentActions/BangoSleepAction.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoSleep.h"
@@ -17,6 +18,9 @@
 #include "KismetNodes/KismetNodeInfoContext.h"
 #include "Widgets/Notifications/SProgressBar.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/SToolTip.h"
+#include "UObject/Class.h"
+#include "Widgets/Layout/SSpacer.h"
 
 #define LOCTEXT_NAMESPACE "BangoEditor"
 

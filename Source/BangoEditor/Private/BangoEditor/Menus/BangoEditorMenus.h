@@ -1,5 +1,17 @@
 ﻿#pragma once
 
+#include "Templates/SharedPointer.h"
+#include "UObject/WeakObjectPtrTemplates.h"
+
+namespace ETextCommit
+{
+	enum Type : int;
+}
+
+class SEditableTextBox;
+class SWidget;
+class SWindow;
+class AActor;
 class UBangoActorIDComponent;
 
 struct FBangoEditorMenus

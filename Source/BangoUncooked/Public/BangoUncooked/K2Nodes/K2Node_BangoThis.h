@@ -2,6 +2,7 @@
 
 #include "BangoUncooked/K2Nodes/Base/_K2NodeBangoBase.h"
 #include "BangoUncooked/NodeBuilder/BangoNodeBuilder.h"
+#include "TickableEditorObject.h"
 
 #include "K2Node_BangoThis.generated.h"
 

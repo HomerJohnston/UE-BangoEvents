@@ -2,10 +2,13 @@
 
 #include "EdGraphSchema_K2_Actions.h"
 #include "K2Node_Literal.h"
+#include "SBlueprintEditorToolbar.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+#include "Kismet2/DebuggerCommands.h"
 #include "WorldPartition/ActorDescContainerInstance.h"
 #include "WorldPartition/WorldPartition.h"
 
@@ -20,20 +23,18 @@ void FBangoBlueprintEditor::SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEdit
 
 void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
-	AddEditingObject(Blueprint);
-	
-	//SetupGraphEditorEvents(InGraph, InEvents);
+	SetupGraphEditorEvents(InGraph, InEvents);
 		
-	//InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP( this, &FBlueprintEditor::OnSelectedNodesChanged );
-	//InEvents.OnDropActors = SGraphEditor::FOnDropActors::CreateSP( this, &FBlueprintEditor::OnGraphEditorDropActor );
-	//InEvents.OnDropStreamingLevels = SGraphEditor::FOnDropStreamingLevels::CreateSP( this, &FBlueprintEditor::OnGraphEditorDropStreamingLevel );
-	//InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FBlueprintEditor::OnNodeDoubleClicked);
-	//InEvents.OnVerifyTextCommit = FOnNodeVerifyTextCommit::CreateSP(this, &FBlueprintEditor::OnNodeVerifyTitleCommit);
-	//InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FBlueprintEditor::OnNodeTitleCommitted);
-	//InEvents.OnSpawnNodeByShortcutAtLocation = SGraphEditor::FOnSpawnNodeByShortcutAtLocation::CreateSP(this, &FBlueprintEditor::OnSpawnGraphNodeByShortcut, InGraph);
-	//InEvents.OnNodeSpawnedByKeymap = SGraphEditor::FOnNodeSpawnedByKeymap::CreateSP(this, &FBlueprintEditor::OnNodeSpawnedByKeymap );
-	//InEvents.OnDisallowedPinConnection = SGraphEditor::FOnDisallowedPinConnection::CreateSP(this, &FBlueprintEditor::OnDisallowedPinConnection);
-	//InEvents.OnDoubleClicked = SGraphEditor::FOnDoubleClicked::CreateSP(this, &FBlueprintEditor::NavigateToParentGraphByDoubleClick);
+	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP( this, &FBangoBlueprintEditor::OnSelectedNodesChanged );
+	InEvents.OnDropActors = SGraphEditor::FOnDropActors::CreateSP( this, &FBangoBlueprintEditor::OnGraphEditorDropActor );
+	InEvents.OnDropStreamingLevels = SGraphEditor::FOnDropStreamingLevels::CreateSP( this, &FBangoBlueprintEditor::OnGraphEditorDropStreamingLevel );
+	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FBangoBlueprintEditor::OnNodeDoubleClicked);
+	InEvents.OnVerifyTextCommit = FOnNodeVerifyTextCommit::CreateSP(this, &FBangoBlueprintEditor::OnNodeVerifyTitleCommit);
+	InEvents.OnTextCommitted = FOnNodeTextCommitted::CreateSP(this, &FBangoBlueprintEditor::OnNodeTitleCommitted);
+	InEvents.OnSpawnNodeByShortcutAtLocation = SGraphEditor::FOnSpawnNodeByShortcutAtLocation::CreateSP(this, &FBangoBlueprintEditor::OnSpawnGraphNodeByShortcut, InGraph);
+	InEvents.OnNodeSpawnedByKeymap = SGraphEditor::FOnNodeSpawnedByKeymap::CreateSP(this, &FBangoBlueprintEditor::OnNodeSpawnedByKeymap );
+	//InEvents.OnDisallowedPinConnection = SGraphEditor::FOnDisallowedPinConnection::CreateSP(this, &FBangoBlueprintEditor::OnDisallowedPinConnection);
+	InEvents.OnDoubleClicked = SGraphEditor::FOnDoubleClicked::CreateSP(this, &FBangoBlueprintEditor::NavigateToParentGraphByDoubleClick);
 		
 	// Custom menu for K2 schemas
 	if(InGraph->Schema != nullptr && InGraph->Schema->IsChildOf(UEdGraphSchema_K2::StaticClass()))
@@ -231,6 +232,123 @@ FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 void FBangoBlueprintEditor::SetWarningText(const FText& InText)
 {
 	WarningText = InText;
+}
+
+void FBangoBlueprintEditor::InitBangoBlueprintEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode)
+{
+	check(InBlueprints.Num() == 1 || bShouldOpenInDefaultsMode);
+
+	// TRUE if a single Blueprint is being opened and is marked as newly created
+	bool bNewlyCreated = InBlueprints.Num() == 1 && InBlueprints[0]->bIsNewlyCreated;
+
+	// Load editor settings from disk.
+	// LoadEditorSettings();
+
+	TArray< UObject* > Objects;
+	for (UBlueprint* Blueprint : InBlueprints)
+	{
+		// Flag the blueprint as having been opened
+		Blueprint->bIsNewlyCreated = false;
+
+		Objects.Add( Blueprint );
+	}
+	
+	if (!Toolbar.IsValid())
+	{
+		Toolbar = MakeShareable(new FBlueprintEditorToolbar(SharedThis(this)));
+	}
+
+	GetToolkitCommands()->Append(FPlayWorldCommands::GlobalPlayWorldActions.ToSharedRef());
+
+	CreateDefaultCommands();
+
+	RegisterMenus();
+
+	// Initialize the asset editor and spawn nothing (dummy layout)
+	//const bool bCreateDefaultStandaloneMenu = true;
+	//const bool bCreateDefaultToolbar = true;
+	//const FName BlueprintEditorAppName = FName(TEXT("BlueprintEditorApp"));
+	// InitAssetEditor(Mode, InitToolkitHost, BlueprintEditorAppName, FTabManager::FLayout::NullLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, Objects);
+
+	///
+	AddEditingObject( InBlueprints[0] );
+	///
+	
+	CommonInitialization(InBlueprints, bShouldOpenInDefaultsMode);
+
+	InitalizeExtenders();
+
+	RegenerateMenusAndToolbars();
+
+	RegisterApplicationModes(InBlueprints, bShouldOpenInDefaultsMode, bNewlyCreated);
+
+	// Post-layout initialization
+	// PostLayoutBlueprintEditorInitialization();
+
+	// Find and set any instances of this blueprint type if any exists and we are not already editing one
+	FBlueprintEditorUtils::FindAndSetDebuggableBlueprintInstances();
+
+	if ( bNewlyCreated )
+	{
+		if ( UBlueprint* Blueprint = GetBlueprintObj() )
+		{
+			if ( Blueprint->BlueprintType == BPTYPE_MacroLibrary )
+			{
+				NewDocument_OnClick(CGT_NewMacroGraph);
+			}
+			else if ( Blueprint->BlueprintType == BPTYPE_Interface )
+			{
+				NewDocument_OnClick(CGT_NewFunctionGraph);
+			}
+			else if ( Blueprint->BlueprintType == BPTYPE_FunctionLibrary )
+			{
+				NewDocument_OnClick(CGT_NewFunctionGraph);
+			}
+		}
+	}
+
+	if ( UBlueprint* Blueprint = GetBlueprintObj() )
+	{
+		if ( Blueprint->GetClass() == UBlueprint::StaticClass() && Blueprint->BlueprintType == BPTYPE_Normal )
+		{
+			if ( !bShouldOpenInDefaultsMode )
+			{
+				GetToolkitCommands()->ExecuteAction(FFullBlueprintEditorCommands::Get().EditClassDefaults.ToSharedRef());
+			}
+		}
+
+		// There are upgrade notes, open the log and dump the messages to it
+		if (Blueprint->UpgradeNotesLog.IsValid())
+		{
+			DumpMessagesToCompilerLog(Blueprint->UpgradeNotesLog->Messages, true);
+		}
+	}
+
+	/*
+	// Register for notifications when settings change
+	BlueprintEditorSettingsChangedHandle = GetMutableDefault<UBlueprintEditorSettings>()->OnSettingChanged()
+		.AddRaw(this, &FBlueprintEditor::OnBlueprintEditorPreferencesChanged);
+	BlueprintProjectSettingsChangedHandle = GetMutableDefault<UBlueprintEditorProjectSettings>()->OnSettingChanged()
+		.AddRaw(this, &FBlueprintEditor::OnBlueprintProjectSettingsChanged);
+	*/
+	
+	/*
+	if (const TSharedPtr<SSCSEditorViewport> Viewport = GetSubobjectViewport())
+	{
+		ViewportSelectabilityBridge = MakeUnique<FEditorViewportSelectabilityBridge>(Viewport->GetViewportClient());
+	}
+	*/
+}
+
+void FBangoBlueprintEditor::AddEditingObject(UObject* Object)
+{
+	FBlueprintEditor::AddEditingObject(Object);
+}
+
+void FBangoBlueprintEditor::SetCurrentMode(FName NewMode)
+{
+	FBlueprintEditor::SetCurrentMode(NewMode);
+	//SetUISelectionState(NAME_None);
 }
 
 void FBangoBlueprintEditor::PostInitAssetEditor()

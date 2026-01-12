@@ -1,5 +1,7 @@
 ﻿#include "Bango/Default/Triggers/BangoTrigger_ActorHit.h"
 
+#include "GameFramework/Actor.h"
+
 UBangoTrigger_ActorHit::UBangoTrigger_ActorHit()
 {
 	SignalOnHit = EBangoTriggerSignalType::DoNothing;

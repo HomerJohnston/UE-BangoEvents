@@ -1,6 +1,8 @@
 ﻿#include "BangoEditorScriptClickSubsystem.h"
 
 #include "BangoEditorSubsystem.h"
+#include "Editor.h"
+#include "BangoEditorTooling/BangoEditorDelegates.h"
 
 void UBangoEditorScriptClickSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

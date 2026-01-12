@@ -1,19 +1,26 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
 #include "Bango/SceneProxies/BangoPlungerSceneProxy.h"
+
+#include "SceneInterface.h"
 #include "Bango/Components/BangoPlungerComponent.h"
 #include "Bango/Core/BangoEvent.h"
 #include "SceneManagement.h"
+#include "SceneView.h"
 #include "Bango/Settings/BangoDevSettings.h"
-#include "BangoEditorTooling/BangoColors.h"
+#include "Engine/Engine.h"
+#include "Materials/Material.h"
 #include "Materials/MaterialRenderProxy.h"
+
+#if WITH_EDITOR
+#include "BangoEditorTooling/BangoColors.h"
+#endif
 
 // Forward declarations
 //=================================================================================================
 
 void BuildBangoBoxVerts(const FVector3f& StaticOffset, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
 void BuildBangoCylinderVerts(const FVector& Base, const FVector& XAxis, const FVector& YAxis, const FVector& ZAxis, double Radius, double HalfHeight, uint32 Sides, TArray<FDynamicMeshVertex>& OutVerts, TArray<uint32>& OutIndices);
-
 
 // FBangoPlungerSceneProxy
 //=================================================================================================

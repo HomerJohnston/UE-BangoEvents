@@ -1,5 +1,8 @@
 ﻿#include "Bango/Triggers/TargetGroups/Base/BangoTargetGroup.h"
 
+#include "Bango/Utility/BangoLog.h"
+#include "Engine/EngineTypes.h"
+
 UBangoTargetGroup::UBangoTargetGroup()
 {
 	QueryCollisionChannel = ECC_WorldDynamic;

@@ -18,6 +18,9 @@
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
 #include "BangoEditor/Private/BangoEditor/Unsorted/BangoHideScriptFolderFilter.h"
 #include "BangoEditorTooling/BangoEditorLog.h"
+#include "Factories/Factory.h"
+#include "Misc/TransactionObjectEvent.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "UObject/ObjectSaveContext.h"
 
@@ -233,7 +236,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 		
 		if (ISourceControlModule::Get().IsEnabled())
 		{
-			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->Script.GetScriptClass();
+			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->ScriptContainer.GetScriptClass();
 		
 			if (!ScriptClass)
 			{
@@ -244,7 +247,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 		}
 		else
 		{
-			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->Script.GetScriptClass();
+			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->ScriptContainer.GetScriptClass();
 		
 			if (!ScriptClass)
 			{
@@ -396,7 +399,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, 
 	
 			UE_LOG(LogBangoEditor, Verbose, TEXT("OnObjectRenamed: %s, %s, %s"), *RenamedObject->GetName(), *RenamedObjectOuter->GetName(), *OldName.ToString());
 			
-			UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptComponent->Script.GetScriptClass());
+			UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptComponent->ScriptContainer.GetScriptClass());
 
 			if (Blueprint)
 			{
@@ -414,7 +417,7 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectRenamed(UObject* RenamedObject, 
 				FKismetEditorUtilities::CompileBlueprint(Blueprint);
 				
 				ScriptComponent->Modify();
-				ScriptComponent->Script.SetScriptClass(Blueprint->GeneratedClass);
+				ScriptComponent->ScriptContainer.SetScriptClass(Blueprint->GeneratedClass);
 				
 				// Tell details panels / script component customization to refresh
 				This->OnScriptGenerated.Broadcast();

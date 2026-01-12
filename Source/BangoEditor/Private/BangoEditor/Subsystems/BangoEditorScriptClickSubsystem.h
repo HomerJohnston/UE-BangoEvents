@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "EditorSubsystem.h"
 #include "Bango/Components/BangoScriptComponent.h"
 
 #include "BangoEditorScriptClickSubsystem.generated.h"

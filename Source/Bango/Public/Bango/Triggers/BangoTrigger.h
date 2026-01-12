@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "GameFramework/Actor.h"
+#include "Misc/EnumRange.h"
+
 #include "BangoTrigger.generated.h"
 
 class UBangoTargetCollector;

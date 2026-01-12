@@ -1,5 +1,7 @@
 ﻿#pragma once
-#include "Bango/Core/BangoScriptHandle.h"
+
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Subsystems/WorldSubsystem.h"
 
 #include "BangoActorIDSubsystem.generated.h"
 
