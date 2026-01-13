@@ -535,14 +535,28 @@ void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 
 	TArray<FClipboardActor> CopiedActors;
 	
+	const TCHAR* MAP = TEXT("MAP");
+	const TCHAR* LEVEL = TEXT("LEVEL");
+	const TCHAR* ACTOR = TEXT("ACTOR");
+	const TCHAR* OBJECT = TEXT("OBJECT");
+	
 	while (FParse::Line(&Buffer, StrLine))
 	{
 		const TCHAR* Str = *StrLine;
 		
 		if (NestedDepth == 0)
 		{
-			const TCHAR* MAP = TEXT("MAP");
+			// Only detect new Map openings
 			if (GetBEGIN(&Str, MAP))
+			{
+				++NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 1)
+		{
+			// Only detect new Level openings or closures of Map
+			if (GetBEGIN(&Str, LEVEL))
 			{
 				++NestedDepth;
 			}
@@ -552,22 +566,9 @@ void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 			}
 		}
 		
-		else if (NestedDepth == 1)
-		{
-			const TCHAR* LEVEL = TEXT("LEVEL");
-			if (GetBEGIN(&Str, LEVEL))
-			{
-				++NestedDepth;
-			}
-			else if (GetEND(&Str, LEVEL))
-			{
-				--NestedDepth;
-			}
-		}
-		
 		else if (NestedDepth == 2)
 		{
-			const TCHAR* ACTOR = TEXT("ACTOR");
+			// Only detect new Actor openings or closures of Level
 			if (GetBEGIN(&Str, ACTOR))
 			{
 				++NestedDepth;
@@ -597,7 +598,24 @@ void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 					}
 				}
 			}
+			else if (GetEND(&Str, LEVEL))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 3)
+		{
+			// Only detect new Object openings or closures of Actor
+			if (GetBEGIN(&Str, OBJECT))
+			{
+				++NestedDepth;
+			}
 			else if (GetEND(&Str, ACTOR))
+			{
+				--NestedDepth;
+			}
+			else if (GetEND(&Str, OBJECT))
 			{
 				--NestedDepth;
 			}
@@ -605,12 +623,8 @@ void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 		
 		else
 		{
-			const TCHAR* OBJECT = TEXT("OBJECT");
-			if (GetBEGIN(&Str, OBJECT))
-			{
-				++NestedDepth;
-			}
-			else if (GetEND(&Str, OBJECT))
+			// Only detect closures of Object
+			if (GetEND(&Str, OBJECT))
 			{
 				--NestedDepth;
 			}
