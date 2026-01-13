@@ -38,7 +38,11 @@ bool FBangoClassViewerFilter::IsClassAllowed(const FClassViewerInitializationOpt
 			
 			FString PackagePath = FPackageName::GetLongPackagePath(BlueprintPackage->GetName());
 			
-			return !PackagePath.StartsWith(Bango::Editor::GetGameScriptRootFolder());
+			FString GameScriptRootPath = Bango::Editor::GetGameScriptRootFolder();
+			
+			bool bAllowed = !PackagePath.StartsWith(GameScriptRootPath);
+			
+			return bAllowed;
 		}
 	}
 	

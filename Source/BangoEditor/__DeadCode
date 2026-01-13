@@ -1,0 +1,22 @@
+﻿
+/*
+FActionMenuContent FBangoBlueprintEditor::OnCreateGraphActionMenu_Impl(UEdGraph* InGraph, const FVector2f& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed)
+{
+	HasOpenActionMenu = InGraph;
+	if (!BlueprintEditorImpl::GraphHasUserPlacedNodes(InGraph))
+	{
+		InstructionsFadeCountdown = BlueprintEditorImpl::InstructionFadeDuration;
+	}
+
+	TSharedRef<SBlueprintActionMenu> ActionMenu = 
+	SNew(SBlueprintActionMenu, SharedThis(this))
+	.GraphObj(InGraph)
+	.NewNodePosition(FDeprecateSlateVector2D(InNodePosition))
+	.DraggedFromPins(InDraggedPins)
+	.AutoExpandActionMenu(bAutoExpand)
+	.OnClosedCallback(InOnMenuClosed)
+	.OnCloseReason(this, &FBlueprintEditor::OnGraphActionMenuClosed);
+
+	return FActionMenuContent( ActionMenu, ActionMenu->GetFilterTextBox() );
+}
+*/

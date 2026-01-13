@@ -5,11 +5,11 @@
 class FBangoScriptComponentVisualizer : public FComponentVisualizer
 {
 	
-	virtual void OnRegister() override;
+	void OnRegister() override;
 	
-	virtual void DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
+	void DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
 	
-	virtual void DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
+	void DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 	
 	void DrawScreenCircleOverWorldPos(const FSceneView* View, FCanvas* Canvas, const FVector& WorldPosition, float Radius, float Thickness, const FLinearColor& Color);
 	

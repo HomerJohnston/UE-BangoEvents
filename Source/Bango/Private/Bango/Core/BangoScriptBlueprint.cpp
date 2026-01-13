@@ -141,7 +141,7 @@ UBangoScriptBlueprint* UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(c
 	
 	if (!FPackageName::DoesPackageExist(ScriptClassPath.GetLongPackageName()))
 	{
-		return nullptr;	
+		//return nullptr;	
 	}
 	
 	UClass* Class = ScriptClass.LoadSynchronous();

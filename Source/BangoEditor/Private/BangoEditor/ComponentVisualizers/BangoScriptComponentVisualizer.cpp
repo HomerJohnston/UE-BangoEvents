@@ -6,6 +6,8 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "BangoEditorTooling/BangoEditorUtility.h"
+#include "Components/Viewport.h"
+#include "Framework/Application/SlateApplication.h"
 
 void FBangoScriptComponentVisualizer::OnRegister()
 {
@@ -14,6 +16,7 @@ void FBangoScriptComponentVisualizer::OnRegister()
 
 void FBangoScriptComponentVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {	
+#if 0
 	if (!IsValid(Component))
 	{
 		// This can happen if you delete or undo creation of the component or actor
@@ -100,6 +103,7 @@ void FBangoScriptComponentVisualizer::DrawVisualization(const UActorComponent* C
 			}
 		}
 	}
+#endif
 }
 
 struct FBangoActorNodeDraw
@@ -182,6 +186,12 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				}
 			}
 			
+			float MinRadius = 10.0f;
+			float MaxRadius = 50.0f;
+
+			MinRadius = FMath::Max(MinRadius, 0.005f * Viewport->GetSizeXY().Y);
+			MaxRadius = FMath::Max(MaxRadius, 0.02f * Viewport->GetSizeXY().Y);
+			
 			// Now we draw
 			for (const FBangoActorNodeDraw& DrawInfo : VisitedActors)// int32 i = 0; i < VisitedActors FindActorNodes.Num(); ++i)
 			{
@@ -198,7 +208,7 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 					return;
 				}
 				
-				Radius = FMath::Clamp(Radius, 25.0f, 250.0f);
+				Radius = FMath::Clamp(Radius, MinRadius, MaxRadius);
 				DrawScreenCircleOverWorldPos(View, Canvas, ScreenPos, Radius, Thickness, Color);					
 				
 				// Draw connection line

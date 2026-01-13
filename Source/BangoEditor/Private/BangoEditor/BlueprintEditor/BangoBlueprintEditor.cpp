@@ -7,6 +7,7 @@
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditor/BangoEditorStyle.h"
 #include "BangoUncooked/K2Nodes/K2Node_BangoFindActor.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/DebuggerCommands.h"
 #include "WorldPartition/ActorDescContainerInstance.h"
@@ -14,12 +15,16 @@
 
 #define LOCTEXT_NAMESPACE "Bango"
 
+// ----------------------------------------------
+
 void FBangoBlueprintEditor::SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
 	FBlueprintEditor::SetupGraphEditorEvents(InGraph, InEvents);
 	InEvents.OnDropActors.Unbind();
 	InEvents.OnDropActors = SGraphEditor::FOnDropActors::CreateSP(this, &FBangoBlueprintEditor::OnDropActors);
 }
+
+// ----------------------------------------------
 
 void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
@@ -42,6 +47,8 @@ void FBangoBlueprintEditor::SetupGraphEditorEvents_Impl(UBlueprint* Blueprint, U
 		InEvents.OnCreateActionMenuAtLocation = SGraphEditor::FOnCreateActionMenuAtLocation::CreateSP(this, &FBangoBlueprintEditor::OnCreateGraphActionMenu);
 	}
 }
+
+// ----------------------------------------------
 
 void FBangoBlueprintEditor::Tick(float DeltaTime)
 {
@@ -75,6 +82,8 @@ void FBangoBlueprintEditor::Tick(float DeltaTime)
 	}
 }
 
+// ----------------------------------------------
+
 void FBangoBlueprintEditor::OnDropActors(const TArray<TWeakObjectPtr<AActor>>& Actors, UEdGraph* Graph, const UE::Math::TVector2<float>& DropLocation) const
 {
 	UE_LOG(LogBango, Display, TEXT("Test 2"));
@@ -97,6 +106,8 @@ void FBangoBlueprintEditor::OnDropActors(const TArray<TWeakObjectPtr<AActor>>& A
 		}
 	}
 }
+
+// ----------------------------------------------
 
 FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* InGraph) const
 {
@@ -128,6 +139,8 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 
 	return AppearanceInfo;
 }
+
+// ----------------------------------------------
 
 FText FBangoBlueprintEditor::GetLevelNameAsText() const
 {
@@ -180,6 +193,8 @@ FText FBangoBlueprintEditor::GetLevelNameAsText() const
 	}
 }
 
+// ----------------------------------------------
+
 FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 {
 	UBangoScriptBlueprint* Blueprint = Cast<UBangoScriptBlueprint>(GetBlueprintObj());
@@ -229,10 +244,14 @@ FText FBangoBlueprintEditor::GetOwnerNameAsText() const
 	}
 }
 
+// ----------------------------------------------
+
 void FBangoBlueprintEditor::SetWarningText(const FText& InText)
 {
 	WarningText = InText;
 }
+
+// ----------------------------------------------
 
 void FBangoBlueprintEditor::InitBangoBlueprintEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode)
 {
@@ -340,16 +359,22 @@ void FBangoBlueprintEditor::InitBangoBlueprintEditor(const EToolkitMode::Type Mo
 	*/
 }
 
+// ----------------------------------------------
+
 void FBangoBlueprintEditor::AddEditingObject(UObject* Object)
 {
 	FBlueprintEditor::AddEditingObject(Object);
 }
+
+// ----------------------------------------------
 
 void FBangoBlueprintEditor::SetCurrentMode(FName NewMode)
 {
 	FBlueprintEditor::SetCurrentMode(NewMode);
 	//SetUISelectionState(NAME_None);
 }
+
+// ----------------------------------------------
 
 void FBangoBlueprintEditor::PostInitAssetEditor()
 {
@@ -358,31 +383,306 @@ void FBangoBlueprintEditor::PostInitAssetEditor()
 	OpenTime = 0.0f;
 }
 
+// ----------------------------------------------
+
 void FBangoBlueprintEditor::PasteGeneric()
 {
 	FBlueprintEditor::PasteGeneric();
 }
 
-/*
-FActionMenuContent FBangoBlueprintEditor::OnCreateGraphActionMenu_Impl(UEdGraph* InGraph, const FVector2f& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed)
+// ----------------------------------------------
+
+bool FBangoBlueprintEditor::CanPasteGeneric() const
 {
-	HasOpenActionMenu = InGraph;
-	if (!BlueprintEditorImpl::GraphHasUserPlacedNodes(InGraph))
-	{
-		InstructionsFadeCountdown = BlueprintEditorImpl::InstructionFadeDuration;
-	}
-
-	TSharedRef<SBlueprintActionMenu> ActionMenu = 
-	SNew(SBlueprintActionMenu, SharedThis(this))
-	.GraphObj(InGraph)
-	.NewNodePosition(FDeprecateSlateVector2D(InNodePosition))
-	.DraggedFromPins(InDraggedPins)
-	.AutoExpandActionMenu(bAutoExpand)
-	.OnClosedCallback(InOnMenuClosed)
-	.OnCloseReason(this, &FBlueprintEditor::OnGraphActionMenuClosed);
-
-	return FActionMenuContent( ActionMenu, ActionMenu->GetFilterTextBox() );
+	return FBlueprintEditor::CanPasteGeneric();
 }
-*/
+
+// ----------------------------------------------
+
+bool FBangoBlueprintEditor::CanPasteNodes() const
+{
+	// Check if the clipboard contains actors in a map
+	
+	struct FClipboardActor
+	{
+		FString CastTo;
+		FString TargetActor;
+	};
+	
+	FString ClipboardContent;
+	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
+
+	const TCHAR* Buffer = *ClipboardContent;
+
+	FParse::Next( &Buffer );
+
+	int32 NestedDepth     = 0;
+
+	FString StrLine;
+
+	TArray<FClipboardActor> CopiedActors;
+	
+	while (FParse::Line(&Buffer, StrLine))
+	{
+		const TCHAR* Str = *StrLine;
+		
+		if (NestedDepth == 0)
+		{
+			const TCHAR* MAP = TEXT("MAP");
+			if (GetBEGIN(&Str, MAP))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, MAP))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 1)
+		{
+			const TCHAR* LEVEL = TEXT("LEVEL");
+			if (GetBEGIN(&Str, LEVEL))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, LEVEL))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 2)
+		{
+			const TCHAR* ACTOR = TEXT("ACTOR");
+			if (GetBEGIN(&Str, ACTOR))
+			{
+				++NestedDepth;
+				
+				FString ExportPath;
+				
+				if (FParse::Value(Str, TEXT("ExportPath="), ExportPath))
+				{
+					FString ObjectClassName;
+					FString TargetActor;
+					
+					if (FPackageName::ParseExportTextPath(ExportPath, &ObjectClassName, &TargetActor))
+					{
+						FString CastTo;
+						if (ObjectClassName.EndsWith(TEXT("_C")))
+						{
+							CastTo = TEXT("/Script/Engine.BlueprintGeneratedClass"); 
+						}
+						else
+						{
+							CastTo = TEXT("/Script/CoreUObject.Class");
+						}
+						
+						CastTo = FString::Format(TEXT("{0}'{1}'"), { CastTo, ObjectClassName } );
+						
+						CopiedActors.Add( {CastTo, TargetActor} );
+					}
+				}
+			}
+			else if (GetEND(&Str, ACTOR))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else
+		{
+			const TCHAR* OBJECT = TEXT("OBJECT");
+			if (GetBEGIN(&Str, OBJECT))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, OBJECT))
+			{
+				--NestedDepth;
+			}
+		}
+	}
+	
+	if (CopiedActors.Num() > 0)
+	{
+		return true;
+	}
+	
+	return FBlueprintEditor::CanPasteNodes();
+}
+
+// ----------------------------------------------
+
+void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVector2f& GraphLocation)
+{
+	struct FClipboardActor
+	{
+		FString CastTo;
+		FString TargetActor;
+	};
+	
+	FString ClipboardContent;
+	FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
+
+	const TCHAR* Buffer = *ClipboardContent;
+
+	FParse::Next( &Buffer );
+
+	int32 NestedDepth     = 0;
+
+	FString StrLine;
+
+	TArray<FClipboardActor> CopiedActors;
+	
+	while (FParse::Line(&Buffer, StrLine))
+	{
+		const TCHAR* Str = *StrLine;
+		
+		if (NestedDepth == 0)
+		{
+			const TCHAR* MAP = TEXT("MAP");
+			if (GetBEGIN(&Str, MAP))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, MAP))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 1)
+		{
+			const TCHAR* LEVEL = TEXT("LEVEL");
+			if (GetBEGIN(&Str, LEVEL))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, LEVEL))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else if (NestedDepth == 2)
+		{
+			const TCHAR* ACTOR = TEXT("ACTOR");
+			if (GetBEGIN(&Str, ACTOR))
+			{
+				++NestedDepth;
+				
+				FString ExportPath;
+				
+				if (FParse::Value(Str, TEXT("ExportPath="), ExportPath))
+				{
+					FString ObjectClassName;
+					FString TargetActor;
+					
+					if (FPackageName::ParseExportTextPath(ExportPath, &ObjectClassName, &TargetActor))
+					{
+						FString CastTo;
+						if (ObjectClassName.EndsWith(TEXT("_C")))
+						{
+							CastTo = TEXT("/Script/Engine.BlueprintGeneratedClass"); 
+						}
+						else
+						{
+							CastTo = TEXT("/Script/CoreUObject.Class");
+						}
+						
+						CastTo = FString::Format(TEXT("{0}'{1}'"), { CastTo, ObjectClassName } );
+						
+						CopiedActors.Add( {CastTo, TargetActor} );
+					}
+				}
+			}
+			else if (GetEND(&Str, ACTOR))
+			{
+				--NestedDepth;
+			}
+		}
+		
+		else
+		{
+			const TCHAR* OBJECT = TEXT("OBJECT");
+			if (GetBEGIN(&Str, OBJECT))
+			{
+				++NestedDepth;
+			}
+			else if (GetEND(&Str, OBJECT))
+			{
+				--NestedDepth;
+			}
+		}
+	}
+	
+	if (CopiedActors.Num() > 0) 
+	{
+		const FString Format = TEXT
+		(
+			"Begin Object Class={0}\n" // {/Script/BangoUncooked.K2Node_BangoFindActor}
+				"CastTo={1}\n" // "/Script/Engine.BlueprintGeneratedClass'/Game/TestThings/BP_StreetLamp.BP_StreetLamp_C'"
+				"TargetActor={2}\n" // "/Game/Test3.Test3:PersistentLevel.BP_StreetLamp_C_UAID_B04F13D324A438B102_1405045264"
+			"End Object\n\n"
+		);
+
+		const FString FindActorNode = UK2Node_BangoFindActor::StaticClass()->GetClassPathName().ToString();
+		
+		TStringBuilder<512> ClipboardStringBuilder;
+		
+		for (const FClipboardActor& CopiedActor : CopiedActors)
+		{
+			ClipboardStringBuilder.Append(FString::Format(*Format, { FindActorNode, CopiedActor.CastTo, CopiedActor.TargetActor }));
+		}
+		
+		FPlatformApplicationMisc::ClipboardCopy(*ClipboardStringBuilder);
+	}
+	
+	// We delay it by one frame because sometimes Windows sucks and it takes a bit for the clipboard to update into the PasteNodesHere func
+	TWeakObjectPtr<UEdGraph> WeakGraph = DestinationGraph;
+	
+	auto DelayedCall = [this, WeakGraph, GraphLocation] ()
+	{
+		if (UEdGraph* DestinationGraph = WeakGraph.Get())
+		{
+			FBlueprintEditor::PasteNodesHere(DestinationGraph, GraphLocation);
+		}
+	};
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(DelayedCall);
+}
+
+// ----------------------------------------------
+
+bool FBangoBlueprintEditor::GetBEGIN(const TCHAR** Stream, const TCHAR* Match) const
+{
+	const TCHAR* Original = *Stream;
+
+	if( FParse::Command(Stream, TEXT("BEGIN")) && FParse::Command(Stream, Match))
+	{
+		return true;
+	}
+	
+	*Stream = Original;
+	
+	return false;
+}
+
+// ----------------------------------------------
+
+bool FBangoBlueprintEditor::GetEND(const TCHAR** Stream, const TCHAR* Match) const
+{
+	const TCHAR* Original = *Stream;
+	
+	if (FParse::Command(Stream, TEXT("END")) && FParse::Command(Stream, Match))
+	{
+		return true;
+	}
+	
+	*Stream = Original;
+
+	return false;
+}
 
 #undef LOCTEXT_NAMESPACE

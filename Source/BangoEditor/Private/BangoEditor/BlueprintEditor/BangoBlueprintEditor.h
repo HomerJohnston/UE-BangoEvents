@@ -2,6 +2,8 @@
 
 #include "BlueprintEditor.h"
 
+class UEdGraph;
+
 class FBangoBlueprintEditor : public FBlueprintEditor
 {
 public:
@@ -17,7 +19,7 @@ public:
 	
 	// Sadly Epic didn't expose enough functionality for me to prevent adding multiple graphs 
 	//bool AreEventGraphsAllowed() const override { return false; }
-	FGraphAppearanceInfo GetGraphAppearance(class UEdGraph* InGraph) const override;
+	FGraphAppearanceInfo GetGraphAppearance(UEdGraph* InGraph) const override;
 	
 	FText GetLevelNameAsText() const;
 	
@@ -39,4 +41,15 @@ protected:
 	void PostInitAssetEditor() override;
 	
 	void PasteGeneric() override;
+	
+	bool CanPasteGeneric() const override;
+	
+	bool CanPasteNodes() const override;
+	
+	void PasteNodesHere(UEdGraph* DestinationGraph, const FVector2f& GraphLocation) override;
+	
+protected:
+	// Copied from Editor.h
+	bool GetBEGIN(const TCHAR** Stream, const TCHAR* Match) const;
+	bool GetEND(const TCHAR** Stream, const TCHAR* Match) const;
 };
