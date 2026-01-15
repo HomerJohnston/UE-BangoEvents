@@ -36,6 +36,7 @@ struct FBangoEditorDelegates
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> OnScriptContainerCreated;
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString Name)> OnScriptContainerDuplicated;
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> OnScriptContainerDestroyed;
+	BANGOEDITORTOOLING_API static TMulticastDelegate<void(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptContainer)> OnScriptContainerUnregisteredDuringTransaction;
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(FGuid ScriptID, UBangoScriptBlueprint*& FoundBlueprint)> OnBangoActorComponentUndoDelete;
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(AActor* Actor)> RequestNewID;
 	BANGOEDITORTOOLING_API static TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> OnScriptComponentClicked;

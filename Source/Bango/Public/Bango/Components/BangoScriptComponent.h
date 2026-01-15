@@ -31,8 +31,6 @@ class BANGO_API UBangoScriptComponent : public UActorComponent//, public FBangoD
 public:
 	UBangoScriptComponent();
 	
-	//void PrintState(FString Msg) const;
-
 	void BeginPlay() override;
 	
 #if WITH_EDITOR
@@ -45,6 +43,10 @@ public:
 	void OnComponentCreated() override;
 
 	void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	
+	void BeginDestroy() override;
+	
+	void FinishDestroy() override;
 	
 	// This is only used to spawn script assets for CDO spawned components (actor dragged into world) as well as for duplicating any actors or any instance components
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;

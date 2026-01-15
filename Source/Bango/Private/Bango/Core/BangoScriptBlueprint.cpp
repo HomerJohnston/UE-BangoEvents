@@ -23,7 +23,7 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 #if WITH_EDITOR
 const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 {
-	return Actor;
+	return TSoftObjectPtr<AActor>(FSoftObjectPath(Actor));
 }
 #endif
 

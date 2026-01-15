@@ -9,9 +9,9 @@
 #include "Math/Ray.h"
 #include "UObject/Package.h"
 
-void BangoUtility::Debug::PrintComponentState(UActorComponent* Component, FString Msg)
+void Bango::Debug::PrintComponentState(UActorComponent* Component, FString Msg)
 {
-	UE_LOG(LogBangoEditor, Display, TEXT("Owner Actor: %s, package: %s"), *Component->GetOwner()->GetActorLabel(), *Component->GetOwner()->GetPackage()->GetName());
+	// UE_LOG(LogBangoEditor, Display, TEXT("Owner Actor: %s, package: %s"), *Component->GetOwner()->GetActorLabel(), *Component->GetOwner()->GetPackage()->GetName());
 			
 	uint32 Flags = (uint32)Component->GetFlags();
 	uint32 IntFlags = (uint32)Component->GetInternalFlags();
@@ -35,7 +35,7 @@ void BangoUtility::Debug::PrintComponentState(UActorComponent* Component, FStrin
 	UE_LOG(LogBangoEditor, Display, TEXT("%s: %s"), *Component->GetName(), *FString::Format(TEXT("{0} --- Flags: {1}                          --- Internal Flags: {2}"), { Msg, *BitString1, *BitString2 } ));
 }
 
-void BangoUtility::Debug::PrintFlagNames()
+void Bango::Debug::PrintFlagNames()
 {
 	static const TMap<int64, FString> FlagDefs =
 	{
@@ -95,7 +95,7 @@ void BangoUtility::Debug::PrintFlagNames()
 	for (int64 i = 0; i <= 30; ++i)
 	{
 		FString Print;
-		Print = Print.LeftPad(91);
+		Print = Print.LeftPad(89);
 		FString Indent;
 		Indent = FString::ChrN(31 - i, '|');
 		FString Pointout = "o-";
@@ -117,7 +117,7 @@ void BangoUtility::Debug::PrintFlagNames()
 	}
 }
 
-void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, float DashLength, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
+void Bango::Debug::Draw::DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, float DashLength, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
 {
 	float Distance = (End - Start).Size();
 
@@ -126,7 +126,7 @@ void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FVector& 
 	DebugDrawDashedLine(World, Ray, Distance, DashLength, Color, bPersistentLines, Lifetime, DepthPriority, Thickness);
 }
 
-void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, int32 NumDashes, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
+void Bango::Debug::Draw::DebugDrawDashedLine(UWorld* World, const FVector& Start, const FVector& End, int32 NumDashes, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
 {
 	float Distance = (End - Start).Size();
 
@@ -137,7 +137,7 @@ void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FVector& 
 	DebugDrawDashedLine(World, Ray, Distance, DashLength, Color, bPersistentLines, Lifetime, DepthPriority, Thickness);
 }
 
-void BangoUtility::DebugDraw::DebugDrawDashedLine(UWorld* World, const FRay& Ray, float Distance, float DashLength, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
+void Bango::Debug::Draw::DebugDrawDashedLine(UWorld* World, const FRay& Ray, float Distance, float DashLength, const FColor& Color, bool bPersistentLines, float Lifetime, uint8 DepthPriority, float Thickness)
 {
 	FVector Dir = Ray.Direction;
 

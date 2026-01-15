@@ -31,8 +31,14 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TSoftClassPtr<UBangoScript> ScriptClass;
 	
+	// Used for async loading
 	TSharedPtr<FStreamableHandle> ScriptClassHandle;
 
+#if WITH_EDITORONLY_DATA
+	// Used during construction of the ScriptClass only
+	FString RequestedName;
+#endif
+	
 	// TODO I can probably delete this but keeping it in until the plugin is stable
 	// This is only necessary if packaging scripts into .umap files... and packaging into .umap doesn't work with World Partition because world partition package splitting breaks the script packages 
 	/** In standalone this returns the ScriptClass. In PIE this strips any "PIE" info out of the class path. */
@@ -54,15 +60,24 @@ public:
 #if WITH_EDITOR
 	void Unset();
 	
-	void Reset();
-	
 	void SetScriptClass(TSubclassOf<UObject> NewScriptClass)
 	{
 		ScriptClass = NewScriptClass;
 	}
 	
-	void TryRestoreScriptFromTransientPackage();
-
-	const FString& GetDescription() const { return Description; }
+	void SetRequestedName(const FString& InName)
+	{
+		RequestedName = InName;
+	}
+	
+	const FString& GetRequestedName() const
+	{
+		return RequestedName;
+	}
+	
+	const FString& GetDescription() const
+	{
+		return Description;
+	}
 #endif
 };

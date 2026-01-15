@@ -1,11 +1,13 @@
 ﻿#include "BangoFolderUtility.h"
 
 #include "BangoEditorUtility.h"
+#include "Editor.h"
 #include "IAssetTools.h"
 #include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Utility/BangoLog.h"
+#include "BangoEditorTooling/BangoEditorLog.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformFileManager.h"
 #include "UObject/Package.h"
@@ -272,3 +274,82 @@ void Bango::Editor::DeleteUnreferencedScripts()
 
 	ObjectTools::DeleteAssets(UnreferencedScripts, false);
 }
+
+bool Bango::Editor::IsScriptReferenced(TSoftClassPtr<UBangoScript> ScriptClass)
+{
+	if (ScriptClass.IsNull())
+	{
+		return false;
+	}
+	
+	if (!ScriptClass.IsValid())
+	{
+		// Not sure if this is a good idea
+		return false;
+	}
+	
+	FAssetRegistryModule& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	
+	const FString BlueprintPath = ScriptClass->GetClassPathName().ToString().LeftChop(2); // Chop off _C
+	//const FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(FSoftObjectPath(BlueprintPath));
+	
+	FAssetData ScriptAssetData = AssetRegistry.Get().GetAssetByObjectPath(FSoftObjectPath(BlueprintPath));
+
+	if (ScriptAssetData.IsValid())
+	{
+		
+		if (ScriptAssetData.GetObjectPathString().StartsWith(Bango::Editor::GetGameScriptRootFolder()))
+		{
+			TArray<FName> Referencers;
+			AssetRegistry.Get().GetReferencers(ScriptAssetData.GetPackage()->GetFName(), Referencers);
+			
+			return Referencers.Num() == 0;
+		}
+	}
+	
+	UE_LOG(LogBangoEditor, Warning, TEXT("Could not find asset for script %s"), *ScriptClass.ToString());
+	return false;
+}
+
+void Bango::Editor::DeleteScriptIfUnreferenced(TSoftClassPtr<UBangoScript> ScriptClass)
+{
+	// Always wait one tick to allow the editor to finish other deletions
+	
+	auto Delay = [ScriptClass] ()
+	{
+		if (ScriptClass.IsNull())
+		{
+			return false;
+		}
+	
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	
+		FAssetData ScriptAssetData = AssetRegistryModule.Get().GetAssetByObjectPath(ScriptClass.ToSoftObjectPath());
+
+		if (ScriptAssetData.IsValid())
+		{
+		
+			if (ScriptAssetData.GetObjectPathString().StartsWith(Bango::Editor::GetGameScriptRootFolder()))
+			{
+				TArray<FName> Referencers;
+				AssetRegistryModule.Get().GetReferencers(ScriptAssetData.GetPackage()->GetFName(), Referencers);
+			
+				if (Referencers.Num() == 0)
+				{
+					ObjectTools::DeleteAssets( {ScriptAssetData}, false);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+	
+		UE_LOG(LogBangoEditor, Warning, TEXT("Could not find asset for script %s"), *ScriptClass.ToString());
+		return false;
+	};
+	
+	GEditor->GetTimerManager()->SetTimerForNextTick(Delay);
+}
+

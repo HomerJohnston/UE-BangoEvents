@@ -201,7 +201,7 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 	
 	UObject* Outer = GetOuter();
 	
-	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Outer, ScriptContainer, *Outer->GetFName().ToString());
+	//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Outer, ScriptContainer, *Outer->GetFName().ToString());
 	
 	/*
 	ScriptClassProperty->GetOuterPackages(Packages);

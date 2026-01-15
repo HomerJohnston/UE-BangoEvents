@@ -40,8 +40,11 @@ bool Bango::Editor::IsComponentInEditedLevel(UActorComponent* Component, EBangoA
 	
 	if (!Actor || Actor->IsTemplate())
 		return false;
-	
+		
 	if (Actor->HasAnyFlags(RF_Transient))
+		return false;
+	
+	if (Actor->HasAnyFlags(RF_MirroredGarbage))
 		return false;
 	
 	if (Component->IsDefaultSubobject())

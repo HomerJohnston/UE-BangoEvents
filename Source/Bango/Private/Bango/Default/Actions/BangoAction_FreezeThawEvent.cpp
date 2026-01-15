@@ -94,7 +94,7 @@ void UBangoAction_FreezeThawEvent::DebugDraw_Implementation(UCanvas* Canvas, APl
 		}
 		else
 		{
-			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), GetEventComponent()->GetComponentLocation(), ActualTargetComponent->GetComponentLocation(), 100.0f, FColor::Green);
+			Bango::Debug::Draw::DebugDrawDashedLine(GetWorld(), GetEventComponent()->GetComponentLocation(), ActualTargetComponent->GetComponentLocation(), 100.0f, FColor::Green);
 		}
 	}
 }

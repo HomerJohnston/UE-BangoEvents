@@ -6,6 +6,7 @@
 #include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
 #include "BangoEditorTooling/BangoDebugDrawCanvas.h"
+#include "BangoEditorTooling/BangoDebugUtility.h"
 #include "Components/BillboardComponent.h"
 #include "Fonts/FontMeasure.h"
 #include "UObject/ICookInfo.h"
@@ -33,34 +34,6 @@ UBangoScriptComponent::UBangoScriptComponent()
 
 // ----------------------------------------------
 
-/*
-void UBangoScriptComponent::PrintState(FString Msg) const
-{	
-	uint32 Flags = (uint32)GetOwner()->GetFlags();
-	uint32 IntFlags = (uint32)GetOwner()->GetInternalFlags();
-	
-	FString BitString1;
-	FString BitString2;
-	BitString1.Reserve(32);
-	BitString2.Reserve(32);
-
-	while (Msg.Len() < 32)
-	{
-		Msg += " ";
-	}
-	
-	for (int32 i = 31; i >= 0; --i)
-	{
-		BitString1.AppendChar(((Flags >> i) & 1) ? TEXT('1') : TEXT('0'));
-		BitString2.AppendChar(((IntFlags >> i) & 1) ? TEXT('1') : TEXT('0'));
-	}
-	
-	UE_LOG(LogBango, Display, TEXT("%s"), *FString::Format(TEXT("{0}: {1} | {2}"), { Msg, *BitString1, *BitString2 } ));
-}
-*/
-
-// ----------------------------------------------
-
 void UBangoScriptComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -78,8 +51,15 @@ void UBangoScriptComponent::OnRegister()
 {
 	Super::OnRegister();
 	
-	//BangoDebugDraw_Register(this);
+	Bango::Debug::PrintComponentState(this, "OnRegister");
 	
+	if (Bango::Editor::IsComponentInEditedLevel(this))
+	{
+		FString ScriptName = GetName(); // We will use the component name for the script name
+	
+		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
+	}
+		
 	if (!IsTemplate())
 	{
 		FBangoEditorDelegates::BangoDebugDraw.AddUObject(this, &ThisClass::DebugDraw);
@@ -124,9 +104,23 @@ void UBangoScriptComponent::OnRegister()
 #if WITH_EDITOR
 void UBangoScriptComponent::OnUnregister()
 {
+	Bango::Debug::PrintComponentState(this, "OnUnregister_Early");
+	
 	FBangoEditorDelegates::BangoDebugDraw.RemoveAll(this);
 
+	if (Bango::Editor::IsComponentInEditedLevel(this))
+	{
+		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, ScriptContainer.GetScriptClass());
+	}
+	
+	if (GetOwner()->HasAnyFlags(RF_Transactional) && Bango::Editor::IsComponentInEditedLevel(this))
+	{
+		//FBangoEditorDelegates::OnScriptContainerUnregisteredDuringTransaction.Broadcast(this, ScriptContainer.GetScriptClass());
+	}
+	
 	Super::OnUnregister();
+
+	Bango::Debug::PrintComponentState(this, "OnUnregister_Finish");
 }
 #endif
 
@@ -135,6 +129,8 @@ void UBangoScriptComponent::OnUnregister()
 #if WITH_EDITOR
 void UBangoScriptComponent::OnComponentCreated()
 {
+	Bango::Debug::PrintComponentState(this, "OnComponentCreated_Early");
+	
 	Super::OnComponentCreated();
 	
 	if (!Bango::Editor::IsComponentInEditedLevel(this))
@@ -142,11 +138,15 @@ void UBangoScriptComponent::OnComponentCreated()
 		return;
 	}
 	
+	Bango::Debug::PrintComponentState(this, "OnComponentCreated_InLevel");
+	
 	// With RF_LoadCompleted this is a default actor component. We rely on PostDuplicated instead.
 	if (HasAllFlags(RF_LoadCompleted))
 	{
 		return;
 	}
+	
+	Bango::Debug::PrintComponentState(this, "OnComponentCreated_NotLoadCompleted");
 	
 	FString ScriptName = GetName(); // We will use the component name for the script name
 	
@@ -171,18 +171,26 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	TSoftClassPtr<UBangoScript> ScriptClass = ScriptContainer.GetScriptClass();
 	bool bIsComponentInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
 	
+	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_Early");
+	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
-		
+	
+	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_0");
+	
 	if (!bIsComponentInEditedLevel)
 	{
 		return;
 	}
+	
+	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_1");
 	
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
 		return;
 	}
+
+	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_2");
 	
 	// If we are a default actor component, we will always exist on the actor and the only time we'll be truly deleted is when the whole actor hierachy is being deleted
 	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
@@ -190,11 +198,27 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 		return;
 	}
 
+	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_Final");
+	
 	if (!ScriptClass.IsNull())
 	{
 		// Moves handling over to an editor module to handle more complicated package deletion/undo management
-		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
+		//FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
 	}
+}
+
+void UBangoScriptComponent::BeginDestroy()
+{
+	Bango::Debug::PrintComponentState(this, "BeginDestroy_Early");
+	
+	Super::BeginDestroy();
+}
+
+void UBangoScriptComponent::FinishDestroy()
+{
+	Bango::Debug::PrintComponentState(this, "FinishDestroy_Early");
+	
+	Super::FinishDestroy();
 }
 #endif
 
@@ -203,18 +227,26 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 #if WITH_EDITOR
 void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 {
+	Bango::Debug::PrintComponentState(this, "PostDuplicate_Early");
+	
 	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		return;
 	}
 	
+	Bango::Debug::PrintComponentState(this, "PostDuplicate_InEditedLevel");
+	
 	if (CreationMethod == EComponentCreationMethod::Instance)
 	{
+		Bango::Debug::PrintComponentState(this, "PostDuplicate_Instance");
+		
 		// Component was added to an actor in the level; this case is very easy to handle, PostDuplicate is only called on real human-initiated duplications
 		FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &ScriptContainer, GetName());
 	}
 	else
 	{
+		Bango::Debug::PrintComponentState(this, "PostDuplicate_CDO");
+
 		// Component is part of a blueprint, only run duplication code if it's in a level already
 		if (!GetOwner()->HasAnyFlags(RF_WasLoaded))
 		{
@@ -479,6 +511,8 @@ void UBangoScriptComponent::PreEditUndo()
 {
 	Super::PreEditUndo();
 	
+	Bango::Debug::PrintComponentState(this, "PreEditUndo");
+	
 	__UNDO_Script = ScriptContainer;
 }
 #endif
@@ -489,6 +523,8 @@ void UBangoScriptComponent::PreEditUndo()
 void UBangoScriptComponent::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
 {
 	Super::Super::PostEditUndo(TransactionAnnotation);
+	
+	Bango::Debug::PrintComponentState(this, "PostEditUndo");
 }
 #endif
 

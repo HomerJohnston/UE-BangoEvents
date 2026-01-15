@@ -168,7 +168,7 @@ void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APl
 
 			FVector End = EventComponent->GetComponentLocation();
 
-			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
+			Bango::Debug::Draw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
 		}
 	
 	}
@@ -183,7 +183,7 @@ void UBangoTrigger_EventTriggered::DebugDraw_Implementation(UCanvas* Canvas, APl
 
 			FVector End = Actor->GetActorLocation();
 
-			BangoUtility::DebugDraw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
+			Bango::Debug::Draw::DebugDrawDashedLine(GetWorld(), Start, End, 50.0f, Bango::Colors::TriggerDebugColor);
 		}
 	}
 }

@@ -199,7 +199,7 @@ void UBangoActorIDComponent::PrintGuid(const FString& FuncName)
 	}
 	
 	FString Msg = PrintedFuncName + " Guid: [" + BangoGuid.ToString() + "]";
-	BangoUtility::Debug::PrintComponentState(this, Msg);
+	Bango::Debug::PrintComponentState(this, Msg);
 }
 
 #if WITH_EDITOR

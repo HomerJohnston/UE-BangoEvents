@@ -1,6 +1,9 @@
 ﻿#pragma once
 
 #include "Containers/UnrealString.h"
+#include "UObject/SoftObjectPtr.h"
+
+class UBangoScript;
 
 namespace Bango::Editor
 {
@@ -18,4 +21,8 @@ namespace Bango::Editor
 	FString PathConvertToRelative(const FString& InPath);
 	
 	void DeleteUnreferencedScripts();
+	
+	bool IsScriptReferenced(TSoftClassPtr<UBangoScript> ScriptClass);
+	
+	void DeleteScriptIfUnreferenced(TSoftClassPtr<UBangoScript> ScriptClass);
 }
