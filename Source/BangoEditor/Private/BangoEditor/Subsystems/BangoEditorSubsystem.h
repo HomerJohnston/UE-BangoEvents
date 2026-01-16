@@ -20,22 +20,36 @@ namespace Bango
 			
 			Outer->Modify();
 			
-			InScriptContainer->Unset();
+			// InScriptContainer->Unset();
 		}
 		
 		TWeakObjectPtr<UObject> ScriptOuter;
+		FString OuterObjectPath;
+		
 		FBangoScriptContainer* ScriptContainer;
 		
 		TSoftClassPtr<UBangoScript> Script;
 		
 		bool operator==(const FScriptContainerKey& Other) const
 		{
-			return ScriptOuter == Other.ScriptOuter && ScriptContainer == Other.ScriptContainer;
+			if (ScriptContainer->GetScriptClass().IsNull())
+			{
+				return ScriptOuter == Other.ScriptOuter && ScriptContainer == Other.ScriptContainer;
+			}
+			
+			return ScriptContainer->GetScriptClass() == Other.ScriptContainer->GetScriptClass();
+			//return ScriptOuter == Other.ScriptOuter && ScriptContainer == Other.ScriptContainer;
 		}
 		
 		friend int32 GetTypeHash(const FScriptContainerKey& ScriptContainerKey)
 		{
-			return HashCombine(ScriptContainerKey.ScriptOuter.GetWeakPtrTypeHash(), GetTypeHash(ScriptContainerKey.ScriptContainer));
+			if (ScriptContainerKey.ScriptContainer->GetScriptClass().IsNull())
+			{
+				return HashCombine(ScriptContainerKey.ScriptOuter.GetWeakPtrTypeHash(), GetTypeHash(ScriptContainerKey.ScriptContainer));
+			}
+
+			return GetTypeHash(ScriptContainerKey.ScriptContainer->GetScriptClass().ToString());
+			//return HashCombine(ScriptContainerKey.ScriptOuter.GetWeakPtrTypeHash(), GetTypeHash(ScriptContainerKey.ScriptContainer));
 		}
 	};
 }
@@ -99,7 +113,8 @@ public:
 protected:
 	bool bDuplicateActorsActive = false;
 	bool bDeleteActorsActive = false;
-	
+	bool bMapLoading = false;
+
 	//TArray<TPair<FGuid, TStrongObjectPtr<UBangoScriptBlueprint>>> DeletedScripts;
 	
 public:
@@ -129,6 +144,8 @@ public:
 	void OnLevelActorDeleted(AActor* Actor) const;
 
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
+	void OnMapOpened(const FString& String, bool bArg);
+	
 	void PreSaveWorldWithContext(UWorld* World, FObjectPreSaveContext ObjectPreSaveContext) const;
 	
 	void OnObjectConstructed(UObject* Object) const;
@@ -148,9 +165,6 @@ public:
 	
 	void OnRequestNewID(AActor* Actor) const;
 	
-	void SoftDeleteLevelScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass);
-	static UBangoScriptBlueprint* RetrieveDeletedLevelScript(FGuid Guid);
-	
 private:
 	void EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer);
 	
@@ -164,7 +178,11 @@ enum class EScriptState : uint8
 };
 	
 	// When a component is created in the editor, it gets queued here. On the next tick, ProcessScriptRequestQueues will flush these. If a script is created and then destroyed, it will be added and removed to this queue. 
-	TMap<FScriptContainerKey, EScriptState> QueuedModifiedScriptComponents;
+	//TMap<FScriptContainerKey, EScriptState> QueuedModifiedScriptComponents;
+	
+	TSet<FScriptContainerKey> CreationRequests;
+	
+	TSet<TSoftClassPtr<UBangoScript>> DestructionRequests;
 	
 	FTimerHandle ProcessScriptRequestQueuesHandle;
 	
@@ -174,9 +192,11 @@ enum class EScriptState : uint8
 	
 	void ProcessCreatedScriptRequest(TWeakObjectPtr<UObject> Owner, FBangoScriptContainer* ScriptContainer);
 	
-	void ProcessDestroyedScriptRequest(TWeakObjectPtr<UObject> Owner, TSoftClassPtr<UBangoScript> ScriptClass);
+	void ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass);
 	
-	void CreateScript(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	void CreateLevelScript(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	
-	void DestroyScript(TSoftClassPtr<UBangoScript> ScriptClass);
+	void DuplicateLevelScript(UObject* Owner, FBangoScriptContainer* ScriptContainer);
+	
+	void TryUndeleteScript(FSoftObjectPath ScriptClassSoft, FBangoScriptContainer* ScriptContainer);
 };

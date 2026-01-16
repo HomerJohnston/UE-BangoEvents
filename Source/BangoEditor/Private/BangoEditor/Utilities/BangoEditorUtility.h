@@ -43,7 +43,5 @@ namespace Bango::Editor
 	// I can't find any existing PUBLIC code in this retarded engine to do this, so now I have to copy code from AssetViewUtils
 	bool DeleteEmptyFolderFromDisk(const FString& InPathToDelete);
 	
-	//void NewScriptRequested(UObject* Outer, FBangoScriptContainer* ScriptContainer, FGuid Guid = FGuid());
-	
 	FString GetLocalScriptName(FString InName);
 }

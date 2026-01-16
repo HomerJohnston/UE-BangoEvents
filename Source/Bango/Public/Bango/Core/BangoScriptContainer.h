@@ -26,19 +26,19 @@ public:
 private:
 	/** A brief description of the blueprint. This can be displayed in the level editor viewport. */
 	UPROPERTY(EditInstanceOnly)
-	FString Description;
+	FString Description = "";
 	
 	UPROPERTY(VisibleAnywhere)
-	TSoftClassPtr<UBangoScript> ScriptClass;
+	TSoftClassPtr<UBangoScript> ScriptClass = nullptr;
 	
 	// Used for async loading
-	TSharedPtr<FStreamableHandle> ScriptClassHandle;
+	TSharedPtr<FStreamableHandle> ScriptClassHandle = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	// Used during construction of the ScriptClass only
-	FString RequestedName;
+	FString RequestedName = "";
 	
-	bool bIsDuplicate;
+	bool bIsDuplicate = false;
 #endif
 	
 	// TODO I can probably delete this but keeping it in until the plugin is stable

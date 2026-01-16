@@ -31,7 +31,7 @@ bool UBangoScriptBlueprint::ShouldBeMarkedDirtyUponTransaction() const
 #if WITH_EDITOR
 const TSoftObjectPtr<AActor> UBangoScriptBlueprint::GetActor() const
 {
-	return TSoftObjectPtr<AActor>(FSoftObjectPath(Actor));
+	return TSoftObjectPtr<AActor>(FSoftObjectPath(ActorReference));
 }
 #endif
 

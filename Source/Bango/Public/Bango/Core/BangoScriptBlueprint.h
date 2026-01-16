@@ -65,7 +65,7 @@ protected:
 	// We use a raw FString to avoid editor issues with UE thinking that the actor is referenced by this script. 
 	/** Scripts *may* be tied to an actor. This is only used for blueprint editor niceties and has no effect on gameplay. */
 	UPROPERTY(NonPIEDuplicateTransient, TextExportTransient)
-	FString Actor;
+	FString ActorReference;
 	
 	// These are assigned when a script is deleted (i.e. when something owning a script is deleted), and is used to restore the script back to an identical-to-original state.
 	FString DeletedName; // The original name, e.g. ~BangoScript

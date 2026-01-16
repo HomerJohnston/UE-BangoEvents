@@ -46,32 +46,23 @@ void UBangoLevelScriptsEditorSubsystem::Initialize(FSubsystemCollectionBase& Col
 	GEngine->OnLevelActorDeleted().AddUObject(this, &ThisClass::OnLevelActorDeleted);
 	
 	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
+	FEditorDelegates::OnMapOpened.AddUObject(this, &ThisClass::OnMapOpened);
+	
 	FEditorDelegates::PreSaveWorldWithContext.AddUObject(this, &ThisClass::PreSaveWorldWithContext);
 	
-	// FEditorDelegates::OnAssetPostImport.AddUObject(this, &ThisClass::OnAssetPostImport);
-	// FEditorDelegates::OnPackageDeleted.AddUObject(this, &ThisClass::OnPackageDeleted);
-	// FEditorDelegates::OnAssetsAddExtraObjectsToDelete.AddUObject(this, &ThisClass::OnAssetsAddExtraObjectsToDelete);
-	// FEditorDelegates::OnAssetsPreDelete.AddUObject(this, &ThisClass::OnAssetsPreDelete);
-	// FEditorDelegates::OnAssetsDeleted.AddUObject(this, &ThisClass::OnAssetsDeleted);
 	FEditorDelegates::OnDuplicateActorsBegin.AddUObject(this, &ThisClass::OnDuplicateActorsBegin);
 	FEditorDelegates::OnDuplicateActorsEnd.AddUObject(this, &ThisClass::OnDuplicateActorsEnd);
-	// FCoreUObjectDelegates::OnObjectConstructed.AddUObject(this, &ThisClass::OnObjectConstructed);
-	// FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
-	// FCoreUObjectDelegates::OnAssetLoaded.AddUObject(this, &ThisClass::OnAssetLoaded);
-	// FCoreUObjectDelegates::OnObjectModified.AddUObject(this, &ThisClass::OnObjectModified);
 	FEditorDelegates::OnDeleteActorsBegin.AddUObject(this, &ThisClass::OnDeleteActorsBegin);
 	FEditorDelegates::OnDeleteActorsEnd.AddUObject(this, &ThisClass::OnDeleteActorsEnd);
 	
 	FCoreUObjectDelegates::OnObjectPreSave.AddUObject(this, &ThisClass::OnObjectPreSave);
-	
-	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentCreated.AddUObject(this, &ThisClass::OnScriptComponentCreated);
-	//GEditor->GetEditorSubsystem<UBangoScriptHelperSubsystem>()->OnScriptComponentDestroyed.AddUObject(this, &ThisClass::OnScriptComponentDestroyed);
 	
 	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnLevelScriptContainerCreated);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnLevelScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerUnregisteredDuringTransaction.AddUObject(this, &ThisClass::OnLevelScriptContainerUnregisteredDuringTransaction);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnLevelScriptContainerDuplicated);
 	
+	// TODO am I deprecating my ID system, do I need this?
 	FBangoEditorDelegates::RequestNewID.AddUObject(this, &ThisClass::OnRequestNewID);
 	
 	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
@@ -114,165 +105,9 @@ void UBangoLevelScriptsEditorSubsystem::OnObjectTransacted(UObject* Object, cons
 	UE_LOG(LogBangoEditor, Verbose, TEXT("OnObjectTransacted: %s, %i"), *Object->GetName(), (uint8)TransactionEvent.GetEventType());
 	
 	// TODO dismantle mount everest below
-	if (Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
-	{
-		/*
-		if (!ScriptComponent->ScriptContainer.GetGuid().IsValid())
-		{
-			// Hacky solution to force the Guid back into place. TODO investigate why the script class UPROP is intact but the Guid is not!
-			ScriptComponent->ScriptContainer.SetGuid(ScriptComponent->__UNDO_Script.GetGuid());
-		}
-		*/
-		
-		// This was undoing a deletion event; we will want to restore a script from the transient package
-		//EnqueueCreatedScriptComponent(Object, &ScriptComponent->ScriptContainer);
-		
-#if 0
-		// Find a script container on this thing and make it do stuff
-		for (TFieldIterator<FProperty> It(UBangoScriptComponent::StaticClass()); It; ++It)
-		{
-			const FProperty* Property = *It;
-			
-			if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
-			{
-				if (StructProperty->Struct == FBangoScriptContainer::StaticStruct())
-				{
-					void* Value = nullptr;
-					Value = StructProperty->ContainerPtrToValuePtr<void>(Object);
-					
-					if (Value)
-					{
-						FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(Value);
-						
-						TArray<UObject*> TransientObjects;
-						GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
-
-						for (UObject* TransientObject : TransientObjects)
-						{
-							if (UBangoScriptBlueprint* ScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
-							{
-								if (ScriptBlueprint->ScriptGuid == ScriptContainer->GetGuid())
-								{
-									if (FPackageName::DoesPackageExist(ScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
-									{
-										UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
-										ScriptContainer->Unset();
-										return;
-									}
-								
-									if (ISourceControlModule::Get().IsEnabled())
-									{
-										// No source control, just restore the transient copy we made on destroy into a new package. NOTE: The new package will have a few bytes different.
-										UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
-										RestoredPackage->SetFlags(RF_Public);
-										RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
-										RestoredPackage->SetPersistentGuid(ScriptBlueprint->DeletedPackagePersistentGuid);
-										RestoredPackage->SetPackageId(ScriptBlueprint->DeletedPackageId);
-									
-										ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-										ScriptBlueprint->Modify();
-										ScriptBlueprint->ClearFlags(RF_Transient);
-									
-										FAssetRegistryModule::AssetCreated(ScriptBlueprint);
-										(void)ScriptBlueprint->MarkPackageDirty();
-										//										RestoredPackage->FullyLoad();
-									
-										GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
-										/*
-										ISourceControlProvider& SourceControlProvider = ISourceControlModule::Get().GetProvider();
-
-										TArray<UPackage*> PackagesToSave;
-										for (UPackage* Package : DirtyDatabasePackages)
-										{
-											FSourceControlStatePtr SourceControlState = SourceControlProvider.GetState(Package, EStateCacheUsage::Use);
-											if (SourceControlState->IsCheckedOutOther())
-											{
-												UE_LOG(LogAnimationCompression, Warning, TEXT("Package %s is already checked out by someone, will not check out"), *SourceControlState->GetFilename());
-											}
-											else if (!SourceControlState->IsCurrent())
-											{
-												UE_LOG(LogAnimationCompression, Warning, TEXT("Package %s is not at head, will not check out"), *SourceControlState->GetFilename());
-											}
-											else if (SourceControlState->CanCheckout())
-											{
-												const ECommandResult::Type StatusResult = SourceControlProvider.Execute(ISourceControlOperation::Create<FCheckOut>(), Package);
-												if (StatusResult != ECommandResult::Succeeded)
-												{
-													UE_LOG(LogAnimationCompression, Log, TEXT("Package %s failed to check out"), *SourceControlState->GetFilename());
-													bFailedToSave = true;
-												}
-												else
-												{
-													PackagesToSave.Add(Package);
-												}
-											}
-											else if (!SourceControlState->IsSourceControlled() || SourceControlState->CanEdit())
-											{
-												PackagesToSave.Add(Package);
-											}
-										}
-
-										UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true);
-										ISourceControlModule::Get().QueueStatusUpdate(PackagesToSave);
-										*/
-									}
-									else
-									{
-										// No source control, just restore the transient copy we made on destroy into a new package. NOTE: The new package will have a few bytes different.
-										UPackage* RestoredPackage = CreatePackage(*ScriptBlueprint->DeletedPackagePath.ToString());
-										RestoredPackage->SetFlags(RF_Public);
-										RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
-										RestoredPackage->SetPersistentGuid(ScriptBlueprint->DeletedPackagePersistentGuid);
-										RestoredPackage->SetPackageId(ScriptBlueprint->DeletedPackageId);
-									
-										ScriptBlueprint->Rename(*ScriptBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-										ScriptBlueprint->Modify();
-										ScriptBlueprint->ClearFlags(RF_Transient);
-									
-										FAssetRegistryModule::AssetCreated(ScriptBlueprint);
-										(void)ScriptBlueprint->MarkPackageDirty();
-										//										RestoredPackage->FullyLoad();
-									
-										GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(ScriptBlueprint, false);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-#endif
-	}
-	else
+	if (!Bango::Editor::IsComponentInEditedLevel(ScriptComponent))
 	{
 		EnqueueDestroyedScriptComponent(Object, &ScriptComponent->ScriptContainer);
-		// This was undoing a creation event; we will want to delete the blueprint asset
-		
-		/*
-		if (ISourceControlModule::Get().IsEnabled())
-		{
-			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->ScriptContainer.GetScriptClass();
-		
-			if (!ScriptClass)
-			{
-				ScriptClass = ScriptComponent->__UNDO_Script.GetScriptClass();
-			}
-		
-			OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);	
-		}
-		else
-		{
-			TSoftClassPtr<UBangoScript> ScriptClass = ScriptComponent->ScriptContainer.GetScriptClass();
-		
-			if (!ScriptClass)
-			{
-				ScriptClass = ScriptComponent->__UNDO_Script.GetScriptClass();
-			}
-		
-			OnLevelScriptContainerDestroyed(ScriptComponent, ScriptClass);	
-		}
-		*/
 	}
 }
 
@@ -371,13 +206,20 @@ void UBangoLevelScriptsEditorSubsystem::OnLevelActorDeleted(AActor* Actor) const
 
 void UBangoLevelScriptsEditorSubsystem::OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap)
 {
+	bMapLoading = true;
+	
 	// TODO check if I need to do this. The intent is to obliterate "undo" soft delete script assets.
 	auto DelayCollectGarbage = FTimerDelegate::CreateLambda([] ()
 	{
 		CollectGarbage(RF_NoFlags);	
 	});
-		
+	
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayCollectGarbage);
+}
+
+void UBangoLevelScriptsEditorSubsystem::OnMapOpened(const FString& String, bool bArg)
+{
+	bMapLoading = false;
 }
 
 // TODO erase
@@ -580,7 +422,7 @@ void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerCreated(UObject* O
 			UBangoScriptBlueprint* Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, NewBlueprintName, NewScriptGuid);
 			
 			Blueprint->Modify();
-			Blueprint->Actor = Actor->GetPathName();
+			Blueprint->ActorReference = Actor->GetPathName();
 			
 			if (Blueprint)
 			{
@@ -720,7 +562,7 @@ void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerDuplicated(UObject
 		if (SourceBlueprint)
 		{
 			NewBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, BlueprintName, NewScriptGuid);
-			NewBlueprint->Actor = Outer->GetTypedOuter<AActor>()->GetPathName();	
+			NewBlueprint->ActorReference = Outer->GetTypedOuter<AActor>()->GetPathName();	
 		}
 
 		if (NewBlueprint)
@@ -745,174 +587,102 @@ void UBangoLevelScriptsEditorSubsystem::OnRequestNewID(AActor* Actor) const
 	FBangoEditorMenus::SetEditActorID(Actor, true);
 }
 
-void UBangoLevelScriptsEditorSubsystem::SoftDeleteLevelScriptPackage(TSoftClassPtr<UBangoScript> ScriptClass)
-{/*
-	UE_LOG(LogBangoEditor, Verbose, TEXT("SoftDeleteLevelScriptPackage: %s"), *ScriptClass.ToSoftObjectPath().ToString());
-	
-	// I have to delay this by one frame or else I get really weird editor crashes, 
-	// something about running ObjectTools::ForceDeleteObjects from my component's OnComponentDestroy causes the garbage collector to freak out.
-	
-	//auto DelayedDelete = [ScriptClass] ()
-	//{
-		if (Bango::Editor::IsScriptReferenced(ScriptClass))
-		{
-			return;
-		}
-		
-		UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
-	
-		if (!Blueprint)
-		{
-			UE_LOG(LogBangoEditor, Error, TEXT("SoftDeleteLevelScriptPackage failed - Null Blueprint: %s"), *ScriptClass.ToSoftObjectPath().GetAssetPathString());
-			return;
-		}
-		
-		UPackage* OldPackage = Blueprint->GetPackage();
-	
-		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
-
-		Blueprint->ClearEditorReferences();
-	
-		// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
-		// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
-		Blueprint->DeletedName = Blueprint->GetName();
-		Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
-		Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
-		Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-		Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-		
-		UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
-		
-		int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
-				
-		if (NumDelete == 0)
-		{
-			ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
-		}
-
-		Bango::Editor::DeleteEmptyLevelScriptFolders();
-	//};
-	
-	//GEditor->GetTimerManager()->SetTimerForNextTick(DelayedDelete);*/
-}
-
-UBangoScriptBlueprint* UBangoLevelScriptsEditorSubsystem::RetrieveDeletedLevelScript(FGuid Guid)
-{
-	UE_LOG(LogBangoEditor, Verbose, TEXT("RetrieveDeletedLevelScript: %s"), *Guid.ToString());
-	
-	TArray<UObject*> AllTransientObjects;
-	GetObjectsWithOuter(GetTransientPackage(), AllTransientObjects);
-	
-	int32 Index = AllTransientObjects.IndexOfByPredicate([Guid] (const UObject* Element)
-	{
-		if (const UBangoScriptBlueprint* Script = Cast<UBangoScriptBlueprint>(Element))
-		{
-			return Script->ScriptGuid == Guid;
-		}
-		
-		return false;
-	});
-	
-	if (Index != INDEX_NONE)
-	{
-		return Cast<UBangoScriptBlueprint>(AllTransientObjects[Index]);
-	}
-	
-	return nullptr;
-}
-
 void UBangoLevelScriptsEditorSubsystem::EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
+	if (bMapLoading)
+	{
+		return;
+	}
+	
 	if (!Owner || !ScriptContainer)
 	{
 		checkNoEntry();
 		return;
 	}
 	
+	UE_LOG(LogBangoEditor, Verbose, TEXT("EnqueueCreatedScriptComponent: %s (%p)"), *Owner->GetName(), ScriptContainer);
+	
 	FScriptContainerKey Key(Owner, ScriptContainer);
-	
-	EScriptState& ScriptState = QueuedModifiedScriptComponents.FindOrAdd(Key);
-	ScriptState = EScriptState::Created;
-
+	CreationRequests.Add(Key);
 	QueueProcessScriptRequestQueues();
-	
-	/*
-	// Last operation prevails!
-	QueuedDestroyedScripts.Remove(Owner);
-	
-	UE_LOG(LogBangoEditor, Verbose, TEXT("EnqueueCreatedScriptComponent: %s (%p), %s"), *Owner->GetName(), Owner, *ScriptContainer->GetScriptClass().ToString());
-	QueuedCreatedScriptComponents.Add(Owner, ScriptContainer);
-	QueueProcessScriptRequestQueues();
-	*/
 }
 
 void UBangoLevelScriptsEditorSubsystem::EnqueueDestroyedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
+	if (bMapLoading)
+	{
+		return;
+	}
+	
 	if (!Owner || !ScriptContainer)
 	{
 		checkNoEntry();
 		return;
 	}
 	
-	FScriptContainerKey Key(Owner, ScriptContainer);
-	
-	EScriptState& ScriptState = QueuedModifiedScriptComponents.FindOrAdd(Key);
-	ScriptState = EScriptState::Destroyed;
-
-	QueueProcessScriptRequestQueues();
-	
-	/*
-	// Last operation prevails!
-	QueuedCreatedScriptComponents.Remove(Owner);
-
-	if (!ScriptClass.IsNull())
+	if (!ScriptContainer->GetGuid().IsValid())
 	{
-		UE_LOG(LogBangoEditor, Verbose, TEXT("EnqueueDestroyedScriptComponent: %s (%p), %s"), *Owner->GetName(), Owner, *ScriptClass.ToString());
-		QueuedDestroyedScripts.Add(Owner, ScriptClass);
-		QueueProcessScriptRequestQueues();
+		return;
 	}
-	*/
+	
+	if (ScriptContainer->GetScriptClass().IsNull())
+	{
+		return;
+	}
+	
+	UE_LOG(LogBangoEditor, Verbose, TEXT("EnqueueDestroyedScriptComponent: %s (%p)"), *Owner->GetName(), ScriptContainer);
+	
+	DestructionRequests.Add(ScriptContainer->GetScriptClass());
+	QueueProcessScriptRequestQueues();
 }
 
 void UBangoLevelScriptsEditorSubsystem::QueueProcessScriptRequestQueues()
 {
-	if (!ProcessScriptRequestQueuesHandle.IsValid())
+	TWeakObjectPtr<UBangoLevelScriptsEditorSubsystem> WeakThis = this;
+			
+	auto ProcessScriptRequestQueuesNextTick = FTimerDelegate::CreateLambda([WeakThis] ()
 	{
-		TWeakObjectPtr<UBangoLevelScriptsEditorSubsystem> WeakThis = this;
-			
-		auto ProcessScriptRequestQueuesNextTick = [WeakThis] ()
+		if (WeakThis.IsValid())
 		{
-			if (WeakThis.IsValid())
-			{
-				WeakThis->ProcessScriptRequestQueues();
-			}
-		};
-			
-		ProcessScriptRequestQueuesHandle = GEditor->GetTimerManager()->SetTimerForNextTick(ProcessScriptRequestQueuesNextTick);
-	}
+			WeakThis->ProcessScriptRequestQueues();
+		}
+	});
+		
+	ProcessScriptRequestQueuesHandle = GEditor->GetTimerManager()->SetTimerForNextTick(ProcessScriptRequestQueuesNextTick);
 }
 
 void UBangoLevelScriptsEditorSubsystem::ProcessScriptRequestQueues()
 {
-	for (const auto&[RequestKey, Request] : QueuedModifiedScriptComponents)
+	UE_LOG(LogBangoEditor, Verbose, TEXT("--------------------------------"))
+	UE_LOG(LogBangoEditor, Verbose, TEXT("ProcessScriptRequestQueue"))
+
+	// This should always be running one frame later than the requests were queued
+	
+	for (const auto& Request : CreationRequests)
 	{
-		switch (Request)
+		if (!Request.ScriptOuter.IsValid())
 		{
-			case EScriptState::Created:
-			{
-				ProcessCreatedScriptRequest(RequestKey.ScriptOuter, RequestKey.ScriptContainer);
-				break;
-			}
-			case EScriptState::Destroyed:
-			{
-				ProcessDestroyedScriptRequest(RequestKey.ScriptOuter, RequestKey.Script);
-				break;
-			}
+			continue;
 		}
+		
+		TSoftClassPtr<UBangoScript> Script = Request.ScriptContainer->GetScriptClass();
+		UE_LOG(LogBangoEditor, Verbose, TEXT("     %s"),*Request.ScriptContainer->GetScriptClass().ToString());
+		
+		// We want creation requests to take priority; parse through creations first and have any creation requests cancel out any destruction requestss
+		DestructionRequests.Remove(Script);
+		ProcessCreatedScriptRequest(Request.ScriptOuter, Request.ScriptContainer);
 	}
 	
+	for (const TSoftClassPtr<UBangoScript>& DestroyedScript : DestructionRequests)
+	{
+		ProcessDestroyedScriptRequest(DestroyedScript);
+	}
+	
+	CreationRequests.Empty();
+	DestructionRequests.Empty();
 	ProcessScriptRequestQueuesHandle.Invalidate();
-	QueuedModifiedScriptComponents.Empty();
+	
+	UE_LOG(LogBangoEditor, Verbose, TEXT("--------------------------------"))
 }
 
 void UBangoLevelScriptsEditorSubsystem::ProcessCreatedScriptRequest(TWeakObjectPtr<UObject> Owner, FBangoScriptContainer* ScriptContainer)
@@ -927,51 +697,13 @@ void UBangoLevelScriptsEditorSubsystem::ProcessCreatedScriptRequest(TWeakObjectP
 	if (ExistingScriptClass.IsNull())
 	{
 		// This must be a fresh shiny brand new script container. Make a script for it!
-		CreateScript(Owner.Get(), ScriptContainer);
+		CreateLevelScript(Owner.Get(), ScriptContainer);
 	}
 	else
 	{
 		if (ScriptContainer->ConsumeDuplicate())
 		{
-			UBangoScriptBlueprint* SourceBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
-		
-			// Prepare the newly duplicated script container
-			ScriptContainer->Unset();
-		
-			FGuid NewScriptGuid = FGuid::NewGuid(); 
-			ScriptContainer->SetGuid(NewScriptGuid);
-		
-			// Duplicate the blueprint
-			UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Owner.Get(), NewScriptGuid);
-		
-			if (!NewScriptPackage)
-			{
-				UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
-				return;
-			}
-		
-			UE_LOG(LogBangoEditor, Verbose, TEXT("OnLevelScriptContainerDuplicated: %s, %s, %s"), *Owner->GetName(), *ScriptContainer->GetGuid().ToString(), *ScriptContainer->GetRequestedName());
-		
-			UBangoScriptBlueprint* DuplicatedBlueprint = nullptr;
-		
-			if (SourceBlueprint)
-			{
-				DuplicatedBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, ScriptContainer->GetRequestedName(), NewScriptGuid);
-				DuplicatedBlueprint->Actor = Owner->GetTypedOuter<AActor>()->GetPathName();	
-			}
-
-			if (DuplicatedBlueprint)
-			{
-				ScriptContainer->SetScriptClass(DuplicatedBlueprint->GeneratedClass);
-	
-				FKismetEditorUtilities::CompileBlueprint(DuplicatedBlueprint);
-				
-				FAssetRegistryModule::AssetCreated(DuplicatedBlueprint);
-				(void)NewScriptPackage->MarkPackageDirty();
-	
-				// Tells FBangoScript property type customizations to regenerate
-				OnScriptGenerated.Broadcast();	
-			}
+			DuplicateLevelScript(Owner.Get(), ScriptContainer);
 		}
 		else
 		{
@@ -983,81 +715,19 @@ void UBangoLevelScriptsEditorSubsystem::ProcessCreatedScriptRequest(TWeakObjectP
 			if (!bScriptExists)
 			{
 				// This must have been an undo-delete. Let's see if we can find the script class in the Transient Package.
-				TArray<UObject*> TransientObjects;
-                GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
-    
-                UBangoScriptBlueprint* MatchedBlueprint = nullptr;
-                
-                for (UObject* TransientObject : TransientObjects)
-                {
-                	if (UBangoScriptBlueprint* TransientBangoScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
-                	{
-                		if (TransientBangoScriptBlueprint->DeletedPackagePath == ScriptClassSoft.GetAssetPath().GetPackageName().ToString())
-                		{
-                			if (FPackageName::DoesPackageExist(TransientBangoScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
-                			{
-                				UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
-                				ScriptContainer->Unset();
-                			}
-                			else
-                			{
-                				MatchedBlueprint = TransientBangoScriptBlueprint;
-                				break;
-                			}
-                		}
-                	}
-                }
-                
-                if (MatchedBlueprint)
-                {
-                	UPackage* RestoredPackage = CreatePackage(*MatchedBlueprint->DeletedPackagePath.ToString());
-                	RestoredPackage->SetFlags(RF_Public);
-                	RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
-                	RestoredPackage->SetPersistentGuid(MatchedBlueprint->DeletedPackagePersistentGuid);
-                	RestoredPackage->SetPackageId(MatchedBlueprint->DeletedPackageId);
-                						
-                	MatchedBlueprint->Rename(*MatchedBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-                	MatchedBlueprint->Modify();
-                	MatchedBlueprint->ClearFlags(RF_Transient);
-                						
-                	FAssetRegistryModule::AssetCreated(MatchedBlueprint);
-                	(void)MatchedBlueprint->MarkPackageDirty();
-                	
-                	if (RestoredPackage->GetPackageId().IsValid())
-                	{
-                		GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(MatchedBlueprint, false);
-                	}
-                }
-                else
-                {
-                	UE_LOG(LogBangoEditor, Warning, TEXT("Error - could not find associated blueprint for %s"), *ScriptClassSoft.ToString());
-                }
+				TryUndeleteScript(ScriptClassSoft, ScriptContainer);
 			}
 		}
 	}
 }
 
-void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TWeakObjectPtr<UObject> Owner, TSoftClassPtr<UBangoScript> ScriptClass)
+void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass)
 {
 	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
 	
 	if (ScriptClassPath.IsNull())
 	{
-		// This can happen if you 1) Add a UBangoScriptComponent to an actor, 2) press Undo (without saving or doing anything else)
 		return;
-	}
-	
-	UE_LOG(LogBangoEditor, Verbose, TEXT("SoftDeleteLevelScriptPackage: %s"), *ScriptClass.ToSoftObjectPath().ToString());
-	
-	// I have to delay this by one frame or else I get really weird editor crashes, 
-	// something about running ObjectTools::ForceDeleteObjects from my component's OnComponentDestroy causes the garbage collector to freak out.
-	
-	//auto DelayedDelete = [ScriptClass] ()
-	//{
-	if (Bango::Editor::IsScriptReferenced(ScriptClass))
-	{
-		//UE_LOG(LogBangoEditor, Warning, TEXT("Tried to destroy script but it was still referenced! This should never happen. %s"), *ScriptClassPath.ToString());
-		//return;
 	}
 	
 	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
@@ -1082,6 +752,7 @@ void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TWeakObjec
 	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
 	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
 	
+	// TODO Is there another way to make this work without this? I can't successfully run ObjectTools' delete funcs on a UPackage, only on an asset inside a UPackage!
 	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
 	
 	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
@@ -1092,54 +763,22 @@ void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TWeakObjec
 	}
 
 	Bango::Editor::DeleteEmptyLevelScriptFolders();
-	//};
-	
-	//GEditor->GetTimerManager()->SetTimerForNextTick(DelayedDelete);
-	
-	
-	//SoftDeleteLevelScriptPackage(ScriptClass);
-	
-	//Bango::Editor::DeleteScriptIfUnreferenced(ScriptClass);
 }
 
-void UBangoLevelScriptsEditorSubsystem::CreateScript(UObject* Outer, FBangoScriptContainer* ScriptContainer)
+void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBangoScriptContainer* ScriptContainer)
 {
+	// This function must be ran one frame *after* the script container is created. This gives UE time finish all serialization behavior.
+	
 	if (ScriptContainer->GetGuid().IsValid())
 	{
+		// We don't want to create a new script if it already has one
 		return;
-		/*
-		if (!Outer->HasAnyFlags(RF_WasLoaded))
-		{
-			// This creation is from an undo operation. We destroyed the package before during delete, so make a new one.
-			ScriptPackage = Bango::Editor::MakePackageForScript(Outer, NewBlueprintName, ScriptContainer->Guid);
-	
-			if (!ScriptPackage)
-			{
-				UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
-				return;
-			}
-	
-			UBangoScriptBlueprint* FoundBlueprint = nullptr;
-			FBangoEditorDelegates::OnBangoActorComponentUndoDelete.Broadcast(ScriptContainer->Guid, FoundBlueprint);
-		
-			if (FoundBlueprint)
-			{
-				Blueprint = FoundBlueprint;
-				Blueprint->StopListeningForUndelete();
-				Blueprint->Rename(*Blueprint->RetrieveDeletedName(), ScriptPackage, REN_DontCreateRedirectors | REN_NonTransactional);
-			}
-		}
-		*/
 	}
 	else
 	{
-		UE_LOG(LogBangoEditor, Verbose, TEXT("OnLevelScriptContainerCreated: %s"), *Outer->GetName());
-
-		// This creation is from a new addition
 		Outer->Modify();
 		
-		// This is storing my script blueprints in __BangoScripts__ packages - this is harder to figure out how to manage reliably and is WIP
-		// Pros: similar to OFPA, designers don't have VCS conflicts... and you can have multiple with the same name
+		// All level scripts are supposed to be tied to an actor, although it doesn't actually do anything at runtime, it is moreso an editor concept.
 		AActor* Actor = Outer->GetTypedOuter<AActor>();
 		
 		FGuid NewScriptGuid = FGuid::NewGuid(); 
@@ -1147,6 +786,15 @@ void UBangoLevelScriptsEditorSubsystem::CreateScript(UObject* Outer, FBangoScrip
 		
 		UPackage* ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewScriptGuid);
 		
+		if (!ScriptPackage)
+		{
+			UE_LOG(LogBangoEditor, Error, TEXT("Failed to create package for new Bango level script asset! Perhaps a file system issue?"));
+			return;
+		}
+
+		UE_LOG(LogBangoEditor, Display, TEXT("Created new Bango level script asset: %s"), *ScriptPackage->GetPathName());
+		
+		// Higher-level systems can fill in the requested name to get it passed in here for creation. This was a bit of a late-stage hack, not very "clean code", but it works fine
 		FString NewBlueprintName = ScriptContainer->GetRequestedName();
 		
 		if (NewBlueprintName.IsEmpty())
@@ -1154,104 +802,139 @@ void UBangoLevelScriptsEditorSubsystem::CreateScript(UObject* Outer, FBangoScrip
 			NewBlueprintName = FPackageName::GetShortName(ScriptPackage);
 		}
 		
+		// Make the actual script blueprint asset!
 		UBangoScriptBlueprint* Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, NewBlueprintName, NewScriptGuid);
 		
 		Blueprint->Modify();
-		Blueprint->Actor = Actor->GetPathName();
+		Blueprint->ActorReference = Actor->GetPathName();
 		
-		if (Blueprint)
+		if (!Blueprint)
 		{
-			Blueprint->SetGuid(ScriptContainer->GetGuid());
-			
-			UClass* GenClass = Blueprint->GeneratedClass;
-			
-			if (GenClass)
-			{
-				UObject* CDO = GenClass->GetDefaultObject();
-				UBangoScript* BangoScript = Cast<UBangoScript>(CDO);
-				
-				if (BangoScript)
-				{
-					BangoScript->SetThis_ClassType(Actor->GetClass());
-				}
-			}
-		
-			ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
-		
-			FKismetEditorUtilities::CompileBlueprint(Blueprint);
-			
-			FAssetRegistryModule::AssetCreated(Blueprint);
-			(void)ScriptPackage->MarkPackageDirty();
-		
-			// Tells FBangoScript property type customizations to regenerate
-			OnScriptGenerated.Broadcast();	
+			UE_LOG(LogBangoEditor, Error, TEXT("Failed to create new level script!"))
+			return;
 		}
+	
+		Blueprint->SetGuid(ScriptContainer->GetGuid());
+		
+		UClass* GenClass = Blueprint->GeneratedClass;
+		
+		if (GenClass)
+		{
+			UObject* CDO = GenClass->GetDefaultObject();
+			UBangoScript* BangoScript = Cast<UBangoScript>(CDO);
+			
+			if (BangoScript)
+			{
+				// This enables the "This" node to self-setup its own output cast type
+				BangoScript->SetThis_ClassType(Actor->GetClass());
+			}
+		}
+	
+		ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
+	
+		FKismetEditorUtilities::CompileBlueprint(Blueprint);
+		FAssetRegistryModule::AssetCreated(Blueprint);
+		(void)ScriptPackage->MarkPackageDirty();
+	
+		// Tells FBangoScript property type customizations to regenerate their view
+		OnScriptGenerated.Broadcast();	
 	}
 }
 
-void UBangoLevelScriptsEditorSubsystem::DestroyScript(TSoftClassPtr<UBangoScript> ScriptClass)
+void UBangoLevelScriptsEditorSubsystem::DuplicateLevelScript(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
-	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
-	
-	if (ScriptClassPath.IsNull())
+	UBangoScriptBlueprint* SourceBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
+		
+	// Prepare the newly duplicated script container
+	ScriptContainer->Unset();
+		
+	FGuid NewScriptGuid = FGuid::NewGuid(); 
+	ScriptContainer->SetGuid(NewScriptGuid);
+		
+	// Duplicate the blueprint
+	UPackage* NewScriptPackage = Bango::Editor::MakeLevelScriptPackage(Owner, NewScriptGuid);
+		
+	if (!NewScriptPackage)
 	{
-		// This can happen if you 1) Add a UBangoScriptComponent to an actor, 2) press Undo (without saving or doing anything else)
+		UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
 		return;
 	}
-	
-	UE_LOG(LogBangoEditor, Verbose, TEXT("SoftDeleteLevelScriptPackage: %s"), *ScriptClass.ToSoftObjectPath().ToString());
-	
-	// I have to delay this by one frame or else I get really weird editor crashes, 
-	// something about running ObjectTools::ForceDeleteObjects from my component's OnComponentDestroy causes the garbage collector to freak out.
-	
-	//auto DelayedDelete = [ScriptClass] ()
-	//{
-	if (Bango::Editor::IsScriptReferenced(ScriptClass))
+		
+	UE_LOG(LogBangoEditor, Verbose, TEXT("OnLevelScriptContainerDuplicated: %s, %s, %s"), *Owner->GetName(), *ScriptContainer->GetGuid().ToString(), *ScriptContainer->GetRequestedName());
+		
+	UBangoScriptBlueprint* DuplicatedBlueprint = nullptr;
+		
+	if (SourceBlueprint)
 	{
-		//UE_LOG(LogBangoEditor, Warning, TEXT("Tried to destroy script but it was still referenced! This should never happen. %s"), *ScriptClassPath.ToString());
-		//return;
-	}
-	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
-
-	if (!Blueprint)
-	{
-		UE_LOG(LogBangoEditor, Warning, TEXT("Could not find blueprint for script class %s"), *ScriptClass.ToString());
-		return;
-	}
-	
-	UPackage* OldPackage = Blueprint->GetPackage();
-
-	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
-
-	Blueprint->ClearEditorReferences();
-
-	// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
-	// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
-	Blueprint->DeletedName = Blueprint->GetName();
-	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
-	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
-	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-	
-	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
-	
-	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
-			
-	if (NumDelete == 0)
-	{
-		ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
+		DuplicatedBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, ScriptContainer->GetRequestedName(), NewScriptGuid);
+		DuplicatedBlueprint->ActorReference = Owner->GetTypedOuter<AActor>()->GetPathName();	
 	}
 
-	Bango::Editor::DeleteEmptyLevelScriptFolders();
-	//};
+	if (DuplicatedBlueprint)
+	{
+		ScriptContainer->SetScriptClass(DuplicatedBlueprint->GeneratedClass);
 	
-	//GEditor->GetTimerManager()->SetTimerForNextTick(DelayedDelete);
+		FKismetEditorUtilities::CompileBlueprint(DuplicatedBlueprint);
+				
+		FAssetRegistryModule::AssetCreated(DuplicatedBlueprint);
+		(void)NewScriptPackage->MarkPackageDirty();
 	
-	
-	//SoftDeleteLevelScriptPackage(ScriptClass);
-	
-	//Bango::Editor::DeleteScriptIfUnreferenced(ScriptClass);
+		// Tells FBangoScript property type customizations to regenerate
+		OnScriptGenerated.Broadcast();	
+	}
+}
+
+void UBangoLevelScriptsEditorSubsystem::TryUndeleteScript(FSoftObjectPath ScriptClassSoft, FBangoScriptContainer* ScriptContainer)
+{
+	TArray<UObject*> TransientObjects;
+    GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
+
+    UBangoScriptBlueprint* MatchedBlueprint = nullptr;
+    
+    for (UObject* TransientObject : TransientObjects)
+    {
+        if (UBangoScriptBlueprint* TransientBangoScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
+        {
+            if (TransientBangoScriptBlueprint->DeletedPackagePath == ScriptClassSoft.GetAssetPath().GetPackageName().ToString())
+            {
+                if (FPackageName::DoesPackageExist(TransientBangoScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
+                {
+                	UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
+                	ScriptContainer->Unset();
+                }
+                else
+                {
+                	MatchedBlueprint = TransientBangoScriptBlueprint;
+                	break;
+                }
+            }
+        }
+    }
+    
+    if (MatchedBlueprint)
+    {
+        UPackage* RestoredPackage = CreatePackage(*MatchedBlueprint->DeletedPackagePath.ToString());
+        RestoredPackage->SetFlags(RF_Public);
+        RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+        RestoredPackage->SetPersistentGuid(MatchedBlueprint->DeletedPackagePersistentGuid);
+        RestoredPackage->SetPackageId(MatchedBlueprint->DeletedPackageId);
+                			
+        MatchedBlueprint->Rename(*MatchedBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+        MatchedBlueprint->Modify();
+        MatchedBlueprint->ClearFlags(RF_Transient);
+                			
+        FAssetRegistryModule::AssetCreated(MatchedBlueprint);
+        (void)MatchedBlueprint->MarkPackageDirty();
+        
+        if (RestoredPackage->GetPackageId().IsValid())
+        {
+            GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(MatchedBlueprint, false);
+        }
+    }
+    else
+    {
+        UE_LOG(LogBangoEditor, Warning, TEXT("Error - could not find associated blueprint for %s"), *ScriptClassSoft.ToString());
+    }
 }
 
 #undef LOCTEXT_NAMESPACE
