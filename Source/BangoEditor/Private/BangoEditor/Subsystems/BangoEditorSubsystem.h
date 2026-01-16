@@ -15,6 +15,12 @@ namespace Bango
 			, ScriptContainer(InScriptContainer)
 		{
 			Script = ScriptContainer->GetScriptClass();
+			
+			UObject* Outer = InScriptOuter.Get(true);
+			
+			Outer->Modify();
+			
+			InScriptContainer->Unset();
 		}
 		
 		TWeakObjectPtr<UObject> ScriptOuter;

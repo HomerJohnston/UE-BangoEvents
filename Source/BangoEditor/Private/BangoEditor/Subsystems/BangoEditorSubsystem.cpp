@@ -975,58 +975,63 @@ void UBangoLevelScriptsEditorSubsystem::ProcessCreatedScriptRequest(TWeakObjectP
 		}
 		else
 		{
-			// This must have been an undo-delete operation. Find the existing script.
-			TArray<UObject*> TransientObjects;
-			GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
-
-			UBangoScriptBlueprint* MatchedBlueprint = nullptr;
-			
-			for (UObject* TransientObject : TransientObjects)
-			{
-				if (UBangoScriptBlueprint* TransientBangoScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
-				{
-					FSoftObjectPath ScriptClassSoft(ScriptContainer->GetScriptClass().ToSoftObjectPath());
+			// This script container already has a script class assigned, *and* it wasn't a duplicate... 			
+			FSoftObjectPath ScriptClassSoft(ScriptContainer->GetScriptClass().ToSoftObjectPath());
 					
-					//if (TransientBangoScriptBlueprint->ScriptGuid == ScriptContainer->GetGuid() || TransientBangoScriptBlueprint->DeletedPackagePath == ScriptClassSoft.GetAssetPath().GetPackageName().ToString())
-					if (TransientBangoScriptBlueprint->DeletedPackagePath == ScriptClassSoft.GetAssetPath().GetPackageName().ToString())
-					{
-						if (FPackageName::DoesPackageExist(TransientBangoScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
-						{
-							UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
-							ScriptContainer->Unset();
-						}
-						else
-						{
-							MatchedBlueprint = TransientBangoScriptBlueprint;
-							break;
-						}
-					}
-				}
-			}
+			bool bScriptExists = FPackageName::DoesPackageExist(ScriptClassSoft.GetLongPackageName());
 			
-			if (MatchedBlueprint)
+			if (!bScriptExists)
 			{
-				UPackage* RestoredPackage = CreatePackage(*MatchedBlueprint->DeletedPackagePath.ToString());
-				RestoredPackage->SetFlags(RF_Public);
-				RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
-				RestoredPackage->SetPersistentGuid(MatchedBlueprint->DeletedPackagePersistentGuid);
-				RestoredPackage->SetPackageId(MatchedBlueprint->DeletedPackageId);
-									
-				MatchedBlueprint->Rename(*MatchedBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-				MatchedBlueprint->Modify();
-				MatchedBlueprint->ClearFlags(RF_Transient);
-									
-				FAssetRegistryModule::AssetCreated(MatchedBlueprint);
-				(void)MatchedBlueprint->MarkPackageDirty();
-				
-				if (RestoredPackage->GetPackageId().IsValid())
-				{
-					GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(MatchedBlueprint, false);
-				}
-			}
-			else
-			{
-				UE_LOG(LogBangoEditor, Warning, TEXT("Error - could not find associated blueprint for undo op."));
+				// This must have been an undo-delete. Let's see if we can find the script class in the Transient Package.
+				TArray<UObject*> TransientObjects;
+                GetObjectsWithOuter(GetTransientPackage(), TransientObjects);
+    
+                UBangoScriptBlueprint* MatchedBlueprint = nullptr;
+                
+                for (UObject* TransientObject : TransientObjects)
+                {
+                	if (UBangoScriptBlueprint* TransientBangoScriptBlueprint = Cast<UBangoScriptBlueprint>(TransientObject))
+                	{
+                		if (TransientBangoScriptBlueprint->DeletedPackagePath == ScriptClassSoft.GetAssetPath().GetPackageName().ToString())
+                		{
+                			if (FPackageName::DoesPackageExist(TransientBangoScriptBlueprint->DeletedPackagePath.GetLongPackageName()))
+                			{
+                				UE_LOG(LogBango, Warning, TEXT("Tried to restore deleted Bango Blueprint but there was another package at the location. Invalidating this Script Container property."));
+                				ScriptContainer->Unset();
+                			}
+                			else
+                			{
+                				MatchedBlueprint = TransientBangoScriptBlueprint;
+                				break;
+                			}
+                		}
+                	}
+                }
+                
+                if (MatchedBlueprint)
+                {
+                	UPackage* RestoredPackage = CreatePackage(*MatchedBlueprint->DeletedPackagePath.ToString());
+                	RestoredPackage->SetFlags(RF_Public);
+                	RestoredPackage->SetPackageFlags(PKG_NewlyCreated);
+                	RestoredPackage->SetPersistentGuid(MatchedBlueprint->DeletedPackagePersistentGuid);
+                	RestoredPackage->SetPackageId(MatchedBlueprint->DeletedPackageId);
+                						
+                	MatchedBlueprint->Rename(*MatchedBlueprint->DeletedName, RestoredPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+                	MatchedBlueprint->Modify();
+                	MatchedBlueprint->ClearFlags(RF_Transient);
+                						
+                	FAssetRegistryModule::AssetCreated(MatchedBlueprint);
+                	(void)MatchedBlueprint->MarkPackageDirty();
+                	
+                	if (RestoredPackage->GetPackageId().IsValid())
+                	{
+                		GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->SaveLoadedAsset(MatchedBlueprint, false);
+                	}
+                }
+                else
+                {
+                	UE_LOG(LogBangoEditor, Warning, TEXT("Error - could not find associated blueprint for %s"), *ScriptClassSoft.ToString());
+                }
 			}
 		}
 	}
