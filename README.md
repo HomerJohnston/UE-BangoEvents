@@ -1,4 +1,4 @@
-# UE-BangoEvents
-Event trigger system for UE
+# Bango Scripts
+A scripting system for UE powered by blueprints.
 
-In alpha status
+Dependencies: Unreal Engine 5.7
