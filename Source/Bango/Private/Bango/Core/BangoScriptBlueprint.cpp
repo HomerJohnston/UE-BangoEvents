@@ -16,6 +16,14 @@ UBangoScriptBlueprint::UBangoScriptBlueprint()
 {
 	bForceFullEditor = true;
 }
+
+bool UBangoScriptBlueprint::ShouldBeMarkedDirtyUponTransaction() const
+{
+	// return Super::ShouldBeMarkedDirtyUponTransaction();
+
+	// TODO spend some time investigating if this might break anything. If I leave this on, then "undoing" duplication or creation of a script component can throw an odd ensure message about blueprint compilation.
+	return false;
+}
 #endif
 
 // ----------------------------------------------

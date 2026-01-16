@@ -37,6 +37,8 @@ private:
 #if WITH_EDITORONLY_DATA
 	// Used during construction of the ScriptClass only
 	FString RequestedName;
+	
+	bool bIsDuplicate;
 #endif
 	
 	// TODO I can probably delete this but keeping it in until the plugin is stable
@@ -73,6 +75,18 @@ public:
 	const FString& GetRequestedName() const
 	{
 		return RequestedName;
+	}
+	
+	void SetIsDuplicate()
+	{
+		bIsDuplicate = true;
+	}
+	
+	bool ConsumeDuplicate()
+	{
+		bool bWasDuplicate = bIsDuplicate;
+		bIsDuplicate = false;
+		return bWasDuplicate;
 	}
 	
 	const FString& GetDescription() const

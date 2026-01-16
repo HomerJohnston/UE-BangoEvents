@@ -1,9 +1,41 @@
 ﻿#pragma once
+
 #include "Bango/Components/BangoScriptComponent.h"
 
 #include "BangoEditorSubsystem.generated.h"
 
 class UObject;
+
+namespace Bango
+{
+	struct FScriptContainerKey
+	{
+		FScriptContainerKey(TWeakObjectPtr<UObject> InScriptOuter, FBangoScriptContainer* InScriptContainer)
+			: ScriptOuter(InScriptOuter)
+			, ScriptContainer(InScriptContainer)
+		{
+			Script = ScriptContainer->GetScriptClass();
+		}
+		
+		TWeakObjectPtr<UObject> ScriptOuter;
+		FBangoScriptContainer* ScriptContainer;
+		
+		TSoftClassPtr<UBangoScript> Script;
+		
+		bool operator==(const FScriptContainerKey& Other) const
+		{
+			return ScriptOuter == Other.ScriptOuter && ScriptContainer == Other.ScriptContainer;
+		}
+		
+		friend int32 GetTypeHash(const FScriptContainerKey& ScriptContainerKey)
+		{
+			return HashCombine(ScriptContainerKey.ScriptOuter.GetWeakPtrTypeHash(), GetTypeHash(ScriptContainerKey.ScriptContainer));
+		}
+	};
+}
+
+using namespace Bango;
+
 
 // Special thanks to https://github.com/ashe23/ProjectCleaner for lots of helper code used in this class.
 
@@ -102,7 +134,7 @@ public:
 	
 	void OnLevelScriptContainerCreated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString BlueprintName = "");
 
-	void OnLevelScriptContainerDestroyed(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass);
+	void OnLevelScriptContainerDestroyed(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	// bool IsExistingScriptContainerValid(UObject* Outer, FBangoScriptContainer* ScriptContainer);
 	void OnLevelScriptContainerUnregisteredDuringTransaction(UObject* Outer, TSoftClassPtr<UBangoScript> ScriptClass);
 
@@ -116,14 +148,17 @@ public:
 private:
 	void EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer);
 	
-	void EnqueueDestroyedScriptComponent(UObject* Owner, TSoftClassPtr<UBangoScript> ScriptClass);
+	void EnqueueDestroyedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer);
 	
 private:
-	// When a component is created in the editor, it gets queued here. On the next tick, ProcessScriptRequestQueues will flush these. If a script is created and then destroyed, it will be added and removed to this queue. 
-	TMap<TWeakObjectPtr<UObject>, FBangoScriptContainer*> QueuedCreatedScriptComponents;
+enum class EScriptState : uint8
+{
+	Created,
+	Destroyed,
+};
 	
-	// When a component is destroyed in the editor, it gets queued here.
-	TMap<TWeakObjectPtr<UObject>, TSoftClassPtr<UBangoScript>> QueuedDestroyedScripts;
+	// When a component is created in the editor, it gets queued here. On the next tick, ProcessScriptRequestQueues will flush these. If a script is created and then destroyed, it will be added and removed to this queue. 
+	TMap<FScriptContainerKey, EScriptState> QueuedModifiedScriptComponents;
 	
 	FTimerHandle ProcessScriptRequestQueuesHandle;
 	

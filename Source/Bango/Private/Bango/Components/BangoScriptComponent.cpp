@@ -108,10 +108,11 @@ void UBangoScriptComponent::OnUnregister()
 	
 	FBangoEditorDelegates::BangoDebugDraw.RemoveAll(this);
 
-	if (Bango::Editor::IsComponentInEditedLevel(this))
-	{
-		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, ScriptContainer.GetScriptClass());
-	}
+	// CDO components use OnUnregister for destruction detection, instances use OnComponentDestroyed
+	//if (CreationMethod != EComponentCreationMethod::Instance && Bango::Editor::IsComponentInEditedLevel(this))
+	//{
+		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &ScriptContainer);
+	//}
 	
 	if (GetOwner()->HasAnyFlags(RF_Transactional) && Bango::Editor::IsComponentInEditedLevel(this))
 	{
@@ -171,15 +172,22 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	TSoftClassPtr<UBangoScript> ScriptClass = ScriptContainer.GetScriptClass();
 	bool bIsComponentInEditedLevel = Bango::Editor::IsComponentInEditedLevel(this);
 	
-	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_Early");
+	Bango::Debug::PrintComponentState(this, FString::Format(TEXT("OnComponentDestroyed_Early, {0}"), {bDestroyingHierarchy ? "TRUE" : "FALSE"} ));
 	
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 	
 	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_0");
 	
-	if (!bIsComponentInEditedLevel)
+	// CDO components use OnUnregister for destruction detection, instances use OnComponentDestroyed
+	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
 	{
-		return;
+		//return;
+	}
+	
+	if (!bIsComponentInEditedLevel && !HasAnyFlags(RF_BeginDestroyed))
+	{
+		// Issue: when the actor is destroyed, this skips too early. Should I check if the owner is being destroyed in the level?
+		//return;
 	}
 	
 	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_1");
@@ -187,23 +195,18 @@ void UBangoScriptComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	// This flag seems to be set when the editor destroys the component, e.g. it is unloaded by world partition. It isn't set when you delete the component. 	
 	if (HasAllFlags(RF_BeginDestroyed))
 	{
-		return;
+		//return;
 	}
 
-	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_2");
+	//Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_2");
 	
-	// If we are a default actor component, we will always exist on the actor and the only time we'll be truly deleted is when the whole actor hierachy is being deleted
-	if (CreationMethod != EComponentCreationMethod::Instance && !bDestroyingHierarchy)
-	{
-		return;
-	}
 
 	Bango::Debug::PrintComponentState(this, "OnComponentDestroyed_PostSuper_Final");
 	
 	if (!ScriptClass.IsNull())
 	{
 		// Moves handling over to an editor module to handle more complicated package deletion/undo management
-		//FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(GetOwner(), ScriptClass);
+		FBangoEditorDelegates::OnScriptContainerDestroyed.Broadcast(this, &ScriptContainer);
 	}
 }
 
@@ -253,6 +256,11 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 			FBangoEditorDelegates::OnScriptContainerDuplicated.Broadcast(this, &ScriptContainer, GetName());
 		}
 	}
+}
+
+void UBangoScriptComponent::PostEditImport()
+{
+	Super::PostEditImport();
 }
 #endif
 

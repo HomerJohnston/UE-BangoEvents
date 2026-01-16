@@ -21,6 +21,8 @@ public:
 	UBangoScriptBlueprint();
 	
 protected:
+	bool ShouldBeMarkedDirtyUponTransaction() const override;
+	
 	// When a script holder is deleted, the actual script blueprint (this) isn't deleted, it gets moved to the transient package. 
 	// If the user undos their delete, this lets Bango restore the blueprint back the way it was.
 	void SoftDelete();
@@ -49,6 +51,7 @@ public:
 	static FString GetAutomaticName(UObject* Outer);
 	
 	FString RetrieveDeletedName();
+	
 	
 	bool RestoreToPackage();
 #endif
