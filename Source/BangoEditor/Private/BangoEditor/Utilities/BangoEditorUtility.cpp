@@ -1,14 +1,11 @@
 ﻿#include "BangoEditor/Utilities/BangoEditorUtility.h"
 
-#include "AssetToolsModule.h"
 #include "ExternalPackageHelper.h"
 #include "ObjectTools.h"
 #include "PropertyHandle.h"
 #include "Bango/Core/BangoScriptBlueprint.h"
 #include "Bango/Core/BangoScript.h"
 #include "Bango/Utility/BangoLog.h"
-#include "BangoEditor/DevTesting/BangoPackageHelper.h"
-#include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
 #include "BangoEditorTooling/BangoEditorLog.h"
 #include "HAL/FileManager.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -16,37 +13,23 @@
 #include "WorldPartition/WorldPartition.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 
+// ----------------------------------------------
+
 FString Bango::Editor::GetGameScriptRootFolder()
 {
-	return "/Game" / ScriptRootFolder;
+	return TEXT("__BangoScripts__");
 }
+
+// ----------------------------------------------
 
 FString Bango::Editor::GetAbsoluteScriptRootFolder()
 {
-	return FPaths::ProjectContentDir() / ScriptRootFolder;
+	return FPaths::ProjectContentDir() / GetGameScriptRootFolder();
 }
 
-AActor* Bango::Editor::GetActorOwner(TSharedPtr<IPropertyHandle> Property)
-{
-	TArray<UObject*> OuterObjects;
-	Property->GetOuterObjects(OuterObjects);
-	
-	if (OuterObjects.Num() > 0)
-	{
-		if (AActor* Actor = Cast<AActor>(OuterObjects[0]))
-		{
-			return Actor;
-		}
-		else if (UActorComponent* Component = Cast<UActorComponent>(OuterObjects[0]))
-		{
-			return Component->GetOwner();
-		}
-	}
-	
-	return nullptr;
-}
+// ----------------------------------------------
 
-UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, /*FString& InOutBPName, */FGuid Guid)
+UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, FGuid Guid)
 {
 	if (!IsValid(Outer) || Outer->GetFlags() == RF_NoFlags || Outer->HasAnyFlags(RF_BeingRegenerated))
 	{
@@ -73,20 +56,7 @@ UPackage* Bango::Editor::MakeLevelScriptPackage(UObject* Outer, /*FString& InOut
 	return MakeLevelScriptPackage_Internal(Actor, OuterPackage, /*InOutBPName, */Guid);
 }
 
-// I may later need this for manually creating scripts on FBangoScriptContainers manually
-/*
-UPackage* Bango::Editor::MakeLevelScriptPackage(TSharedPtr<IPropertyHandle> ScriptProperty, UObject* Outer, FString& InOutBPName, FGuid Guid)
-{
-	AActor* Actor = GetActorOwner(ScriptProperty);
-	
-	if (!Actor)
-	{
-		return nullptr;
-	}
-	
-	return MakeScriptPackage_Internal(Actor, Outer, InOutBPName, Guid);
-}
-*/
+// ----------------------------------------------
 
 FString UInt32ToBase36(uint32 Value)
 {
@@ -102,6 +72,8 @@ FString UInt32ToBase36(uint32 Value)
 
 	return Result;
 }
+
+// ----------------------------------------------
 
 UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject* Outer, FGuid Guid)
 {
@@ -144,7 +116,7 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 	check(!ActorFolderPath.IsEmpty());
 
 	// Generate the preferred final path name
-	FString FinalPath = "/Game" / Bango::Editor::ScriptRootFolder / LevelName / ActorFolderPath / GuidHashBase36;
+	FString FinalPath = "/Game" / Bango::Editor::GetGameScriptRootFolder() / LevelName / ActorFolderPath / GuidHashBase36;
 	
 	// Ensure we have a unique pathname
 	uint32 Suffix = 0;
@@ -165,6 +137,8 @@ UPackage* Bango::Editor::MakeLevelScriptPackage_Internal(AActor* Actor, UObject*
 	return NewPackage;
 }
 
+// ----------------------------------------------
+
 UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const FString& InName, const FGuid& InScriptGuid)
 {
 	if (!InPackage)
@@ -181,23 +155,14 @@ UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const
 	UBangoScriptBlueprint* ScriptBlueprint = Cast<UBangoScriptBlueprint>(FKismetEditorUtilities::CreateBlueprint(UBangoScript::StaticClass(), InPackage, FName(AssetName), BPTYPE_Normal, UBangoScriptBlueprint::StaticClass(), UBlueprintGeneratedClass::StaticClass()));
 	ScriptBlueprint->SetScriptGuid(InScriptGuid);
 	
-//	InPackage->GetOutermost()->MarkPackageDirty();
 	FAssetRegistryModule::AssetCreated(ScriptBlueprint);
 
 	FKismetEditorUtilities::CompileBlueprint(ScriptBlueprint);
 	
-	/*
-	GEditor->GetTimerManager()->SetTimerForNextTick(FTimerDelegate::CreateLambda([ScriptBlueprint]()
-	{
-		ScriptBlueprint->Modify();
-		ScriptBlueprint->MarkPackageDirty();
-		ScriptBlueprint->GeneratedClass->Modify();
-		ScriptBlueprint->GeneratedClass->MarkPackageDirty();
-	}));
-	*/
-	
 	return ScriptBlueprint;
 }
+
+// ----------------------------------------------
 
 UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FString& InName, const FGuid& NewGuid)
 {
@@ -216,92 +181,7 @@ UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint
 	return DuplicateScript;
 }
 
-#if 0
-bool Bango::Editor::SaveScriptPackage(UPackage* ScriptPackage, UBlueprint* ScriptBlueprint)
-{
-	const FString PackageName = ScriptPackage->GetName();
-	FString ExistingFilename;
-	const bool bPackageAlreadyExists = FPackageName::DoesPackageExist(PackageName, &ExistingFilename);
-		
-	bool bAttemptSave = true;
-        			
-	if (!bPackageAlreadyExists)
-	{
-		const FString& FileExtension = FPackageName::GetAssetPackageExtension();
-		ExistingFilename = FPackageName::LongPackageNameToFilename(PackageName, FileExtension);
-			
-		// Check if we can use this filename.
-		FText ErrorText;
-		if (!FFileHelper::IsFilenameValidForSaving(ExistingFilename, ErrorText))
-		{
-			// Display the error (already localized) and exit gracefully.
-			FMessageDialog::Open(EAppMsgType::Ok, ErrorText);
-			bAttemptSave = false;
-		}
-	}
-		
-	if (bAttemptSave)
-	{
-		FString BaseFilename, Extension, Directory;
-		FPaths::NormalizeFilename(ExistingFilename);
-		FPaths::Split(ExistingFilename, Directory, BaseFilename, Extension);
-			
-		FString FinalPackageSavePath = ExistingFilename;
-			
-		FString FinalPackageFilename = FString::Printf(TEXT("%s.%s"), *BaseFilename, *Extension);
-			
-		FSavePackageArgs SaveArgs;
-		
-		return UPackage::SavePackage(ScriptPackage, ScriptBlueprint, /* *PackagePath2 */ *FinalPackageSavePath, SaveArgs);
-	}
-	
-	return false;
-}
-#endif
-
-// TODO erase this, replaced by editor subsystem funcs
-bool Bango::Editor::DeleteEmptyFolderFromDisk(const FString& InPathToDelete)
-{
-	struct FEmptyFolderVisitor : public IPlatformFile::FDirectoryVisitor
-	{
-		bool bIsEmpty;
-		
-		TSet<FString> EmptyFolders;
-
-		FEmptyFolderVisitor()
-			: bIsEmpty(true)
-		{
-		}
-
-		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
-		{
-			if (!bIsDirectory)
-			{
-				bIsEmpty = false;
-				return false; // abort searching
-			}
-
-			return true; // continue searching
-		}
-	};
-
-	FString PathToDelete = "/Game/" + InPathToDelete;
-	
-	FString PathToDeleteOnDisk;
-	if (FPackageName::TryConvertLongPackageNameToFilename(PathToDelete, PathToDeleteOnDisk))
-	{
-		// Look for files on disk in case the folder contains things not tracked by the asset registry
-		FEmptyFolderVisitor EmptyFolderVisitor;
-		IFileManager::Get().IterateDirectoryRecursively(*PathToDeleteOnDisk, EmptyFolderVisitor);
-
-		if (EmptyFolderVisitor.bIsEmpty)
-		{
-			return IFileManager::Get().DeleteDirectory(*PathToDeleteOnDisk, false, true);
-		}
-	}
-
-	return false;
-}
+// ----------------------------------------------
 
 FString Bango::Editor::GetLocalScriptName(FString InName)
 {

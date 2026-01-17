@@ -8,7 +8,7 @@
 #include "BangoEditorTooling/BangoColors.h"
 #include "BangoEditorTooling/BangoEditorDelegates.h"
 #include "BangoEditor/BangoEditorStyle.h"
-#include "BangoEditor/Subsystems/BangoEditorSubsystem.h"
+#include "BangoEditor/Subsystems/BangoLevelScriptsEditorSubsystem.h"
 #include "BangoEditor/BlueprintEditor/BangoBlueprintEditor.h"
 #include "BangoEditor/Widgets/SBangoGraphEditor.h"
 #include "EdGraph/EdGraph.h"

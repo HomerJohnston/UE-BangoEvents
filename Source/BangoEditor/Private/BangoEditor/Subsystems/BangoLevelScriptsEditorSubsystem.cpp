@@ -1,4 +1,4 @@
-﻿#include "BangoEditorSubsystem.h"
+﻿#include "BangoLevelScriptsEditorSubsystem.h"
 
 #include "ContentBrowserDataSubsystem.h"
 #include "IContentBrowserDataModule.h"
@@ -12,7 +12,7 @@
 #include "BangoEditorTooling/BangoScriptHelperSubsystem.h"
 #include "BangoEditorTooling/BangoHelpers.h"
 #include "Bango/Utility/BangoLog.h"
-#include "BangoEditor/DevTesting/BangoDummyObject.h"
+#include "BangoEditor/Private/BangoEditor/Unsorted/BangoDummyObject.h"
 #include "BangoEditor/Menus/BangoEditorMenus.h"
 #include "BangoEditor/Utilities/BangoEditorUtility.h"
 #include "BangoEditor/Utilities/BangoFolderUtility.h"
@@ -43,22 +43,41 @@ void UBangoLevelScriptsEditorSubsystem::Initialize(FSubsystemCollectionBase& Col
 {
 	Collection.InitializeDependency<UContentBrowserDataSubsystem>();
 
+	// Filter causes __BangoScripts__ folder to be hidden when it contains no "valid" assets (valid assets require a normal name; this is why I prepend level scripts with a ~ symbol)
 	Filter = MakeShared<FBangoHideScriptFolderFilter>();
 	UContentBrowserDataSubsystem* ContentBrowserData = IContentBrowserDataModule::Get().GetSubsystem();
 	ContentBrowserData->RegisterCreateHideFolderIfEmptyFilter(FContentBrowserCreateHideFolderIfEmptyFilter::CreateLambda([this] () { return Filter; }));
 
+	// While maps are loading we want to ignore all script creation/destruction requests
 	FEditorDelegates::OnMapLoad.AddUObject(this, &ThisClass::OnMapLoad);
 	FEditorDelegates::OnMapOpened.AddUObject(this, &ThisClass::OnMapOpened);
 	
+	// UBangoScriptComponent (and potentially others)
 	FBangoEditorDelegates::OnScriptContainerCreated.AddUObject(this, &ThisClass::OnLevelScriptContainerCreated);
 	FBangoEditorDelegates::OnScriptContainerDestroyed.AddUObject(this, &ThisClass::OnLevelScriptContainerDestroyed);
 	FBangoEditorDelegates::OnScriptContainerDuplicated.AddUObject(this, &ThisClass::OnLevelScriptContainerDuplicated);
 	
-	// TODO am I deprecating my ID system, do I need this?
-	FBangoEditorDelegates::RequestNewID.AddUObject(this, &ThisClass::OnRequestNewID);
-	
 	FCoreUObjectDelegates::OnObjectRenamed.AddUObject(this, &ThisClass::OnObjectRenamed);
 	FCoreUObjectDelegates::OnObjectTransacted.AddUObject(this, &ThisClass::OnObjectTransacted);
+}
+
+// ----------------------------------------------
+
+void UBangoLevelScriptsEditorSubsystem::Deinitialize()
+{
+	// While maps are loading we want to ignore all script creation/destruction requests
+	FEditorDelegates::OnMapLoad.RemoveAll(this);
+	FEditorDelegates::OnMapOpened.RemoveAll(this);
+	
+	// UBangoScriptComponent (and potentially others)
+	FBangoEditorDelegates::OnScriptContainerCreated.RemoveAll(this);
+	FBangoEditorDelegates::OnScriptContainerDestroyed.RemoveAll(this);
+	FBangoEditorDelegates::OnScriptContainerDuplicated.RemoveAll(this);
+	
+	FCoreUObjectDelegates::OnObjectRenamed.RemoveAll(this);
+	FCoreUObjectDelegates::OnObjectTransacted.RemoveAll(this);
+	
+	Super::Deinitialize();
 }
 
 // ----------------------------------------------
@@ -204,14 +223,6 @@ void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerDuplicated(UObject
 
 // ----------------------------------------------
 
-void UBangoLevelScriptsEditorSubsystem::OnRequestNewID(AActor* Actor) const
-{
-	UE_LOG(LogBangoEditor, Verbose, TEXT("OnRequestNewID: %s"), *Actor->GetName());
-	FBangoEditorMenus::SetEditActorID(Actor, true);
-}
-
-// ----------------------------------------------
-
 void UBangoLevelScriptsEditorSubsystem::EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
 	if (bMapLoading)
@@ -229,7 +240,7 @@ void UBangoLevelScriptsEditorSubsystem::EnqueueCreatedScriptComponent(UObject* O
 	
 	FScriptContainerKey Key(Owner, ScriptContainer);
 	CreationRequests.Add(Key);
-	QueueProcessScriptRequestQueues();
+	RequestScriptQueueProcessing();
 }
 
 // ----------------------------------------------
@@ -260,12 +271,12 @@ void UBangoLevelScriptsEditorSubsystem::EnqueueDestroyedScriptComponent(UObject*
 	UE_LOG(LogBangoEditor, Verbose, TEXT("EnqueueDestroyedScriptComponent: %s (%p)"), *Owner->GetName(), ScriptContainer);
 	
 	DestructionRequests.Add(ScriptContainer->GetScriptClass());
-	QueueProcessScriptRequestQueues();
+	RequestScriptQueueProcessing();
 }
 
 // ----------------------------------------------
 
-void UBangoLevelScriptsEditorSubsystem::QueueProcessScriptRequestQueues()
+void UBangoLevelScriptsEditorSubsystem::RequestScriptQueueProcessing()
 {
 	TWeakObjectPtr<UBangoLevelScriptsEditorSubsystem> WeakThis = this;
 			
@@ -352,52 +363,6 @@ void UBangoLevelScriptsEditorSubsystem::ProcessCreatedScriptRequest(TWeakObjectP
 			}
 		}
 	}
-}
-
-// ----------------------------------------------
-
-void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass)
-{
-	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
-	
-	if (ScriptClassPath.IsNull())
-	{
-		return;
-	}
-	
-	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
-
-	if (!Blueprint)
-	{
-		UE_LOG(LogBangoEditor, Error, TEXT("SoftDeleteLevelScriptPackage failed - Null Blueprint: %s"), *ScriptClass.ToSoftObjectPath().GetAssetPathString());
-		return;
-	}
-	
-	UPackage* OldPackage = Blueprint->GetPackage();
-
-	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
-
-	Blueprint->ClearEditorReferences();
-
-	// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
-	// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
-	Blueprint->DeletedName = Blueprint->GetName();
-	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
-	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
-	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-	
-	// TODO Is there another way to make this work without this? I can't successfully run ObjectTools' delete funcs on a UPackage, only on an asset inside a UPackage!
-	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
-	
-	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
-			
-	if (NumDelete == 0)
-	{
-		ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
-	}
-
-	Bango::Editor::DeleteEmptyLevelScriptFolders();
 }
 
 // ----------------------------------------------
@@ -576,6 +541,52 @@ void UBangoLevelScriptsEditorSubsystem::TryUndeleteScript(FSoftObjectPath Script
     {
         UE_LOG(LogBangoEditor, Warning, TEXT("Error - could not find associated blueprint for %s"), *ScriptClassSoft.ToString());
     }
+}
+
+// ----------------------------------------------
+
+void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass)
+{
+	const FSoftObjectPath& ScriptClassPath = ScriptClass.ToSoftObjectPath();
+	
+	if (ScriptClassPath.IsNull())
+	{
+		return;
+	}
+	
+	UBangoScriptBlueprint* Blueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptClass); 
+
+	if (!Blueprint)
+	{
+		UE_LOG(LogBangoEditor, Error, TEXT("SoftDeleteLevelScriptPackage failed - Null Blueprint: %s"), *ScriptClass.ToSoftObjectPath().GetAssetPathString());
+		return;
+	}
+	
+	UPackage* OldPackage = Blueprint->GetPackage();
+
+	GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(Blueprint);
+
+	Blueprint->ClearEditorReferences();
+
+	// We're going to "softly" delete the blueprint. Stash its name & package path inside of it, and then rename it to its Guid form.
+	// When the script container is restored (undo delete), it can look for the script inside the transient package by its Guid to restore it.
+	Blueprint->DeletedName = Blueprint->GetName();
+	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
+	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
+	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
+	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+	
+	// TODO Is there another way to make this work without this? I can't successfully run ObjectTools' delete funcs on a UPackage, only on an asset inside a UPackage!
+	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);
+	
+	int32 NumDelete = ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt }, false );
+			
+	if (NumDelete == 0)
+	{
+		ObjectTools::ForceDeleteObjects( { WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt } );
+	}
+
+	Bango::Editor::DeleteEmptyLevelScriptFolders();
 }
 
 // ----------------------------------------------

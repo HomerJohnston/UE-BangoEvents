@@ -2,7 +2,7 @@
 
 #include "Bango/Components/BangoScriptComponent.h"
 
-#include "BangoEditorSubsystem.generated.h"
+#include "BangoLevelScriptsEditorSubsystem.generated.h"
 
 class UObject;
 
@@ -57,15 +57,12 @@ namespace Bango
 
 // ==============================================
 
-/**
- * 
- */
 class IContentBrowserHideFolderIfEmptyFilter;
 
 // ==============================================
 
 /**
- * 
+ * This subsystem is responsible for managing level script .uassets. 
  */
 UCLASS()
 class UBangoLevelScriptsEditorSubsystem : public UEditorSubsystem
@@ -85,12 +82,15 @@ public:
 public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	
+	void Deinitialize() override;
+	
 	void OnObjectTransacted(UObject* Object, const class FTransactionObjectEvent& TransactionEvent);
 	
 	void OnMapLoad(const FString& String, FCanLoadMap& CanLoadMap);
+	
 	void OnMapOpened(const FString& String, bool bArg);
 	
-	void OnObjectRenamed(UObject* ObjectL, UObject* RenamedObjectOuter, FName OldName) const;
+	void OnObjectRenamed(UObject* RenamedObject, UObject* RenamedObjectOuter, FName OldName) const;
 	
 	static TSharedPtr<IContentBrowserHideFolderIfEmptyFilter> Filter;	
 	
@@ -100,13 +100,30 @@ public:
 
 	void OnLevelScriptContainerDuplicated(UObject* Outer, FBangoScriptContainer* ScriptContainer, FString BlueprintName = "");
 	
-	void OnRequestNewID(AActor* Actor) const;
-	
+	// ------------------------------------------
+	// Level script creation functions
 private:
 	void EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer);
 	
 	void EnqueueDestroyedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer);
 
+	void RequestScriptQueueProcessing();
+	
+	// Master queue processing function
+	void ProcessScriptRequestQueues();
+	
+	// Script creation methods
+	void ProcessCreatedScriptRequest(TWeakObjectPtr<UObject> Owner, FBangoScriptContainer* ScriptContainer);
+	
+	void CreateLevelScript(UObject* Outer, FBangoScriptContainer* ScriptContainer);
+	
+	void DuplicateLevelScript(UObject* Owner, FBangoScriptContainer* ScriptContainer);
+	
+	void TryUndeleteScript(FSoftObjectPath ScriptClassSoft, FBangoScriptContainer* ScriptContainer);
+	
+	// Script destruction method
+	void ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass);
+	
 private:
 	TSet<FScriptContainerKey> CreationRequests;
 	
@@ -114,17 +131,4 @@ private:
 	
 	FTimerHandle ProcessScriptRequestQueuesHandle;
 	
-	void QueueProcessScriptRequestQueues();
-	
-	void ProcessScriptRequestQueues();
-	
-	void ProcessCreatedScriptRequest(TWeakObjectPtr<UObject> Owner, FBangoScriptContainer* ScriptContainer);
-	
-	void ProcessDestroyedScriptRequest(TSoftClassPtr<UBangoScript> ScriptClass);
-	
-	void CreateLevelScript(UObject* Outer, FBangoScriptContainer* ScriptContainer);
-	
-	void DuplicateLevelScript(UObject* Owner, FBangoScriptContainer* ScriptContainer);
-	
-	void TryUndeleteScript(FSoftObjectPath ScriptClassSoft, FBangoScriptContainer* ScriptContainer);
 };
