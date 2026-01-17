@@ -5,7 +5,7 @@
 #include "BangoScripts/BangoAction.h"
 #include "BangoScripts/Core/BangoEventComponent.h"
 #include "BangoScripts/Core/BangoTriggerSignal.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/World.h"
 
 #if WITH_EDITORONLY_DATA

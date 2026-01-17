@@ -3,7 +3,7 @@
 #include "Editor.h"
 #include "BangoScripts/Components/BangoScriptComponent.h"
 #include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
 

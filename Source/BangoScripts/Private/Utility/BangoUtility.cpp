@@ -2,7 +2,7 @@
 
 #include "GameFramework/Actor.h"
 #include "BangoScripts/Components/BangoActorIDComponent.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
 
 UBangoActorIDComponent* Bango::Utilities::GetActorIDComponent(AActor* Actor, bool bForceCreate)

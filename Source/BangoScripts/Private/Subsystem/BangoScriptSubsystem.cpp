@@ -2,7 +2,7 @@
 
 #include "BangoScripts/Core/BangoScriptHandle.h"
 #include "BangoScripts/Core/BangoScript.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 

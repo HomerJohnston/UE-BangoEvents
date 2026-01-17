@@ -7,7 +7,7 @@
 #include "ToolMenuDelegates.h"
 #include "ToolMenus.h"
 #include "BangoScripts/Components/BangoActorIDComponent.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts_Editor/Private/Commands/BangoEditorActions.h"
 #include "Framework/Application/MenuStack.h"
 #include "Framework/Application/SlateApplication.h"

@@ -1,5 +1,5 @@
 ﻿// Copyright Ghost Pepper Games, Inc. All Rights Reserved.
 
-#include "BangoScripts/EditorTooling/BangoEditorLog.h"
+#include "BangoScripts/EditorTooling/BangoScriptsEditorLog.h"
 
 DEFINE_LOG_CATEGORY(LogBangoEditor);

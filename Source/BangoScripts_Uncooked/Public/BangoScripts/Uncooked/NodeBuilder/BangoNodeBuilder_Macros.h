@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "EdGraph/EdGraph.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "KismetCompiler.h"
 
 // ==============================================

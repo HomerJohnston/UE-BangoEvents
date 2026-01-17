@@ -1,6 +1,6 @@
 ﻿#include "BangoScripts/Actors/BangoInitScriptActor.h"
 
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/Level.h"
 #include "GameFramework/WorldSettings.h"
 

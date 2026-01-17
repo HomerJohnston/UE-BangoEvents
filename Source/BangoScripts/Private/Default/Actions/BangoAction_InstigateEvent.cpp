@@ -1,7 +1,7 @@
 #include "BangoScripts/Default/Actions/BangoAction_InstigateEvent.h"
 
 #include "BangoScripts/Core/BangoEvent.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/Core/BangoEventComponent.h"
 #include "GameFramework/Actor.h"
 

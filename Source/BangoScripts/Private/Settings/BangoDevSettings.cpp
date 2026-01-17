@@ -2,7 +2,7 @@
 
 #include "BangoScripts/Settings/BangoDevSettings.h"
 
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "HAL/IConsoleManager.h"
 
 static TAutoConsoleVariable<bool> CVarBangoShowEventsInGame(

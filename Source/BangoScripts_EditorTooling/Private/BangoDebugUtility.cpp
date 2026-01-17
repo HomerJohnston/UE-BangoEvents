@@ -65,7 +65,7 @@ void Bango::Debug::PrintFlagNames()
 		{ RF_ImmutableDefaultObject,		TEXT("RF_ImmutableDefaultObject") },
 		{ RF_WillBeLoaded,					TEXT("RF_WillBeLoaded") },
 		{ RF_HasExternalPackage,			TEXT("RF_HasExternalPackage") },
-		{ RF_MigratingAsset,				TEXT("RF_MigratingAsset") },
+//		{ RF_MigratingAsset,				TEXT("RF_MigratingAsset") }, // 5.7 onward only
 		{ RF_MirroredGarbage,				TEXT("RF_MirroredGarbage") },
 		{ RF_AllocatedInSharedPage,			TEXT("RF_AllocatedInSharedPage") },
 	};

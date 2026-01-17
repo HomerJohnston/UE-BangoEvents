@@ -7,7 +7,7 @@
 #include "BangoScripts/Subsystem/BangoActorIDSubsystem.h"
 #include "BangoScripts/EditorTooling/BangoColors.h"
 #include "BangoScripts/EditorTooling/BangoHelpers.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/Canvas.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"

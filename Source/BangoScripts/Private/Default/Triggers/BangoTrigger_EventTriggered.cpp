@@ -1,12 +1,12 @@
 ﻿#include "BangoScripts/Default/Triggers/BangoTrigger_EventTriggered.h"
 
 #include "Algo/Count.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/Core/BangoEvent.h"
 #include "BangoScripts/Core/BangoEventComponent.h"
 #include "BangoScripts/EditorTooling/BangoDebugUtility.h"
 #include "BangoScripts/EditorTooling/BangoColors.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 

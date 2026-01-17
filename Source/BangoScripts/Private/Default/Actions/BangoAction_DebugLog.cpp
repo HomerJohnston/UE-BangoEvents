@@ -3,7 +3,7 @@
 #include "BangoScripts/Default/Actions/BangoAction_DebugLog.h"
 
 #include "BangoScripts/Core/BangoEvent.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/Core/BangoEventSignal.h"
 #include "BangoScripts/Core/BangoEventComponent.h"
 #include "Engine/Engine.h"

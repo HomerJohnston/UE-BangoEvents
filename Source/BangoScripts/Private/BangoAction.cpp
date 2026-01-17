@@ -4,7 +4,7 @@
 #include "BangoScripts/Core/BangoEventComponent.h"
 
 #include "BangoScripts/EditorTooling/BangoDebugTextEntry.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 
 #if DO_CHECK
 // Used to check to see if a derived class actually implemented GetWorld() or not

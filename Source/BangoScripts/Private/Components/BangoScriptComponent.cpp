@@ -4,7 +4,7 @@
 #include "BangoScripts/Subsystem/BangoScriptSubsystem.h"
 #include "BangoScripts/EditorTooling/BangoColors.h"
 #include "BangoScripts/EditorTooling/BangoHelpers.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/EditorTooling/BangoDebugDrawCanvas.h"
 #include "BangoScripts/EditorTooling/BangoDebugUtility.h"
 #include "Components/BillboardComponent.h"

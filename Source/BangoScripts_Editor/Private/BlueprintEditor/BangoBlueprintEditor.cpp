@@ -4,7 +4,7 @@
 #include "K2Node_Literal.h"
 #include "SBlueprintEditorToolbar.h"
 #include "BangoScripts/Core/BangoScriptBlueprint.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Private/BangoEditorStyle.h"
 #include "BangoScripts/Uncooked/K2Nodes/K2Node_BangoFindActor.h"
 #include "HAL/PlatformApplicationMisc.h"

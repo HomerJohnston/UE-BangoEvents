@@ -4,7 +4,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "BangoScripts/Core/BangoEventSignal.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/Core/BangoEventComponent.h"
 #include "BangoScripts/EditorTooling/BangoDebugUtility.h"
 #include "GameFramework/Actor.h"

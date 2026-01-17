@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "BangoScripts/EditorTooling/BangoEditorLog.h"
+#include "BangoScripts/EditorTooling/BangoScriptsEditorLog.h"
 #include "Containers/UnrealString.h"
 
 class UActorComponent;

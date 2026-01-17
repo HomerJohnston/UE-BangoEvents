@@ -2,7 +2,7 @@
 
 #include "BangoScripts/EditorTooling/BangoDebugTextEntry.h"
 #include "BangoScripts/EditorTooling/BangoColors.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "BangoScripts/Core/BangoTriggerSignal.h"
 #include "Engine/World.h"
 

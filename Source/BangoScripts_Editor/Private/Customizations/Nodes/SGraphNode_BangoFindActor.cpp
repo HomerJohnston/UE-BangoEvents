@@ -14,6 +14,7 @@
 #include "Styling/SlateIconFinder.h"
 #include "Widgets/SToolTip.h"
 #include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "BangoScripts"
 

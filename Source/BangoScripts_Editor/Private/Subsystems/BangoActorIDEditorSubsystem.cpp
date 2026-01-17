@@ -2,7 +2,7 @@
 
 #include "Menus/BangoEditorMenus.h"
 #include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
-#include "BangoScripts/EditorTooling/BangoEditorLog.h"
+#include "BangoScripts/EditorTooling/BangoScriptsEditorLog.h"
 #include "GameFramework/Actor.h"
 
 // ----------------------------------------------

@@ -4,7 +4,7 @@
 #include "IDetailChildrenBuilder.h"
 #include "IDetailGroup.h"
 #include "BangoScripts/BangoAction.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SSeparator.h"
 #include "Widgets/SPanel.h"

@@ -1,6 +1,6 @@
 ﻿#include "BangoScripts/Subsystem/BangoActorIDSubsystem.h"
 
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/World.h"
 
 UBangoActorIDSubsystem* UBangoActorIDSubsystem::Get(UObject* WorldContext)

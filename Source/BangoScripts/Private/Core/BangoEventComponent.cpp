@@ -4,7 +4,7 @@
 #include "SceneView.h"
 #include "BangoScripts/Settings/BangoDevSettings.h"
 #include "BangoScripts/Components/BangoPlungerComponent.h"
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 #include "BangoScripts/BangoTrigger_OLD.h"

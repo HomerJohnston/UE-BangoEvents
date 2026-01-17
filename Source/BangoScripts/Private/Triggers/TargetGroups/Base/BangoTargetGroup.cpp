@@ -1,6 +1,6 @@
 ﻿#include "BangoScripts/Triggers/TargetGroups/Base/BangoTargetGroup.h"
 
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/EngineTypes.h"
 
 UBangoTargetGroup::UBangoTargetGroup()

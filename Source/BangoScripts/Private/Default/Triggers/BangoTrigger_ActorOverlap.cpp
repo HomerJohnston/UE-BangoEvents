@@ -1,6 +1,6 @@
 ﻿#include "BangoScripts/Default/Triggers/BangoTrigger_ActorOverlap.h"
 
-#include "BangoScripts/Utility/BangoLog.h"
+#include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
 
