@@ -13,6 +13,9 @@ namespace Bango::Editor
 	// returns "__BangoScript__".
 	FString GetGameScriptRootFolder();
 
+	// returns '~'
+	const TCHAR* GetLevelScriptNamePrefix();
+	
 	// Gets the full computer drive path to the script folder.
 	FString GetAbsoluteScriptRootFolder();
 	

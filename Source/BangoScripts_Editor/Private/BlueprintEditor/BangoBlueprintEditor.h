@@ -1,11 +1,17 @@
 ﻿#pragma once
 
 #include "BlueprintEditor.h"
+#include "BangoScripts/Core/BangoScript.h"
 
 class UEdGraph;
 
 class FBangoBlueprintEditor : public FBlueprintEditor
 {
+public:
+	FBangoBlueprintEditor();
+	
+	virtual ~FBangoBlueprintEditor();
+	
 public:
 	void SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents) override;
 	
@@ -25,7 +31,7 @@ public:
 	
 	FText GetOwnerNameAsText() const;
 
-	float OpenTime;
+	float OpenTime = 0.0f;
 	
 	FText WarningText;
 	
@@ -47,6 +53,12 @@ protected:
 	bool CanPasteNodes() const override;
 	
 	void PasteNodesHere(UEdGraph* DestinationGraph, const FVector2f& GraphLocation) override;
+	
+	void OnBangoScriptRan(UBangoScript* ScriptInstance);
+	
+	void OnBangoScriptFinished(UBangoScript* ScriptInstance);
+	
+	int32 Instances = 0;
 	
 protected:
 	// Copied from Editor.h

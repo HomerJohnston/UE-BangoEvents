@@ -290,15 +290,20 @@ void UBangoScriptSubsystem::LaunchQueuedScripts()
 
 // ----------------------------------------------
 
-void UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptObject)
+void UBangoScriptSubsystem::RegisterScript(UBangoScript* ScriptInstance)
 {
-	UBangoScriptSubsystem* Subsystem = Get(ScriptObject);
+	UBangoScriptSubsystem* Subsystem = Get(ScriptInstance);
 	check(Subsystem->GetWorld()->HasBegunPlay());
 
-	Subsystem->RunningScripts.Add(ScriptObject->Handle, ScriptObject);
+	Subsystem->RunningScripts.Add(ScriptInstance->Handle, ScriptInstance);
 	
-	UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptObject->GetName());
-	ScriptObject->Start();
+	UE_LOG(LogBango, Verbose, TEXT("Script running: {%s}"), *ScriptInstance->GetName());
+	
+#if WITH_EDITOR
+	FBangoEditorDelegates::OnBangoScriptRan.Broadcast(ScriptInstance);
+#endif
+	
+	ScriptInstance->Start();
 }
 
 // ----------------------------------------------
@@ -312,12 +317,17 @@ void UBangoScriptSubsystem::UnregisterScript(UObject* WorldContext, FBangoScript
 	
 	UBangoScriptSubsystem* Subsystem = Get(WorldContext);
 
-	TObjectPtr<UBangoScript> Script;
+	TObjectPtr<UBangoScript> ScriptInstance;
 	
-	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, Script))
+	if (Subsystem->RunningScripts.RemoveAndCopyValue(Handle, ScriptInstance))
 	{
-		UE_LOG(LogBango, Verbose, TEXT("Script halting: {%s}"), *Script->GetName());
-		UBangoScript::Finish(Script);
+		UE_LOG(LogBango, Verbose, TEXT("Script halting: {%s}"), *ScriptInstance->GetName());
+			
+#if WITH_EDITOR
+		FBangoEditorDelegates::OnBangoScriptFinished.Broadcast(ScriptInstance);
+#endif
+
+		UBangoScript::Finish(ScriptInstance);
 	}
 
 	OnScriptFinished.Broadcast(Handle);

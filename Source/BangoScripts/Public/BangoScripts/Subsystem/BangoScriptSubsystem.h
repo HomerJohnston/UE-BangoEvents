@@ -89,7 +89,7 @@ protected:
 	
 	void LaunchQueuedScripts();
 	
-	void RegisterScript(UBangoScript* ScriptObject);
+	void RegisterScript(UBangoScript* ScriptInstance);
 
 	void UnregisterScript(UObject* WorldContext, FBangoScriptHandle& Handle);
 };

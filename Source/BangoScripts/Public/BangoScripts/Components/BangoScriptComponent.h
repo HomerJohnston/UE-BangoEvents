@@ -4,6 +4,7 @@
 #include "InputCoreTypes.h"
 #include "Components/ActorComponent.h"
 #include "BangoScripts/Debug/BangoDebugDrawServiceBase.h"
+#include "StructUtils/PropertyBag.h"
 
 #include "BangoScriptComponent.generated.h"
 
@@ -51,9 +52,9 @@ public:
 	// This is only used to spawn script assets for CDO spawned components (actor dragged into world) as well as for duplicating any actors or any instance components
 	void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 	
-	void PostEditImport() override;
-	
 	void UnsetScript();
+
+	void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	
 	//void OnRename();
 #endif
@@ -67,6 +68,9 @@ protected:
 	UPROPERTY(EditInstanceOnly)
 	FBangoScriptContainer ScriptContainer;
 
+	UPROPERTY(EditAnywhere)
+	FInstancedPropertyBag ScriptInputs;
+	
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;

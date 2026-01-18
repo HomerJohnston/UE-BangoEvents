@@ -4,6 +4,7 @@
 #include "K2Node_Literal.h"
 #include "SBlueprintEditorToolbar.h"
 #include "BangoScripts/Core/BangoScriptBlueprint.h"
+#include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
 #include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Private/BangoEditorStyle.h"
 #include "BangoScripts/Uncooked/K2Nodes/K2Node_BangoFindActor.h"
@@ -16,6 +17,16 @@
 #define LOCTEXT_NAMESPACE "BangoScripts"
 
 // ----------------------------------------------
+
+FBangoBlueprintEditor::FBangoBlueprintEditor() : FBlueprintEditor()
+{
+	FBangoEditorDelegates::OnBangoScriptRan.AddRaw(this, &FBangoBlueprintEditor::OnBangoScriptRan);
+	FBangoEditorDelegates::OnBangoScriptFinished.AddRaw(this, &FBangoBlueprintEditor::OnBangoScriptFinished);
+}
+
+FBangoBlueprintEditor::~FBangoBlueprintEditor()
+{
+}
 
 void FBangoBlueprintEditor::SetupGraphEditorEvents(UEdGraph* InGraph, SGraphEditor::FGraphEditorEvents& InEvents)
 {
@@ -665,6 +676,48 @@ void FBangoBlueprintEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 	};
 	
 	GEditor->GetTimerManager()->SetTimerForNextTick(DelayedCall);
+}
+
+// ----------------------------------------------
+
+void FBangoBlueprintEditor::OnBangoScriptRan(UBangoScript* ScriptInstance)
+{
+	UBangoScriptBlueprint* RunningBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(TSoftClassPtr<UBangoScript>(ScriptInstance->GetClass()));
+	UBangoScriptBlueprint* ThisBlueprint = Cast<UBangoScriptBlueprint>(GetEditingObject());
+	
+	if (RunningBlueprint == ThisBlueprint)
+	{
+		if (!ThisBlueprint->GetCurrentObjectBeingDebugged().IsValid())
+		{
+			ThisBlueprint->SetObjectBeingDebugged(ScriptInstance);
+		}
+		
+		Instances++;
+	}
+	
+	if (Instances > 0)
+	{
+		FText WarningText_ScriptCount = LOCTEXT("LevelScriptEditor_ScriptCountHint", "Instances Running: {0}");
+		WarningText = FText::Format(WarningText_ScriptCount, FText::AsNumber(Instances));
+	}
+}
+
+// ----------------------------------------------
+
+void FBangoBlueprintEditor::OnBangoScriptFinished(UBangoScript* ScriptInstance)
+{
+	UBangoScriptBlueprint* RunningBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(TSoftClassPtr<UBangoScript>(ScriptInstance->GetClass()));
+	UBangoScriptBlueprint* ThisBlueprint = Cast<UBangoScriptBlueprint>(GetEditingObject());
+	
+	if (RunningBlueprint == ThisBlueprint)
+	{
+		Instances--;
+	}
+	
+	if (Instances <= 0)
+	{
+		WarningText = FText::GetEmpty();
+	}
 }
 
 // ----------------------------------------------

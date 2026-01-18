@@ -41,5 +41,11 @@ struct FBangoEditorDelegates
 	
 	// FBangoScriptContainerCustomization instances subscribe to this to regenerate themselves when the script subsystem does things to level scripts
 	BANGOSCRIPTS_EDITORTOOLING_API static TMulticastDelegate<void()> OnScriptGenerated;
+	
+	// Used by FBangoBlueprintEditor to automatically start debugging newly ran scripts
+	BANGOSCRIPTS_EDITORTOOLING_API static TMulticastDelegate<void(UBangoScript* ScriptClass)> OnBangoScriptRan;
+	
+	// Used by FBangoBlueprintEditor
+	BANGOSCRIPTS_EDITORTOOLING_API static TMulticastDelegate<void(UBangoScript* ScriptClass)> OnBangoScriptFinished;
 };
 #endif

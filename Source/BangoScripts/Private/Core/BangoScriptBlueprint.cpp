@@ -88,6 +88,11 @@ void UBangoScriptBlueprint::Reset()
 	ActorReference.Empty();
 	ScriptGuid.Invalidate();
 }
+
+TWeakObjectPtr<UObject> UBangoScriptBlueprint::GetCurrentObjectBeingDebugged() const
+{
+	return CurrentObjectBeingDebugged;
+}
 #endif
 
 // ----------------------------------------------

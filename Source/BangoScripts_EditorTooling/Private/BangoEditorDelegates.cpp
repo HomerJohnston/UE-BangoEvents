@@ -19,3 +19,8 @@ TMulticastDelegate<void(UBangoScriptComponent* ScriptComponent)> FBangoEditorDel
 TMulticastDelegate<void(FBangoDebugDrawCanvas& DebugDrawData, bool bPIE)> FBangoEditorDelegates::BangoDebugDraw;
 
 TMulticastDelegate<void()> FBangoEditorDelegates::OnScriptGenerated;
+
+TMulticastDelegate<void(UBangoScript* ScriptClass)> FBangoEditorDelegates::OnBangoScriptRan;
+
+TMulticastDelegate<void(UBangoScript* ScriptClass)> FBangoEditorDelegates::OnBangoScriptFinished;
+

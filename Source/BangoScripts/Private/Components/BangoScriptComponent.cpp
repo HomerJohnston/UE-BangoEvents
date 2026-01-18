@@ -59,7 +59,7 @@ void UBangoScriptComponent::OnRegister()
 	{
 		FString ScriptName = GetName(); // We will use the component name for the script name
 	
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
+		// FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
 	}
 	
 	if (!IsTemplate())
@@ -140,7 +140,7 @@ void UBangoScriptComponent::OnComponentCreated()
 	}
 	else
 	{
-		FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
+		// FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(this, &ScriptContainer, ScriptName);
 	}
 }
 #endif
@@ -208,11 +208,6 @@ void UBangoScriptComponent::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 		}
 	}
 }
-
-void UBangoScriptComponent::PostEditImport()
-{
-	Super::PostEditImport();
-}
 #endif
 
 // ----------------------------------------------
@@ -226,6 +221,30 @@ void UBangoScriptComponent::UnsetScript()
 	if (!MarkPackageDirty())
 	{
 		UE_LOG(LogBlueprint, Error, TEXT("Could not mark the actor package dirty?"));
+	}
+}
+#endif
+
+// ----------------------------------------------
+
+#if WITH_EDITOR
+void UBangoScriptComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (ScriptContainer.GetScriptClass().IsValid())
+	{
+		TSubclassOf<UBangoScript> Script = ScriptContainer.GetScriptClass().Get();
+		
+		for (TFieldIterator<FProperty> PropertyIterator(Script); PropertyIterator; ++PropertyIterator)
+		{
+			FProperty* Property = *PropertyIterator;
+			
+			if (Property->HasAnyPropertyFlags(CPF_Edit | CPF_ExposeOnSpawn))
+			{
+				UE_LOG(LogBangoEditor, Display, TEXT("%s"), *Property->GetName());
+			}
+		}
 	}
 }
 #endif

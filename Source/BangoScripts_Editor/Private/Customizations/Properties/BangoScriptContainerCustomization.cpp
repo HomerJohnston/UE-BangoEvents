@@ -3,6 +3,8 @@
 #include "BlueprintEditor.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
+#include "IDetailGroup.h"
+#include "PropertyCustomizationHelpers.h"
 #include "SEditorViewport.h"
 #include "BangoScripts/Core/BangoScript.h"
 #include "BangoScripts/EditorTooling/BangoColors.h"
@@ -15,6 +17,8 @@
 #include "Private/Subsystems/BangoLevelScriptsEditorSubsystem.h"
 #include "Private/BlueprintEditor/BangoBlueprintEditor.h"
 #include "Private/Widgets/SBangoGraphEditor.h"
+#include "Utilities/BangoEditorUtility.h"
+#include "Widgets/Layout/SWidgetSwitcher.h"
 
 #define LOCTEXT_NAMESPACE "BangoScripts"
 
@@ -79,6 +83,7 @@ UEdGraph* FBangoScriptContainerCustomization::GetPrimaryEventGraph() const
 
 void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	// Validity for customization display
 	if (PropertyHandle->GetNumOuterObjects() != 1)
 	{
 		HeaderRow.NameContent()
@@ -91,34 +96,81 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 		return;
 	}
 	
+	// PropertyHandle->SetExpanded(true);
+	
+	// Setup
 	ScriptContainerProperty = PropertyHandle;
 	ScriptClassProperty = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptClass));
 		
 	CurrentGraph = GetPrimaryEventGraph();
-	
-	Box = SNew(SVerticalBox);
-	
-	HeaderRow.WholeRowContent()
+		
+	HeaderRow.NameContent()
 	[
-		SNew(SBox)
-		.Padding(0, 4, 0, 4)
+		SNew(STextBlock)
+		.Text(LOCTEXT("ScripContainer_ScriptClassPropertyLabel", "Script"))
+		.TextStyle(FAppStyle::Get(), "SmallText")
+	];
+	
+	HeaderRow.ValueContent()
+	[
+		SNew(SWidgetSwitcher)
+		.WidgetIndex(this, &FBangoScriptContainerCustomization::WidgetIndex_GraphEditor)
+		+ SWidgetSwitcher::Slot()
 		[
-			SNew(SBorder)
-			.Padding(2)
-			.BorderImage(FBangoEditorStyle::GetImageBrush(BangoEditorBrushes.Border_InlineBlueprintGraph))
-			.BorderBackgroundColor(Bango::Colors::Noir)
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
 			[
-				Box.ToSharedRef()
-			]			
+				SNew(SClassPropertyEntryBox)
+				.MetaClass(UBangoScript::StaticClass())
+				.AllowNone(true)
+				.AllowAbstract(false)
+				.OnSetClass(this, &FBangoScriptContainerCustomization::OnSetClass_ScriptClass)
+				.SelectedClass(this, &FBangoScriptContainerCustomization::SelectedClass_ScriptClass)
+				.IsEnabled(this, &FBangoScriptContainerCustomization::IsEnabled_ScriptClassPicker)	
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(4, 0, 0, 0)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("ScriptContainerCustomization_CreateLevelScriptButtonLabel", "Create Level Script"))
+				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
+				.VAlign(VAlign_Center)
+				.HAlign(HAlign_Center)
+				.IsEnabled(this, &FBangoScriptContainerCustomization::IsEnabled_CreateLevelScriptButton)
+			]
+		]
+		+ SWidgetSwitcher::Slot()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0, 0, 6, 0)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("ScriptContainerCustomization_EditScriptButtonLabel", "Open Script Editor"))
+				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EditScript)
+				.VAlign(VAlign_Center)
+				.HAlign(HAlign_Center)
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger") // very red
+				.Text(LOCTEXT("ScriptContainerCustomization_DeleteLevelScript", "Delete Script"))
+				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript)
+				.VAlign(VAlign_Center)
+				.HAlign(HAlign_Center)
+			]
 		]
 	];
-
-	HeaderRow.ResetToDefaultContent()
-	[
-		SNullWidget::NullWidget
-	];
-	
-	UpdateBox();	
 	
 	UBlueprint* Blueprint = GetBlueprint();
 	
@@ -153,7 +205,17 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 		return;
 	}
 	
-	UObject* Outer = GetOuter();
+	Box = SNew(SVerticalBox);
+	
+	ChildBuilder.AddCustomRow(LOCTEXT("BangoScriptHolder_SearchTerm", "Bango"))
+	.ShouldAutoExpand(true)
+	[
+		Box.ToSharedRef()
+	];
+
+	UpdateBox();
+	
+	// Add native children (Description field etc.)
 	
 	uint32 NumChildren;
 	PropertyHandle->GetNumChildren(NumChildren);
@@ -167,26 +229,13 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 			ChildBuilder.AddProperty(ChildHandle.ToSharedRef());
 		}
 	}
-	
-	return;
-	/*
-	Box = SNew(SVerticalBox);
-	
-	ChildBuilder.AddCustomRow(LOCTEXT("BangoScriptHolder_SearchTerm", "Bango"))
-	.ShouldAutoExpand(true)
-	[
-		Box.ToSharedRef()
-	];
-
-	UpdateBox();
-	*/
 }
 
 // ----------------------------------------------
 
 int FBangoScriptContainerCustomization::WidgetIndex_GraphEditor() const
 {
-	return 0;
+	return GetScriptClass() ? 1 : 0;
 }
 
 // ----------------------------------------------
@@ -202,8 +251,9 @@ FReply FBangoScriptContainerCustomization::OnClicked_CreateScript()
 	
 	UObject* Outer = GetOuter();
 	
-	//FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Outer, ScriptContainer, *Outer->GetFName().ToString());
+	FBangoEditorDelegates::OnScriptContainerCreated.Broadcast(Outer, ScriptContainer, *Outer->GetFName().ToString());
 	
+	ScriptContainerProperty->SetExpanded(true);
 	/*
 	ScriptClassProperty->GetOuterPackages(Packages);
 	
@@ -248,6 +298,34 @@ FReply FBangoScriptContainerCustomization::OnClicked_DeleteScript()
 	PreScriptDeleted.Broadcast();
 	
 	return FReply::Handled();
+}
+
+bool FBangoScriptContainerCustomization::IsEnabled_ScriptClassPicker() const
+{
+	TSubclassOf<UBangoScript> ScriptClass = GetScriptClass();
+
+	if (!ScriptClass)
+	{
+		return true;
+	}
+	
+	return ScriptClass->GetName().StartsWith(Bango::Editor::GetLevelScriptNamePrefix());
+}
+
+bool FBangoScriptContainerCustomization::IsEnabled_CreateLevelScriptButton() const
+{
+	// If there is already a script assigned, we can't create a level script
+	return !GetScriptClass();
+}
+
+void FBangoScriptContainerCustomization::OnSetClass_ScriptClass(const UClass* Class) const
+{
+	ScriptClassProperty->SetValue(Class);
+}
+
+const UClass* FBangoScriptContainerCustomization::SelectedClass_ScriptClass() const
+{
+	return GetScriptClass();
 }
 
 // ----------------------------------------------
@@ -323,6 +401,11 @@ FReply FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView() const
 }
 
 FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
+{
+	return FReply::Handled();
+}
+
+FReply FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript() const
 {
 	return FReply::Handled();
 }
@@ -532,66 +615,84 @@ void FBangoScriptContainerCustomization::UpdateBox()
 	
 	Box->ClearChildren();
 	
-	if (CurrentGraph.IsValid())
+	if (!CurrentGraph.IsValid())
 	{
-		TSharedRef<SGraphEditor> GraphEditor = SNew(SGraphEditor)
-		.GraphToEdit(GetPrimaryEventGraph())
-		.IsEditable(false)
-		.GraphEvents(Events)
-		.ShowGraphStateOverlay(false);
-		
-		Box->AddSlot()
-		.AutoHeight()
-		[
-			SNew(SOverlay)
-			+ SOverlay::Slot()
-			[
-				SNew(SBox)
-				.HeightOverride(300)
-				[
-					GraphEditor
-				]
-			]
-			+ SOverlay::Slot()
-			.HAlign(HAlign_Left)
-			.VAlign(VAlign_Top)
-			.Padding(8)
-			[
-				SNew(SButton)
-				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView)
-				[
-					SNew(SImage)
-					.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
-				]
-			]
-			+ SOverlay::Slot()
-			.HAlign(HAlign_Left)
-			.VAlign(VAlign_Bottom)
-			.Padding(8)
-			[
-				SNew(STextBlock)
-				.Text(FText::Format
-					(
-						INVTEXT("{0}\n{1}{2}"),
-						FText::FromName(GetBlueprint()->GetFName()),
-						FText::FromString( GetBlueprint()->GetPackage()->GetPathName()),
-						FText::FromString( GetBlueprint()->GetPackage()->ContainsMap() ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension())
-					))
-				.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
-				.ColorAndOpacity(Bango::Colors::Gray)
-			]
-		];
+		return;
 	}
-	else
-	{
-		Box->AddSlot()
+	
+	TSharedRef<SGraphEditor> GraphEditor = SNew(SGraphEditor)
+	.GraphToEdit(GetPrimaryEventGraph())
+	.IsEditable(false)
+	.GraphEvents(Events)
+	.ShowGraphStateOverlay(false);
+	
+	Box->AddSlot()
+	.AutoHeight()
+	[
+		SNew(SOverlay)
+		+ SOverlay::Slot()
+		[
+			SNew(SBox)
+			.HeightOverride(300)
+			.Padding(-22, 0, 0, 0)
+			[
+				GraphEditor
+			]
+		]
+		+ SOverlay::Slot()
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		.Padding(8-22, 8, 0, 0)
 		[
 			SNew(SButton)
-			.Text(LOCTEXT("BangoScriptHolder_CreateScriptButtonText", "None (Click to Create)"))
-			.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
-			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
-		];
-	}
+			.ContentPadding(0)
+			// .ButtonStyle(FAppStyle::Get(), "FlatButton") // blue
+			.ButtonStyle(FAppStyle::Get(), "FlatButton.Default") // nice flat gray button
+			//.ButtonStyle(FAppStyle::Get(), "Animation.PlayControlsButton")
+			//.ButtonStyle(FAppStyle::Get(), "Button")
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView)
+			[
+				SNew(SImage)
+				.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
+				.DesiredSizeOverride(FVector2D(16.0f, 16.0f))
+			]
+		]
+		/*
+		+ SOverlay::Slot()
+		.HAlign(HAlign_Right)
+		.VAlign(VAlign_Top)
+		.Padding(0, 8, 96, 0)
+		[
+			SNew(SButton)
+			.ContentPadding(0)
+			// .ButtonStyle(FAppStyle::Get(), "SimpleButton") / grey hover hint
+			// .ButtonStyle(FAppStyle::Get(), "PrimaryButton") // blue
+			.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger") // very red
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript)
+			[
+				SNew(SImage)
+				.Image(FAppStyle::GetBrush("Icons.X"))
+				.DesiredSizeOverride(FVector2D(16.0f, 16.0f))
+			]
+		]
+		*/
+		+ SOverlay::Slot()
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Bottom)
+		.Padding(8-22, 0, 0, 8)
+		[
+			SNew(STextBlock)
+			.Text(FText::Format
+				(
+					INVTEXT("{0}\n{1}{2}"),
+					FText::FromName(GetBlueprint()->GetFName()),
+					FText::FromString( FPackageName::GetShortName( GetBlueprint()->GetPackage()->GetPathName() ) ),
+					FText::FromString( GetBlueprint()->GetPackage()->ContainsMap() ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension())
+				))
+			.Font(FCoreStyle::GetDefaultFontStyle("Normal", 8))
+			.ColorAndOpacity(Bango::Colors::Gray)
+		]
+	];
 }
 
 // ----------------------------------------------

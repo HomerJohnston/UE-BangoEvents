@@ -43,7 +43,8 @@ public class BangoScripts_Editor : ModuleRules
 				"TypedElementFramework",
 				"AssetTools",
 				"UMGEditor",
-				"ApplicationCore"
+				"ApplicationCore",
+				"PropertyEditor"
             }
         );
         

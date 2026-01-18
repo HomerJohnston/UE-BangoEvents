@@ -20,6 +20,19 @@ FString Bango::Editor::GetGameScriptRootFolder()
 	return TEXT("__BangoScripts__");
 }
 
+const TCHAR* Bango::Editor::GetLevelScriptNamePrefix()
+{
+	// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.
+	return TEXT("~");
+	
+	// \U0001F4DC Manuscript / Scroll
+	// \U0001F9FE Receipt
+	// \U0001F4A5 Explosion
+	// \U0001F4CD Pushpin
+	// \U0000FE6B Small Form @
+	// \U0000FF5E Halfwidth Forms ~
+}
+
 // ----------------------------------------------
 
 FString Bango::Editor::GetAbsoluteScriptRootFolder()
@@ -190,12 +203,5 @@ UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint
 FString Bango::Editor::GetLocalScriptName(FString InName)
 {
 	// We append a funny character to the UObject name to make it invisible in the content browser (this is a hacky hack). Note that a period '.' is not allowed because of some filepath checks in engine code.
-	return TEXT("~") + InName;
-	
-	// \U0001F4DC Manuscript / Scroll
-	// \U0001F9FE Receipt
-	// \U0001F4A5 Explosion
-	// \U0001F4CD Pushpin
-	// \U0000FE6B Small Form @
-	// \U0000FF5E Halfwidth Forms ~
+	return Bango::Editor::GetLevelScriptNamePrefix() + InName;
 }

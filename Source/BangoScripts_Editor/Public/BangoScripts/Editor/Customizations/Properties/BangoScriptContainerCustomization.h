@@ -41,7 +41,7 @@ protected:
 	FText ScriptNameText;
 	
 	EBangoScriptRenameStatus ProposedNameStatus;
-	
+
 	// ------------------------------------------
 
 	void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
@@ -51,6 +51,14 @@ protected:
 	FReply OnClicked_CreateScript();
 	
 	FReply OnClicked_DeleteScript();
+	
+	bool IsEnabled_ScriptClassPicker() const;
+	
+	bool IsEnabled_CreateLevelScriptButton() const;
+	
+	void OnSetClass_ScriptClass(const UClass* Class) const;
+	
+	const UClass* SelectedClass_ScriptClass() const;
 	
 	// ------------------------------------------
 
@@ -63,6 +71,8 @@ protected:
 	FReply OnClicked_EnlargeGraphView() const;
 	
 	FReply OnClicked_RenameScript() const;
+	
+	FReply OnClicked_DeleteLevelScript() const;
 	
 	void OnTextChanged_ScriptNameEditableText(const FText& Text);
 	
