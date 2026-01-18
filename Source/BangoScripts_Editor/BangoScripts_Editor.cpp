@@ -24,6 +24,9 @@
 TSharedPtr<FSlateStyleSet> FBangoScripts_EditorModule::StyleSet = nullptr;
 TSharedPtr<FBangoClassViewerFilter> FBangoScripts_EditorModule::BangoClassViewerFilter = nullptr;
 
+EAssetTypeCategories::Type FBangoScripts_EditorModule::BangoAssetCategory = static_cast<EAssetTypeCategories::Type>(0);
+FAssetCategoryPath FBangoAssetCategoryPaths::Bango(LOCTEXT("Bango", "Bango"));
+
 // TODO clean this up
 void FBangoScripts_EditorModule::StartupModule()
 {

@@ -4,7 +4,6 @@
 #include "InputCoreTypes.h"
 #include "Components/ActorComponent.h"
 #include "BangoScripts/Debug/BangoDebugDrawServiceBase.h"
-#include "StructUtils/PropertyBag.h"
 
 #include "BangoScriptComponent.generated.h"
 
@@ -67,9 +66,6 @@ protected:
 	/** The actual script instance. */
 	UPROPERTY(EditInstanceOnly)
 	FBangoScriptContainer ScriptContainer;
-
-	UPROPERTY(EditAnywhere)
-	FInstancedPropertyBag ScriptInputs;
 	
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)

@@ -136,7 +136,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 			.VAlign(VAlign_Center)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("ScriptContainerCustomization_CreateLevelScriptButtonLabel", "Create Level Script"))
+				.Text(LOCTEXT("ScriptContainerCustomization_CreateLevelScriptButtonLabel", "Create New Level Script"))
 				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
 				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_CreateScript)
 				.VAlign(VAlign_Center)
@@ -152,7 +152,7 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 			.Padding(0, 0, 6, 0)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("ScriptContainerCustomization_EditScriptButtonLabel", "Open Script Editor"))
+				.Text(LOCTEXT("ScriptContainerCustomization_EditScriptButtonLabel", "Edit"))
 				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
 				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EditScript)
 				.VAlign(VAlign_Center)
@@ -162,8 +162,9 @@ void FBangoScriptContainerCustomization::CustomizeHeader(TSharedRef<IPropertyHan
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger") // very red
-				.Text(LOCTEXT("ScriptContainerCustomization_DeleteLevelScript", "Delete Script"))
+				//.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger") // very red
+				.ButtonColorAndOpacity(FLinearColor::Red)
+				.Text(LOCTEXT("ScriptContainerCustomization_DeleteLevelScript", "Delete"))
 				.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
 				.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript)
 				.VAlign(VAlign_Center)
@@ -226,7 +227,33 @@ void FBangoScriptContainerCustomization::CustomizeChildren(TSharedRef<IPropertyH
 		
 		if (ChildHandle->IsValidHandle() && ChildHandle->IsEditable())
 		{
-			ChildBuilder.AddProperty(ChildHandle.ToSharedRef());
+			if (ChildHandle->GetProperty()->GetFName() == GET_MEMBER_NAME_CHECKED(FBangoScriptContainer, ScriptInputs))
+			{
+				IDetailPropertyRow& Row = ChildBuilder.AddProperty(ChildHandle.ToSharedRef());
+
+				TSharedPtr<SWidget> NameWidget, ValueWidget;
+				Row.GetDefaultWidgets(NameWidget, ValueWidget);
+				
+				Row.CustomWidget(true)
+				.NameContent()
+				[
+					NameWidget.ToSharedRef()
+				]
+				.ValueContent()
+				[
+					SNew(SButton)
+					.ButtonColorAndOpacity(FLinearColor::Blue)
+					.Text(LOCTEXT("ScriptContainerCustomization_RefreshScriptInputs", "Refresh"))
+					.TextStyle(FAppStyle::Get(), "DetailsView.CategoryTextStyle")
+					.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_RefreshScriptInputs)
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Center)
+				];
+			}
+			else
+			{
+				ChildBuilder.AddProperty(ChildHandle.ToSharedRef());
+			}
 		}
 	}
 }
@@ -407,6 +434,19 @@ FReply FBangoScriptContainerCustomization::OnClicked_RenameScript() const
 
 FReply FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript() const
 {
+	return FReply::Handled();
+}
+
+FReply FBangoScriptContainerCustomization::OnClicked_RefreshScriptInputs() const
+{
+	void* ScriptContainerPtr = nullptr;
+	ScriptContainerProperty->GetValueData(ScriptContainerPtr);
+	
+	FBangoScriptContainer* ScriptContainer = reinterpret_cast<FBangoScriptContainer*>(ScriptContainerPtr);
+	
+	GetOuter()->Modify();
+	ScriptContainer->UpdateScriptInputs();
+	
 	return FReply::Handled();
 }
 
@@ -646,36 +686,14 @@ void FBangoScriptContainerCustomization::UpdateBox()
 		[
 			SNew(SButton)
 			.ContentPadding(0)
-			// .ButtonStyle(FAppStyle::Get(), "FlatButton") // blue
-			.ButtonStyle(FAppStyle::Get(), "FlatButton.Default") // nice flat gray button
-			//.ButtonStyle(FAppStyle::Get(), "Animation.PlayControlsButton")
-			//.ButtonStyle(FAppStyle::Get(), "Button")
-			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EnlargeGraphView)
+			.ButtonStyle(FAppStyle::Get(), "FlatButton.Default")
+			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_EditScript)
 			[
 				SNew(SImage)
 				.Image(FAppStyle::Get().GetBrush("Icons.Fullscreen"))
 				.DesiredSizeOverride(FVector2D(16.0f, 16.0f))
 			]
 		]
-		/*
-		+ SOverlay::Slot()
-		.HAlign(HAlign_Right)
-		.VAlign(VAlign_Top)
-		.Padding(0, 8, 96, 0)
-		[
-			SNew(SButton)
-			.ContentPadding(0)
-			// .ButtonStyle(FAppStyle::Get(), "SimpleButton") / grey hover hint
-			// .ButtonStyle(FAppStyle::Get(), "PrimaryButton") // blue
-			.ButtonStyle(FAppStyle::Get(), "FlatButton.Danger") // very red
-			.OnClicked(this, &FBangoScriptContainerCustomization::OnClicked_DeleteLevelScript)
-			[
-				SNew(SImage)
-				.Image(FAppStyle::GetBrush("Icons.X"))
-				.DesiredSizeOverride(FVector2D(16.0f, 16.0f))
-			]
-		]
-		*/
 		+ SOverlay::Slot()
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Bottom)

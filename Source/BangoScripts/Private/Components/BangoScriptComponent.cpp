@@ -231,21 +231,6 @@ void UBangoScriptComponent::UnsetScript()
 void UBangoScriptComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	
-	if (ScriptContainer.GetScriptClass().IsValid())
-	{
-		TSubclassOf<UBangoScript> Script = ScriptContainer.GetScriptClass().Get();
-		
-		for (TFieldIterator<FProperty> PropertyIterator(Script); PropertyIterator; ++PropertyIterator)
-		{
-			FProperty* Property = *PropertyIterator;
-			
-			if (Property->HasAnyPropertyFlags(CPF_Edit | CPF_ExposeOnSpawn))
-			{
-				UE_LOG(LogBangoEditor, Display, TEXT("%s"), *Property->GetName());
-			}
-		}
-	}
 }
 #endif
 

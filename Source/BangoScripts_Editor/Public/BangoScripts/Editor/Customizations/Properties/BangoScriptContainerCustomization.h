@@ -74,6 +74,8 @@ protected:
 	
 	FReply OnClicked_DeleteLevelScript() const;
 	
+	FReply OnClicked_RefreshScriptInputs() const;
+	
 	void OnTextChanged_ScriptNameEditableText(const FText& Text);
 	
 	void SetProposedScriptName(const FText& Text);

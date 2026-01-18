@@ -129,7 +129,7 @@ FGraphAppearanceInfo FBangoBlueprintEditor::GetGraphAppearance(class UEdGraph* I
 	FText LevelNameText = GetLevelNameAsText();
 	
 	FText InstructionText = OwnerNameText.IsEmpty() ? OwnerNameText : FText::Format(INVTEXT("{0} \U00002014 {1}"), { OwnerNameText, LevelNameText.IsEmpty() ? LOCTEXT("ScriptBlueprintEditor_NoLevel", "No Level") : LevelNameText }) ;
-	FText CornerText = LevelNameText.IsEmpty() ? LOCTEXT("ScriptBlueprintEditor_ContentScript", "Content Script") : LOCTEXT("ScriptBlueprintEditor_LevelScript", "Level Script");
+	FText CornerText = LevelNameText.IsEmpty() ? LOCTEXT("ScriptBlueprintEditor_ContentScript", "Bango Script") : LOCTEXT("ScriptBlueprintEditor_LevelScript", "Bango Level Script");
 	
 	AppearanceInfo.CornerText = CornerText;
 	AppearanceInfo.InstructionText = InstructionText;

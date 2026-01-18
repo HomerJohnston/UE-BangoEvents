@@ -31,9 +31,9 @@ DECLARE_DYNAMIC_DELEGATE(FOnLatentActionCompleted);
 using DataValidationDelegate = TDelegate<EDataValidationResult(class FDataValidationContext& Context, const UBangoScript* ScriptInstance)>;
 
 /**
- * This is the actual script blueprint core class.
+ * A reusable script asset, to be used in Bango Script Actor Components (UBangoScriptActorComponent) or in other places.
  */
-UCLASS(Abstract, Blueprintable)
+UCLASS(Blueprintable)
 class BANGOSCRIPTS_API UBangoScript : public UObject 
 {
     GENERATED_BODY()

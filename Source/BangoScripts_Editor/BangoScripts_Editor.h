@@ -8,12 +8,19 @@
 
 class FSlateStyleSet;
 
+struct BANGOSCRIPTS_EDITOR_API FBangoAssetCategoryPaths : EAssetCategoryPaths
+{
+	static FAssetCategoryPath Bango;
+};
+
 class FBangoScripts_EditorModule : public IModuleInterface, public FGPGEditorModuleBase
 {
 	// ============================================================================================
 	// SETTINGS
 	// ============================================================================================
 
+	static EAssetTypeCategories::Type BangoAssetCategory;
+	
 	// ============================================================================================
 	// STATE
 	// ============================================================================================
