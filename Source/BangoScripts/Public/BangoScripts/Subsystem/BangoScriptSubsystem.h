@@ -1,7 +1,9 @@
 ﻿#pragma once
+
 #include "BangoScripts/Components/BangoScriptComponent.h"
 #include "BangoScripts/Core/BangoScriptHandle.h"
 #include "BangoScripts/Utility/ObjectTicker.h"
+#include "Subsystems/WorldSubsystem.h"
 
 #include "BangoScriptSubsystem.generated.h"
 

@@ -1,8 +1,11 @@
 ﻿#pragma once
 
+#if WITH_EDITOR
 #include "Editor.h"
 #include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
 #include "BangoScripts/EditorTooling/BangoHelpers.h"
+#endif
+
 #include "Debug/DebugDrawService.h"
 #include "Engine/Canvas.h"
 

@@ -3,7 +3,10 @@
 #include "GameFramework/Actor.h"
 #include "BangoScripts/Components/BangoActorIDComponent.h"
 #include "BangoScripts/Utility/BangoScriptsLog.h"
+
+#if WITH_EDITOR
 #include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
+#endif
 
 UBangoActorIDComponent* Bango::Utilities::GetActorIDComponent(AActor* Actor, bool bForceCreate)
 {
@@ -19,15 +22,14 @@ UBangoActorIDComponent* Bango::Utilities::GetActorIDComponent(AActor* Actor, boo
 	
 	if (IDComponents.Num() == 0)
 	{
+#if WITH_EDITOR
 		if (bForceCreate)
 		{
 			FBangoEditorDelegates::RequestNewID.Broadcast(Actor);
 			Actor->GetComponents<UBangoActorIDComponent>(IDComponents);	
 		}
-		else
-		{
-			return nullptr;
-		}
+#endif
+		return nullptr;
 	}
 
 	if (IDComponents.Num() == 1)

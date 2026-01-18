@@ -4,6 +4,7 @@
 #include "BangoScripts/LatentActions/BangoSleepAction.h"
 #include "BangoScripts/Subsystem/BangoScriptSubsystem.h"
 #include "BangoScripts/Utility/BangoScriptsLog.h"
+#include "Engine/Engine.h"
 #include "Misc/DataValidation.h"
 #include "UObject/AssetRegistryTagsContext.h"
 

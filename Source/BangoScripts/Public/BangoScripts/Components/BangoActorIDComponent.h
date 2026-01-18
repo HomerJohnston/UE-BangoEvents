@@ -5,6 +5,10 @@
 
 #include "BangoActorIDComponent.generated.h"
 
+/**
+ * Bango Actor ID Component MAY become deprecated! It was originally intended to be used for level scripts to be able to look up actors from the world. 
+ * However, I since figured out how to create soft pointers to actors in the level scripts which seem to work better. Real-world testing required.
+ */
 UCLASS(HideCategories=("Navigation", "Tags", "Activation", "AssetUserData"), meta = (BlueprintSpawnableComponent))
 class BANGOSCRIPTS_API UBangoActorIDComponent : public UActorComponent
 {
@@ -30,38 +34,16 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> IconTexture;
 #endif
-	void PostInitProperties() override;
-	
-	void PostReinitProperties() override;
-	
 	void PostDuplicate(bool bDuplicateForPIE) override;
-	
-	void PostLoad() override;
-
-	void PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph) override;
-	
-	void PostLinkerChange() override;
-
-	void Serialize(FArchive& Ar) override;
-	
-	bool Rename(const TCHAR* NewName = nullptr, UObject* NewOuter = nullptr, ERenameFlags Flags = (0)) override;
-	
-	void PostEditImport() override;
-	
-	void PostApplyToComponent() override;
-	
-	void CheckForErrors() override;
-	
-	void InitializeComponent() override;
 	
 	void BeginPlay() override;
 
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
+#if WITH_EDITOR
+protected:
 	void PrintGuid(const FString& FuncName);
 	
-#if WITH_EDITOR
-private:
 	void EnsureValidGuid();
 #endif
 	
@@ -73,8 +55,6 @@ public:
 
 	void OnUnregister() override;
 
-	void OnComponentCreated() override;
-	
 	void DebugDrawEditor(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const;
 	
 	void DebugDrawGame(UCanvas* Canvas, FVector ScreenLocation, float Alpha) const;

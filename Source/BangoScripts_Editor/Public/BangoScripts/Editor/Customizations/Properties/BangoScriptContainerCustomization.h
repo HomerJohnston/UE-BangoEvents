@@ -4,6 +4,7 @@
 #include "IPropertyTypeCustomization.h"
 #include "Input/Reply.h"
 
+struct FCanLoadMap;
 class SVerticalBox;
 class FBangoBlueprintEditor;
 

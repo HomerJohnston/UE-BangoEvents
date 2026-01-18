@@ -225,6 +225,16 @@ void UBangoLevelScriptsEditorSubsystem::OnLevelScriptContainerDuplicated(UObject
 
 void UBangoLevelScriptsEditorSubsystem::EnqueueCreatedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
+	if (GEditor->IsPlaySessionInProgress())
+	{
+		return;
+	}
+	
+	if (IsRunningCommandlet())
+	{
+		return;
+	}
+	
 	if (bMapLoading)
 	{
 		return;
@@ -247,6 +257,16 @@ void UBangoLevelScriptsEditorSubsystem::EnqueueCreatedScriptComponent(UObject* O
 
 void UBangoLevelScriptsEditorSubsystem::EnqueueDestroyedScriptComponent(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
+	if (GEditor->IsPlaySessionInProgress())
+	{
+		return;
+	}
+	
+	if (IsRunningCommandlet())
+	{
+		return;
+	}
+	
 	if (bMapLoading)
 	{
 		return;
@@ -384,7 +404,6 @@ void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBango
 		AActor* Actor = Outer->GetTypedOuter<AActor>();
 		
 		FGuid NewScriptGuid = FGuid::NewGuid(); 
-		ScriptContainer->SetGuid(NewScriptGuid);
 		
 		UPackage* ScriptPackage = Bango::Editor::MakeLevelScriptPackage(Outer, NewScriptGuid);
 		
@@ -408,7 +427,7 @@ void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBango
 		UBangoScriptBlueprint* Blueprint = Bango::Editor::MakeLevelScript(ScriptPackage, NewBlueprintName, NewScriptGuid);
 		
 		Blueprint->Modify();
-		Blueprint->ActorReference = Actor->GetPathName();
+		Blueprint->SetActorReference(Actor);
 		
 		if (!Blueprint)
 		{
@@ -416,7 +435,6 @@ void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBango
 			return;
 		}
 	
-		Blueprint->SetGuid(ScriptContainer->GetGuid());
 		
 		UClass* GenClass = Blueprint->GeneratedClass;
 		
@@ -431,7 +449,8 @@ void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBango
 				BangoScript->SetThis_ClassType(Actor->GetClass());
 			}
 		}
-	
+		
+		ScriptContainer->SetGuid(NewScriptGuid);
 		ScriptContainer->SetScriptClass(Blueprint->GeneratedClass);
 	
 		FKismetEditorUtilities::CompileBlueprint(Blueprint);
@@ -448,6 +467,20 @@ void UBangoLevelScriptsEditorSubsystem::CreateLevelScript(UObject* Outer, FBango
 void UBangoLevelScriptsEditorSubsystem::DuplicateLevelScript(UObject* Owner, FBangoScriptContainer* ScriptContainer)
 {
 	UBangoScriptBlueprint* SourceBlueprint = UBangoScriptBlueprint::GetBangoScriptBlueprintFromClass(ScriptContainer->GetScriptClass());
+
+	if (!SourceBlueprint)
+	{
+		UE_LOG(LogBangoEditor, Error, TEXT("Failed to locate script blueprint asset for script class path %s"), *ScriptContainer->GetScriptClass().ToSoftObjectPath().ToString());
+		return;
+	}
+	
+	AActor* OwnerActor = Owner->GetTypedOuter<AActor>();
+	
+	if (!OwnerActor)
+	{
+		UE_LOG(LogBangoEditor, Error, TEXT("Failed to duplicate script; could not find an AActor outer for %s"), *Owner->GetPathName()); 
+		return;
+	}
 		
 	// Prepare the newly duplicated script container
 	ScriptContainer->Unset();
@@ -463,29 +496,22 @@ void UBangoLevelScriptsEditorSubsystem::DuplicateLevelScript(UObject* Owner, FBa
 		UE_LOG(LogBango, Error, TEXT("Tried to create a new script but could not create a package!"));
 		return;
 	}
-		
+	
 	UE_LOG(LogBangoEditor, Verbose, TEXT("OnLevelScriptContainerDuplicated: %s, %s, %s"), *Owner->GetName(), *ScriptContainer->GetGuid().ToString(), *ScriptContainer->GetRequestedName());
-		
-	UBangoScriptBlueprint* DuplicatedBlueprint = nullptr;
-		
-	if (SourceBlueprint)
-	{
-		DuplicatedBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, ScriptContainer->GetRequestedName(), NewScriptGuid);
-		DuplicatedBlueprint->ActorReference = Owner->GetTypedOuter<AActor>()->GetPathName();	
-	}
-
-	if (DuplicatedBlueprint)
-	{
-		ScriptContainer->SetScriptClass(DuplicatedBlueprint->GeneratedClass);
 	
-		FKismetEditorUtilities::CompileBlueprint(DuplicatedBlueprint);
-				
-		FAssetRegistryModule::AssetCreated(DuplicatedBlueprint);
-		(void)NewScriptPackage->MarkPackageDirty();
+	UBangoScriptBlueprint* DuplicatedBlueprint = Bango::Editor::DuplicateLevelScript(SourceBlueprint, NewScriptPackage, ScriptContainer->GetRequestedName(), NewScriptGuid, OwnerActor);
+	check(DuplicatedBlueprint);
 	
-		// Tells FBangoScript property type customizations to regenerate
-		OnScriptGenerated.Broadcast();	
-	}
+	FKismetEditorUtilities::CompileBlueprint(DuplicatedBlueprint);
+	
+	Owner->Modify();
+	ScriptContainer->SetScriptClass(DuplicatedBlueprint->GeneratedClass);
+	
+	FAssetRegistryModule::AssetCreated(DuplicatedBlueprint);
+	(void)NewScriptPackage->MarkPackageDirty();
+	
+	// Tells FBangoScript property type customizations to regenerate
+	OnScriptGenerated.Broadcast();	
 }
 
 // ----------------------------------------------
@@ -574,7 +600,8 @@ void UBangoLevelScriptsEditorSubsystem::ProcessDestroyedScriptRequest(TSoftClass
 	Blueprint->DeletedPackagePath = Blueprint->GetPackage()->GetPathName();
 	Blueprint->DeletedPackagePersistentGuid = OldPackage->GetPersistentGuid();
 	Blueprint->DeletedPackageId = OldPackage->GetPackageId();
-	Blueprint->Rename(*Blueprint->ScriptGuid.ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+	
+	Blueprint->Rename(*Blueprint->GetScriptGuid().ToString(), GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
 	
 	// TODO Is there another way to make this work without this? I can't successfully run ObjectTools' delete funcs on a UPackage, only on an asset inside a UPackage!
 	UBangoDummyObject* WhyDoINeedToPutADummyObjectIntoAPackageToDeleteIt = NewObject<UBangoDummyObject>(OldPackage);

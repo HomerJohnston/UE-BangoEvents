@@ -60,9 +60,10 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 	TArray<UEdGraph*> Graphs;
 	Blueprint->GetAllGraphs(Graphs);
 	
+	FVector ComponentActorWorldPos;
 	FVector ComponentActorScreenPos;
 	float ComponentActorSize;
-	if (!GetActorScreenPosAndSize(View, Canvas, ComponentActor, ComponentActorScreenPos, ComponentActorSize))
+	if (!GetActorScreenPosAndSize(View, Canvas, ComponentActor, ComponentActorWorldPos, ComponentActorScreenPos, ComponentActorSize))
 	{
 		return;
 	}
@@ -98,11 +99,11 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				}
 			}
 			
-			float MinRadius = 10.0f;
-			float MaxRadius = 50.0f;
+			float MinRadius = 3.0f;
+			float MaxRadius = 10.0f;
 
-			MinRadius = FMath::Max(MinRadius, 0.005f * Viewport->GetSizeXY().Y);
-			MaxRadius = FMath::Max(MaxRadius, 0.02f * Viewport->GetSizeXY().Y);
+			//MinRadius = FMath::Max(MinRadius, 0.005f * Viewport->GetSizeXY().Y);
+			//MaxRadius = FMath::Max(MaxRadius, 0.02f * Viewport->GetSizeXY().Y);
 			
 			// Now we draw
 			for (const FBangoActorNodeDraw& DrawInfo : VisitedActors)// int32 i = 0; i < VisitedActors FindActorNodes.Num(); ++i)
@@ -113,15 +114,18 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				FLinearColor Color = Bango::Colors::Funcs::GetHashedColor(GetTypeHash(DrawInfo.Actor), Saturation, Luminosity);
 				
 				// Draw circle
-				FVector ScreenPos;
+				FVector TargetActorWorldPos;
+				FVector TargetActorScreenPos;
 				float Radius;
-				if (!GetActorScreenPosAndSize(View, Canvas, DrawInfo.Actor.Get(), ScreenPos, Radius))
+				if (!GetActorScreenPosAndSize(View, Canvas, DrawInfo.Actor.Get(), TargetActorWorldPos, TargetActorScreenPos, Radius))
 				{
 					return;
 				}
 				
-				Radius = FMath::Clamp(Radius, MinRadius, MaxRadius);
-				DrawScreenCircleOverWorldPos(View, Canvas, ScreenPos, Radius, Thickness, Color);					
+				Radius = FMath::Lerp(0.1f * Radius, 0.01f * Viewport->GetSizeXY().Y, 0.5f); // Grow the radius a bit depending on the size of the actor
+				Radius = FMath::Clamp(Radius, MinRadius, MaxRadius); // But clamp its max size also
+				
+				DrawCircle_ScreenSpace(View, Canvas, TargetActorScreenPos, Radius, Thickness, Color);					
 				
 				// Draw connection line
 				FVector Delta = DrawInfo.Actor->GetActorLocation() - ComponentActor->GetActorLocation();
@@ -131,20 +135,20 @@ void FBangoScriptComponentVisualizer::DrawVisualizationHUD(const UActorComponent
 				if (Delta.SizeSquared() > FMath::Square(StartDrawDistance))
 				{
 					FVector Start = ComponentActor->GetActorLocation();
-					FVector End = DrawInfo.Actor->GetActorLocation();
+					FVector End = TargetActorWorldPos;
 			
-					DrawScreenLineForWorldPos(View, Canvas, Start, End, Thickness, Color, ComponentActorSize * 1.5f, Radius);
+					DrawLine_WorldSpace(View, Canvas, Start, End, Thickness, Color, ComponentActorSize * 0.5f, Radius);
 				}
 			}
 		}
 		else
 		{
-			// Fast path - just display count stuff
+			// TODO fast path - just display count stuff
 		}
 	}
 }
 
-void FBangoScriptComponentVisualizer::DrawScreenCircleOverWorldPos(const FSceneView* View, FCanvas* Canvas, const FVector& WorldPosition, float Radius, float Thickness, const FLinearColor& Color)
+void FBangoScriptComponentVisualizer::DrawCircle_ScreenSpace(const FSceneView* View, FCanvas* Canvas, const FVector& ScreenPosition, float Radius, float Thickness, const FLinearColor& Color)
 {
 	uint8 NumLineSegments = 24;
 	static TArray<FVector2D> TempPoints;
@@ -156,8 +160,8 @@ void FBangoScriptComponentVisualizer::DrawScreenCircleOverWorldPos(const FSceneV
 		const float Angle = (i / NumFloatLineSegments) * TWO_PI;
 
 		FVector2D PointOnCircle;
-		PointOnCircle.X = cosf(Angle) * Radius + WorldPosition.X;
-		PointOnCircle.Y = sinf(Angle) * Radius + WorldPosition.Y;
+		PointOnCircle.X = cosf(Angle) * Radius + ScreenPosition.X;
+		PointOnCircle.Y = sinf(Angle) * Radius + ScreenPosition.Y;
 		TempPoints.Add(PointOnCircle);
 	}
 	
@@ -169,11 +173,13 @@ void FBangoScriptComponentVisualizer::DrawScreenCircleOverWorldPos(const FSceneV
 		FCanvasLineItem Line(TempPoints[Index0], TempPoints[Index1]);
 		Line.LineThickness = Thickness;
 		Line.SetColor(Color);
-		Canvas->DrawItem(Line);
+		//Canvas->DrawItem(Line);
+		
+		Canvas->DrawNGon(FVector2D(ScreenPosition.X, ScreenPosition.Y), Color.ToFColor(false), 16, Radius);
 	}
 }
 
-void FBangoScriptComponentVisualizer::DrawScreenLineForWorldPos(const FSceneView* View, FCanvas* Canvas, const FVector& WorldStart, const FVector& WorldEnd, float Thickness, const FLinearColor& Color, float StartCutoff, float EndCutoff)
+void FBangoScriptComponentVisualizer::DrawLine_WorldSpace(const FSceneView* View, FCanvas* Canvas, const FVector& WorldStart, const FVector& WorldEnd, float Thickness, const FLinearColor& Color, float StartCutoff, float EndCutoff)
 {
 	FVector2D ScreenStart;
 	FVector2D ScreenEnd;
@@ -207,16 +213,14 @@ void FBangoScriptComponentVisualizer::DrawScreenLineForWorldPos(const FSceneView
 	Canvas->DrawItem(Line);
 }
 
-bool FBangoScriptComponentVisualizer::GetActorScreenPosAndSize(const FSceneView* View, FCanvas* Canvas, const AActor* Actor, FVector& ScreenLocation, float& Radius)
+bool FBangoScriptComponentVisualizer::GetActorScreenPosAndSize(const FSceneView* View, FCanvas* Canvas, const AActor* Actor, FVector& OutWorldOrigin, FVector& OutOriginScreenLocation, float& Radius)
 {
-	FVector TargetOrigin;
 	FVector TargetBoxExtents;
-	Actor->GetActorBounds(false, TargetOrigin, TargetBoxExtents);
+	Actor->GetActorBounds(false, OutWorldOrigin, TargetBoxExtents);
 	float TargetSphereRadius = TargetBoxExtents.GetMax() * 0.677f;
-	FVector WorldPos = TargetOrigin;
 	
 	FVector2D ScreenPos; 
-	if (!GetScreenPos(View, WorldPos, ScreenPos))
+	if (!GetScreenPos(View, OutWorldOrigin, ScreenPos))
 	{
 		return false;
 	}
@@ -225,13 +229,13 @@ bool FBangoScriptComponentVisualizer::GetActorScreenPosAndSize(const FSceneView*
 	FVector UpView = RightView.Cross(View->GetViewDirection());
 	
 	FVector2D RadiusScreenPos;
-	if (!GetScreenPos(View, WorldPos + TargetSphereRadius * UpView, RadiusScreenPos))
+	if (!GetScreenPos(View, OutWorldOrigin + TargetSphereRadius * UpView, RadiusScreenPos))
 	{
 		return false;
 	}
 	
-	ScreenLocation.X = ScreenPos.X;
-	ScreenLocation.Y = ScreenPos.Y;
+	OutOriginScreenLocation.X = ScreenPos.X;
+	OutOriginScreenLocation.Y = ScreenPos.Y;
 
 	Radius = FVector2D::Distance(RadiusScreenPos, ScreenPos);
 	

@@ -11,11 +11,11 @@ class FBangoScriptComponentVisualizer : public FComponentVisualizer
 	
 	void DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 	
-	void DrawScreenCircleOverWorldPos(const FSceneView* View, FCanvas* Canvas, const FVector& WorldPosition, float Radius, float Thickness, const FLinearColor& Color);
+	void DrawCircle_ScreenSpace(const FSceneView* View, FCanvas* Canvas, const FVector& ScreenPosition, float Radius, float Thickness, const FLinearColor& Color);
 	
-	void DrawScreenLineForWorldPos(const FSceneView* View, FCanvas* Canvas, const FVector& WorldStart, const FVector& WorldEnd, float Thickness, const FLinearColor& Color, float StartCutoff = 0.0f, float EndCutoff = 0.0f);
+	void DrawLine_WorldSpace(const FSceneView* View, FCanvas* Canvas, const FVector& WorldStart, const FVector& WorldEnd, float Thickness, const FLinearColor& Color, float StartCutoff = 0.0f, float EndCutoff = 0.0f);
 	
-	bool GetActorScreenPosAndSize(const FSceneView* View, FCanvas* Canvas, const AActor* Actor, FVector& ScreenLocation, float& Radius);
+	bool GetActorScreenPosAndSize(const FSceneView* View, FCanvas* Canvas, const AActor* Actor, FVector& OutWorldOrigin, FVector& OutOriginScreenLocation, float& Radius);
 	
 	bool GetScreenPos(const FSceneView* View, const FVector& WorldPos, FVector2D& ScreenPos);
 };

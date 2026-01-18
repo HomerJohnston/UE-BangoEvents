@@ -1,56 +1,33 @@
 ﻿#include "BangoScripts/Components/BangoActorIDComponent.h"
 
 #include "CanvasItem.h"
-#include "Editor.h"
 #include "TimerManager.h"
-#include "BangoScripts/EditorTooling/BangoDebugUtility.h"
 #include "BangoScripts/Subsystem/BangoActorIDSubsystem.h"
-#include "BangoScripts/EditorTooling/BangoColors.h"
-#include "BangoScripts/EditorTooling/BangoHelpers.h"
 #include "BangoScripts/Utility/BangoScriptsLog.h"
 #include "Engine/Canvas.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
+#include "UObject/ICookInfo.h"
+
+#if WITH_EDITOR
+#include "Editor.h"
+#include "BangoScripts/EditorTooling/BangoDebugUtility.h"
+#include "BangoScripts/EditorTooling/BangoColors.h"
+#include "BangoScripts/EditorTooling/BangoHelpers.h"
+#endif
 
 UBangoActorIDComponent::UBangoActorIDComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	
 #if WITH_EDITORONLY_DATA 
-	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_ActorID.Icon_ActorID"));
-#endif
-	
-	if (!IsTemplate())
+	if (!IsRunningCookCommandlet())
 	{
-		//PrintGuid("C++ Constructor");
-		
-#if WITH_EDITOR
-		//EnsureValidGuid();
-#endif	
+		FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
+		IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_ActorID.Icon_ActorID"));
 	}
-}
-
-void UBangoActorIDComponent::PostInitProperties()
-{
-	Super::PostInitProperties();
-	
-	//PrintGuid("PostInitProperties");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-void UBangoActorIDComponent::PostReinitProperties()
-{
-	Super::PostReinitProperties();
-	
-	//PrintGuid("PostReinitProperties");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
 #endif
 }
 
@@ -58,122 +35,19 @@ void UBangoActorIDComponent::PostDuplicate(bool bDuplicateForPIE)
 {
 	Super::PostDuplicate(bDuplicateForPIE);
 	
+#if WITH_EDITOR
 	// Manual names should normally only be assigned at edit-time; if duplicating at game time, don't use a name
 	if (!Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		BangoName = NAME_None;
 	}
-}
-
-void UBangoActorIDComponent::PostLoad()
-{
-	Super::PostLoad();
-	
-	//PrintGuid("PostLoad");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
 #endif
-}
-
-void UBangoActorIDComponent::PostLoadSubobjects(FObjectInstancingGraph* OuterInstanceGraph)
-{
-	Super::PostLoadSubobjects(OuterInstanceGraph);
-	
-	//PrintGuid("PostLoadSubobjects");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-void UBangoActorIDComponent::PostLinkerChange()
-{
-	Super::PostLinkerChange();
-	
-	//PrintGuid("PostLinkerChange");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-void UBangoActorIDComponent::Serialize(FArchive& Ar)
-{
-	Super::Serialize(Ar);
-	
-	//PrintGuid("Serialize");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-bool UBangoActorIDComponent::Rename(const TCHAR* NewName, UObject* NewOuter, ERenameFlags Flags)
-{
-	bool Val = Super::Rename(NewName, NewOuter, Flags);
-	
-	//PrintGuid("Rename");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-	
-	return Val;
-}
-
-void UBangoActorIDComponent::PostEditImport()
-{
-	Super::PostEditImport();
-	
-	//PrintGuid("PostEditImport");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-void UBangoActorIDComponent::PostApplyToComponent()
-{
-	Super::PostApplyToComponent();
-	
-	//PrintGuid("PostApplyToComponent");
-	
-	//BangoUtility::Debug::PrintFlagNames();
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-}
-
-void UBangoActorIDComponent::CheckForErrors()
-{
-	Super::CheckForErrors();
-	
-	//PrintGuid("CheckForErrors");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif	
-}
-
-void UBangoActorIDComponent::InitializeComponent()
-{
-	Super::InitializeComponent();
-	
-	//PrintGuid("InitializeComponent");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif	
 }
 
 void UBangoActorIDComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//PrintGuid("BeginPlay");
-	
 	UBangoActorIDSubsystem::RegisterActor(this, GetOwner(), BangoName, BangoGuid);
 }
 
@@ -184,6 +58,7 @@ void UBangoActorIDComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+#if WITH_EDITOR
 void UBangoActorIDComponent::PrintGuid(const FString& FuncName)
 {
 	if (!Bango::Editor::IsComponentInEditedLevel(this))
@@ -201,6 +76,7 @@ void UBangoActorIDComponent::PrintGuid(const FString& FuncName)
 	FString Msg = PrintedFuncName + " Guid: [" + BangoGuid.ToString() + "]";
 	Bango::Debug::PrintComponentState(this, Msg);
 }
+#endif
 
 #if WITH_EDITOR
 void UBangoActorIDComponent::SetBangoName(FName NewID)
@@ -215,18 +91,12 @@ void UBangoActorIDComponent::OnRegister()
 {
 	Super::OnRegister();
 	
-	//PrintGuid("OnRegister");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif
-	
 #if WITH_EDITOR
 	if (Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		TWeakObjectPtr<UBangoActorIDComponent> WeakThis = this;
 		
-		auto FuckYouBostonStrangler = FTimerDelegate::CreateLambda( [WeakThis] ()
+		auto DelayedRegister = FTimerDelegate::CreateLambda( [WeakThis] ()
 		{
 			if (!WeakThis.IsValid())
 			{
@@ -236,7 +106,7 @@ void UBangoActorIDComponent::OnRegister()
 			WeakThis->EnsureValidGuid();
 		});
 		
-		GEditor->GetTimerManager()->SetTimerForNextTick(FuckYouBostonStrangler);
+		GEditor->GetTimerManager()->SetTimerForNextTick(DelayedRegister);
 	}
 	//BangoDebugDraw_Register<UBangoActorIDComponent>(this);
 #endif
@@ -251,23 +121,11 @@ void UBangoActorIDComponent::OnUnregister()
 	
 	Super::OnUnregister();
 }
-
-void UBangoActorIDComponent::OnComponentCreated()
-{
-	Super::OnComponentCreated();
-	
-	//PrintGuid("OnComponentCreated");
-	
-#if WITH_EDITOR
-	//EnsureValidGuid();
-#endif	
-}
 #endif
 
 #if WITH_EDITOR
 void UBangoActorIDComponent::EnsureValidGuid()
 {
-#if 1
 	if (Bango::Editor::IsComponentInEditedLevel(this))
 	{
 		if (!BangoGuid.IsValid() || BangoGuid == FGuid(0, 0, 0, 1))
@@ -278,7 +136,6 @@ void UBangoActorIDComponent::EnsureValidGuid()
 			UE_LOG(LogBango, VeryVerbose, TEXT("Setting ID Component GUID to: %s"), *BangoGuid.ToString());
 		}
 	}
-#endif
 }
 #endif
 

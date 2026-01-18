@@ -164,7 +164,7 @@ UBangoScriptBlueprint* Bango::Editor::MakeLevelScript(UPackage* InPackage, const
 
 // ----------------------------------------------
 
-UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FString& InName, const FGuid& NewGuid)
+UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint* SourceBlueprint, UPackage* NewScriptPackage, const FString& InName, const FGuid& NewGuid, AActor* NewOwnerActor)
 {
 	FString ScriptName = InName;
 	
@@ -176,7 +176,11 @@ UBangoScriptBlueprint* Bango::Editor::DuplicateLevelScript(UBangoScriptBlueprint
 	FString AssetName = GetLocalScriptName(ScriptName);
 	
 	UBangoScriptBlueprint* DuplicateScript = DuplicateObject(SourceBlueprint, NewScriptPackage, FName(AssetName));
+	
+	DuplicateScript->Reset();
+	
 	DuplicateScript->SetScriptGuid(NewGuid);
+	DuplicateScript->SetActorReference(NewOwnerActor);	
 	
 	return DuplicateScript;
 }

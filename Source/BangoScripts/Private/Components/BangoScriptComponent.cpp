@@ -2,17 +2,20 @@
 
 #include "BangoScripts/Core/BangoScript.h"
 #include "BangoScripts/Subsystem/BangoScriptSubsystem.h"
-#include "BangoScripts/EditorTooling/BangoColors.h"
-#include "BangoScripts/EditorTooling/BangoHelpers.h"
 #include "BangoScripts/Utility/BangoScriptsLog.h"
-#include "BangoScripts/EditorTooling/BangoDebugDrawCanvas.h"
-#include "BangoScripts/EditorTooling/BangoDebugUtility.h"
 #include "Components/BillboardComponent.h"
 #include "Fonts/FontMeasure.h"
 #include "UObject/ICookInfo.h"
-#include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
 #include "Engine/Texture2D.h"
 #include "Framework/Application/SlateApplication.h"
+
+#if WITH_EDITOR
+#include "BangoScripts/EditorTooling/BangoColors.h"
+#include "BangoScripts/EditorTooling/BangoHelpers.h"
+#include "BangoScripts/EditorTooling/BangoDebugDrawCanvas.h"
+#include "BangoScripts/EditorTooling/BangoDebugUtility.h"
+#include "BangoScripts/EditorTooling/BangoEditorDelegates.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "BangoScripts"
 
@@ -23,8 +26,11 @@ UBangoScriptComponent::UBangoScriptComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 #if WITH_EDITORONLY_DATA 
-	FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
-	IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+	if (!IsRunningCookCommandlet())
+	{
+		FCookLoadScope EditorOnlyLoadScope(ECookLoadType::EditorOnly);
+		IconTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Bango/Icon_Script.Icon_Script"));
+	}
 #endif
 }
 
